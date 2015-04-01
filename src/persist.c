@@ -191,7 +191,7 @@ static int mqtt3_db_message_store_write(struct mosquitto_db *db, FILE *db_fptr)
 		i32temp = htonl(stored->payloadlen);
 		write_e(db_fptr, &i32temp, sizeof(uint32_t));
 		if(stored->payloadlen){
-			write_e(db_fptr, stored->payload, (unsigned int)stored->payloadlen);
+			write_e(db_fptr, UHPA_ACCESS(stored->payload, stored->payloadlen), (unsigned int)stored->payloadlen);
 		}
 		stored = stored->next;
 	}

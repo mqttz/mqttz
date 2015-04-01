@@ -26,6 +26,10 @@ Contributors:
 #include "tls_mosq.h"
 #include "uthash.h"
 
+#define uhpa_malloc(size) _mosquitto_malloc(size)
+#define uhpa_free(ptr) _mosquitto_free(ptr)
+#include "uhpa.h"
+
 #ifndef __GNUC__
 #define __attribute__(attrib)
 #endif
@@ -40,6 +44,18 @@ Contributors:
 #define MQTT3_LOG_ALL 0xFF
 
 #define WEBSOCKET_CLIENT -2
+
+/* ========================================
+ * UHPA data types
+ * ======================================== */
+#define MOSQ_PAYLOAD_UNION_SIZE 8
+typedef union {
+	void *ptr;
+	char array[MOSQ_PAYLOAD_UNION_SIZE];
+} mosquitto__payload_uhpa;
+/* ========================================
+ * End UHPA data types
+ * ======================================== */
 
 enum mosquitto_protocol {
 	mp_mqtt,
@@ -160,7 +176,7 @@ struct mosquitto_msg_store{
 	int dest_id_count;
 	int ref_count;
 	char *topic;
-	void *payload;
+	mosquitto__payload_uhpa payload;
 	uint32_t payloadlen;
 	uint16_t source_mid;
 	uint16_t mid;

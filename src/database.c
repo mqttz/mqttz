@@ -166,7 +166,7 @@ void mosquitto__db_msg_store_remove(struct mosquitto_db *db, struct mosquitto_ms
 		_mosquitto_free(store->dest_ids);
 	}
 	if(store->topic) _mosquitto_free(store->topic);
-	if(store->payload) _mosquitto_free(store->payload);
+	UHPA_FREE(store->payload, store->payloadlen);
 	_mosquitto_free(store);
 }
 
@@ -533,23 +533,22 @@ int mqtt3_db_message_store(struct mosquitto_db *db, const char *source, uint16_t
 	}
 	temp->payloadlen = payloadlen;
 	if(payloadlen){
-		temp->payload = _mosquitto_malloc(sizeof(char)*payloadlen);
-		if(!temp->payload){
+		UHPA_ALLOC(temp->payload, payloadlen);
+		if(!UHPA_ACCESS(temp->payload, payloadlen)){
 			if(temp->source_id) _mosquitto_free(temp->source_id);
 			if(temp->topic) _mosquitto_free(temp->topic);
-			if(temp->payload) _mosquitto_free(temp->payload);
 			_mosquitto_free(temp);
 			return MOSQ_ERR_NOMEM;
 		}
-		memcpy(temp->payload, payload, sizeof(char)*payloadlen);
+		memcpy(UHPA_ACCESS(temp->payload, payloadlen), payload, sizeof(char)*payloadlen);
 	}else{
-		temp->payload = NULL;
+		temp->payload.ptr = NULL;
 	}
 
-	if(!temp->source_id || (payloadlen && !temp->payload)){
+	if(!temp->source_id || (payloadlen && !UHPA_ACCESS(temp->payload, payloadlen))){
 		if(temp->source_id) _mosquitto_free(temp->source_id);
 		if(temp->topic) _mosquitto_free(temp->topic);
-		if(temp->payload) _mosquitto_free(temp->payload);
+		UHPA_FREE(temp->payload, payloadlen);
 		_mosquitto_free(temp);
 		return 1;
 	}
@@ -813,7 +812,7 @@ int mqtt3_db_message_write(struct mosquitto_db *db, struct mosquitto *context)
 			topic = tail->store->topic;
 			qos = tail->qos;
 			payloadlen = tail->store->payloadlen;
-			payload = tail->store->payload;
+			payload = UHPA_ACCESS(tail->store->payload, tail->store->payloadlen);
 
 			switch(tail->state){
 				case mosq_ms_publish_qos0:
