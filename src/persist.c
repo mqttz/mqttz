@@ -139,7 +139,7 @@ static int mqtt3_db_message_store_write(struct mosquitto_db *db, FILE *db_fptr)
 
 	stored = db->msg_store;
 	while(stored){
-		if(!strncmp(stored->topic, "$SYS", 4)){
+		if(!strncmp(UHPA_ACCESS_TOPIC(stored), "$SYS", 4)){
 			/* Don't save $SYS messages as retained otherwise they can give
 			 * misleading information when reloaded. They should still be saved
 			 * because a disconnected durable client may have them in their
@@ -150,7 +150,7 @@ static int mqtt3_db_message_store_write(struct mosquitto_db *db, FILE *db_fptr)
 		}
 		length = htonl(sizeof(dbid_t) + 2+strlen(stored->source_id) +
 				sizeof(uint16_t) + sizeof(uint16_t) +
-				2+strlen(stored->topic) + sizeof(uint32_t) +
+				2+stored->topic_len + sizeof(uint32_t) +
 				stored->payloadlen + sizeof(uint8_t) + sizeof(uint8_t));
 
 		i16temp = htons(DB_CHUNK_MSG_STORE);
@@ -173,10 +173,10 @@ static int mqtt3_db_message_store_write(struct mosquitto_db *db, FILE *db_fptr)
 		i16temp = htons(stored->mid);
 		write_e(db_fptr, &i16temp, sizeof(uint16_t));
 
-		slen = strlen(stored->topic);
+		slen = stored->topic_len;
 		i16temp = htons(slen);
 		write_e(db_fptr, &i16temp, sizeof(uint16_t));
-		write_e(db_fptr, stored->topic, slen);
+		write_e(db_fptr, UHPA_ACCESS_TOPIC(stored), slen);
 
 		i8temp = (uint8_t )stored->qos;
 		write_e(db_fptr, &i8temp, sizeof(uint8_t));
@@ -253,13 +253,13 @@ static int _db_subs_retain_write(struct mosquitto_db *db, FILE *db_fptr, struct 
 	dbid_t i64temp;
 	size_t slen;
 
-	slen = strlen(topic) + strlen(node->topic) + 2;
+	slen = strlen(topic) + node->topic_len + 2;
 	thistopic = _mosquitto_malloc(sizeof(char)*slen);
 	if(!thistopic) return MOSQ_ERR_NOMEM;
 	if(strlen(topic)){
-		snprintf(thistopic, slen, "%s/%s", topic, node->topic);
+		snprintf(thistopic, slen, "%s/%s", topic, UHPA_ACCESS_TOPIC(node));
 	}else{
-		snprintf(thistopic, slen, "%s", node->topic);
+		snprintf(thistopic, slen, "%s", UHPA_ACCESS_TOPIC(node));
 	}
 
 	sub = node->subs;
@@ -286,7 +286,7 @@ static int _db_subs_retain_write(struct mosquitto_db *db, FILE *db_fptr, struct 
 		sub = sub->next;
 	}
 	if(node->retained){
-		if(strncmp(node->retained->topic, "$SYS", 4)){
+		if(strncmp(UHPA_ACCESS_TOPIC(node->retained), "$SYS", 4)){
 			/* Don't save $SYS messages. */
 			length = htonl(sizeof(dbid_t));
 
@@ -667,7 +667,7 @@ static int _db_retain_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 	store_id = i64temp;
 	HASH_FIND(hh, db->msg_store_load, &store_id, sizeof(dbid_t), load);
 	if(load){
-		mqtt3_db_messages_queue(db, NULL, load->store->topic, load->store->qos, load->store->retain, &load->store);
+		mqtt3_db_messages_queue(db, NULL, UHPA_ACCESS(load->store->topic, load->store->topic_len), load->store->qos, load->store->retain, &load->store);
 	}else{
 		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Corrupt database whilst restoring a retained message.");
 		return MOSQ_ERR_INVAL;

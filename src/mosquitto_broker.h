@@ -53,6 +53,16 @@ typedef union {
 	void *ptr;
 	char array[MOSQ_PAYLOAD_UNION_SIZE];
 } mosquitto__payload_uhpa;
+
+#define MOSQ_TOPIC_UNION_SIZE 8
+typedef union {
+	char *ptr;
+	char array[MOSQ_TOPIC_UNION_SIZE];
+} mosquitto__topic_uhpa;
+#define UHPA_ALLOC_TOPIC(A) UHPA_ALLOC((A)->topic, (A)->topic_len+1)
+#define UHPA_ACCESS_TOPIC(A) UHPA_ACCESS((A)->topic, (A)->topic_len+1)
+#define UHPA_FREE_TOPIC(A) UHPA_FREE((A)->topic, (A)->topic_len+1)
+
 /* ========================================
  * End UHPA data types
  * ======================================== */
@@ -157,8 +167,9 @@ struct _mosquitto_subhier {
 	struct _mosquitto_subhier *children;
 	struct _mosquitto_subhier *next;
 	struct _mosquitto_subleaf *subs;
-	char *topic;
 	struct mosquitto_msg_store *retained;
+	mosquitto__topic_uhpa topic;
+	uint16_t topic_len;
 };
 
 struct mosquitto_msg_store_load{
@@ -175,11 +186,12 @@ struct mosquitto_msg_store{
 	char **dest_ids;
 	int dest_id_count;
 	int ref_count;
-	char *topic;
+	mosquitto__topic_uhpa topic;
 	mosquitto__payload_uhpa payload;
 	uint32_t payloadlen;
 	uint16_t source_mid;
 	uint16_t mid;
+	uint16_t topic_len;
 	uint8_t qos;
 	bool retain;
 };

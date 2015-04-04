@@ -52,7 +52,14 @@ int mqtt3_db_open(struct mqtt3_config *config, struct mosquitto_db *db)
 
 	db->subs.next = NULL;
 	db->subs.subs = NULL;
-	db->subs.topic = "";
+	db->subs.topic_len = strlen("");
+	if(UHPA_ALLOC(db->subs.topic, db->subs.topic_len+1) == 0){
+		db->subs.topic_len = 0;
+		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		return MOSQ_ERR_NOMEM;
+	}else{
+		strncpy(UHPA_ACCESS(db->subs.topic, db->subs.topic_len+1), "", db->subs.topic_len+1);
+	}
 
 	child = _mosquitto_malloc(sizeof(struct _mosquitto_subhier));
 	if(!child){
@@ -60,10 +67,13 @@ int mqtt3_db_open(struct mqtt3_config *config, struct mosquitto_db *db)
 		return MOSQ_ERR_NOMEM;
 	}
 	child->next = NULL;
-	child->topic = _mosquitto_strdup("");
-	if(!child->topic){
+	child->topic_len = strlen("");
+	if(UHPA_ALLOC_TOPIC(child) == 0){
+		child->topic_len = 0;
 		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
+	}else{
+		strncpy(UHPA_ACCESS_TOPIC(child), "", child->topic_len+1);
 	}
 	child->subs = NULL;
 	child->children = NULL;
@@ -76,10 +86,13 @@ int mqtt3_db_open(struct mqtt3_config *config, struct mosquitto_db *db)
 		return MOSQ_ERR_NOMEM;
 	}
 	child->next = NULL;
-	child->topic = _mosquitto_strdup("$SYS");
-	if(!child->topic){
+	child->topic_len = strlen("$SYS");
+	if(UHPA_ALLOC_TOPIC(child) == 0){
+		child->topic_len = 0;
 		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
+	}else{
+		strncpy(UHPA_ACCESS_TOPIC(child), "$SYS", child->topic_len+1);
 	}
 	child->subs = NULL;
 	child->children = NULL;
@@ -114,7 +127,7 @@ static void subhier_clean(struct mosquitto_db *db, struct _mosquitto_subhier *su
 			mosquitto__db_msg_store_deref(db, &subhier->retained);
 		}
 		subhier_clean(db, subhier->children);
-		if(subhier->topic) _mosquitto_free(subhier->topic);
+		UHPA_FREE_TOPIC(subhier);
 
 		_mosquitto_free(subhier);
 		subhier = next;
@@ -165,7 +178,7 @@ void mosquitto__db_msg_store_remove(struct mosquitto_db *db, struct mosquitto_ms
 		}
 		_mosquitto_free(store->dest_ids);
 	}
-	if(store->topic) _mosquitto_free(store->topic);
+	UHPA_FREE_TOPIC(store);
 	UHPA_FREE(store->payload, store->payloadlen);
 	_mosquitto_free(store);
 }
@@ -521,22 +534,24 @@ int mqtt3_db_message_store(struct mosquitto_db *db, const char *source, uint16_t
 	temp->qos = qos;
 	temp->retain = retain;
 	if(topic){
-		temp->topic = _mosquitto_strdup(topic);
-		if(!temp->topic){
+		temp->topic_len = strlen(topic);
+		if(UHPA_ALLOC_TOPIC(temp) == 0){
 			_mosquitto_free(temp->source_id);
 			_mosquitto_free(temp);
 			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
+		strncpy(UHPA_ACCESS_TOPIC(temp), topic, temp->topic_len+1);
 	}else{
-		temp->topic = NULL;
+		temp->topic.ptr = NULL;
+		temp->topic_len = 0;
 	}
 	temp->payloadlen = payloadlen;
 	if(payloadlen){
 		UHPA_ALLOC(temp->payload, payloadlen);
 		if(!UHPA_ACCESS(temp->payload, payloadlen)){
 			if(temp->source_id) _mosquitto_free(temp->source_id);
-			if(temp->topic) _mosquitto_free(temp->topic);
+			UHPA_FREE(temp->topic, temp->topic_len+1);
 			_mosquitto_free(temp);
 			return MOSQ_ERR_NOMEM;
 		}
@@ -547,7 +562,7 @@ int mqtt3_db_message_store(struct mosquitto_db *db, const char *source, uint16_t
 
 	if(!temp->source_id || (payloadlen && !UHPA_ACCESS(temp->payload, payloadlen))){
 		if(temp->source_id) _mosquitto_free(temp->source_id);
-		if(temp->topic) _mosquitto_free(temp->topic);
+		UHPA_FREE_TOPIC(temp);
 		UHPA_FREE(temp->payload, payloadlen);
 		_mosquitto_free(temp);
 		return 1;
@@ -749,7 +764,7 @@ int mqtt3_db_message_release(struct mosquitto_db *db, struct mosquitto *context,
 		}
 		if(tail->mid == mid && tail->direction == dir){
 			qos = tail->store->qos;
-			topic = tail->store->topic;
+			topic = UHPA_ACCESS_TOPIC(tail->store);
 			retain = tail->retain;
 			source_id = tail->store->source_id;
 
@@ -809,7 +824,7 @@ int mqtt3_db_message_write(struct mosquitto_db *db, struct mosquitto *context)
 			mid = tail->mid;
 			retries = tail->dup;
 			retain = tail->retain;
-			topic = tail->store->topic;
+			topic = UHPA_ACCESS_TOPIC(tail->store);
 			qos = tail->qos;
 			payloadlen = tail->store->payloadlen;
 			payload = UHPA_ACCESS(tail->store->payload, tail->store->payloadlen);
