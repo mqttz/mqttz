@@ -191,7 +191,7 @@ static int mqtt3_db_message_store_write(struct mosquitto_db *db, FILE *db_fptr)
 		i32temp = htonl(stored->payloadlen);
 		write_e(db_fptr, &i32temp, sizeof(uint32_t));
 		if(stored->payloadlen){
-			write_e(db_fptr, UHPA_ACCESS(stored->payload, stored->payloadlen), (unsigned int)stored->payloadlen);
+			write_e(db_fptr, UHPA_ACCESS_PAYLOAD(stored), (unsigned int)stored->payloadlen);
 		}
 		stored = stored->next;
 	}
@@ -667,7 +667,7 @@ static int _db_retain_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 	store_id = i64temp;
 	HASH_FIND(hh, db->msg_store_load, &store_id, sizeof(dbid_t), load);
 	if(load){
-		mqtt3_db_messages_queue(db, NULL, UHPA_ACCESS(load->store->topic, load->store->topic_len), load->store->qos, load->store->retain, &load->store);
+		mqtt3_db_messages_queue(db, NULL, UHPA_ACCESS_TOPIC(load->store), load->store->qos, load->store->retain, &load->store);
 	}else{
 		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Corrupt database whilst restoring a retained message.");
 		return MOSQ_ERR_INVAL;

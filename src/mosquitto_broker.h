@@ -94,6 +94,9 @@ typedef union {
 	void *ptr;
 	char array[MOSQ_PAYLOAD_UNION_SIZE];
 } mosquitto__payload_uhpa;
+#define UHPA_ALLOC_PAYLOAD(A) UHPA_ALLOC((A)->payload, (A)->payloadlen)
+#define UHPA_ACCESS_PAYLOAD(A) UHPA_ACCESS((A)->payload, (A)->payloadlen)
+#define UHPA_FREE_PAYLOAD(A) UHPA_FREE((A)->payload, (A)->payloadlen)
 
 #define MOSQ_TOPIC_UNION_SIZE 8
 typedef union {
