@@ -73,10 +73,11 @@ Contributors:
  * elements (e.g. "bar" out of "foo/bar/baz") it is likely that an array size
  * of 32 bytes will mean that the majority of heap allocations are removed.
  *
- * You can change the size of MOSQ_PAYLOAD_UNION_SIZE and MOSQ_TOPIC_UNION_SIZE
- * to change the size of the uhpa array used for the payload (i.e. the
- * published part of a message) and for topic elements, and so control the heap
- * allocation threshold for these data types. You should look at your
+ * You can change the size of MOSQ_PAYLOAD_UNION_SIZE and
+ * MOSQ_TOPIC_ELEMENT_UNION_SIZE to change the size of the uhpa array used for
+ * the payload (i.e. the published part of a message) and for topic elements
+ * (e.g. "foo", "bar" or "baz" in the topic "foo/bar/baz"), and so control the
+ * heap allocation threshold for these data types. You should look at your
  * application to decide what values to set, but don't set them too high
  * otherwise your overall memory usage will increase.
  *
@@ -98,11 +99,11 @@ typedef union {
 #define UHPA_ACCESS_PAYLOAD(A) UHPA_ACCESS((A)->payload, (A)->payloadlen)
 #define UHPA_FREE_PAYLOAD(A) UHPA_FREE((A)->payload, (A)->payloadlen)
 
-#define MOSQ_TOPIC_UNION_SIZE 8
+#define MOSQ_TOPIC_ELEMENT_UNION_SIZE 8
 typedef union {
 	char *ptr;
-	char array[MOSQ_TOPIC_UNION_SIZE];
-} mosquitto__topic_uhpa;
+	char array[MOSQ_TOPIC_ELEMENT_UNION_SIZE];
+} mosquitto__topic_element_uhpa;
 #define UHPA_ALLOC_TOPIC(A) UHPA_ALLOC((A)->topic, (A)->topic_len+1)
 #define UHPA_ACCESS_TOPIC(A) UHPA_ACCESS((A)->topic, (A)->topic_len+1)
 #define UHPA_FREE_TOPIC(A) UHPA_FREE((A)->topic, (A)->topic_len+1)
@@ -212,7 +213,7 @@ struct _mosquitto_subhier {
 	struct _mosquitto_subhier *next;
 	struct _mosquitto_subleaf *subs;
 	struct mosquitto_msg_store *retained;
-	mosquitto__topic_uhpa topic;
+	mosquitto__topic_element_uhpa topic;
 	uint16_t topic_len;
 };
 
@@ -230,12 +231,11 @@ struct mosquitto_msg_store{
 	char **dest_ids;
 	int dest_id_count;
 	int ref_count;
-	mosquitto__topic_uhpa topic;
+	char* topic;
 	mosquitto__payload_uhpa payload;
 	uint32_t payloadlen;
 	uint16_t source_mid;
 	uint16_t mid;
-	uint16_t topic_len;
 	uint8_t qos;
 	bool retain;
 };

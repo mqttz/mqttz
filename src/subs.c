@@ -57,7 +57,7 @@ Contributors:
 
 struct _sub_token {
 	struct _sub_token *next;
-	mosquitto__topic_uhpa topic;
+	mosquitto__topic_element_uhpa topic;
 	uint16_t topic_len;
 };
 
@@ -177,7 +177,7 @@ static int _sub_topic_tokenise(const char *subtopic, struct _sub_token **topics)
 	int len;
 	int start, stop, tlen;
 	int i;
-	mosquitto__topic_uhpa topic;
+	mosquitto__topic_element_uhpa topic;
 
 	assert(subtopic);
 	assert(topics);
@@ -630,7 +630,7 @@ static int _retain_process(struct mosquitto_db *db, struct mosquitto_msg_store *
 	int qos;
 	uint16_t mid;
 
-	rc = mosquitto_acl_check(db, context, UHPA_ACCESS_TOPIC(retained), MOSQ_ACL_READ);
+	rc = mosquitto_acl_check(db, context, retained->topic, MOSQ_ACL_READ);
 	if(rc == MOSQ_ERR_ACL_DENIED){
 		return MOSQ_ERR_SUCCESS;
 	}else if(rc != MOSQ_ERR_SUCCESS){
