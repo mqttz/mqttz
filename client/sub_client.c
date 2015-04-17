@@ -33,6 +33,19 @@ Contributors:
 bool process_messages = true;
 int msg_count = 0;
 
+static void write_payload(const unsigned char *payload, int payloadlen, bool hex)
+{
+	int i;
+
+	if(!hex){
+		fwrite(payload, 1, payloadlen, stdout);
+	}else{
+		for(i=0; i<payloadlen; i++){
+			fprintf(stdout, "%x", payload[i]);
+		}
+	}
+}
+
 void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
 {
 	struct mosq_config *cfg;
@@ -55,7 +68,7 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 	if(cfg->verbose){
 		if(message->payloadlen){
 			printf("%s ", message->topic);
-			fwrite(message->payload, 1, message->payloadlen, stdout);
+			write_payload(message->payload, message->payloadlen, cfg->hex_output);
 			if(cfg->eol){
 				printf("\n");
 			}
@@ -67,7 +80,7 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 		fflush(stdout);
 	}else{
 		if(message->payloadlen){
-			fwrite(message->payload, 1, message->payloadlen, stdout);
+			write_payload(message->payload, message->payloadlen, cfg->hex_output);
 			if(cfg->eol){
 				printf("\n");
 			}
@@ -137,7 +150,7 @@ void print_usage(void)
 	printf("                     [-A bind_address]\n");
 #endif
 	printf("                     [-i id] [-I id_prefix]\n");
-	printf("                     [-d] [-N] [--quiet] [-v]\n");
+	printf("                     [-d] [-N] [--quiet] [-v] [-x]\n");
 	printf("                     [-u username [-P password]]\n");
 	printf("                     [--will-topic [--will-payload payload] [--will-qos qos] [--will-retain]]\n");
 #ifdef WITH_TLS
@@ -175,6 +188,7 @@ void print_usage(void)
 	printf(" -v : print published messages verbosely.\n");
 	printf(" -V : specify the version of the MQTT protocol to use when connecting.\n");
 	printf("      Can be mqttv31 or mqttv311. Defaults to mqttv31.\n");
+	printf(" -x : print published message payloads as hexadecimal data.\n");
 	printf(" --help : display this message.\n");
 	printf(" --quiet : don't print error messages.\n");
 	printf(" --will-payload : payload for the client Will, which is sent by the broker in case of\n");

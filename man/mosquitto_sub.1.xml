@@ -32,6 +32,7 @@
 			<arg><option>-N</option></arg>
 			<arg><option>--quiet</option></arg>
 			<arg><option>-v</option></arg>
+			<arg><option>-x</option></arg>
 			<arg>
 				<arg><option>-u</option> <replaceable>username</replaceable></arg>
 				<arg><option>-P</option> <replaceable>password</replaceable></arg>
@@ -453,6 +454,13 @@
 				<listitem>
 					<para>The topic on which to send a Will, in the event that
 					the client disconnects unexpectedly.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-x</option></term>
+				<listitem>
+					<para>Print published message payloads as hexadecimal
+						data.</para>
 				</listitem>
 			</varlistentry>
 		</variablelist>

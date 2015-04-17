@@ -1,7 +1,12 @@
 1.5 - 2015xxxx
 ==============
 
+Broker:
 - Reduce calls to malloc through the use of UHPA.
+
+Client:
+- Add -x to mosquitto_sub for printing the payload in hexadecimal format.
+
 
 1.4.1 - 2015xxxx
 ================
