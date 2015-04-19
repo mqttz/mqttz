@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2014 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2015 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -33,7 +33,7 @@ extern unsigned long g_msgs_dropped;
 int mqtt3_db_open(struct mqtt3_config *config, struct mosquitto_db *db)
 {
 	int rc = 0;
-	struct _mosquitto_subhier *child;
+	struct mosquitto__subhier *child;
 
 	if(!config || !db) return MOSQ_ERR_INVAL;
 
@@ -55,22 +55,22 @@ int mqtt3_db_open(struct mqtt3_config *config, struct mosquitto_db *db)
 	db->subs.topic_len = strlen("");
 	if(UHPA_ALLOC(db->subs.topic, db->subs.topic_len+1) == 0){
 		db->subs.topic_len = 0;
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}else{
 		strncpy(UHPA_ACCESS(db->subs.topic, db->subs.topic_len+1), "", db->subs.topic_len+1);
 	}
 
-	child = _mosquitto_malloc(sizeof(struct _mosquitto_subhier));
+	child = mosquitto__malloc(sizeof(struct mosquitto__subhier));
 	if(!child){
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}
 	child->next = NULL;
 	child->topic_len = strlen("");
 	if(UHPA_ALLOC_TOPIC(child) == 0){
 		child->topic_len = 0;
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}else{
 		strncpy(UHPA_ACCESS_TOPIC(child), "", child->topic_len+1);
@@ -80,16 +80,16 @@ int mqtt3_db_open(struct mqtt3_config *config, struct mosquitto_db *db)
 	child->retained = NULL;
 	db->subs.children = child;
 
-	child = _mosquitto_malloc(sizeof(struct _mosquitto_subhier));
+	child = mosquitto__malloc(sizeof(struct mosquitto__subhier));
 	if(!child){
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}
 	child->next = NULL;
 	child->topic_len = strlen("$SYS");
 	if(UHPA_ALLOC_TOPIC(child) == 0){
 		child->topic_len = 0;
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}else{
 		strncpy(UHPA_ACCESS_TOPIC(child), "$SYS", child->topic_len+1);
@@ -110,17 +110,17 @@ int mqtt3_db_open(struct mqtt3_config *config, struct mosquitto_db *db)
 	return rc;
 }
 
-static void subhier_clean(struct mosquitto_db *db, struct _mosquitto_subhier *subhier)
+static void subhier_clean(struct mosquitto_db *db, struct mosquitto__subhier *subhier)
 {
-	struct _mosquitto_subhier *next;
-	struct _mosquitto_subleaf *leaf, *nextleaf;
+	struct mosquitto__subhier *next;
+	struct mosquitto__subleaf *leaf, *nextleaf;
 
 	while(subhier){
 		next = subhier->next;
 		leaf = subhier->subs;
 		while(leaf){
 			nextleaf = leaf->next;
-			_mosquitto_free(leaf);
+			mosquitto__free(leaf);
 			leaf = nextleaf;
 		}
 		if(subhier->retained){
@@ -129,7 +129,7 @@ static void subhier_clean(struct mosquitto_db *db, struct _mosquitto_subhier *su
 		subhier_clean(db, subhier->children);
 		UHPA_FREE_TOPIC(subhier);
 
-		_mosquitto_free(subhier);
+		mosquitto__free(subhier);
 		subhier = next;
 	}
 }
@@ -171,16 +171,16 @@ void mosquitto__db_msg_store_remove(struct mosquitto_db *db, struct mosquitto_ms
 	}
 	db->msg_store_count--;
 
-	if(store->source_id) _mosquitto_free(store->source_id);
+	if(store->source_id) mosquitto__free(store->source_id);
 	if(store->dest_ids){
 		for(i=0; i<store->dest_id_count; i++){
-			if(store->dest_ids[i]) _mosquitto_free(store->dest_ids[i]);
+			if(store->dest_ids[i]) mosquitto__free(store->dest_ids[i]);
 		}
-		_mosquitto_free(store->dest_ids);
+		mosquitto__free(store->dest_ids);
 	}
-	if(store->topic) _mosquitto_free(store->topic);
+	if(store->topic) mosquitto__free(store->topic);
 	UHPA_FREE_PAYLOAD(store);
-	_mosquitto_free(store);
+	mosquitto__free(store);
 }
 
 
@@ -230,7 +230,7 @@ static void _message_remove(struct mosquitto_db *db, struct mosquitto *context, 
 	if((*msg)->qos > 0){
 		context->msg_count12--;
 	}
-	_mosquitto_free(*msg);
+	mosquitto__free(*msg);
 	if(last){
 		*msg = last->next;
 	}else{
@@ -355,7 +355,7 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 			/* Dropping message due to full queue. */
 			if(context->is_dropping == false){
 				context->is_dropping = true;
-				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE,
+				mosquitto__log_printf(NULL, MOSQ_LOG_NOTICE,
 						"Outgoing messages are being dropped for client %s.",
 						context->id);
 			}
@@ -371,7 +371,7 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 #endif
 			if(context->is_dropping == false){
 				context->is_dropping = true;
-				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE,
+				mosquitto__log_printf(NULL, MOSQ_LOG_NOTICE,
 						"Outgoing messages are being dropped for client %s.",
 						context->id);
 			}
@@ -388,7 +388,7 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 	}
 #endif
 
-	msg = _mosquitto_malloc(sizeof(struct mosquitto_client_msg));
+	msg = mosquitto__malloc(sizeof(struct mosquitto_client_msg));
 	if(!msg) return MOSQ_ERR_NOMEM;
 	msg->next = NULL;
 	msg->store = stored;
@@ -420,11 +420,11 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 		 * multiple times for overlapping subscriptions, although this is only the
 		 * case for SUBSCRIPTION with multiple subs in so is a minor concern.
 		 */
-		dest_ids = _mosquitto_realloc(stored->dest_ids, sizeof(char *)*(stored->dest_id_count+1));
+		dest_ids = mosquitto__realloc(stored->dest_ids, sizeof(char *)*(stored->dest_id_count+1));
 		if(dest_ids){
 			stored->dest_ids = dest_ids;
 			stored->dest_id_count++;
-			stored->dest_ids[stored->dest_id_count-1] = _mosquitto_strdup(context->id);
+			stored->dest_ids[stored->dest_id_count-1] = mosquitto__strdup(context->id);
 			if(!stored->dest_ids[stored->dest_id_count-1]){
 				return MOSQ_ERR_NOMEM;
 			}
@@ -478,7 +478,7 @@ int mqtt3_db_messages_delete(struct mosquitto_db *db, struct mosquitto *context)
 	while(tail){
 		mosquitto__db_msg_store_deref(db, &tail->store);
 		next = tail->next;
-		_mosquitto_free(tail);
+		mosquitto__free(tail);
 		tail = next;
 	}
 	context->msgs = NULL;
@@ -515,18 +515,18 @@ int mqtt3_db_message_store(struct mosquitto_db *db, const char *source, uint16_t
 	assert(db);
 	assert(stored);
 
-	temp = _mosquitto_malloc(sizeof(struct mosquitto_msg_store));
+	temp = mosquitto__malloc(sizeof(struct mosquitto_msg_store));
 	if(!temp) return MOSQ_ERR_NOMEM;
 
 	temp->ref_count = 0;
 	if(source){
-		temp->source_id = _mosquitto_strdup(source);
+		temp->source_id = mosquitto__strdup(source);
 	}else{
-		temp->source_id = _mosquitto_strdup("");
+		temp->source_id = mosquitto__strdup("");
 	}
 	if(!temp->source_id){
-		_mosquitto_free(temp);
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		mosquitto__free(temp);
+		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}
 	temp->source_mid = source_mid;
@@ -534,11 +534,11 @@ int mqtt3_db_message_store(struct mosquitto_db *db, const char *source, uint16_t
 	temp->qos = qos;
 	temp->retain = retain;
 	if(topic){
-		temp->topic = _mosquitto_strdup(topic);
+		temp->topic = mosquitto__strdup(topic);
 		if(!temp->topic){
-			_mosquitto_free(temp->source_id);
-			_mosquitto_free(temp);
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+			mosquitto__free(temp->source_id);
+			mosquitto__free(temp);
+			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
 	}else{
@@ -548,9 +548,9 @@ int mqtt3_db_message_store(struct mosquitto_db *db, const char *source, uint16_t
 	if(payloadlen){
 		UHPA_ALLOC_PAYLOAD(temp);
 		if(!UHPA_ACCESS_PAYLOAD(temp)){
-			if(temp->source_id) _mosquitto_free(temp->source_id);
-			if(temp->topic) _mosquitto_free(temp->topic);
-			_mosquitto_free(temp);
+			if(temp->source_id) mosquitto__free(temp->source_id);
+			if(temp->topic) mosquitto__free(temp->topic);
+			mosquitto__free(temp);
 			return MOSQ_ERR_NOMEM;
 		}
 		memcpy(UHPA_ACCESS_PAYLOAD(temp), payload, sizeof(char)*payloadlen);
@@ -559,10 +559,10 @@ int mqtt3_db_message_store(struct mosquitto_db *db, const char *source, uint16_t
 	}
 
 	if(!temp->source_id || (payloadlen && !UHPA_ACCESS_PAYLOAD(temp))){
-		if(temp->source_id) _mosquitto_free(temp->source_id);
-		if(temp->topic) _mosquitto_free(temp->topic);
+		if(temp->source_id) mosquitto__free(temp->source_id);
+		if(temp->topic) mosquitto__free(temp->topic);
 		UHPA_FREE_PAYLOAD(temp);
-		_mosquitto_free(temp);
+		mosquitto__free(temp);
 		return 1;
 	}
 	temp->dest_ids = NULL;
@@ -755,7 +755,7 @@ int mqtt3_db_message_release(struct mosquitto_db *db, struct mosquitto *context,
 				}
 			}else{
 				if(tail->qos == 2){
-					_mosquitto_send_pubrec(context, tail->mid);
+					mosquitto__send_pubrec(context, tail->mid);
 					tail->state = mosq_ms_wait_for_pubrel;
 				}
 			}
@@ -829,7 +829,7 @@ int mqtt3_db_message_write(struct mosquitto_db *db, struct mosquitto *context)
 
 			switch(tail->state){
 				case mosq_ms_publish_qos0:
-					rc = _mosquitto_send_publish(context, mid, topic, payloadlen, payload, qos, retain, retries);
+					rc = mosquitto__send_publish(context, mid, topic, payloadlen, payload, qos, retain, retries);
 					if(!rc){
 						_message_remove(db, context, &tail, last);
 					}else{
@@ -838,7 +838,7 @@ int mqtt3_db_message_write(struct mosquitto_db *db, struct mosquitto *context)
 					break;
 
 				case mosq_ms_publish_qos1:
-					rc = _mosquitto_send_publish(context, mid, topic, payloadlen, payload, qos, retain, retries);
+					rc = mosquitto__send_publish(context, mid, topic, payloadlen, payload, qos, retain, retries);
 					if(!rc){
 						tail->timestamp = mosquitto_time();
 						tail->dup = 1; /* Any retry attempts are a duplicate. */
@@ -851,7 +851,7 @@ int mqtt3_db_message_write(struct mosquitto_db *db, struct mosquitto *context)
 					break;
 
 				case mosq_ms_publish_qos2:
-					rc = _mosquitto_send_publish(context, mid, topic, payloadlen, payload, qos, retain, retries);
+					rc = mosquitto__send_publish(context, mid, topic, payloadlen, payload, qos, retain, retries);
 					if(!rc){
 						tail->timestamp = mosquitto_time();
 						tail->dup = 1; /* Any retry attempts are a duplicate. */
@@ -864,7 +864,7 @@ int mqtt3_db_message_write(struct mosquitto_db *db, struct mosquitto *context)
 					break;
 				
 				case mosq_ms_send_pubrec:
-					rc = _mosquitto_send_pubrec(context, mid);
+					rc = mosquitto__send_pubrec(context, mid);
 					if(!rc){
 						tail->state = mosq_ms_wait_for_pubrel;
 					}else{
@@ -875,7 +875,7 @@ int mqtt3_db_message_write(struct mosquitto_db *db, struct mosquitto *context)
 					break;
 
 				case mosq_ms_resend_pubrel:
-					rc = _mosquitto_send_pubrel(context, mid);
+					rc = mosquitto__send_pubrel(context, mid);
 					if(!rc){
 						tail->state = mosq_ms_wait_for_pubcomp;
 					}else{
@@ -886,7 +886,7 @@ int mqtt3_db_message_write(struct mosquitto_db *db, struct mosquitto *context)
 					break;
 
 				case mosq_ms_resend_pubcomp:
-					rc = _mosquitto_send_pubcomp(context, mid);
+					rc = mosquitto__send_pubcomp(context, mid);
 					if(!rc){
 						tail->state = mosq_ms_wait_for_pubrel;
 					}else{

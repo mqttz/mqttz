@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2010-2014 Roger Light <roger@atchoo.org>
+Copyright (c) 2010-2015 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -25,7 +25,7 @@ Contributors:
 #include <send_mosq.h>
 #include <time_mosq.h>
 
-void _mosquitto_message_cleanup(struct mosquitto_message_all **message)
+void mosquitto__message_cleanup(struct mosquitto_message_all **message)
 {
 	struct mosquitto_message_all *msg;
 
@@ -33,12 +33,12 @@ void _mosquitto_message_cleanup(struct mosquitto_message_all **message)
 
 	msg = *message;
 
-	if(msg->msg.topic) _mosquitto_free(msg->msg.topic);
-	if(msg->msg.payload) _mosquitto_free(msg->msg.payload);
-	_mosquitto_free(msg);
+	if(msg->msg.topic) mosquitto__free(msg->msg.topic);
+	if(msg->msg.payload) mosquitto__free(msg->msg.payload);
+	mosquitto__free(msg);
 }
 
-void _mosquitto_message_cleanup_all(struct mosquitto *mosq)
+void mosquitto__message_cleanup_all(struct mosquitto *mosq)
 {
 	struct mosquitto_message_all *tmp;
 
@@ -46,12 +46,12 @@ void _mosquitto_message_cleanup_all(struct mosquitto *mosq)
 
 	while(mosq->in_messages){
 		tmp = mosq->in_messages->next;
-		_mosquitto_message_cleanup(&mosq->in_messages);
+		mosquitto__message_cleanup(&mosq->in_messages);
 		mosq->in_messages = tmp;
 	}
 	while(mosq->out_messages){
 		tmp = mosq->out_messages->next;
-		_mosquitto_message_cleanup(&mosq->out_messages);
+		mosquitto__message_cleanup(&mosq->out_messages);
 		mosq->out_messages = tmp;
 	}
 }
@@ -61,14 +61,14 @@ int mosquitto_message_copy(struct mosquitto_message *dst, const struct mosquitto
 	if(!dst || !src) return MOSQ_ERR_INVAL;
 
 	dst->mid = src->mid;
-	dst->topic = _mosquitto_strdup(src->topic);
+	dst->topic = mosquitto__strdup(src->topic);
 	if(!dst->topic) return MOSQ_ERR_NOMEM;
 	dst->qos = src->qos;
 	dst->retain = src->retain;
 	if(src->payloadlen){
-		dst->payload = _mosquitto_malloc(src->payloadlen);
+		dst->payload = mosquitto__malloc(src->payloadlen);
 		if(!dst->payload){
-			_mosquitto_free(dst->topic);
+			mosquitto__free(dst->topic);
 			return MOSQ_ERR_NOMEM;
 		}
 		memcpy(dst->payload, src->payload, src->payloadlen);
@@ -80,15 +80,15 @@ int mosquitto_message_copy(struct mosquitto_message *dst, const struct mosquitto
 	return MOSQ_ERR_SUCCESS;
 }
 
-int _mosquitto_message_delete(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_direction dir)
+int mosquitto__message_delete(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_direction dir)
 {
 	struct mosquitto_message_all *message;
 	int rc;
 	assert(mosq);
 
-	rc = _mosquitto_message_remove(mosq, mid, dir, &message);
+	rc = mosquitto__message_remove(mosq, mid, dir, &message);
 	if(rc == MOSQ_ERR_SUCCESS){
-		_mosquitto_message_cleanup(&message);
+		mosquitto__message_cleanup(&message);
 	}
 	return rc;
 }
@@ -101,12 +101,12 @@ void mosquitto_message_free(struct mosquitto_message **message)
 
 	msg = *message;
 
-	if(msg->topic) _mosquitto_free(msg->topic);
-	if(msg->payload) _mosquitto_free(msg->payload);
-	_mosquitto_free(msg);
+	if(msg->topic) mosquitto__free(msg->topic);
+	if(msg->payload) mosquitto__free(msg->payload);
+	mosquitto__free(msg);
 }
 
-void _mosquitto_message_queue(struct mosquitto *mosq, struct mosquitto_message_all *message, enum mosquitto_msg_direction dir)
+void mosquitto__message_queue(struct mosquitto *mosq, struct mosquitto_message_all *message, enum mosquitto_msg_direction dir)
 {
 	/* mosq->*_message_mutex should be locked before entering this function */
 	assert(mosq);
@@ -136,7 +136,7 @@ void _mosquitto_message_queue(struct mosquitto *mosq, struct mosquitto_message_a
 	}
 }
 
-void _mosquitto_messages_reconnect_reset(struct mosquitto *mosq)
+void mosquitto__messages_reconnect_reset(struct mosquitto *mosq)
 {
 	struct mosquitto_message_all *message;
 	struct mosquitto_message_all *prev = NULL;
@@ -151,11 +151,11 @@ void _mosquitto_messages_reconnect_reset(struct mosquitto *mosq)
 		if(message->msg.qos != 2){
 			if(prev){
 				prev->next = message->next;
-				_mosquitto_message_cleanup(&message);
+				mosquitto__message_cleanup(&message);
 				message = prev;
 			}else{
 				mosq->in_messages = message->next;
-				_mosquitto_message_cleanup(&message);
+				mosquitto__message_cleanup(&message);
 				message = mosq->in_messages;
 			}
 		}else{
@@ -196,7 +196,7 @@ void _mosquitto_messages_reconnect_reset(struct mosquitto *mosq)
 	pthread_mutex_unlock(&mosq->out_message_mutex);
 }
 
-int _mosquitto_message_remove(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_direction dir, struct mosquitto_message_all **message)
+int mosquitto__message_remove(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_direction dir, struct mosquitto_message_all **message)
 {
 	struct mosquitto_message_all *cur, *prev = NULL;
 	bool found = false;
@@ -242,7 +242,7 @@ int _mosquitto_message_remove(struct mosquitto *mosq, uint16_t mid, enum mosquit
 						}else if(cur->msg.qos == 2){
 							cur->state = mosq_ms_wait_for_pubrec;
 						}
-						rc = _mosquitto_send_publish(mosq, cur->msg.mid, cur->msg.topic, cur->msg.payloadlen, cur->msg.payload, cur->msg.qos, cur->msg.retain, cur->dup);
+						rc = mosquitto__send_publish(mosq, cur->msg.mid, cur->msg.topic, cur->msg.payloadlen, cur->msg.payload, cur->msg.qos, cur->msg.retain, cur->dup);
 						if(rc){
 							pthread_mutex_unlock(&mosq->out_message_mutex);
 							return rc;
@@ -294,9 +294,9 @@ int _mosquitto_message_remove(struct mosquitto *mosq, uint16_t mid, enum mosquit
 }
 
 #ifdef WITH_THREADING
-void _mosquitto_message_retry_check_actual(struct mosquitto *mosq, struct mosquitto_message_all *messages, pthread_mutex_t *mutex)
+void mosquitto__message_retry_check_actual(struct mosquitto *mosq, struct mosquitto_message_all *messages, pthread_mutex_t *mutex)
 #else
-void _mosquitto_message_retry_check_actual(struct mosquitto *mosq, struct mosquitto_message_all *messages)
+void mosquitto__message_retry_check_actual(struct mosquitto *mosq, struct mosquitto_message_all *messages)
 #endif
 {
 	time_t now = mosquitto_time();
@@ -313,17 +313,17 @@ void _mosquitto_message_retry_check_actual(struct mosquitto *mosq, struct mosqui
 				case mosq_ms_wait_for_pubrec:
 					messages->timestamp = now;
 					messages->dup = true;
-					_mosquitto_send_publish(mosq, messages->msg.mid, messages->msg.topic, messages->msg.payloadlen, messages->msg.payload, messages->msg.qos, messages->msg.retain, messages->dup);
+					mosquitto__send_publish(mosq, messages->msg.mid, messages->msg.topic, messages->msg.payloadlen, messages->msg.payload, messages->msg.qos, messages->msg.retain, messages->dup);
 					break;
 				case mosq_ms_wait_for_pubrel:
 					messages->timestamp = now;
 					messages->dup = true;
-					_mosquitto_send_pubrec(mosq, messages->msg.mid);
+					mosquitto__send_pubrec(mosq, messages->msg.mid);
 					break;
 				case mosq_ms_wait_for_pubcomp:
 					messages->timestamp = now;
 					messages->dup = true;
-					_mosquitto_send_pubrel(mosq, messages->msg.mid);
+					mosquitto__send_pubrel(mosq, messages->msg.mid);
 					break;
 				default:
 					break;
@@ -336,14 +336,14 @@ void _mosquitto_message_retry_check_actual(struct mosquitto *mosq, struct mosqui
 #endif
 }
 
-void _mosquitto_message_retry_check(struct mosquitto *mosq)
+void mosquitto__message_retry_check(struct mosquitto *mosq)
 {
 #ifdef WITH_THREADING
-	_mosquitto_message_retry_check_actual(mosq, mosq->out_messages, &mosq->out_message_mutex);
-	_mosquitto_message_retry_check_actual(mosq, mosq->in_messages, &mosq->in_message_mutex);
+	mosquitto__message_retry_check_actual(mosq, mosq->out_messages, &mosq->out_message_mutex);
+	mosquitto__message_retry_check_actual(mosq, mosq->in_messages, &mosq->in_message_mutex);
 #else
-	_mosquitto_message_retry_check_actual(mosq, mosq->out_messages);
-	_mosquitto_message_retry_check_actual(mosq, mosq->in_messages);
+	mosquitto__message_retry_check_actual(mosq, mosq->out_messages);
+	mosquitto__message_retry_check_actual(mosq, mosq->in_messages);
 #endif
 }
 
@@ -353,7 +353,7 @@ void mosquitto_message_retry_set(struct mosquitto *mosq, unsigned int message_re
 	if(mosq) mosq->message_retry = message_retry;
 }
 
-int _mosquitto_message_out_update(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_state state)
+int mosquitto__message_out_update(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_state state)
 {
 	struct mosquitto_message_all *message;
 	assert(mosq);

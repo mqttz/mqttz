@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2010-2014 Roger Light <roger@atchoo.org>
+Copyright (c) 2010-2015 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -20,7 +20,7 @@ Contributors:
 #include <mosquitto.h>
 #include <mosquitto_internal.h>
 
-int _mosquitto_will_set(struct mosquitto *mosq, const char *topic, int payloadlen, const void *payload, int qos, bool retain);
-int _mosquitto_will_clear(struct mosquitto *mosq);
+int mosquitto__will_set(struct mosquitto *mosq, const char *topic, int payloadlen, const void *payload, int qos, bool retain);
+int mosquitto__will_clear(struct mosquitto *mosq);
 
 #endif

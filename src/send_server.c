@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2014 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2015 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -21,56 +21,56 @@ Contributors:
 #include <memory_mosq.h>
 #include <util_mosq.h>
 
-int _mosquitto_send_connack(struct mosquitto *context, int ack, int result)
+int mosquitto__send_connack(struct mosquitto *context, int ack, int result)
 {
-	struct _mosquitto_packet *packet = NULL;
+	struct mosquitto__packet *packet = NULL;
 	int rc;
 
 	if(context){
 		if(context->id){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Sending CONNACK to %s (%d, %d)", context->id, ack, result);
+			mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Sending CONNACK to %s (%d, %d)", context->id, ack, result);
 		}else{
-			_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Sending CONNACK to %s (%d, %d)", context->address, ack, result);
+			mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Sending CONNACK to %s (%d, %d)", context->address, ack, result);
 		}
 	}
 
-	packet = _mosquitto_calloc(1, sizeof(struct _mosquitto_packet));
+	packet = mosquitto__calloc(1, sizeof(struct mosquitto__packet));
 	if(!packet) return MOSQ_ERR_NOMEM;
 
 	packet->command = CONNACK;
 	packet->remaining_length = 2;
-	rc = _mosquitto_packet_alloc(packet);
+	rc = mosquitto__packet_alloc(packet);
 	if(rc){
-		_mosquitto_free(packet);
+		mosquitto__free(packet);
 		return rc;
 	}
 	packet->payload[packet->pos+0] = ack;
 	packet->payload[packet->pos+1] = result;
 
-	return _mosquitto_packet_queue(context, packet);
+	return mosquitto__packet_queue(context, packet);
 }
 
-int _mosquitto_send_suback(struct mosquitto *context, uint16_t mid, uint32_t payloadlen, const void *payload)
+int mosquitto__send_suback(struct mosquitto *context, uint16_t mid, uint32_t payloadlen, const void *payload)
 {
-	struct _mosquitto_packet *packet = NULL;
+	struct mosquitto__packet *packet = NULL;
 	int rc;
 
-	_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Sending SUBACK to %s", context->id);
+	mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Sending SUBACK to %s", context->id);
 
-	packet = _mosquitto_calloc(1, sizeof(struct _mosquitto_packet));
+	packet = mosquitto__calloc(1, sizeof(struct mosquitto__packet));
 	if(!packet) return MOSQ_ERR_NOMEM;
 
 	packet->command = SUBACK;
 	packet->remaining_length = 2+payloadlen;
-	rc = _mosquitto_packet_alloc(packet);
+	rc = mosquitto__packet_alloc(packet);
 	if(rc){
-		_mosquitto_free(packet);
+		mosquitto__free(packet);
 		return rc;
 	}
-	_mosquitto_write_uint16(packet, mid);
+	mosquitto__write_uint16(packet, mid);
 	if(payloadlen){
-		_mosquitto_write_bytes(packet, payload, payloadlen);
+		mosquitto__write_bytes(packet, payload, payloadlen);
 	}
 
-	return _mosquitto_packet_queue(context, packet);
+	return mosquitto__packet_queue(context, packet);
 }

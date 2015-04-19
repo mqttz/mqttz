@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2010-2014 Roger Light <roger@atchoo.org>
+Copyright (c) 2010-2015 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -99,23 +99,23 @@ enum mosquitto_client_state {
 	mosq_cs_expiring = 15,
 };
 
-enum _mosquitto_protocol {
+enum mosquitto__protocol {
 	mosq_p_invalid = 0,
 	mosq_p_mqtt31 = 1,
 	mosq_p_mqtt311 = 2,
 	mosq_p_mqtts = 3
 };
 
-enum _mosquitto_transport {
+enum mosquitto__transport {
 	mosq_t_invalid = 0,
 	mosq_t_tcp = 1,
 	mosq_t_ws = 2,
 	mosq_t_sctp = 3
 };
 
-struct _mosquitto_packet{
+struct mosquitto__packet{
 	uint8_t *payload;
-	struct _mosquitto_packet *next;
+	struct mosquitto__packet *next;
 	uint32_t remaining_mult;
 	uint32_t remaining_length;
 	uint32_t packet_length;
@@ -147,7 +147,7 @@ struct mosquitto {
 	SOCKET sockpairR, sockpairW;
 #  endif
 #endif
-	enum _mosquitto_protocol protocol;
+	enum mosquitto__protocol protocol;
 	char *address;
 	char *id;
 	char *username;
@@ -158,9 +158,9 @@ struct mosquitto {
 	time_t last_msg_in;
 	time_t last_msg_out;
 	time_t ping_t;
-	struct _mosquitto_packet in_packet;
-	struct _mosquitto_packet *current_out_packet;
-	struct _mosquitto_packet *out_packet;
+	struct mosquitto__packet in_packet;
+	struct mosquitto__packet *current_out_packet;
+	struct mosquitto__packet *out_packet;
 	struct mosquitto_message *will;
 #ifdef WITH_TLS
 	SSL *ssl;
@@ -194,16 +194,16 @@ struct mosquitto {
 #ifdef WITH_BROKER
 	bool is_dropping;
 	bool is_bridge;
-	struct _mqtt3_bridge *bridge;
+	struct mqtt3__bridge *bridge;
 	struct mosquitto_client_msg *msgs;
 	struct mosquitto_client_msg *last_msg;
 	int msg_count;
 	int msg_count12;
-	struct _mosquitto_acl_user *acl_list;
-	struct _mqtt3_listener *listener;
+	struct mosquitto__acl_user *acl_list;
+	struct mqtt3__listener *listener;
 	time_t disconnect_t;
-	struct _mosquitto_packet *out_packet_last;
-	struct _mosquitto_subhier **subs;
+	struct mosquitto__packet *out_packet_last;
+	struct mosquitto__subhier **subs;
 	int sub_count;
 	int pollfd_index;
 #  ifdef WITH_WEBSOCKETS
@@ -242,7 +242,7 @@ struct mosquitto {
 	unsigned int reconnect_delay_max;
 	bool reconnect_exponential_backoff;
 	bool threaded;
-	struct _mosquitto_packet *out_packet_last;
+	struct mosquitto__packet *out_packet_last;
 	int inflight_messages;
 	int max_inflight_messages;
 #  ifdef WITH_SRV

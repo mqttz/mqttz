@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2010-2014 Roger Light <roger@atchoo.org>
+Copyright (c) 2010-2015 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -55,19 +55,19 @@ Contributors:
 #include <memory_mosq.h>
 #include <util_mosq.h>
 
-struct _sub_token {
-	struct _sub_token *next;
+struct sub__token {
+	struct sub__token *next;
 	mosquitto__topic_element_uhpa topic;
 	uint16_t topic_len;
 };
 
-static int _subs_process(struct mosquitto_db *db, struct _mosquitto_subhier *hier, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored, bool set_retain)
+static int subs__process(struct mosquitto_db *db, struct mosquitto__subhier *hier, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored, bool set_retain)
 {
 	int rc = 0;
 	int rc2;
 	int client_qos, msg_qos;
 	uint16_t mid;
-	struct _mosquitto_subleaf *leaf;
+	struct mosquitto__subleaf *leaf;
 	bool client_retain;
 
 	leaf = hier->subs;
@@ -119,7 +119,7 @@ static int _subs_process(struct mosquitto_db *db, struct _mosquitto_subhier *hie
 				}
 			}
 			if(msg_qos){
-				mid = _mosquitto_mid_generate(leaf->context);
+				mid = mosquitto__mid_generate(leaf->context);
 			}else{
 				mid = 0;
 			}
@@ -142,21 +142,21 @@ static int _subs_process(struct mosquitto_db *db, struct _mosquitto_subhier *hie
 	return rc;
 }
 
-static struct _sub_token *_sub_topic_append(struct _sub_token **tail, struct _sub_token **topics, char *topic)
+static struct sub__token *sub__topic_append(struct sub__token **tail, struct sub__token **topics, char *topic)
 {
-	struct _sub_token *new_topic;
+	struct sub__token *new_topic;
 
 	if(!topic){
 		return NULL;
 	}
-	new_topic = _mosquitto_malloc(sizeof(struct _sub_token));
+	new_topic = mosquitto__malloc(sizeof(struct sub__token));
 	if(!new_topic){
 		return NULL;
 	}
 	new_topic->next = NULL;
 	new_topic->topic_len = strlen(topic);
 	if(UHPA_ALLOC_TOPIC(new_topic) == 0){
-		_mosquitto_free(new_topic);
+		mosquitto__free(new_topic);
 		return NULL;
 	}
 	strncpy(UHPA_ACCESS_TOPIC(new_topic), topic, new_topic->topic_len+1);
@@ -171,9 +171,9 @@ static struct _sub_token *_sub_topic_append(struct _sub_token **tail, struct _su
 	return new_topic;
 }
 
-static int _sub_topic_tokenise(const char *subtopic, struct _sub_token **topics)
+static int sub__topic_tokenise(const char *subtopic, struct sub__token **topics)
 {
-	struct _sub_token *new_topic, *tail = NULL;
+	struct sub__token *new_topic, *tail = NULL;
 	int len;
 	int start, stop, tlen;
 	int i;
@@ -183,14 +183,14 @@ static int _sub_topic_tokenise(const char *subtopic, struct _sub_token **topics)
 	assert(topics);
 
 	if(subtopic[0] != '$'){
-		new_topic = _sub_topic_append(&tail, topics, "");
+		new_topic = sub__topic_append(&tail, topics, "");
 		if(!new_topic) goto cleanup;
 	}
 
 	len = strlen(subtopic);
 
 	if(subtopic[0] == '/'){
-		new_topic = _sub_topic_append(&tail, topics, "");
+		new_topic = sub__topic_append(&tail, topics, "");
 		if(!new_topic) goto cleanup;
 
 		start = 1;
@@ -209,10 +209,10 @@ static int _sub_topic_tokenise(const char *subtopic, struct _sub_token **topics)
 				if(UHPA_ALLOC(topic, tlen+1) == 0) goto cleanup;
 				memcpy(UHPA_ACCESS(topic, tlen+1), &subtopic[start], tlen);
 				UHPA_ACCESS(topic, tlen+1)[tlen] = '\0';
-				new_topic = _sub_topic_append(&tail, topics, UHPA_ACCESS(topic, tlen+1));
+				new_topic = sub__topic_append(&tail, topics, UHPA_ACCESS(topic, tlen+1));
 				UHPA_FREE(topic, tlen+1);
 			}else{
-				new_topic = _sub_topic_append(&tail, topics, "");
+				new_topic = sub__topic_append(&tail, topics, "");
 			}
 			if(!new_topic) goto cleanup;
 			start = i+1;
@@ -227,29 +227,29 @@ cleanup:
 	while(tail){
 		UHPA_FREE_TOPIC(tail);
 		new_topic = tail->next;
-		_mosquitto_free(tail);
+		mosquitto__free(tail);
 		tail = new_topic;
 	}
 	return 1;
 }
 
-static void _sub_topic_tokens_free(struct _sub_token *tokens)
+static void sub__topic_tokens_free(struct sub__token *tokens)
 {
-	struct _sub_token *tail;
+	struct sub__token *tail;
 
 	while(tokens){
 		tail = tokens->next;
 		UHPA_FREE_TOPIC(tokens);
-		_mosquitto_free(tokens);
+		mosquitto__free(tokens);
 		tokens = tail;
 	}
 }
 
-static int _sub_add(struct mosquitto_db *db, struct mosquitto *context, int qos, struct _mosquitto_subhier *subhier, struct _sub_token *tokens)
+static int sub__add(struct mosquitto_db *db, struct mosquitto *context, int qos, struct mosquitto__subhier *subhier, struct sub__token *tokens)
 {
-	struct _mosquitto_subhier *branch, *last = NULL;
-	struct _mosquitto_subleaf *leaf, *last_leaf;
-	struct _mosquitto_subhier **subs;
+	struct mosquitto__subhier *branch, *last = NULL;
+	struct mosquitto__subleaf *leaf, *last_leaf;
+	struct mosquitto__subhier **subs;
 	int i;
 
 	if(!tokens){
@@ -273,7 +273,7 @@ static int _sub_add(struct mosquitto_db *db, struct mosquitto *context, int qos,
 				last_leaf = leaf;
 				leaf = leaf->next;
 			}
-			leaf = _mosquitto_malloc(sizeof(struct _mosquitto_subleaf));
+			leaf = mosquitto__malloc(sizeof(struct mosquitto__subleaf));
 			if(!leaf) return MOSQ_ERR_NOMEM;
 			leaf->next = NULL;
 			leaf->context = context;
@@ -287,9 +287,9 @@ static int _sub_add(struct mosquitto_db *db, struct mosquitto *context, int qos,
 				}
 				if(i == context->sub_count){
 					context->sub_count++;
-					subs = _mosquitto_realloc(context->subs, sizeof(struct _mosquitto_subhier *)*context->sub_count);
+					subs = mosquitto__realloc(context->subs, sizeof(struct mosquitto__subhier *)*context->sub_count);
 					if(!subs){
-						_mosquitto_free(leaf);
+						mosquitto__free(leaf);
 						return MOSQ_ERR_NOMEM;
 					}
 					context->subs = subs;
@@ -297,9 +297,9 @@ static int _sub_add(struct mosquitto_db *db, struct mosquitto *context, int qos,
 				}
 			}else{
 				context->sub_count = 1;
-				context->subs = _mosquitto_malloc(sizeof(struct _mosquitto_subhier *)*context->sub_count);
+				context->subs = mosquitto__malloc(sizeof(struct mosquitto__subhier *)*context->sub_count);
 				if(!context->subs){
-					_mosquitto_free(leaf);
+					mosquitto__free(leaf);
 					return MOSQ_ERR_NOMEM;
 				}
 				context->subs[0] = subhier;
@@ -321,17 +321,17 @@ static int _sub_add(struct mosquitto_db *db, struct mosquitto *context, int qos,
 	branch = subhier->children;
 	while(branch){
 		if(!strcmp(UHPA_ACCESS_TOPIC(branch), UHPA_ACCESS_TOPIC(tokens))){
-			return _sub_add(db, context, qos, branch, tokens->next);
+			return sub__add(db, context, qos, branch, tokens->next);
 		}
 		last = branch;
 		branch = branch->next;
 	}
 	/* Not found */
-	branch = _mosquitto_calloc(1, sizeof(struct _mosquitto_subhier));
+	branch = mosquitto__calloc(1, sizeof(struct mosquitto__subhier));
 	if(!branch) return MOSQ_ERR_NOMEM;
 	branch->topic_len = tokens->topic_len;
 	if(UHPA_ALLOC_TOPIC(branch) == 0){
-		_mosquitto_free(branch);
+		mosquitto__free(branch);
 		return MOSQ_ERR_NOMEM;
 	}
 	strncpy(UHPA_ACCESS_TOPIC(branch), UHPA_ACCESS_TOPIC(tokens), branch->topic_len+1);
@@ -340,13 +340,13 @@ static int _sub_add(struct mosquitto_db *db, struct mosquitto *context, int qos,
 	}else{
 		last->next = branch;
 	}
-	return _sub_add(db, context, qos, branch, tokens->next);
+	return sub__add(db, context, qos, branch, tokens->next);
 }
 
-static int _sub_remove(struct mosquitto_db *db, struct mosquitto *context, struct _mosquitto_subhier *subhier, struct _sub_token *tokens)
+static int sub__remove(struct mosquitto_db *db, struct mosquitto *context, struct mosquitto__subhier *subhier, struct sub__token *tokens)
 {
-	struct _mosquitto_subhier *branch, *last = NULL;
-	struct _mosquitto_subleaf *leaf;
+	struct mosquitto__subhier *branch, *last = NULL;
+	struct mosquitto__subleaf *leaf;
 	int i;
 
 	if(!tokens){
@@ -364,7 +364,7 @@ static int _sub_remove(struct mosquitto_db *db, struct mosquitto *context, struc
 				if(leaf->next){
 					leaf->next->prev = leaf->prev;
 				}
-				_mosquitto_free(leaf);
+				mosquitto__free(leaf);
 
 				/* Remove the reference to the sub that the client is keeping.
 				 * It would be nice to be able to use the reference directly,
@@ -386,7 +386,7 @@ static int _sub_remove(struct mosquitto_db *db, struct mosquitto *context, struc
 	branch = subhier->children;
 	while(branch){
 		if(!strcmp(UHPA_ACCESS_TOPIC(branch), UHPA_ACCESS_TOPIC(tokens))){
-			_sub_remove(db, context, branch, tokens->next);
+			sub__remove(db, context, branch, tokens->next);
 			if(!branch->children && !branch->subs && !branch->retained){
 				if(last){
 					last->next = branch->next;
@@ -394,7 +394,7 @@ static int _sub_remove(struct mosquitto_db *db, struct mosquitto *context, struc
 					subhier->children = branch->next;
 				}
 				UHPA_FREE_TOPIC(branch);
-				_mosquitto_free(branch);
+				mosquitto__free(branch);
 			}
 			return MOSQ_ERR_SUCCESS;
 		}
@@ -404,10 +404,10 @@ static int _sub_remove(struct mosquitto_db *db, struct mosquitto *context, struc
 	return MOSQ_ERR_SUCCESS;
 }
 
-static void _sub_search(struct mosquitto_db *db, struct _mosquitto_subhier *subhier, struct _sub_token *tokens, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored, bool set_retain)
+static void sub__search(struct mosquitto_db *db, struct mosquitto__subhier *subhier, struct sub__token *tokens, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored, bool set_retain)
 {
 	/* FIXME - need to take into account source_id if the client is a bridge */
-	struct _mosquitto_subhier *branch;
+	struct mosquitto__subhier *branch;
 	bool sr;
 
 	branch = subhier->children;
@@ -423,51 +423,51 @@ static void _sub_search(struct mosquitto_db *db, struct _mosquitto_subhier *subh
 				/* Don't set a retained message where + is in the hierarchy. */
 				sr = false;
 			}
-			_sub_search(db, branch, tokens->next, source_id, topic, qos, retain, stored, sr);
+			sub__search(db, branch, tokens->next, source_id, topic, qos, retain, stored, sr);
 			if(!tokens->next){
-				_subs_process(db, branch, source_id, topic, qos, retain, stored, sr);
+				subs__process(db, branch, source_id, topic, qos, retain, stored, sr);
 			}
 		}else if(!strcmp(UHPA_ACCESS_TOPIC(branch), "#") && !branch->children){
 			/* The topic matches due to a # wildcard - process the
 			 * subscriptions but *don't* return. Although this branch has ended
 			 * there may still be other subscriptions to deal with.
 			 */
-			_subs_process(db, branch, source_id, topic, qos, retain, stored, false);
+			subs__process(db, branch, source_id, topic, qos, retain, stored, false);
 		}
 		branch = branch->next;
 	}
 }
 
-int mqtt3_sub_add(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int qos, struct _mosquitto_subhier *root)
+int mqtt3_sub_add(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int qos, struct mosquitto__subhier *root)
 {
 	int rc = 0;
-	struct _mosquitto_subhier *subhier, *child;
-	struct _sub_token *tokens = NULL;
+	struct mosquitto__subhier *subhier, *child;
+	struct sub__token *tokens = NULL;
 
 	assert(root);
 	assert(sub);
 
-	if(_sub_topic_tokenise(sub, &tokens)) return 1;
+	if(sub__topic_tokenise(sub, &tokens)) return 1;
 
 	subhier = root->children;
 	while(subhier){
 		if(!strcmp(UHPA_ACCESS_TOPIC(subhier), UHPA_ACCESS_TOPIC(tokens))){
-			rc = _sub_add(db, context, qos, subhier, tokens);
+			rc = sub__add(db, context, qos, subhier, tokens);
 			break;
 		}
 		subhier = subhier->next;
 	}
 	if(!subhier){
-		child = _mosquitto_malloc(sizeof(struct _mosquitto_subhier));
+		child = mosquitto__malloc(sizeof(struct mosquitto__subhier));
 		if(!child){
-			_sub_topic_tokens_free(tokens);
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+			sub__topic_tokens_free(tokens);
+			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
 		child->topic_len = tokens->topic_len;
 		if(UHPA_ALLOC_TOPIC(child) == 0){
-			_sub_topic_tokens_free(tokens);
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+			sub__topic_tokens_free(tokens);
+			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
 		strncpy(UHPA_ACCESS_TOPIC(child), UHPA_ACCESS_TOPIC(tokens), child->topic_len+1);
@@ -482,37 +482,37 @@ int mqtt3_sub_add(struct mosquitto_db *db, struct mosquitto *context, const char
 		}
 		db->subs.children = child;
 
-		rc = _sub_add(db, context, qos, child, tokens);
+		rc = sub__add(db, context, qos, child, tokens);
 	}
 
-	_sub_topic_tokens_free(tokens);
+	sub__topic_tokens_free(tokens);
 
 	/* We aren't worried about -1 (already subscribed) return codes. */
 	if(rc == -1) rc = MOSQ_ERR_SUCCESS;
 	return rc;
 }
 
-int mqtt3_sub_remove(struct mosquitto_db *db, struct mosquitto *context, const char *sub, struct _mosquitto_subhier *root)
+int mqtt3_sub_remove(struct mosquitto_db *db, struct mosquitto *context, const char *sub, struct mosquitto__subhier *root)
 {
 	int rc = 0;
-	struct _mosquitto_subhier *subhier;
-	struct _sub_token *tokens = NULL;
+	struct mosquitto__subhier *subhier;
+	struct sub__token *tokens = NULL;
 
 	assert(root);
 	assert(sub);
 
-	if(_sub_topic_tokenise(sub, &tokens)) return 1;
+	if(sub__topic_tokenise(sub, &tokens)) return 1;
 
 	subhier = root->children;
 	while(subhier){
 		if(!strcmp(UHPA_ACCESS_TOPIC(subhier), UHPA_ACCESS_TOPIC(tokens))){
-			rc = _sub_remove(db, context, subhier, tokens);
+			rc = sub__remove(db, context, subhier, tokens);
 			break;
 		}
 		subhier = subhier->next;
 	}
 
-	_sub_topic_tokens_free(tokens);
+	sub__topic_tokens_free(tokens);
 
 	return rc;
 }
@@ -520,13 +520,13 @@ int mqtt3_sub_remove(struct mosquitto_db *db, struct mosquitto *context, const c
 int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store **stored)
 {
 	int rc = 0;
-	struct _mosquitto_subhier *subhier;
-	struct _sub_token *tokens = NULL;
+	struct mosquitto__subhier *subhier;
+	struct sub__token *tokens = NULL;
 
 	assert(db);
 	assert(topic);
 
-	if(_sub_topic_tokenise(topic, &tokens)) return 1;
+	if(sub__topic_tokenise(topic, &tokens)) return 1;
 
 	/* Protect this message until we have sent it to all
 	clients - this is required because websockets client calls
@@ -541,13 +541,13 @@ int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, cons
 				/* We have a message that needs to be retained, so ensure that the subscription
 				 * tree for its topic exists.
 				 */
-				_sub_add(db, NULL, 0, subhier, tokens);
+				sub__add(db, NULL, 0, subhier, tokens);
 			}
-			_sub_search(db, subhier, tokens, source_id, topic, qos, retain, *stored, true);
+			sub__search(db, subhier, tokens, source_id, topic, qos, retain, *stored, true);
 		}
 		subhier = subhier->next;
 	}
-	_sub_topic_tokens_free(tokens);
+	sub__topic_tokens_free(tokens);
 
 	/* Remove our reference and free if needed. */
 	mosquitto__db_msg_store_deref(db, stored);
@@ -560,7 +560,7 @@ int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, cons
 int mqtt3_subs_clean_session(struct mosquitto_db *db, struct mosquitto *context)
 {
 	int i;
-	struct _mosquitto_subleaf *leaf;
+	struct mosquitto__subleaf *leaf;
 
 	for(i=0; i<context->sub_count; i++){
 		if(context->subs[i] == NULL){
@@ -580,24 +580,24 @@ int mqtt3_subs_clean_session(struct mosquitto_db *db, struct mosquitto *context)
 				if(leaf->next){
 					leaf->next->prev = leaf->prev;
 				}
-				_mosquitto_free(leaf);
+				mosquitto__free(leaf);
 				break;
 			}
 			leaf = leaf->next;
 		}
 	}
-	_mosquitto_free(context->subs);
+	mosquitto__free(context->subs);
 	context->subs = NULL;
 	context->sub_count = 0;
 
 	return MOSQ_ERR_SUCCESS;
 }
 
-void mqtt3_sub_tree_print(struct _mosquitto_subhier *root, int level)
+void mqtt3_sub_tree_print(struct mosquitto__subhier *root, int level)
 {
 	int i;
-	struct _mosquitto_subhier *branch;
-	struct _mosquitto_subleaf *leaf;
+	struct mosquitto__subhier *branch;
+	struct mosquitto__subleaf *leaf;
 
 	for(i=0; i<level*2; i++){
 		printf(" ");
@@ -624,7 +624,7 @@ void mqtt3_sub_tree_print(struct _mosquitto_subhier *root, int level)
 	}
 }
 
-static int _retain_process(struct mosquitto_db *db, struct mosquitto_msg_store *retained, struct mosquitto *context, const char *sub, int sub_qos)
+static int retain__process(struct mosquitto_db *db, struct mosquitto_msg_store *retained, struct mosquitto *context, const char *sub, int sub_qos)
 {
 	int rc = 0;
 	int qos;
@@ -641,16 +641,16 @@ static int _retain_process(struct mosquitto_db *db, struct mosquitto_msg_store *
 
 	if(qos > sub_qos) qos = sub_qos;
 	if(qos > 0){
-		mid = _mosquitto_mid_generate(context);
+		mid = mosquitto__mid_generate(context);
 	}else{
 		mid = 0;
 	}
 	return mqtt3_db_message_insert(db, context, mid, mosq_md_out, qos, true, retained);
 }
 
-static int _retain_search(struct mosquitto_db *db, struct _mosquitto_subhier *subhier, struct _sub_token *tokens, struct mosquitto *context, const char *sub, int sub_qos, int level)
+static int retain__search(struct mosquitto_db *db, struct mosquitto__subhier *subhier, struct sub__token *tokens, struct mosquitto *context, const char *sub, int sub_qos, int level)
 {
-	struct _mosquitto_subhier *branch;
+	struct mosquitto__subhier *branch;
 	int flag = 0;
 
 	branch = subhier->children;
@@ -661,29 +661,29 @@ static int _retain_search(struct mosquitto_db *db, struct _mosquitto_subhier *su
 		if(!strcmp(UHPA_ACCESS_TOPIC(tokens), "#") && !tokens->next){
 			/* Set flag to indicate that we should check for retained messages
 			 * on "foo" when we are subscribing to e.g. "foo/#" and then exit
-			 * this function and return to an earlier _retain_search().
+			 * this function and return to an earlier retain__search().
 			 */
 			flag = -1;
 			if(branch->retained){
-				_retain_process(db, branch->retained, context, sub, sub_qos);
+				retain__process(db, branch->retained, context, sub, sub_qos);
 			}
 			if(branch->children){
-				_retain_search(db, branch, tokens, context, sub, sub_qos, level+1);
+				retain__search(db, branch, tokens, context, sub, sub_qos, level+1);
 			}
 		}else if(strcmp(UHPA_ACCESS_TOPIC(branch), "+")
 					&& (!strcmp(UHPA_ACCESS_TOPIC(branch), UHPA_ACCESS_TOPIC(tokens))
 					|| !strcmp(UHPA_ACCESS_TOPIC(tokens), "+"))){
 			if(tokens->next){
-				if(_retain_search(db, branch, tokens->next, context, sub, sub_qos, level+1) == -1
+				if(retain__search(db, branch, tokens->next, context, sub, sub_qos, level+1) == -1
 						|| (!branch->next && tokens->next && !strcmp(UHPA_ACCESS_TOPIC(tokens->next), "#") && level>0)){
 
 					if(branch->retained){
-						_retain_process(db, branch->retained, context, sub, sub_qos);
+						retain__process(db, branch->retained, context, sub, sub_qos);
 					}
 				}
 			}else{
 				if(branch->retained){
-					_retain_process(db, branch->retained, context, sub, sub_qos);
+					retain__process(db, branch->retained, context, sub, sub_qos);
 				}
 			}
 		}
@@ -695,19 +695,19 @@ static int _retain_search(struct mosquitto_db *db, struct _mosquitto_subhier *su
 
 int mqtt3_retain_queue(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int sub_qos)
 {
-	struct _mosquitto_subhier *subhier;
-	struct _sub_token *tokens = NULL, *tail;
+	struct mosquitto__subhier *subhier;
+	struct sub__token *tokens = NULL, *tail;
 
 	assert(db);
 	assert(context);
 	assert(sub);
 
-	if(_sub_topic_tokenise(sub, &tokens)) return 1;
+	if(sub__topic_tokenise(sub, &tokens)) return 1;
 
 	subhier = db->subs.children;
 	while(subhier){
 		if(!strcmp(UHPA_ACCESS_TOPIC(subhier), UHPA_ACCESS_TOPIC(tokens))){
-			_retain_search(db, subhier, tokens, context, sub, sub_qos, 0);
+			retain__search(db, subhier, tokens, context, sub, sub_qos, 0);
 			break;
 		}
 		subhier = subhier->next;
@@ -715,7 +715,7 @@ int mqtt3_retain_queue(struct mosquitto_db *db, struct mosquitto *context, const
 	while(tokens){
 		tail = tokens->next;
 		UHPA_FREE_TOPIC(tokens);
-		_mosquitto_free(tokens);
+		mosquitto__free(tokens);
 		tokens = tail;
 	}
 

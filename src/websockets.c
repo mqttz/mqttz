@@ -130,8 +130,8 @@ static void easy_address(int sock, struct mosquitto *mosq)
 {
 	char address[1024];
 
-	if(!_mosquitto_socket_get_address(sock, address, 1024)){
-		mosq->address = _mosquitto_strdup(address);
+	if(!mosquitto__socket_get_address(sock, address, 1024)){
+		mosq->address = mosquitto__strdup(address);
 	}
 }
 
@@ -144,7 +144,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 {
 	struct mosquitto_db *db;
 	struct mosquitto *mosq = NULL;
-	struct _mosquitto_packet *packet;
+	struct mosquitto__packet *packet;
 	int count;
 	struct libws_mqtt_data *u = (struct libws_mqtt_data *)user;
 	size_t pos;
@@ -167,7 +167,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 			easy_address(libwebsocket_get_socket_fd(wsi), mosq);
 			if(!mosq->address){
 				/* getpeername and inet_ntop failed and not a bridge */
-				_mosquitto_free(mosq);
+				mosquitto__free(mosq);
 				u->mosq = NULL;
 				return -1;
 			}
@@ -237,8 +237,8 @@ static int callback_mqtt(struct libwebsocket_context *context,
 					}
 				}
 
-				_mosquitto_packet_cleanup(packet);
-				_mosquitto_free(packet);
+				mosquitto__packet_cleanup(packet);
+				mosquitto__free(packet);
 
 				mosq->last_msg_out = mosquitto_time();
 
@@ -292,7 +292,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 					mosq->in_packet.remaining_count *= -1;
 
 					if(mosq->in_packet.remaining_length > 0){
-						mosq->in_packet.payload = _mosquitto_malloc(mosq->in_packet.remaining_length*sizeof(uint8_t));
+						mosq->in_packet.payload = mosquitto__malloc(mosq->in_packet.remaining_length*sizeof(uint8_t));
 						if(!mosq->in_packet.payload){
 							return -1;
 						}
@@ -324,7 +324,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				rc = mqtt3_packet_handle(db, mosq);
 
 				/* Free data and reset values */
-				_mosquitto_packet_cleanup(&mosq->in_packet);
+				mosquitto__packet_cleanup(&mosq->in_packet);
 
 				mosq->last_msg_in = mosquitto_time();
 
@@ -389,7 +389,7 @@ static int callback_http(struct libwebsocket_context *context,
 			}else{
 				slen = strlen(http_dir) + strlen((char *)in) + 2;
 			}
-			filename = _mosquitto_malloc(slen);
+			filename = mosquitto__malloc(slen);
 			if(!filename){
 				libwebsockets_return_http_status(context, wsi, HTTP_STATUS_INTERNAL_SERVER_ERROR, NULL);
 				return -1;
@@ -405,14 +405,14 @@ static int callback_http(struct libwebsocket_context *context,
 #ifdef WIN32
 			filename_canonical = _fullpath(NULL, filename, 0);
 			if(!filename_canonical){
-				_mosquitto_free(filename);
+				mosquitto__free(filename);
 				libwebsockets_return_http_status(context, wsi, HTTP_STATUS_INTERNAL_SERVER_ERROR, NULL);
 				return -1;
 			}
 #else
 			filename_canonical = realpath(filename, NULL);
 			if(!filename_canonical){
-				_mosquitto_free(filename);
+				mosquitto__free(filename);
 				if(errno == EACCES){
 					libwebsockets_return_http_status(context, wsi, HTTP_STATUS_FORBIDDEN, NULL);
 				}else if(errno == EINVAL || errno == EIO || errno == ELOOP){
@@ -428,15 +428,15 @@ static int callback_http(struct libwebsocket_context *context,
 			if(strncmp(http_dir, filename_canonical, strlen(http_dir))){
 				/* Requested file isn't within http_dir, deny access. */
 				free(filename_canonical);
-				_mosquitto_free(filename);
+				mosquitto__free(filename);
 				libwebsockets_return_http_status(context, wsi, HTTP_STATUS_FORBIDDEN, NULL);
 				return -1;
 			}
 			free(filename_canonical);
 
-			_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "http serving file \"%s\".", filename);
+			mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "http serving file \"%s\".", filename);
 			u->fptr = fopen(filename, "rb");
-			_mosquitto_free(filename);
+			mosquitto__free(filename);
 			if(!u->fptr){
 				libwebsockets_return_http_status(context, wsi, HTTP_STATUS_NOT_FOUND, NULL);
 				return -1;
@@ -519,7 +519,7 @@ static void log_wrap(int level, const char *line)
 {
 	char *l = (char *)line;
 	l[strlen(line)-1] = '\0'; // Remove \n
-	_mosquitto_log_printf(NULL, MOSQ_LOG_WEBSOCKETS, "%s", l);
+	mosquitto__log_printf(NULL, MOSQ_LOG_WEBSOCKETS, "%s", l);
 }
 
 struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listener, int log_level)
@@ -533,9 +533,9 @@ struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listen
 	/* Count valid protocols */
 	for(protocol_count=0; protocols[protocol_count].name; protocol_count++);
 
-	p = _mosquitto_calloc(protocol_count+1, sizeof(struct libwebsocket_protocols));
+	p = mosquitto__calloc(protocol_count+1, sizeof(struct libwebsocket_protocols));
 	if(!p){
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Out of memory.");
+		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Out of memory.");
 		return NULL;
 	}
 	for(i=0; protocols[i].name; i++){
@@ -565,9 +565,9 @@ struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listen
 	info.options |= LWS_SERVER_OPTION_DISABLE_IPV6;
 #endif
 
-	user = _mosquitto_calloc(1, sizeof(struct libws_mqtt_hack));
+	user = mosquitto__calloc(1, sizeof(struct libws_mqtt_hack));
 	if(!user){
-		_mosquitto_free(p);
+		mosquitto__free(p);
 		return NULL;
 	}
 
@@ -578,8 +578,8 @@ struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listen
 		user->http_dir = realpath(listener->http_dir, NULL);
 #endif
 		if(!user->http_dir){
-			_mosquitto_free(user);
-			_mosquitto_free(p);
+			mosquitto__free(user);
+			mosquitto__free(p);
 			return NULL;
 		}
 	}
@@ -589,7 +589,7 @@ struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listen
 
 	lws_set_log_level(log_level, log_wrap);
 
-	_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Opening websockets listen socket on port %d.", listener->port);
+	mosquitto__log_printf(NULL, MOSQ_LOG_INFO, "Opening websockets listen socket on port %d.", listener->port);
 	return libwebsocket_create_context(&info);
 }
 

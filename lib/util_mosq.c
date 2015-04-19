@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2014 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2015 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -38,7 +38,7 @@ Contributors:
 #include <libwebsockets.h>
 #endif
 
-int _mosquitto_packet_alloc(struct _mosquitto_packet *packet)
+int mosquitto__packet_alloc(struct mosquitto__packet *packet)
 {
 	uint8_t remaining_bytes[5], byte;
 	uint32_t remaining_length;
@@ -62,9 +62,9 @@ int _mosquitto_packet_alloc(struct _mosquitto_packet *packet)
 	if(packet->remaining_count == 5) return MOSQ_ERR_PAYLOAD_SIZE;
 	packet->packet_length = packet->remaining_length + 1 + packet->remaining_count;
 #ifdef WITH_WEBSOCKETS
-	packet->payload = _mosquitto_malloc(sizeof(uint8_t)*packet->packet_length + LWS_SEND_BUFFER_PRE_PADDING + LWS_SEND_BUFFER_POST_PADDING);
+	packet->payload = mosquitto__malloc(sizeof(uint8_t)*packet->packet_length + LWS_SEND_BUFFER_PRE_PADDING + LWS_SEND_BUFFER_POST_PADDING);
 #else
-	packet->payload = _mosquitto_malloc(sizeof(uint8_t)*packet->packet_length);
+	packet->payload = mosquitto__malloc(sizeof(uint8_t)*packet->packet_length);
 #endif
 	if(!packet->payload) return MOSQ_ERR_NOMEM;
 
@@ -78,9 +78,9 @@ int _mosquitto_packet_alloc(struct _mosquitto_packet *packet)
 }
 
 #ifdef WITH_BROKER
-void _mosquitto_check_keepalive(struct mosquitto_db *db, struct mosquitto *mosq)
+void mosquitto__check_keepalive(struct mosquitto_db *db, struct mosquitto *mosq)
 #else
-void _mosquitto_check_keepalive(struct mosquitto *mosq)
+void mosquitto__check_keepalive(struct mosquitto *mosq)
 #endif
 {
 	time_t last_msg_out;
@@ -97,8 +97,8 @@ void _mosquitto_check_keepalive(struct mosquitto *mosq)
 				&& mosq->sock != INVALID_SOCKET
 				&& now - mosq->last_msg_out >= mosq->bridge->idle_timeout){
 
-		_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Bridge connection %s has exceeded idle timeout, disconnecting.", mosq->id);
-		_mosquitto_socket_close(db, mosq);
+		mosquitto__log_printf(NULL, MOSQ_LOG_NOTICE, "Bridge connection %s has exceeded idle timeout, disconnecting.", mosq->id);
+		mosquitto__socket_close(db, mosq);
 		return;
 	}
 #endif
@@ -110,7 +110,7 @@ void _mosquitto_check_keepalive(struct mosquitto *mosq)
 			(now - last_msg_out >= mosq->keepalive || now - last_msg_in >= mosq->keepalive)){
 
 		if(mosq->state == mosq_cs_connected && mosq->ping_t == 0){
-			_mosquitto_send_pingreq(mosq);
+			mosquitto__send_pingreq(mosq);
 			/* Reset last msg times to give the server time to send a pingresp */
 			pthread_mutex_lock(&mosq->msgtime_mutex);
 			mosq->last_msg_in = now;
@@ -123,9 +123,9 @@ void _mosquitto_check_keepalive(struct mosquitto *mosq)
 				assert(mosq->listener->client_count >= 0);
 			}
 			mosq->listener = NULL;
-			_mosquitto_socket_close(db, mosq);
+			mosquitto__socket_close(db, mosq);
 #else
-			_mosquitto_socket_close(mosq);
+			mosquitto__socket_close(mosq);
 			pthread_mutex_lock(&mosq->state_mutex);
 			if(mosq->state == mosq_cs_disconnecting){
 				rc = MOSQ_ERR_SUCCESS;
@@ -145,7 +145,7 @@ void _mosquitto_check_keepalive(struct mosquitto *mosq)
 	}
 }
 
-uint16_t _mosquitto_mid_generate(struct mosquitto *mosq)
+uint16_t mosquitto__mid_generate(struct mosquitto *mosq)
 {
 	assert(mosq);
 
@@ -284,7 +284,7 @@ int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result
 }
 
 #ifdef REAL_WITH_TLS_PSK
-int _mosquitto_hex2bin(const char *hex, unsigned char *bin, int bin_max_len)
+int mosquitto__hex2bin(const char *hex, unsigned char *bin, int bin_max_len)
 {
 	BIGNUM *bn = NULL;
 	int len;
@@ -304,7 +304,7 @@ int _mosquitto_hex2bin(const char *hex, unsigned char *bin, int bin_max_len)
 }
 #endif
 
-FILE *_mosquitto_fopen(const char *path, const char *mode)
+FILE *mosquitto__fopen(const char *path, const char *mode)
 {
 #ifdef WIN32
 	char buf[4096];

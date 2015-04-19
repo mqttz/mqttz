@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2010-2014 Roger Light <roger@atchoo.org>
+Copyright (c) 2010-2015 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -19,20 +19,20 @@ Contributors:
 #include <mosquitto.h>
 struct mosquitto_db;
 
-int _mosquitto_packet_handle(struct mosquitto *mosq);
-int _mosquitto_handle_connack(struct mosquitto *mosq);
-int _mosquitto_handle_pingreq(struct mosquitto *mosq);
-int _mosquitto_handle_pingresp(struct mosquitto *mosq);
+int mosquitto__packet_handle(struct mosquitto *mosq);
+int mosquitto__handle_connack(struct mosquitto *mosq);
+int mosquitto__handle_pingreq(struct mosquitto *mosq);
+int mosquitto__handle_pingresp(struct mosquitto *mosq);
 #ifdef WITH_BROKER
-int _mosquitto_handle_pubackcomp(struct mosquitto_db *db, struct mosquitto *mosq, const char *type);
+int mosquitto__handle_pubackcomp(struct mosquitto_db *db, struct mosquitto *mosq, const char *type);
 #else
-int _mosquitto_handle_pubackcomp(struct mosquitto *mosq, const char *type);
+int mosquitto__handle_pubackcomp(struct mosquitto *mosq, const char *type);
 #endif
-int _mosquitto_handle_publish(struct mosquitto *mosq);
-int _mosquitto_handle_pubrec(struct mosquitto *mosq);
-int _mosquitto_handle_pubrel(struct mosquitto_db *db, struct mosquitto *mosq);
-int _mosquitto_handle_suback(struct mosquitto *mosq);
-int _mosquitto_handle_unsuback(struct mosquitto *mosq);
+int mosquitto__handle_publish(struct mosquitto *mosq);
+int mosquitto__handle_pubrec(struct mosquitto *mosq);
+int mosquitto__handle_pubrel(struct mosquitto_db *db, struct mosquitto *mosq);
+int mosquitto__handle_suback(struct mosquitto *mosq);
+int mosquitto__handle_unsuback(struct mosquitto *mosq);
 
 
 #endif

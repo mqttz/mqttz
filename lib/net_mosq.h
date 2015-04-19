@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2010-2014 Roger Light <roger@atchoo.org>
+Copyright (c) 2010-2015 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -49,43 +49,43 @@ struct mosquitto_db;
 #define MOSQ_MSB(A) (uint8_t)((A & 0xFF00) >> 8)
 #define MOSQ_LSB(A) (uint8_t)(A & 0x00FF)
 
-void _mosquitto_net_init(void);
-void _mosquitto_net_cleanup(void);
+void mosquitto__net_init(void);
+void mosquitto__net_cleanup(void);
 
-void _mosquitto_packet_cleanup(struct _mosquitto_packet *packet);
-int _mosquitto_packet_queue(struct mosquitto *mosq, struct _mosquitto_packet *packet);
-int _mosquitto_socket_connect(struct mosquitto *mosq, const char *host, uint16_t port, const char *bind_address, bool blocking);
+void mosquitto__packet_cleanup(struct mosquitto__packet *packet);
+int mosquitto__packet_queue(struct mosquitto *mosq, struct mosquitto__packet *packet);
+int mosquitto__socket_connect(struct mosquitto *mosq, const char *host, uint16_t port, const char *bind_address, bool blocking);
 #ifdef WITH_BROKER
-int _mosquitto_socket_close(struct mosquitto_db *db, struct mosquitto *mosq);
+int mosquitto__socket_close(struct mosquitto_db *db, struct mosquitto *mosq);
 #else
-int _mosquitto_socket_close(struct mosquitto *mosq);
+int mosquitto__socket_close(struct mosquitto *mosq);
 #endif
-int _mosquitto_try_connect(struct mosquitto *mosq, const char *host, uint16_t port, int *sock, const char *bind_address, bool blocking);
-int _mosquitto_socket_nonblock(int sock);
-int _mosquitto_socketpair(int *sp1, int *sp2);
+int mosquitto__try_connect(struct mosquitto *mosq, const char *host, uint16_t port, int *sock, const char *bind_address, bool blocking);
+int mosquitto__socket_nonblock(int sock);
+int mosquitto__socketpair(int *sp1, int *sp2);
 
-int _mosquitto_read_byte(struct _mosquitto_packet *packet, uint8_t *byte);
-int _mosquitto_read_bytes(struct _mosquitto_packet *packet, void *bytes, uint32_t count);
-int _mosquitto_read_string(struct _mosquitto_packet *packet, char **str);
-int _mosquitto_read_uint16(struct _mosquitto_packet *packet, uint16_t *word);
+int mosquitto__read_byte(struct mosquitto__packet *packet, uint8_t *byte);
+int mosquitto__read_bytes(struct mosquitto__packet *packet, void *bytes, uint32_t count);
+int mosquitto__read_string(struct mosquitto__packet *packet, char **str);
+int mosquitto__read_uint16(struct mosquitto__packet *packet, uint16_t *word);
 
-void _mosquitto_write_byte(struct _mosquitto_packet *packet, uint8_t byte);
-void _mosquitto_write_bytes(struct _mosquitto_packet *packet, const void *bytes, uint32_t count);
-void _mosquitto_write_string(struct _mosquitto_packet *packet, const char *str, uint16_t length);
-void _mosquitto_write_uint16(struct _mosquitto_packet *packet, uint16_t word);
+void mosquitto__write_byte(struct mosquitto__packet *packet, uint8_t byte);
+void mosquitto__write_bytes(struct mosquitto__packet *packet, const void *bytes, uint32_t count);
+void mosquitto__write_string(struct mosquitto__packet *packet, const char *str, uint16_t length);
+void mosquitto__write_uint16(struct mosquitto__packet *packet, uint16_t word);
 
-ssize_t _mosquitto_net_read(struct mosquitto *mosq, void *buf, size_t count);
-ssize_t _mosquitto_net_write(struct mosquitto *mosq, void *buf, size_t count);
+ssize_t mosquitto__net_read(struct mosquitto *mosq, void *buf, size_t count);
+ssize_t mosquitto__net_write(struct mosquitto *mosq, void *buf, size_t count);
 
-int _mosquitto_packet_write(struct mosquitto *mosq);
+int mosquitto__packet_write(struct mosquitto *mosq);
 #ifdef WITH_BROKER
-int _mosquitto_packet_read(struct mosquitto_db *db, struct mosquitto *mosq);
+int mosquitto__packet_read(struct mosquitto_db *db, struct mosquitto *mosq);
 #else
-int _mosquitto_packet_read(struct mosquitto *mosq);
+int mosquitto__packet_read(struct mosquitto *mosq);
 #endif
 
 #ifdef WITH_TLS
-int _mosquitto_socket_apply_tls(struct mosquitto *mosq);
+int mosquitto__socket_apply_tls(struct mosquitto *mosq);
 int mosquitto__socket_connect_tls(struct mosquitto *mosq);
 #endif
 

@@ -64,7 +64,7 @@ void __stdcall service_main(DWORD dwArgc, LPTSTR *lpszArgv)
 		}
 		strcat(conf_path, "/mosquitto.conf");
 
-		argv = _mosquitto_malloc(sizeof(char *)*3);
+		argv = mosquitto__malloc(sizeof(char *)*3);
 		argv[0] = "mosquitto";
 		argv[1] = "-c";
 		argv[2] = conf_path;
@@ -78,7 +78,7 @@ void __stdcall service_main(DWORD dwArgc, LPTSTR *lpszArgv)
 		SetServiceStatus(service_handle, &service_status);
 
 		main(argc, argv);
-		_mosquitto_free(argv);
+		mosquitto__free(argv);
 
 		service_status.dwCurrentState = SERVICE_STOPPED;
 		SetServiceStatus(service_handle, &service_status);

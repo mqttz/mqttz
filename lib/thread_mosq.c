@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2011-2014 Roger Light <roger@atchoo.org>
+Copyright (c) 2011-2015 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -23,7 +23,7 @@ Contributors:
 #include <mosquitto_internal.h>
 #include <net_mosq.h>
 
-void *_mosquitto_thread_main(void *obj);
+void *mosquitto__thread_main(void *obj);
 
 int mosquitto_loop_start(struct mosquitto *mosq)
 {
@@ -31,7 +31,7 @@ int mosquitto_loop_start(struct mosquitto *mosq)
 	if(!mosq || mosq->threaded) return MOSQ_ERR_INVAL;
 
 	mosq->threaded = true;
-	pthread_create(&mosq->thread_id, NULL, _mosquitto_thread_main, mosq);
+	pthread_create(&mosq->thread_id, NULL, mosquitto__thread_main, mosq);
 	return MOSQ_ERR_SUCCESS;
 #else
 	return MOSQ_ERR_NOT_SUPPORTED;
@@ -73,7 +73,7 @@ int mosquitto_loop_stop(struct mosquitto *mosq, bool force)
 }
 
 #ifdef WITH_THREADING
-void *_mosquitto_thread_main(void *obj)
+void *mosquitto__thread_main(void *obj)
 {
 	struct mosquitto *mosq = obj;
 

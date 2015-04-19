@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2014 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2015 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -26,8 +26,8 @@ Contributors:
 #include "tls_mosq.h"
 #include "uthash.h"
 
-#define uhpa_malloc(size) _mosquitto_malloc(size)
-#define uhpa_free(ptr) _mosquitto_free(ptr)
+#define uhpa_malloc(size) mosquitto__malloc(size)
+#define uhpa_free(ptr) mosquitto__free(ptr)
 #include "uhpa.h"
 
 #ifndef __GNUC__
@@ -120,7 +120,7 @@ enum mosquitto_protocol {
 
 typedef uint64_t dbid_t;
 
-struct _mqtt3_listener {
+struct mqtt3__listener {
 	int fd;
 	char *host;
 	uint16_t port;
@@ -164,8 +164,8 @@ struct mqtt3_config {
 	char *clientid_prefixes;
 	bool connection_messages;
 	bool daemon;
-	struct _mqtt3_listener default_listener;
-	struct _mqtt3_listener *listeners;
+	struct mqtt3__listener default_listener;
+	struct mqtt3__listener *listeners;
 	int listener_count;
 	int log_dest;
 	int log_facility;
@@ -193,7 +193,7 @@ struct mqtt3_config {
 	bool have_websockets_listener;
 #endif
 #ifdef WITH_BRIDGE
-	struct _mqtt3_bridge *bridges;
+	struct mqtt3__bridge *bridges;
 	int bridge_count;
 #endif
 	char *auth_plugin;
@@ -201,17 +201,17 @@ struct mqtt3_config {
 	int auth_option_count;
 };
 
-struct _mosquitto_subleaf {
-	struct _mosquitto_subleaf *prev;
-	struct _mosquitto_subleaf *next;
+struct mosquitto__subleaf {
+	struct mosquitto__subleaf *prev;
+	struct mosquitto__subleaf *next;
 	struct mosquitto *context;
 	int qos;
 };
 
-struct _mosquitto_subhier {
-	struct _mosquitto_subhier *children;
-	struct _mosquitto_subhier *next;
-	struct _mosquitto_subleaf *subs;
+struct mosquitto__subhier {
+	struct mosquitto__subhier *children;
+	struct mosquitto__subhier *next;
+	struct mosquitto__subleaf *subs;
 	struct mosquitto_msg_store *retained;
 	mosquitto__topic_element_uhpa topic;
 	uint16_t topic_len;
@@ -252,7 +252,7 @@ struct mosquitto_client_msg{
 	bool dup;
 };
 
-struct _mosquitto_unpwd{
+struct mosquitto__unpwd{
 	char *username;
 	char *password;
 #ifdef WITH_TLS
@@ -263,21 +263,21 @@ struct _mosquitto_unpwd{
 	UT_hash_handle hh;
 };
 
-struct _mosquitto_acl{
-	struct _mosquitto_acl *next;
+struct mosquitto__acl{
+	struct mosquitto__acl *next;
 	char *topic;
 	int access;
 	int ucount;
 	int ccount;
 };
 
-struct _mosquitto_acl_user{
-	struct _mosquitto_acl_user *next;
+struct mosquitto__acl_user{
+	struct mosquitto__acl_user *next;
 	char *username;
-	struct _mosquitto_acl *acl;
+	struct mosquitto__acl *acl;
 };
 
-struct _mosquitto_auth_plugin{
+struct mosquitto__auth_plugin{
 	void *lib;
 	void *user_data;
 	int (*plugin_version)(void);
@@ -292,18 +292,18 @@ struct _mosquitto_auth_plugin{
 
 struct mosquitto_db{
 	dbid_t last_db_id;
-	struct _mosquitto_subhier subs;
-	struct _mosquitto_unpwd *unpwd;
-	struct _mosquitto_acl_user *acl_list;
-	struct _mosquitto_acl *acl_patterns;
-	struct _mosquitto_unpwd *psk_id;
+	struct mosquitto__subhier subs;
+	struct mosquitto__unpwd *unpwd;
+	struct mosquitto__acl_user *acl_list;
+	struct mosquitto__acl *acl_patterns;
+	struct mosquitto__unpwd *psk_id;
 	struct mosquitto *contexts_by_id;
 	struct mosquitto *contexts_by_sock;
 	struct mosquitto *contexts_for_free;
 #ifdef WITH_BRIDGE
 	struct mosquitto **bridges;
 #endif
-	struct _clientid_index_hash *clientid_index_hash;
+	struct clientid__index_hash *clientid_index_hash;
 	struct mosquitto_msg_store *msg_store;
 	struct mosquitto_msg_store_load *msg_store_load;
 #ifdef WITH_BRIDGE
@@ -312,7 +312,7 @@ struct mosquitto_db{
 	int msg_store_count;
 	struct mqtt3_config *config;
 	int persistence_changes;
-	struct _mosquitto_auth_plugin auth_plugin;
+	struct mosquitto__auth_plugin auth_plugin;
 #ifdef WITH_SYS_TREE
 	int subscription_count;
 	int retained_count;
@@ -333,7 +333,7 @@ enum mosquitto_bridge_start_type{
 	bst_once = 3
 };
 
-struct _mqtt3_bridge_topic{
+struct mqtt3__bridge_topic{
 	char *topic;
 	int qos;
 	enum mqtt3_bridge_direction direction;
@@ -348,7 +348,7 @@ struct bridge_address{
 	int port;
 };
 
-struct _mqtt3_bridge{
+struct mqtt3__bridge{
 	char *name;
 	struct bridge_address *addresses;
 	int cur_address;
@@ -359,10 +359,10 @@ struct _mqtt3_bridge{
 	bool try_private_accepted;
 	bool clean_session;
 	int keepalive;
-	struct _mqtt3_bridge_topic *topics;
+	struct mqtt3__bridge_topic *topics;
 	int topic_count;
 	bool topic_remapping;
-	enum _mosquitto_protocol protocol_version;
+	enum mosquitto__protocol protocol_version;
 	time_t restart_t;
 	char *remote_clientid;
 	char *remote_username;
@@ -408,7 +408,7 @@ struct libws_mqtt_data {
  * Main functions
  * ============================================================ */
 int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock_count, int listener_max);
-struct mosquitto_db *_mosquitto_get_db(void);
+struct mosquitto_db *mosquitto__get_db(void);
 
 /* ============================================================
  * Config functions
@@ -431,15 +431,15 @@ int restore_privileges(void);
 /* ============================================================
  * Server send functions
  * ============================================================ */
-int _mosquitto_send_connack(struct mosquitto *context, int ack, int result);
-int _mosquitto_send_suback(struct mosquitto *context, uint16_t mid, uint32_t payloadlen, const void *payload);
+int mosquitto__send_connack(struct mosquitto *context, int ack, int result);
+int mosquitto__send_suback(struct mosquitto *context, uint16_t mid, uint32_t payloadlen, const void *payload);
 
 /* ============================================================
  * Network functions
  * ============================================================ */
 int mqtt3_socket_accept(struct mosquitto_db *db, int listensock);
-int mqtt3_socket_listen(struct _mqtt3_listener *listener);
-int _mosquitto_socket_get_address(int sock, char *buf, int len);
+int mqtt3_socket_listen(struct mqtt3__listener *listener);
+int mosquitto__socket_get_address(int sock, char *buf, int len);
 
 /* ============================================================
  * Read handling functions
@@ -488,10 +488,10 @@ void mqtt3_db_vacuum(void);
 /* ============================================================
  * Subscription functions
  * ============================================================ */
-int mqtt3_sub_add(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int qos, struct _mosquitto_subhier *root);
-int mqtt3_sub_remove(struct mosquitto_db *db, struct mosquitto *context, const char *sub, struct _mosquitto_subhier *root);
-int mqtt3_sub_search(struct mosquitto_db *db, struct _mosquitto_subhier *root, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored);
-void mqtt3_sub_tree_print(struct _mosquitto_subhier *root, int level);
+int mqtt3_sub_add(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int qos, struct mosquitto__subhier *root);
+int mqtt3_sub_remove(struct mosquitto_db *db, struct mosquitto *context, const char *sub, struct mosquitto__subhier *root);
+int mqtt3_sub_search(struct mosquitto_db *db, struct mosquitto__subhier *root, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored);
+void mqtt3_sub_tree_print(struct mosquitto__subhier *root, int level);
 int mqtt3_subs_clean_session(struct mosquitto_db *db, struct mosquitto *context);
 
 /* ============================================================
@@ -508,13 +508,13 @@ void mosquitto__free_disused_contexts(struct mosquitto_db *db);
  * ============================================================ */
 int mqtt3_log_init(struct mqtt3_config *config);
 int mqtt3_log_close(struct mqtt3_config *config);
-int _mosquitto_log_printf(struct mosquitto *mosq, int level, const char *fmt, ...) __attribute__((format(printf, 3, 4)));
+int mosquitto__log_printf(struct mosquitto *mosq, int level, const char *fmt, ...) __attribute__((format(printf, 3, 4)));
 
 /* ============================================================
  * Bridge functions
  * ============================================================ */
 #ifdef WITH_BRIDGE
-int mqtt3_bridge_new(struct mosquitto_db *db, struct _mqtt3_bridge *bridge);
+int mqtt3_bridge_new(struct mosquitto_db *db, struct mqtt3__bridge *bridge);
 int mqtt3_bridge_connect(struct mosquitto_db *db, struct mosquitto *context);
 void mqtt3_bridge_packet_cleanup(struct mosquitto *context);
 #endif
@@ -552,7 +552,7 @@ void service_run(void);
  * Websockets related functions
  * ============================================================ */
 #ifdef WITH_WEBSOCKETS
-struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listener, int log_level);
+struct libwebsocket_context *mosq_websockets_init(struct mqtt3__listener *listener, int log_level);
 #endif
 void do_disconnect(struct mosquitto_db *db, struct mosquitto *context);
 

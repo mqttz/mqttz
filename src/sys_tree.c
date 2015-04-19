@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2014 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2015 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -40,7 +40,7 @@ int g_clients_expired = 0;
 unsigned int g_socket_connections = 0;
 unsigned int g_connection_count = 0;
 
-static void _sys_update_clients(struct mosquitto_db *db, char *buf)
+static void sys__update_clients(struct mosquitto_db *db, char *buf)
 {
 	static unsigned int client_count = -1;
 	static int clients_expired = -1;
@@ -85,19 +85,19 @@ static void _sys_update_clients(struct mosquitto_db *db, char *buf)
 }
 
 #ifdef REAL_WITH_MEMORY_TRACKING
-static void _sys_update_memory(struct mosquitto_db *db, char *buf)
+static void sys__update_memory(struct mosquitto_db *db, char *buf)
 {
 	static unsigned long current_heap = -1;
 	static unsigned long max_heap = -1;
 	unsigned long value_ul;
 
-	value_ul = _mosquitto_memory_used();
+	value_ul = mosquitto__memory_used();
 	if(current_heap != value_ul){
 		current_heap = value_ul;
 		snprintf(buf, BUFLEN, "%lu", current_heap);
 		mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/heap/current", 2, strlen(buf), buf, 1);
 	}
-	value_ul =_mosquitto_max_memory_used();
+	value_ul =mosquitto__max_memory_used();
 	if(max_heap != value_ul){
 		max_heap = value_ul;
 		snprintf(buf, BUFLEN, "%lu", max_heap);
@@ -191,7 +191,7 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 		snprintf(buf, BUFLEN, "%d seconds", (int)uptime);
 		mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/uptime", 2, strlen(buf), buf, 1);
 
-		_sys_update_clients(db, buf);
+		sys__update_clients(db, buf);
 		if(last_update > 0){
 			i_mult = 60.0/(double)(now-last_update);
 
@@ -269,7 +269,7 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 		}
 
 #ifdef REAL_WITH_MEMORY_TRACKING
-		_sys_update_memory(db, buf);
+		sys__update_memory(db, buf);
 #endif
 
 		if(msgs_received != g_msgs_received){

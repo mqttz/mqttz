@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2014 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2015 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -69,9 +69,9 @@ int mqtt3_log_init(struct mqtt3_config *config)
 		if(drop_privileges(config, true)){
 			return 1;
 		}
-		config->log_fptr = _mosquitto_fopen(config->log_file, "at");
+		config->log_fptr = mosquitto__fopen(config->log_file, "at");
 		if(!config->log_fptr){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open log file %s for writing.", config->log_file);
+			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open log file %s for writing.", config->log_file);
 			return MOSQ_ERR_INVAL;
 		}
 		restore_privileges();
@@ -99,7 +99,7 @@ int mqtt3_log_close(struct mqtt3_config *config)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int _mosquitto_log_vprintf(struct mosquitto *mosq, int priority, const char *fmt, va_list va)
+int mosquitto__log_vprintf(struct mosquitto *mosq, int priority, const char *fmt, va_list va)
 {
 	char *s;
 	char *st;
@@ -189,7 +189,7 @@ int _mosquitto_log_vprintf(struct mosquitto *mosq, int priority, const char *fmt
 #endif
 		}
 		len = strlen(fmt) + 500;
-		s = _mosquitto_malloc(len*sizeof(char));
+		s = mosquitto__malloc(len*sizeof(char));
 		if(!s) return MOSQ_ERR_NOMEM;
 
 		vsnprintf(s, len, fmt, va);
@@ -233,31 +233,31 @@ int _mosquitto_log_vprintf(struct mosquitto *mosq, int priority, const char *fmt
 		if(log_destinations & MQTT3_LOG_TOPIC && priority != MOSQ_LOG_DEBUG){
 			if(int_db.config && int_db.config->log_timestamp){
 				len += 30;
-				st = _mosquitto_malloc(len*sizeof(char));
+				st = mosquitto__malloc(len*sizeof(char));
 				if(!st){
-					_mosquitto_free(s);
+					mosquitto__free(s);
 					return MOSQ_ERR_NOMEM;
 				}
 				snprintf(st, len, "%d: %s", (int)now, s);
 				mqtt3_db_messages_easy_queue(&int_db, NULL, topic, 2, strlen(st), st, 0);
-				_mosquitto_free(st);
+				mosquitto__free(st);
 			}else{
 				mqtt3_db_messages_easy_queue(&int_db, NULL, topic, 2, strlen(s), s, 0);
 			}
 		}
-		_mosquitto_free(s);
+		mosquitto__free(s);
 	}
 
 	return MOSQ_ERR_SUCCESS;
 }
 
-int _mosquitto_log_printf(struct mosquitto *mosq, int priority, const char *fmt, ...)
+int mosquitto__log_printf(struct mosquitto *mosq, int priority, const char *fmt, ...)
 {
 	va_list va;
 	int rc;
 
 	va_start(va, fmt);
-	rc = _mosquitto_log_vprintf(mosq, priority, fmt, va);
+	rc = mosquitto__log_vprintf(mosq, priority, fmt, va);
 	va_end(va);
 
 	return rc;
@@ -268,7 +268,7 @@ void mosquitto_log_printf(int level, const char *fmt, ...)
 	va_list va;
 
 	va_start(va, fmt);
-	_mosquitto_log_vprintf(NULL, level, fmt, va);
+	mosquitto__log_vprintf(NULL, level, fmt, va);
 	va_end(va);
 }
 

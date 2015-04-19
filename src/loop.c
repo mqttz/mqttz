@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2014 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2015 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -77,7 +77,7 @@ static void temp__expire_websockets_clients(struct mosquitto_db *db)
 						}else{
 							id = "<unknown>";
 						}
-						_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", id);
+						mosquitto__log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", id);
 					}
 					/* Client has exceeded keepalive*1.5 */
 					do_disconnect(db, context);
@@ -141,9 +141,9 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 
 		if(listensock_count + context_count > pollfd_count || !pollfds){
 			pollfd_count = listensock_count + context_count;
-			pollfds = _mosquitto_realloc(pollfds, sizeof(struct pollfd)*pollfd_count);
+			pollfds = mosquitto__realloc(pollfds, sizeof(struct pollfd)*pollfd_count);
 			if(!pollfds){
-				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+				mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 				return MOSQ_ERR_NOMEM;
 			}
 		}
@@ -173,14 +173,14 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 			if(context->sock != INVALID_SOCKET){
 #ifdef WITH_BRIDGE
 				if(context->bridge){
-					_mosquitto_check_keepalive(db, context);
+					mosquitto__check_keepalive(db, context);
 					if(context->bridge->round_robin == false
 							&& context->bridge->cur_address != 0
 							&& now > context->bridge->primary_retry){
 
-						if(_mosquitto_try_connect(context, context->bridge->addresses[0].address, context->bridge->addresses[0].port, &bridge_sock, NULL, false) == MOSQ_ERR_SUCCESS){
+						if(mosquitto__try_connect(context, context->bridge->addresses[0].address, context->bridge->addresses[0].port, &bridge_sock, NULL, false) == MOSQ_ERR_SUCCESS){
 							COMPAT_CLOSE(bridge_sock);
-							_mosquitto_socket_close(db, context);
+							mosquitto__socket_close(db, context);
 							context->bridge->cur_address = context->bridge->address_count-1;
 						}
 					}
@@ -211,7 +211,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 						}else{
 							id = "<unknown>";
 						}
-						_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", id);
+						mosquitto__log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", id);
 					}
 					/* Client has exceeded keepalive*1.5 */
 					do_disconnect(db, context);
@@ -294,7 +294,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 						}else{
 							id = "<unknown>";
 						}
-						_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Expiring persistent client %s due to timeout.", id);
+						mosquitto__log_printf(NULL, MOSQ_LOG_NOTICE, "Expiring persistent client %s due to timeout.", id);
 #ifdef WITH_SYS_TREE
 						g_clients_expired++;
 #endif
@@ -351,7 +351,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 		}
 #endif
 		if(flag_reload){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Reloading config.");
+			mosquitto__log_printf(NULL, MOSQ_LOG_INFO, "Reloading config.");
 			mqtt3_config_read(db->config, true);
 			mosquitto_security_cleanup(db, true);
 			mosquitto_security_init(db, true);
@@ -380,7 +380,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 #endif
 	}
 
-	if(pollfds) _mosquitto_free(pollfds);
+	if(pollfds) mosquitto__free(pollfds);
 	return MOSQ_ERR_SUCCESS;
 }
 
@@ -410,9 +410,9 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 				id = "<unknown>";
 			}
 			if(context->state != mosq_cs_disconnecting){
-				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Socket error on client %s, disconnecting.", id);
+				mosquitto__log_printf(NULL, MOSQ_LOG_NOTICE, "Socket error on client %s, disconnecting.", id);
 			}else{
-				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s disconnected.", id);
+				mosquitto__log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s disconnected.", id);
 			}
 		}
 		mqtt3_context_disconnect(db, context);
@@ -424,7 +424,7 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 			mosquitto__add_context_to_disused(db, context);
 			if(context->id){
 				HASH_DELETE(hh_id, db->contexts_by_id, context);
-				_mosquitto_free(context->id);
+				mosquitto__free(context->id);
 				context->id = NULL;
 			}
 		}
@@ -484,7 +484,7 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 					continue;
 				}
 			}
-			if(_mosquitto_packet_write(context)){
+			if(mosquitto__packet_write(context)){
 				do_disconnect(db, context);
 				continue;
 			}
@@ -502,7 +502,7 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 #else
 		if(pollfds[context->pollfd_index].revents & POLLIN){
 #endif
-			if(_mosquitto_packet_read(db, context)){
+			if(mosquitto__packet_read(db, context)){
 				do_disconnect(db, context);
 				continue;
 			}

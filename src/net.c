@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2014 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2015 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -87,7 +87,7 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 	g_socket_connections++;
 #endif
 
-	if(_mosquitto_socket_nonblock(new_sock)){
+	if(mosquitto__socket_nonblock(new_sock)){
 		return INVALID_SOCKET;
 	}
 
@@ -97,8 +97,8 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 	fromhost(&wrap_req);
 	if(!hosts_access(&wrap_req)){
 		/* Access is denied */
-		if(!_mosquitto_socket_get_address(new_sock, address, 1024)){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client connection from %s denied access by tcpd.", address);
+		if(!mosquitto__socket_get_address(new_sock, address, 1024)){
+			mosquitto__log_printf(NULL, MOSQ_LOG_NOTICE, "Client connection from %s denied access by tcpd.", address);
 		}
 		COMPAT_CLOSE(new_sock);
 		return -1;
@@ -124,7 +124,7 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 	}
 
 	if(new_context->listener->max_connections > 0 && new_context->listener->client_count > new_context->listener->max_connections){
-		_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client connection from %s denied: max_connections exceeded.", new_context->address);
+		mosquitto__log_printf(NULL, MOSQ_LOG_NOTICE, "Client connection from %s denied: max_connections exceeded.", new_context->address);
 		mqtt3_context_cleanup(db, new_context, true);
 		return -1;
 	}
@@ -155,7 +155,7 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 						}else{
 							e = ERR_get_error();
 							while(e){
-								_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE,
+								mosquitto__log_printf(NULL, MOSQ_LOG_NOTICE,
 										"Client connection from %s failed: %s.",
 										new_context->address, ERR_error_string(e, ebuf));
 								e = ERR_get_error();
@@ -170,7 +170,7 @@ int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
 	}
 #endif
 
-	_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "New connection from %s on port %d.", new_context->address, new_context->listener->port);
+	mosquitto__log_printf(NULL, MOSQ_LOG_NOTICE, "New connection from %s on port %d.", new_context->address, new_context->listener->port);
 
 	return new_sock;
 }
@@ -188,14 +188,14 @@ static unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned
 {
 	struct mosquitto_db *db;
 	struct mosquitto *context;
-	struct _mqtt3_listener *listener;
+	struct mqtt3__listener *listener;
 	char *psk_key = NULL;
 	int len;
 	const char *psk_hint;
 
 	if(!identity) return 0;
 
-	db = _mosquitto_get_db();
+	db = mosquitto__get_db();
 
 	context = SSL_get_ex_data(ssl, tls_ex_index_context);
 	if(!context) return 0;
@@ -207,35 +207,35 @@ static unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned
 
 	/* The hex to BN conversion results in the length halving, so we can pass
 	 * max_psk_len*2 as the max hex key here. */
-	psk_key = _mosquitto_calloc(1, max_psk_len*2 + 1);
+	psk_key = mosquitto__calloc(1, max_psk_len*2 + 1);
 	if(!psk_key) return 0;
 
 	if(mosquitto_psk_key_get(db, psk_hint, identity, psk_key, max_psk_len*2) != MOSQ_ERR_SUCCESS){
-		_mosquitto_free(psk_key);
+		mosquitto__free(psk_key);
 		return 0;
 	}
 
-	len = _mosquitto_hex2bin(psk_key, psk, max_psk_len);
+	len = mosquitto__hex2bin(psk_key, psk, max_psk_len);
 	if (len < 0){
-		_mosquitto_free(psk_key);
+		mosquitto__free(psk_key);
 		return 0;
 	}
 
 	if(listener->use_identity_as_username){
-		context->username = _mosquitto_strdup(identity);
+		context->username = mosquitto__strdup(identity);
 		if(!context->username){
-			_mosquitto_free(psk_key);
+			mosquitto__free(psk_key);
 			return 0;
 		}
 	}
 
-	_mosquitto_free(psk_key);
+	mosquitto__free(psk_key);
 	return len;
 }
 #endif
 
 #ifdef WITH_TLS
-static int _mosquitto_tls_server_ctx(struct _mqtt3_listener *listener)
+static int mosquitto__tls_server_ctx(struct mqtt3__listener *listener)
 {
 	int ssl_options = 0;
 	char buf[256];
@@ -260,7 +260,7 @@ static int _mosquitto_tls_server_ctx(struct _mqtt3_listener *listener)
 	listener->ssl_ctx = SSL_CTX_new(SSLv23_server_method());
 #endif
 	if(!listener->ssl_ctx){
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create TLS context.");
+		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create TLS context.");
 		return 1;
 	}
 
@@ -287,7 +287,7 @@ static int _mosquitto_tls_server_ctx(struct _mqtt3_listener *listener)
 #elif OPENSSL_VERSION_NUMBER >= 0x10000000L && OPENSSL_VERSION_NUMBER < 0x10002000L
 	ecdh = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
 	if(!ecdh){
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create TLS ECDH curve.");
+		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create TLS ECDH curve.");
 		return 1;
 	}
 	SSL_CTX_set_tmp_ecdh(listener->ssl_ctx, ecdh);
@@ -301,13 +301,13 @@ static int _mosquitto_tls_server_ctx(struct _mqtt3_listener *listener)
 	if(listener->ciphers){
 		rc = SSL_CTX_set_cipher_list(listener->ssl_ctx, listener->ciphers);
 		if(rc == 0){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set TLS ciphers. Check cipher list \"%s\".", listener->ciphers);
+			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set TLS ciphers. Check cipher list \"%s\".", listener->ciphers);
 			return 1;
 		}
 	}else{
 		rc = SSL_CTX_set_cipher_list(listener->ssl_ctx, "DEFAULT:!aNULL:!eNULL:!LOW:!EXPORT:!SSLv2:@STRENGTH");
 		if(rc == 0){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set TLS ciphers. Check cipher list \"%s\".", listener->ciphers);
+			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set TLS ciphers. Check cipher list \"%s\".", listener->ciphers);
 			return 1;
 		}
 	}
@@ -319,7 +319,7 @@ static int _mosquitto_tls_server_ctx(struct _mqtt3_listener *listener)
  * Returns 1 on failure
  * Returns 0 on success.
  */
-int mqtt3_socket_listen(struct _mqtt3_listener *listener)
+int mqtt3_socket_listen(struct mqtt3__listener *listener)
 {
 	int sock = -1;
 	struct addrinfo hints;
@@ -352,9 +352,9 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 
 	for(rp = ainfo; rp; rp = rp->ai_next){
 		if(rp->ai_family == AF_INET){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Opening ipv4 listen socket on port %d.", ntohs(((struct sockaddr_in *)rp->ai_addr)->sin_port));
+			mosquitto__log_printf(NULL, MOSQ_LOG_INFO, "Opening ipv4 listen socket on port %d.", ntohs(((struct sockaddr_in *)rp->ai_addr)->sin_port));
 		}else if(rp->ai_family == AF_INET6){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Opening ipv6 listen socket on port %d.", ntohs(((struct sockaddr_in6 *)rp->ai_addr)->sin6_port));
+			mosquitto__log_printf(NULL, MOSQ_LOG_INFO, "Opening ipv6 listen socket on port %d.", ntohs(((struct sockaddr_in6 *)rp->ai_addr)->sin6_port));
 		}else{
 			continue;
 		}
@@ -362,13 +362,13 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 		sock = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
 		if(sock == -1){
 			strerror_r(errno, buf, 256);
-			_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: %s", buf);
+			mosquitto__log_printf(NULL, MOSQ_LOG_WARNING, "Warning: %s", buf);
 			continue;
 		}
 		listener->sock_count++;
-		listener->socks = _mosquitto_realloc(listener->socks, sizeof(int)*listener->sock_count);
+		listener->socks = mosquitto__realloc(listener->socks, sizeof(int)*listener->sock_count);
 		if(!listener->socks){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
 		listener->socks[listener->sock_count-1] = sock;
@@ -380,7 +380,7 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 		ss_opt = 1;
 		setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, &ss_opt, sizeof(ss_opt));
 
-		if(_mosquitto_socket_nonblock(sock)){
+		if(mosquitto__socket_nonblock(sock)){
 			return 1;
 		}
 
@@ -389,7 +389,7 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 			errno = WSAGetLastError();
 #endif
 			strerror_r(errno, buf, 256);
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s", buf);
+			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: %s", buf);
 			COMPAT_CLOSE(sock);
 			return 1;
 		}
@@ -399,7 +399,7 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 			errno = WSAGetLastError();
 #endif
 			strerror_r(errno, buf, 256);
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s", buf);
+			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: %s", buf);
 			COMPAT_CLOSE(sock);
 			return 1;
 		}
@@ -410,7 +410,7 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 	if(listener->sock_count > 0){
 #ifdef WITH_TLS
 		if((listener->cafile || listener->capath) && listener->certfile && listener->keyfile){
-			if(_mosquitto_tls_server_ctx(listener)){
+			if(mosquitto__tls_server_ctx(listener)){
 				COMPAT_CLOSE(sock);
 				return 1;
 			}
@@ -418,11 +418,11 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 			rc = SSL_CTX_load_verify_locations(listener->ssl_ctx, listener->cafile, listener->capath);
 			if(rc == 0){
 				if(listener->cafile && listener->capath){
-					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check cafile \"%s\" and capath \"%s\".", listener->cafile, listener->capath);
+					mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check cafile \"%s\" and capath \"%s\".", listener->cafile, listener->capath);
 				}else if(listener->cafile){
-					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check cafile \"%s\".", listener->cafile);
+					mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check cafile \"%s\".", listener->cafile);
 				}else{
-					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check capath \"%s\".", listener->capath);
+					mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check capath \"%s\".", listener->capath);
 				}
 				COMPAT_CLOSE(sock);
 				return 1;
@@ -435,19 +435,19 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 			}
 			rc = SSL_CTX_use_certificate_chain_file(listener->ssl_ctx, listener->certfile);
 			if(rc != 1){
-				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load server certificate \"%s\". Check certfile.", listener->certfile);
+				mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load server certificate \"%s\". Check certfile.", listener->certfile);
 				COMPAT_CLOSE(sock);
 				return 1;
 			}
 			rc = SSL_CTX_use_PrivateKey_file(listener->ssl_ctx, listener->keyfile, SSL_FILETYPE_PEM);
 			if(rc != 1){
-				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load server key file \"%s\". Check keyfile.", listener->keyfile);
+				mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load server key file \"%s\". Check keyfile.", listener->keyfile);
 				COMPAT_CLOSE(sock);
 				return 1;
 			}
 			rc = SSL_CTX_check_private_key(listener->ssl_ctx);
 			if(rc != 1){
-				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Server certificate/key are inconsistent.");
+				mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Server certificate/key are inconsistent.");
 				COMPAT_CLOSE(sock);
 				return 1;
 			}
@@ -455,14 +455,14 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 			if(listener->crlfile){
 				store = SSL_CTX_get_cert_store(listener->ssl_ctx);
 				if(!store){
-					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to obtain TLS store.");
+					mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to obtain TLS store.");
 					COMPAT_CLOSE(sock);
 					return 1;
 				}
 				lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file());
 				rc = X509_load_crl_file(lookup, listener->crlfile, X509_FILETYPE_PEM);
 				if(rc != 1){
-					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load certificate revocation file \"%s\". Check crlfile.", listener->crlfile);
+					mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load certificate revocation file \"%s\". Check crlfile.", listener->crlfile);
 					COMPAT_CLOSE(sock);
 					return 1;
 				}
@@ -478,7 +478,7 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 				tls_ex_index_listener = SSL_get_ex_new_index(0, "listener", NULL, NULL, NULL);
 			}
 
-			if(_mosquitto_tls_server_ctx(listener)){
+			if(mosquitto__tls_server_ctx(listener)){
 				COMPAT_CLOSE(sock);
 				return 1;
 			}
@@ -486,7 +486,7 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 			if(listener->psk_hint){
 				rc = SSL_CTX_use_psk_identity_hint(listener->ssl_ctx, listener->psk_hint);
 				if(rc == 0){
-					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set TLS PSK hint.");
+					mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set TLS PSK hint.");
 					COMPAT_CLOSE(sock);
 					return 1;
 				}
@@ -500,7 +500,7 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 	}
 }
 
-int _mosquitto_socket_get_address(int sock, char *buf, int len)
+int mosquitto__socket_get_address(int sock, char *buf, int len)
 {
 	struct sockaddr_storage addr;
 	socklen_t addrlen;
