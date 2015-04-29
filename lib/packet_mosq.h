@@ -16,8 +16,8 @@ Contributors:
 #ifndef _PACKET_MOSQ_H_
 #define _PACKET_MOSQ_H_
 
-#include <mosquitto_internal.h>
-#include <mosquitto.h>
+#include "mosquitto_internal.h"
+#include "mosquitto.h"
 
 #ifdef WITH_BROKER
 struct mosquitto_db;

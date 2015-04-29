@@ -14,14 +14,14 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
-#include <config.h>
+#include "config.h"
 
 #include <stdio.h>
 #include <string.h>
 
-#include <mosquitto_broker.h>
+#include "mosquitto_broker.h"
 #include "mosquitto_plugin.h"
-#include <memory_mosq.h>
+#include "memory_mosq.h"
 #include "lib_load.h"
 
 typedef int (*FUNC_auth_plugin_version)(void);

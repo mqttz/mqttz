@@ -17,12 +17,12 @@ Contributors:
 #ifndef MQTT3_H
 #define MQTT3_H
 
-#include <config.h>
+#include "config.h"
 #include <stdio.h>
 
-#include <mosquitto_internal.h>
-#include <mosquitto_plugin.h>
-#include <mosquitto.h>
+#include "mosquitto_internal.h"
+#include "mosquitto_plugin.h"
+#include "mosquitto.h"
 #include "tls_mosq.h"
 #include "uthash.h"
 

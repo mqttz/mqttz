@@ -58,28 +58,20 @@ Contributors:
 #endif
 
 #ifdef WITH_BROKER
-#  include <mosquitto_broker.h>
-#  ifdef WITH_SYS_TREE
-   extern uint64_t g_bytes_received;
-   extern uint64_t g_bytes_sent;
-   extern unsigned long g_msgs_received;
-   extern unsigned long g_msgs_sent;
-   extern unsigned long g_pub_msgs_received;
-   extern unsigned long g_pub_msgs_sent;
-#  endif
+#  include "mosquitto_broker.h"
 #  ifdef WITH_WEBSOCKETS
 #    include <libwebsockets.h>
 #  endif
 #else
-#  include <read_handle.h>
+#  include "read_handle.h"
 #endif
 
-#include <logging_mosq.h>
-#include <memory_mosq.h>
-#include <mqtt3_protocol.h>
-#include <net_mosq.h>
-#include <time_mosq.h>
-#include <util_mosq.h>
+#include "logging_mosq.h"
+#include "memory_mosq.h"
+#include "mqtt3_protocol.h"
+#include "net_mosq.h"
+#include "time_mosq.h"
+#include "util_mosq.h"
 
 
 #ifdef WITH_TLS

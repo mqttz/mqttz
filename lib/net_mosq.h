@@ -23,8 +23,8 @@ Contributors:
 typedef int ssize_t;
 #endif
 
-#include <mosquitto_internal.h>
-#include <mosquitto.h>
+#include "mosquitto_internal.h"
+#include "mosquitto.h"
 
 #ifdef WITH_BROKER
 struct mosquitto_db;

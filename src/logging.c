@@ -22,12 +22,12 @@ Contributors:
 #include <time.h>
 
 #ifndef CMAKE
-#include <config.h>
+#include "config.h"
 #endif
 
-#include <mosquitto_broker.h>
-#include <memory_mosq.h>
-#include <util_mosq.h>
+#include "mosquitto_broker.h"
+#include "memory_mosq.h"
+#include "util_mosq.h"
 
 extern struct mosquitto_db int_db;
 

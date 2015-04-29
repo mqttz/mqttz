@@ -18,12 +18,12 @@ Contributors:
 #include <stdlib.h>
 #include <string.h>
 
-#include <mosquitto_internal.h>
-#include <mosquitto.h>
-#include <memory_mosq.h>
-#include <messages_mosq.h>
-#include <send_mosq.h>
-#include <time_mosq.h>
+#include "mosquitto_internal.h"
+#include "mosquitto.h"
+#include "memory_mosq.h"
+#include "messages_mosq.h"
+#include "send_mosq.h"
+#include "time_mosq.h"
 
 void mosquitto__message_cleanup(struct mosquitto_message_all **message)
 {

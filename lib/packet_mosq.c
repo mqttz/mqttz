@@ -14,76 +14,11 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
-#if 0
-#include <errno.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <string.h>
-#ifndef WIN32
-#include <netdb.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#else
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#endif
-
-#ifdef __ANDROID__
-#include <linux/in.h>
-#include <linux/in6.h>
-#include <sys/endian.h>
-#endif
-
-#ifdef __FreeBSD__
-#  include <netinet/in.h>
-#endif
-
-#ifdef __SYMBIAN32__
-#include <netinet/in.h>
-#endif
-
-#ifdef __QNX__
-#ifndef AI_ADDRCONFIG
-#define AI_ADDRCONFIG 0
-#endif
-#include <net/netbyte.h>
-#include <netinet/in.h>
-#endif
-
-#ifdef WITH_TLS
-#include <openssl/conf.h>
-#include <openssl/engine.h>
-#include <openssl/err.h>
-#include <tls_mosq.h>
-#endif
-
-#ifdef WITH_BROKER
-#  include <mosquitto_broker.h>
-#  ifdef WITH_SYS_TREE
-   extern uint64_t g_bytes_received;
-   extern uint64_t g_bytes_sent;
-   extern unsigned long g_msgs_received;
-   extern unsigned long g_msgs_sent;
-   extern unsigned long g_pub_msgs_received;
-   extern unsigned long g_pub_msgs_sent;
-#  endif
-#  ifdef WITH_WEBSOCKETS
-#    include <libwebsockets.h>
-#  endif
-#else
-#  include <read_handle.h>
-#endif
-
-#include <logging_mosq.h>
-#include <time_mosq.h>
-#include <util_mosq.h>
-#endif
-
 #include <assert.h>
 #include <errno.h>
 
 #ifdef WITH_BROKER
-#  include <mosquitto_broker.h>
+#  include "mosquitto_broker.h"
 #  ifdef WITH_SYS_TREE
    extern uint64_t g_bytes_received;
    extern uint64_t g_bytes_sent;
@@ -96,9 +31,8 @@ Contributors:
 #    include <libwebsockets.h>
 #  endif
 #else
-#  include <read_handle.h>
+#  include "read_handle.h"
 #endif
-
 
 #include "memory_mosq.h"
 #include "mqtt3_protocol.h"

@@ -29,21 +29,21 @@ Contributors:
 typedef int ssize_t;
 #endif
 
-#include <mosquitto.h>
-#include <mosquitto_internal.h>
-#include <logging_mosq.h>
-#include <messages_mosq.h>
-#include <memory_mosq.h>
-#include <mqtt3_protocol.h>
-#include <net_mosq.h>
-#include <packet_mosq.h>
-#include <read_handle.h>
-#include <send_mosq.h>
-#include <socks_mosq.h>
-#include <time_mosq.h>
-#include <tls_mosq.h>
-#include <util_mosq.h>
-#include <will_mosq.h>
+#include "mosquitto.h"
+#include "mosquitto_internal.h"
+#include "logging_mosq.h"
+#include "messages_mosq.h"
+#include "memory_mosq.h"
+#include "mqtt3_protocol.h"
+#include "net_mosq.h"
+#include "packet_mosq.h"
+#include "read_handle.h"
+#include "send_mosq.h"
+#include "socks_mosq.h"
+#include "time_mosq.h"
+#include "tls_mosq.h"
+#include "util_mosq.h"
+#include "will_mosq.h"
 
 #if !defined(WIN32) && !defined(__SYMBIAN32__)
 #define HAVE_PSELECT

@@ -17,12 +17,12 @@ Contributors:
 #include <assert.h>
 #include <time.h>
 
-#include <config.h>
+#include "config.h"
 
-#include <mosquitto_broker.h>
-#include <memory_mosq.h>
+#include "mosquitto_broker.h"
+#include "memory_mosq.h"
 #include "packet_mosq.h"
-#include <time_mosq.h>
+#include "time_mosq.h"
 
 #include "uthash.h"
 

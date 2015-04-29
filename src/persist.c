@@ -14,7 +14,7 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
-#include <config.h>
+#include "config.h"
 
 #ifdef WITH_PERSISTENCE
 
@@ -29,10 +29,10 @@ Contributors:
 #include <sys/stat.h>
 #include <time.h>
 
-#include <mosquitto_broker.h>
-#include <memory_mosq.h>
-#include <persist.h>
-#include <time_mosq.h>
+#include "mosquitto_broker.h"
+#include "memory_mosq.h"
+#include "persist.h"
+#include "time_mosq.h"
 #include "util_mosq.h"
 
 static uint32_t db_version;

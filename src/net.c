@@ -14,7 +14,7 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
-#include <config.h>
+#include "config.h"
 
 #ifndef WIN32
 #include <netdb.h>
@@ -46,11 +46,11 @@ Contributors:
 #include <sys/socket.h>
 #endif
 
-#include <mosquitto_broker.h>
-#include <mqtt3_protocol.h>
-#include <memory_mosq.h>
-#include <net_mosq.h>
-#include <util_mosq.h>
+#include "mosquitto_broker.h"
+#include "mqtt3_protocol.h"
+#include "memory_mosq.h"
+#include "net_mosq.h"
+#include "util_mosq.h"
 
 #ifdef WITH_TLS
 #include "tls_mosq.h"

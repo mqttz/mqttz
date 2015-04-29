@@ -16,8 +16,8 @@ Contributors:
 #ifndef _MESSAGES_MOSQ_H_
 #define _MESSAGES_MOSQ_H_
 
-#include <mosquitto_internal.h>
-#include <mosquitto.h>
+#include "mosquitto_internal.h"
+#include "mosquitto.h"
 
 void mosquitto__message_cleanup_all(struct mosquitto *mosq);
 void mosquitto__message_cleanup(struct mosquitto_message_all **message);

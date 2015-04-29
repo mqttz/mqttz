@@ -18,12 +18,12 @@ Contributors:
 #include <stdio.h>
 #include <string.h>
 
-#include <mosquitto_broker.h>
-#include <memory_mosq.h>
-#include <mqtt3_protocol.h>
+#include "mosquitto_broker.h"
+#include "memory_mosq.h"
+#include "mqtt3_protocol.h"
 #include "packet_mosq.h"
-#include <send_mosq.h>
-#include <util_mosq.h>
+#include "send_mosq.h"
+#include "util_mosq.h"
 
 int mqtt3_handle_connack(struct mosquitto_db *db, struct mosquitto *context)
 {

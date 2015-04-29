@@ -14,13 +14,13 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
-#include <config.h>
+#include "config.h"
 
 #include <stdio.h>
 #include <string.h>
 
-#include <mosquitto_broker.h>
-#include <memory_mosq.h>
+#include "mosquitto_broker.h"
+#include "memory_mosq.h"
 #include "util_mosq.h"
 
 static int aclfile__parse(struct mosquitto_db *db);

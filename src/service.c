@@ -18,7 +18,7 @@ Contributors:
 
 #include <windows.h>
 
-#include <memory_mosq.h>
+#include "memory_mosq.h"
 
 extern int run;
 SERVICE_STATUS_HANDLE service_handle = 0;

@@ -17,7 +17,7 @@ Contributors:
 #ifndef _MOSQUITTO_INTERNAL_H_
 #define _MOSQUITTO_INTERNAL_H_
 
-#include <config.h>
+#include "config.h"
 
 #ifdef WIN32
 #  include <winsock2.h>

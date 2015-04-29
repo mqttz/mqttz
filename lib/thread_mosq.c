@@ -14,14 +14,14 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
-#include <config.h>
+#include "config.h"
 
 #ifndef WIN32
 #include <unistd.h>
 #endif
 
-#include <mosquitto_internal.h>
-#include <net_mosq.h>
+#include "mosquitto_internal.h"
+#include "net_mosq.h"
 
 void *mosquitto__thread_main(void *obj);
 

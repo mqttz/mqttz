@@ -19,11 +19,11 @@ Contributors:
 #include <math.h>
 #include <stdio.h>
 
-#include <config.h>
+#include "config.h"
 
-#include <mosquitto_broker.h>
-#include <memory_mosq.h>
-#include <time_mosq.h>
+#include "mosquitto_broker.h"
+#include "memory_mosq.h"
+#include "time_mosq.h"
 
 #define BUFLEN 100
 

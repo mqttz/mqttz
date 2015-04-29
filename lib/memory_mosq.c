@@ -14,12 +14,12 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
-#include <config.h>
+#include "config.h"
 
 #include <stdlib.h>
 #include <string.h>
 
-#include <memory_mosq.h>
+#include "memory_mosq.h"
 
 #ifdef REAL_WITH_MEMORY_TRACKING
 #  if defined(__APPLE__)
