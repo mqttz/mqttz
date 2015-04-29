@@ -28,6 +28,7 @@ add_library(libmosquitto SHARED
 	mosquitto_internal.h
 	mqtt3_protocol.h
 	net_mosq.c net_mosq.h
+	packet_mosq.c packet_mosq.h
 	read_handle.c read_handle.h
 	read_handle_client.c
 	read_handle_shared.c

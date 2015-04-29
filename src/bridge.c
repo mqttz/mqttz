@@ -34,6 +34,7 @@ Contributors:
 #include <mosquitto_internal.h>
 #include <net_mosq.h>
 #include <memory_mosq.h>
+#include "packet_mosq.h"
 #include <send_mosq.h>
 #include <time_mosq.h>
 #include <tls_mosq.h>

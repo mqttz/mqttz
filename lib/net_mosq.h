@@ -52,8 +52,6 @@ struct mosquitto_db;
 void mosquitto__net_init(void);
 void mosquitto__net_cleanup(void);
 
-void mosquitto__packet_cleanup(struct mosquitto__packet *packet);
-int mosquitto__packet_queue(struct mosquitto *mosq, struct mosquitto__packet *packet);
 int mosquitto__socket_connect(struct mosquitto *mosq, const char *host, uint16_t port, const char *bind_address, bool blocking);
 #ifdef WITH_BROKER
 int mosquitto__socket_close(struct mosquitto_db *db, struct mosquitto *mosq);
@@ -64,25 +62,8 @@ int mosquitto__try_connect(struct mosquitto *mosq, const char *host, uint16_t po
 int mosquitto__socket_nonblock(int sock);
 int mosquitto__socketpair(int *sp1, int *sp2);
 
-int mosquitto__read_byte(struct mosquitto__packet *packet, uint8_t *byte);
-int mosquitto__read_bytes(struct mosquitto__packet *packet, void *bytes, uint32_t count);
-int mosquitto__read_string(struct mosquitto__packet *packet, char **str);
-int mosquitto__read_uint16(struct mosquitto__packet *packet, uint16_t *word);
-
-void mosquitto__write_byte(struct mosquitto__packet *packet, uint8_t byte);
-void mosquitto__write_bytes(struct mosquitto__packet *packet, const void *bytes, uint32_t count);
-void mosquitto__write_string(struct mosquitto__packet *packet, const char *str, uint16_t length);
-void mosquitto__write_uint16(struct mosquitto__packet *packet, uint16_t word);
-
 ssize_t mosquitto__net_read(struct mosquitto *mosq, void *buf, size_t count);
 ssize_t mosquitto__net_write(struct mosquitto *mosq, void *buf, size_t count);
-
-int mosquitto__packet_write(struct mosquitto *mosq);
-#ifdef WITH_BROKER
-int mosquitto__packet_read(struct mosquitto_db *db, struct mosquitto *mosq);
-#else
-int mosquitto__packet_read(struct mosquitto *mosq);
-#endif
 
 #ifdef WITH_TLS
 int mosquitto__socket_apply_tls(struct mosquitto *mosq);

@@ -7,6 +7,7 @@ MOSQ_OBJS=mosquitto.o \
 		  memory_mosq.o \
 		  messages_mosq.o \
 		  net_mosq.o \
+		  packet_mosq.o \
 		  read_handle.o \
 		  read_handle_client.o \
 		  read_handle_shared.o \
@@ -60,6 +61,9 @@ memory_mosq.o : memory_mosq.c memory_mosq.h
 	${CROSS_COMPILE}$(CC) $(LIB_CFLAGS) -c $< -o $@
 
 net_mosq.o : net_mosq.c net_mosq.h
+	${CROSS_COMPILE}$(CC) $(LIB_CFLAGS) -c $< -o $@
+
+packet_mosq.o : packet_mosq.c packet_mosq.h
 	${CROSS_COMPILE}$(CC) $(LIB_CFLAGS) -c $< -o $@
 
 read_handle.o : read_handle.c read_handle.h

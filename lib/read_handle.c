@@ -24,6 +24,7 @@ Contributors:
 #include <messages_mosq.h>
 #include <mqtt3_protocol.h>
 #include <net_mosq.h>
+#include <packet_mosq.h>
 #include <read_handle.h>
 #include <send_mosq.h>
 #include <time_mosq.h>

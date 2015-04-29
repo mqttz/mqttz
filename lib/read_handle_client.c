@@ -20,6 +20,7 @@ Contributors:
 #include <logging_mosq.h>
 #include <memory_mosq.h>
 #include <net_mosq.h>
+#include <packet_mosq.h>
 #include <read_handle.h>
 
 int mosquitto__handle_connack(struct mosquitto *mosq)

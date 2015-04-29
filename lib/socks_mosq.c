@@ -20,6 +20,7 @@ Contributors:
 #include "mosquitto_internal.h"
 #include "memory_mosq.h"
 #include "net_mosq.h"
+#include "packet_mosq.h"
 #include "send_mosq.h"
 
 #define SOCKS_AUTH_NONE 0x00

@@ -19,6 +19,7 @@ Contributors:
 #include <mosquitto_broker.h>
 #include <mqtt3_protocol.h>
 #include <memory_mosq.h>
+#include <packet_mosq.h>
 #include <util_mosq.h>
 
 int mosquitto__send_connack(struct mosquitto *context, int ack, int result)

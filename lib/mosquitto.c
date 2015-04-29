@@ -36,6 +36,7 @@ typedef int ssize_t;
 #include <memory_mosq.h>
 #include <mqtt3_protocol.h>
 #include <net_mosq.h>
+#include <packet_mosq.h>
 #include <read_handle.h>
 #include <send_mosq.h>
 #include <socks_mosq.h>
