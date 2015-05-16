@@ -299,7 +299,7 @@ void mosquitto__destroy(struct mosquitto *mosq)
 	if(mosq->sock != INVALID_SOCKET){
 		mosquitto__socket_close(mosq);
 	}
-	mosquitto__message_cleanup_all(mosq);
+	message__cleanup_all(mosq);
 	mosquitto__will_clear(mosq);
 #ifdef WITH_TLS
 	if(mosq->ssl){
@@ -506,7 +506,7 @@ static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking)
 	pthread_mutex_unlock(&mosq->out_packet_mutex);
 	pthread_mutex_unlock(&mosq->current_out_packet_mutex);
 
-	mosquitto__messages_reconnect_reset(mosq);
+	message__reconnect_reset(mosq);
 
 #ifdef WITH_SOCKS
 	if(mosq->socks5_host){
@@ -571,14 +571,14 @@ int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int p
 		message->msg.mid = local_mid;
 		message->msg.topic = mosquitto__strdup(topic);
 		if(!message->msg.topic){
-			mosquitto__message_cleanup(&message);
+			message__cleanup(&message);
 			return MOSQ_ERR_NOMEM;
 		}
 		if(payloadlen){
 			message->msg.payloadlen = payloadlen;
 			message->msg.payload = mosquitto__malloc(payloadlen*sizeof(uint8_t));
 			if(!message->msg.payload){
-				mosquitto__message_cleanup(&message);
+				message__cleanup(&message);
 				return MOSQ_ERR_NOMEM;
 			}
 			memcpy(message->msg.payload, payload, payloadlen*sizeof(uint8_t));
@@ -591,7 +591,7 @@ int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int p
 		message->dup = false;
 
 		pthread_mutex_lock(&mosq->out_message_mutex);
-		mosquitto__message_queue(mosq, message, mosq_md_out);
+		message__queue(mosq, message, mosq_md_out);
 		if(mosq->max_inflight_messages == 0 || mosq->inflight_messages < mosq->max_inflight_messages){
 			mosq->inflight_messages++;
 			if(qos == 1){
@@ -1061,7 +1061,7 @@ int mosquitto_loop_misc(struct mosquitto *mosq)
 	mosquitto__check_keepalive(mosq);
 	now = mosquitto_time();
 	if(mosq->last_retry_check+1 < now){
-		mosquitto__message_retry_check(mosq);
+		message__retry_check(mosq);
 		mosq->last_retry_check = now;
 	}
 	if(mosq->ping_t && now - mosq->ping_t >= mosq->keepalive){

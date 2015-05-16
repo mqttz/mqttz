@@ -77,7 +77,7 @@ int mosquitto__handle_pubackcomp(struct mosquitto *mosq, const char *type)
 #else
 	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s received %s (Mid: %d)", mosq->id, type, mid);
 
-	if(!mosquitto__message_delete(mosq, mid, mosq_md_out)){
+	if(!message__delete(mosq, mid, mosq_md_out)){
 		/* Only inform the client the message has been sent once. */
 		pthread_mutex_lock(&mosq->callback_mutex);
 		if(mosq->on_publish){
@@ -107,7 +107,7 @@ int mosquitto__handle_pubrec(struct mosquitto *mosq)
 #else
 	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s received PUBREC (Mid: %d)", mosq->id, mid);
 
-	rc = mosquitto__message_out_update(mosq, mid, mosq_ms_wait_for_pubcomp);
+	rc = message__out_update(mosq, mid, mosq_ms_wait_for_pubcomp);
 #endif
 	if(rc) return rc;
 	rc = mosquitto__send_pubrel(mosq, mid);
@@ -142,7 +142,7 @@ int mosquitto__handle_pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 #else
 	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s received PUBREL (Mid: %d)", mosq->id, mid);
 
-	if(!mosquitto__message_remove(mosq, mid, mosq_md_in, &message)){
+	if(!message__remove(mosq, mid, mosq_md_in, &message)){
 		/* Only pass the message on if we have removed it from the queue - this
 		 * prevents multiple callbacks for the same message. */
 		pthread_mutex_lock(&mosq->callback_mutex);
@@ -152,7 +152,7 @@ int mosquitto__handle_pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 			mosq->in_callback = false;
 		}
 		pthread_mutex_unlock(&mosq->callback_mutex);
-		mosquitto__message_cleanup(&message);
+		message__cleanup(&message);
 	}
 #endif
 	rc = mosquitto__send_pubcomp(mosq, mid);

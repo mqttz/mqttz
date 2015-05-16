@@ -82,18 +82,18 @@ int mosquitto__handle_publish(struct mosquitto *mosq)
 
 	rc = packet__read_string(&mosq->in_packet, &message->msg.topic);
 	if(rc){
-		mosquitto__message_cleanup(&message);
+		message__cleanup(&message);
 		return rc;
 	}
 	if(!strlen(message->msg.topic)){
-		mosquitto__message_cleanup(&message);
+		message__cleanup(&message);
 		return MOSQ_ERR_PROTOCOL;
 	}
 
 	if(message->msg.qos > 0){
 		rc = packet__read_uint16(&mosq->in_packet, &mid);
 		if(rc){
-			mosquitto__message_cleanup(&message);
+			message__cleanup(&message);
 			return rc;
 		}
 		message->msg.mid = (int)mid;
@@ -103,12 +103,12 @@ int mosquitto__handle_publish(struct mosquitto *mosq)
 	if(message->msg.payloadlen){
 		message->msg.payload = mosquitto__calloc(message->msg.payloadlen+1, sizeof(uint8_t));
 		if(!message->msg.payload){
-			mosquitto__message_cleanup(&message);
+			message__cleanup(&message);
 			return MOSQ_ERR_NOMEM;
 		}
 		rc = packet__read_bytes(&mosq->in_packet, message->msg.payload, message->msg.payloadlen);
 		if(rc){
-			mosquitto__message_cleanup(&message);
+			message__cleanup(&message);
 			return rc;
 		}
 	}
@@ -128,7 +128,7 @@ int mosquitto__handle_publish(struct mosquitto *mosq)
 				mosq->in_callback = false;
 			}
 			pthread_mutex_unlock(&mosq->callback_mutex);
-			mosquitto__message_cleanup(&message);
+			message__cleanup(&message);
 			return MOSQ_ERR_SUCCESS;
 		case 1:
 			rc = mosquitto__send_puback(mosq, message->msg.mid);
@@ -139,17 +139,17 @@ int mosquitto__handle_publish(struct mosquitto *mosq)
 				mosq->in_callback = false;
 			}
 			pthread_mutex_unlock(&mosq->callback_mutex);
-			mosquitto__message_cleanup(&message);
+			message__cleanup(&message);
 			return rc;
 		case 2:
 			rc = mosquitto__send_pubrec(mosq, message->msg.mid);
 			pthread_mutex_lock(&mosq->in_message_mutex);
 			message->state = mosq_ms_wait_for_pubrel;
-			mosquitto__message_queue(mosq, message, mosq_md_in);
+			message__queue(mosq, message, mosq_md_in);
 			pthread_mutex_unlock(&mosq->in_message_mutex);
 			return rc;
 		default:
-			mosquitto__message_cleanup(&message);
+			message__cleanup(&message);
 			return MOSQ_ERR_PROTOCOL;
 	}
 }
