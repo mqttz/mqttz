@@ -30,10 +30,10 @@ Contributors:
 #include "util_mosq.h"
 
 #ifdef WITH_BROKER
-#include "mosquitto_broker.h"
-#  ifdef WITH_SYS_TREE
-extern uint64_t g_pub_bytes_sent;
-#  endif
+#  include "mosquitto_broker.h"
+#  include "sys_tree.h"
+#else
+#  define G_PUB_BYTES_SENT_INC(A)
 #endif
 
 int mosquitto__send_pingreq(struct mosquitto *mosq)
@@ -155,9 +155,7 @@ int mosquitto__send_publish(struct mosquitto *mosq, uint16_t mid, const char *to
 						mapped_topic = topic_temp;
 					}
 					mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBLISH to %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", mosq->id, dup, qos, retain, mid, mapped_topic, (long)payloadlen);
-#ifdef WITH_SYS_TREE
-					g_pub_bytes_sent += payloadlen;
-#endif
+					G_PUB_BYTES_SENT_INC(payloadlen);
 					rc =  mosquitto__send_real_publish(mosq, mid, mapped_topic, payloadlen, payload, qos, retain, dup);
 					mosquitto__free(mapped_topic);
 					return rc;
@@ -167,9 +165,7 @@ int mosquitto__send_publish(struct mosquitto *mosq, uint16_t mid, const char *to
 	}
 #endif
 	mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBLISH to %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", mosq->id, dup, qos, retain, mid, topic, (long)payloadlen);
-#  ifdef WITH_SYS_TREE
-	g_pub_bytes_sent += payloadlen;
-#  endif
+	G_PUB_BYTES_SENT_INC(payloadlen);
 #else
 	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBLISH (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", mosq->id, dup, qos, retain, mid, topic, (long)payloadlen);
 #endif

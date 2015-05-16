@@ -17,13 +17,14 @@ Contributors:
 #include <stdio.h>
 #include <string.h>
 
-#include "config.h>
+#include "config.h"
 
 #include "mosquitto_broker.h"
 #include "mqtt3_protocol.h"
 #include "memory_mosq.h"
 #include "packet_mosq.h"
 #include "send_mosq.h"
+#include "sys_tree.h"
 #include "time_mosq.h"
 #include "tls_mosq.h"
 #include "util_mosq.h"
@@ -34,10 +35,6 @@ Contributors:
 
 #ifdef WITH_WEBSOCKETS
 #include <libwebsockets.h>
-#endif
-
-#ifdef WITH_SYS_TREE
-extern unsigned int g_connection_count;
 #endif
 
 static char *client_id_gen(struct mosquitto_db *db)
@@ -101,9 +98,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	X509_NAME_ENTRY *name_entry;
 #endif
 
-#ifdef WITH_SYS_TREE
-	g_connection_count++;
-#endif
+	G_CONNECTION_COUNT_INC();
 
 	/* Don't accept multiple CONNECT commands. */
 	if(context->state != mosq_cs_new){

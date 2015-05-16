@@ -34,19 +34,12 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "mosquitto_broker.h"
 #include "mqtt3_protocol.h"
 #include "memory_mosq.h"
+#include "sys_tree.h"
 
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/stat.h>
 
-#ifdef WITH_SYS_TREE
-extern uint64_t g_bytes_received;
-extern uint64_t g_bytes_sent;
-extern unsigned long g_msgs_received;
-extern unsigned long g_msgs_sent;
-extern unsigned long g_pub_msgs_received;
-extern unsigned long g_pub_msgs_sent;
-#endif
 extern struct mosquitto_db int_db;
 
 static int callback_mqtt(struct libwebsocket_context *context,
@@ -258,9 +251,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 			mosq = u->mosq;
 			pos = 0;
 			buf = (uint8_t *)in;
-#ifdef WITH_SYS_TREE
-			g_bytes_received += len;
-#endif
+			G_BYTES_RECEIVED_INC(len);
 			while(pos < len){
 				if(!mosq->in_packet.command){
 					mosq->in_packet.command = buf[pos];
@@ -315,10 +306,11 @@ static int callback_mqtt(struct libwebsocket_context *context,
 
 				/* All data for this packet is read. */
 				mosq->in_packet.pos = 0;
+
 #ifdef WITH_SYS_TREE
-				g_msgs_received++;
+				G_MSGS_RECEIVED_INC();
 				if(((mosq->in_packet.command)&0xF5) == PUBLISH){
-					g_pub_msgs_received++;
+					G_PUB_MSGS_RECEIVED_INC();
 				}
 #endif
 				rc = mqtt3_packet_handle(db, mosq);

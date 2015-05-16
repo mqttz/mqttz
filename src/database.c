@@ -22,13 +22,11 @@ Contributors:
 #include "mosquitto_broker.h"
 #include "memory_mosq.h"
 #include "send_mosq.h"
+#include "sys_tree.h"
 #include "time_mosq.h"
 
 static int max_inflight = 20;
 static int max_queued = 100;
-#ifdef WITH_SYS_TREE
-extern unsigned long g_msgs_dropped;
-#endif
 
 int mqtt3_db_open(struct mqtt3_config *config, struct mosquitto_db *db)
 {
@@ -359,16 +357,12 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 						"Outgoing messages are being dropped for client %s.",
 						context->id);
 			}
-#ifdef WITH_SYS_TREE
-			g_msgs_dropped++;
-#endif
+			G_MSGS_DROPPED_INC();
 			return 2;
 		}
 	}else{
 		if(max_queued > 0 && context->msg_count12 >= max_queued){
-#ifdef WITH_SYS_TREE
-			g_msgs_dropped++;
-#endif
+			G_MSGS_DROPPED_INC();
 			if(context->is_dropping == false){
 				context->is_dropping = true;
 				mosquitto__log_printf(NULL, MOSQ_LOG_NOTICE,

@@ -19,14 +19,6 @@ Contributors:
 
 #ifdef WITH_BROKER
 #  include "mosquitto_broker.h"
-#  ifdef WITH_SYS_TREE
-   extern uint64_t g_bytes_received;
-   extern uint64_t g_bytes_sent;
-   extern unsigned long g_msgs_received;
-   extern unsigned long g_msgs_sent;
-   extern unsigned long g_pub_msgs_received;
-   extern unsigned long g_pub_msgs_sent;
-#  endif
 #  ifdef WITH_WEBSOCKETS
 #    include <libwebsockets.h>
 #  endif
@@ -39,6 +31,14 @@ Contributors:
 #include "net_mosq.h"
 #include "packet_mosq.h"
 #include "read_handle.h"
+#ifdef WITH_BROKER
+#  include "sys_tree.h"
+#else
+#  define G_BYTES_RECEIVED_INC(A)
+#  define G_BYTES_SENT_INC(A)
+#  define G_MSGS_SENT_INC(A)
+#  define G_PUB_MSGS_SENT_INC(A)
+#endif
 
 void mosquitto__packet_cleanup(struct mosquitto__packet *packet)
 {
@@ -239,9 +239,7 @@ int mosquitto__packet_write(struct mosquitto *mosq)
 		while(packet->to_process > 0){
 			write_length = mosquitto__net_write(mosq, &(packet->payload[packet->pos]), packet->to_process);
 			if(write_length > 0){
-#if defined(WITH_BROKER) && defined(WITH_SYS_TREE)
-				g_bytes_sent += write_length;
-#endif
+				G_BYTES_SENT_INC(write_length);
 				packet->to_process -= write_length;
 				packet->pos += write_length;
 			}else{
@@ -263,15 +261,10 @@ int mosquitto__packet_write(struct mosquitto *mosq)
 			}
 		}
 
-#ifdef WITH_BROKER
-#  ifdef WITH_SYS_TREE
-		g_msgs_sent++;
+		G_MSGS_SENT_INC(1);
 		if(((packet->command)&0xF6) == PUBLISH){
-			g_pub_msgs_sent++;
-		}
-#  endif
-#else
-		if(((packet->command)&0xF6) == PUBLISH){
+			G_PUB_MSGS_SENT_INC(1);
+#ifndef WITH_BROKER
 			pthread_mutex_lock(&mosq->callback_mutex);
 			if(mosq->on_publish){
 				/* This is a QoS=0 message */
@@ -315,8 +308,8 @@ int mosquitto__packet_write(struct mosquitto *mosq)
 			pthread_mutex_unlock(&mosq->callback_mutex);
 			pthread_mutex_unlock(&mosq->current_out_packet_mutex);
 			return MOSQ_ERR_SUCCESS;
-		}
 #endif
+		}
 
 		/* Free data and reset values */
 		pthread_mutex_lock(&mosq->out_packet_mutex);
@@ -376,9 +369,7 @@ int mosquitto__packet_read(struct mosquitto *mosq)
 		if(read_length == 1){
 			mosq->in_packet.command = byte;
 #ifdef WITH_BROKER
-#  ifdef WITH_SYS_TREE
-			g_bytes_received++;
-#  endif
+			G_BYTES_RECEIVED_INC(1);
 			/* Clients must send CONNECT as their first command. */
 			if(!(mosq->bridge) && mosq->state == mosq_cs_new && (byte&0xF0) != CONNECT) return MOSQ_ERR_PROTOCOL;
 #endif
@@ -418,9 +409,7 @@ int mosquitto__packet_read(struct mosquitto *mosq)
 				 */
 				if(mosq->in_packet.remaining_count < -4) return MOSQ_ERR_PROTOCOL;
 
-#if defined(WITH_BROKER) && defined(WITH_SYS_TREE)
-				g_bytes_received++;
-#endif
+				G_BYTES_RECEIVED_INC(1);
 				mosq->in_packet.remaining_length += (byte & 127) * mosq->in_packet.remaining_mult;
 				mosq->in_packet.remaining_mult *= 128;
 			}else{
@@ -453,9 +442,7 @@ int mosquitto__packet_read(struct mosquitto *mosq)
 	while(mosq->in_packet.to_process>0){
 		read_length = mosquitto__net_read(mosq, &(mosq->in_packet.payload[mosq->in_packet.pos]), mosq->in_packet.to_process);
 		if(read_length > 0){
-#if defined(WITH_BROKER) && defined(WITH_SYS_TREE)
-			g_bytes_received += read_length;
-#endif
+			G_BYTES_RECEIVED_INC(read_length);
 			mosq->in_packet.to_process -= read_length;
 			mosq->in_packet.pos += read_length;
 		}else{
@@ -488,12 +475,10 @@ int mosquitto__packet_read(struct mosquitto *mosq)
 	/* All data for this packet is read. */
 	mosq->in_packet.pos = 0;
 #ifdef WITH_BROKER
-#  ifdef WITH_SYS_TREE
-	g_msgs_received++;
+	G_MSGS_RECEIVED_INC(1);
 	if(((mosq->in_packet.command)&0xF5) == PUBLISH){
-		g_pub_msgs_received++;
+		G_PUB_MSGS_RECEIVED_INC(1);
 	}
-#  endif
 	rc = mqtt3_packet_handle(db, mosq);
 #else
 	rc = mosquitto__packet_handle(mosq);

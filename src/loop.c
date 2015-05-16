@@ -44,6 +44,7 @@ Contributors:
 #include "memory_mosq.h"
 #include "packet_mosq.h"
 #include "send_mosq.h"
+#include "sys_tree.h"
 #include "time_mosq.h"
 #include "util_mosq.h"
 
@@ -53,9 +54,6 @@ extern bool flag_db_backup;
 #endif
 extern bool flag_tree_print;
 extern int run;
-#ifdef WITH_SYS_TREE
-extern int g_clients_expired;
-#endif
 
 static void loop_handle_errors(struct mosquitto_db *db, struct pollfd *pollfds);
 static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pollfds);
@@ -296,9 +294,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 							id = "<unknown>";
 						}
 						mosquitto__log_printf(NULL, MOSQ_LOG_NOTICE, "Expiring persistent client %s due to timeout.", id);
-#ifdef WITH_SYS_TREE
-						g_clients_expired++;
-#endif
+						G_CLIENTS_EXPIRED_INC();
 						context->clean_session = true;
 						context->state = mosq_cs_expiring;
 						do_disconnect(db, context);
