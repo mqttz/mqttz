@@ -31,9 +31,9 @@ int mosquitto__handle_connack(struct mosquitto *mosq)
 
 	assert(mosq);
 	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s received CONNACK", mosq->id);
-	rc = mosquitto__read_byte(&mosq->in_packet, &byte); // Reserved byte, not used
+	rc = packet__read_byte(&mosq->in_packet, &byte); // Reserved byte, not used
 	if(rc) return rc;
-	rc = mosquitto__read_byte(&mosq->in_packet, &result);
+	rc = packet__read_byte(&mosq->in_packet, &result);
 	if(rc) return rc;
 	pthread_mutex_lock(&mosq->callback_mutex);
 	if(mosq->on_connect){

@@ -38,8 +38,8 @@ int mqtt3_handle_connack(struct mosquitto_db *db, struct mosquitto *context)
 		return MOSQ_ERR_INVAL;
 	}
 	mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Received CONNACK on connection %s.", context->id);
-	if(mosquitto__read_byte(&context->in_packet, &byte)) return 1; // Reserved byte, not used
-	if(mosquitto__read_byte(&context->in_packet, &rc)) return 1;
+	if(packet__read_byte(&context->in_packet, &byte)) return 1; // Reserved byte, not used
+	if(packet__read_byte(&context->in_packet, &rc)) return 1;
 	switch(rc){
 		case CONNACK_ACCEPTED:
 			if(context->bridge){

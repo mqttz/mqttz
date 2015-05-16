@@ -89,7 +89,7 @@ int mosquitto__send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 
 	packet->command = CONNECT;
 	packet->remaining_length = headerlen+payloadlen;
-	rc = mosquitto__packet_alloc(packet);
+	rc = packet__alloc(packet);
 	if(rc){
 		mosquitto__free(packet);
 		return rc;
@@ -97,9 +97,9 @@ int mosquitto__send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 
 	/* Variable header */
 	if(version == MQTT_PROTOCOL_V31){
-		mosquitto__write_string(packet, PROTOCOL_NAME_v31, strlen(PROTOCOL_NAME_v31));
+		packet__write_string(packet, PROTOCOL_NAME_v31, strlen(PROTOCOL_NAME_v31));
 	}else if(version == MQTT_PROTOCOL_V311){
-		mosquitto__write_string(packet, PROTOCOL_NAME_v311, strlen(PROTOCOL_NAME_v311));
+		packet__write_string(packet, PROTOCOL_NAME_v311, strlen(PROTOCOL_NAME_v311));
 	}else{
 		mosquitto__free(packet);
 		return MOSQ_ERR_INVAL;
@@ -110,7 +110,7 @@ int mosquitto__send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 	}else{
 	}
 #endif
-	mosquitto__write_byte(packet, version);
+	packet__write_byte(packet, version);
 	byte = (clean_session&0x1)<<1;
 	if(will){
 		byte = byte | ((mosq->will->retain&0x1)<<5) | ((mosq->will->qos&0x3)<<3) | ((will&0x1)<<2);
@@ -121,19 +121,19 @@ int mosquitto__send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 			byte = byte | 0x1<<6;
 		}
 	}
-	mosquitto__write_byte(packet, byte);
-	mosquitto__write_uint16(packet, keepalive);
+	packet__write_byte(packet, byte);
+	packet__write_uint16(packet, keepalive);
 
 	/* Payload */
-	mosquitto__write_string(packet, clientid, strlen(clientid));
+	packet__write_string(packet, clientid, strlen(clientid));
 	if(will){
-		mosquitto__write_string(packet, mosq->will->topic, strlen(mosq->will->topic));
-		mosquitto__write_string(packet, (const char *)mosq->will->payload, mosq->will->payloadlen);
+		packet__write_string(packet, mosq->will->topic, strlen(mosq->will->topic));
+		packet__write_string(packet, (const char *)mosq->will->payload, mosq->will->payloadlen);
 	}
 	if(username){
-		mosquitto__write_string(packet, username, strlen(username));
+		packet__write_string(packet, username, strlen(username));
 		if(password){
-			mosquitto__write_string(packet, password, strlen(password));
+			packet__write_string(packet, password, strlen(password));
 		}
 	}
 
@@ -145,7 +145,7 @@ int mosquitto__send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 #else
 	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending CONNECT", clientid);
 #endif
-	return mosquitto__packet_queue(mosq, packet);
+	return packet__queue(mosq, packet);
 }
 
 int mosquitto__send_disconnect(struct mosquitto *mosq)
@@ -179,7 +179,7 @@ int mosquitto__send_subscribe(struct mosquitto *mosq, int *mid, const char *topi
 
 	packet->command = SUBSCRIBE | (1<<1);
 	packet->remaining_length = packetlen;
-	rc = mosquitto__packet_alloc(packet);
+	rc = packet__alloc(packet);
 	if(rc){
 		mosquitto__free(packet);
 		return rc;
@@ -188,11 +188,11 @@ int mosquitto__send_subscribe(struct mosquitto *mosq, int *mid, const char *topi
 	/* Variable header */
 	local_mid = mosquitto__mid_generate(mosq);
 	if(mid) *mid = (int)local_mid;
-	mosquitto__write_uint16(packet, local_mid);
+	packet__write_uint16(packet, local_mid);
 
 	/* Payload */
-	mosquitto__write_string(packet, topic, strlen(topic));
-	mosquitto__write_byte(packet, topic_qos);
+	packet__write_string(packet, topic, strlen(topic));
+	packet__write_byte(packet, topic_qos);
 
 #ifdef WITH_BROKER
 # ifdef WITH_BRIDGE
@@ -202,7 +202,7 @@ int mosquitto__send_subscribe(struct mosquitto *mosq, int *mid, const char *topi
 	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending SUBSCRIBE (Mid: %d, Topic: %s, QoS: %d)", mosq->id, local_mid, topic, topic_qos);
 #endif
 
-	return mosquitto__packet_queue(mosq, packet);
+	return packet__queue(mosq, packet);
 }
 
 
@@ -224,7 +224,7 @@ int mosquitto__send_unsubscribe(struct mosquitto *mosq, int *mid, const char *to
 
 	packet->command = UNSUBSCRIBE | (1<<1);
 	packet->remaining_length = packetlen;
-	rc = mosquitto__packet_alloc(packet);
+	rc = packet__alloc(packet);
 	if(rc){
 		mosquitto__free(packet);
 		return rc;
@@ -233,10 +233,10 @@ int mosquitto__send_unsubscribe(struct mosquitto *mosq, int *mid, const char *to
 	/* Variable header */
 	local_mid = mosquitto__mid_generate(mosq);
 	if(mid) *mid = (int)local_mid;
-	mosquitto__write_uint16(packet, local_mid);
+	packet__write_uint16(packet, local_mid);
 
 	/* Payload */
-	mosquitto__write_string(packet, topic, strlen(topic));
+	packet__write_string(packet, topic, strlen(topic));
 
 #ifdef WITH_BROKER
 # ifdef WITH_BRIDGE
@@ -245,6 +245,6 @@ int mosquitto__send_unsubscribe(struct mosquitto *mosq, int *mid, const char *to
 #else
 	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending UNSUBSCRIBE (Mid: %d, Topic: %s)", mosq->id, local_mid, topic);
 #endif
-	return mosquitto__packet_queue(mosq, packet);
+	return packet__queue(mosq, packet);
 }
 

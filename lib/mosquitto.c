@@ -169,7 +169,7 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 		}
 	}
 	mosq->in_packet.payload = NULL;
-	mosquitto__packet_cleanup(&mosq->in_packet);
+	packet__cleanup(&mosq->in_packet);
 	mosq->out_packet = NULL;
 	mosq->current_out_packet = NULL;
 	mosq->last_msg_in = mosquitto_time();
@@ -357,11 +357,11 @@ void mosquitto__destroy(struct mosquitto *mosq)
 			mosq->out_packet = mosq->out_packet->next;
 		}
 
-		mosquitto__packet_cleanup(packet);
+		packet__cleanup(packet);
 		mosquitto__free(packet);
 	}
 
-	mosquitto__packet_cleanup(&mosq->in_packet);
+	packet__cleanup(&mosq->in_packet);
 	if(mosq->sockpairR != INVALID_SOCKET){
 		COMPAT_CLOSE(mosq->sockpairR);
 		mosq->sockpairR = INVALID_SOCKET;
@@ -482,7 +482,7 @@ static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking)
 
 	mosq->ping_t = 0;
 
-	mosquitto__packet_cleanup(&mosq->in_packet);
+	packet__cleanup(&mosq->in_packet);
 		
 	pthread_mutex_lock(&mosq->current_out_packet_mutex);
 	pthread_mutex_lock(&mosq->out_packet_mutex);
@@ -500,7 +500,7 @@ static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking)
 			mosq->out_packet = mosq->out_packet->next;
 		}
 
-		mosquitto__packet_cleanup(packet);
+		packet__cleanup(packet);
 		mosquitto__free(packet);
 	}
 	pthread_mutex_unlock(&mosq->out_packet_mutex);
@@ -1134,7 +1134,7 @@ int mosquitto_loop_read(struct mosquitto *mosq, int max_packets)
 		}else
 #endif
 		{
-			rc = mosquitto__packet_read(mosq);
+			rc = packet__read(mosq);
 		}
 		if(rc || errno == EAGAIN || errno == COMPAT_EWOULDBLOCK){
 			return mosquitto__loop_rc_handle(mosq, rc);
@@ -1162,7 +1162,7 @@ int mosquitto_loop_write(struct mosquitto *mosq, int max_packets)
 	 * have QoS > 0. We should try to deal with that many in this loop in order
 	 * to keep up. */
 	for(i=0; i<max_packets; i++){
-		rc = mosquitto__packet_write(mosq);
+		rc = packet__write(mosq);
 		if(rc || errno == EAGAIN || errno == COMPAT_EWOULDBLOCK){
 			return mosquitto__loop_rc_handle(mosq, rc);
 		}

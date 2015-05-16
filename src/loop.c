@@ -481,7 +481,7 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 					continue;
 				}
 			}
-			if(mosquitto__packet_write(context)){
+			if(packet__write(context)){
 				do_disconnect(db, context);
 				continue;
 			}
@@ -499,7 +499,7 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 #else
 		if(pollfds[context->pollfd_index].revents & POLLIN){
 #endif
-			if(mosquitto__packet_read(db, context)){
+			if(packet__read(db, context)){
 				do_disconnect(db, context);
 				continue;
 			}

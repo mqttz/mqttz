@@ -54,7 +54,7 @@ struct mosquitto *mqtt3_context_init(struct mosquitto_db *db, int sock)
 	context->is_bridge = false;
 
 	context->in_packet.payload = NULL;
-	mosquitto__packet_cleanup(&context->in_packet);
+	packet__cleanup(&context->in_packet);
 	context->out_packet = NULL;
 	context->current_out_packet = NULL;
 
@@ -152,14 +152,14 @@ void mqtt3_context_cleanup(struct mosquitto_db *db, struct mosquitto *context, b
 		mosquitto__free(context->id);
 		context->id = NULL;
 	}
-	mosquitto__packet_cleanup(&(context->in_packet));
+	packet__cleanup(&(context->in_packet));
 	if(context->current_out_packet){
-		mosquitto__packet_cleanup(context->current_out_packet);
+		packet__cleanup(context->current_out_packet);
 		mosquitto__free(context->current_out_packet);
 		context->current_out_packet = NULL;
 	}
 	while(context->out_packet){
-		mosquitto__packet_cleanup(context->out_packet);
+		packet__cleanup(context->out_packet);
 		packet = context->out_packet;
 		context->out_packet = context->out_packet->next;
 		mosquitto__free(packet);

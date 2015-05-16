@@ -34,6 +34,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "mosquitto_broker.h"
 #include "mqtt3_protocol.h"
 #include "memory_mosq.h"
+#include "packet_mosq.h"
 #include "sys_tree.h"
 
 #include <stdlib.h>
@@ -230,7 +231,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 					}
 				}
 
-				mosquitto__packet_cleanup(packet);
+				packet__cleanup(packet);
 				mosquitto__free(packet);
 
 				mosq->last_msg_out = mosquitto_time();
@@ -308,15 +309,15 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				mosq->in_packet.pos = 0;
 
 #ifdef WITH_SYS_TREE
-				G_MSGS_RECEIVED_INC();
+				G_MSGS_RECEIVED_INC(1);
 				if(((mosq->in_packet.command)&0xF5) == PUBLISH){
-					G_PUB_MSGS_RECEIVED_INC();
+					G_PUB_MSGS_RECEIVED_INC(1);
 				}
 #endif
 				rc = mqtt3_packet_handle(db, mosq);
 
 				/* Free data and reset values */
-				mosquitto__packet_cleanup(&mosq->in_packet);
+				packet__cleanup(&mosq->in_packet);
 
 				mosq->last_msg_in = mosquitto_time();
 
@@ -514,7 +515,7 @@ static void log_wrap(int level, const char *line)
 	mosquitto__log_printf(NULL, MOSQ_LOG_WEBSOCKETS, "%s", l);
 }
 
-struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listener, int log_level)
+struct libwebsocket_context *mosq_websockets_init(struct mqtt3__listener *listener, int log_level)
 {
 	struct lws_context_creation_info info;
 	struct libwebsocket_protocols *p;

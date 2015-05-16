@@ -80,7 +80,7 @@ int mosquitto__handle_publish(struct mosquitto *mosq)
 	message->msg.qos = (header & 0x06)>>1;
 	message->msg.retain = (header & 0x01);
 
-	rc = mosquitto__read_string(&mosq->in_packet, &message->msg.topic);
+	rc = packet__read_string(&mosq->in_packet, &message->msg.topic);
 	if(rc){
 		mosquitto__message_cleanup(&message);
 		return rc;
@@ -91,7 +91,7 @@ int mosquitto__handle_publish(struct mosquitto *mosq)
 	}
 
 	if(message->msg.qos > 0){
-		rc = mosquitto__read_uint16(&mosq->in_packet, &mid);
+		rc = packet__read_uint16(&mosq->in_packet, &mid);
 		if(rc){
 			mosquitto__message_cleanup(&message);
 			return rc;
@@ -106,7 +106,7 @@ int mosquitto__handle_publish(struct mosquitto *mosq)
 			mosquitto__message_cleanup(&message);
 			return MOSQ_ERR_NOMEM;
 		}
-		rc = mosquitto__read_bytes(&mosq->in_packet, message->msg.payload, message->msg.payloadlen);
+		rc = packet__read_bytes(&mosq->in_packet, message->msg.payload, message->msg.payloadlen);
 		if(rc){
 			mosquitto__message_cleanup(&message);
 			return rc;

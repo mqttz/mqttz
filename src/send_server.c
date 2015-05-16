@@ -40,7 +40,7 @@ int mosquitto__send_connack(struct mosquitto *context, int ack, int result)
 
 	packet->command = CONNACK;
 	packet->remaining_length = 2;
-	rc = mosquitto__packet_alloc(packet);
+	rc = packet__alloc(packet);
 	if(rc){
 		mosquitto__free(packet);
 		return rc;
@@ -48,7 +48,7 @@ int mosquitto__send_connack(struct mosquitto *context, int ack, int result)
 	packet->payload[packet->pos+0] = ack;
 	packet->payload[packet->pos+1] = result;
 
-	return mosquitto__packet_queue(context, packet);
+	return packet__queue(context, packet);
 }
 
 int mosquitto__send_suback(struct mosquitto *context, uint16_t mid, uint32_t payloadlen, const void *payload)
@@ -63,15 +63,15 @@ int mosquitto__send_suback(struct mosquitto *context, uint16_t mid, uint32_t pay
 
 	packet->command = SUBACK;
 	packet->remaining_length = 2+payloadlen;
-	rc = mosquitto__packet_alloc(packet);
+	rc = packet__alloc(packet);
 	if(rc){
 		mosquitto__free(packet);
 		return rc;
 	}
-	mosquitto__write_uint16(packet, mid);
+	packet__write_uint16(packet, mid);
 	if(payloadlen){
-		mosquitto__write_bytes(packet, payload, payloadlen);
+		packet__write_bytes(packet, payload, payloadlen);
 	}
 
-	return mosquitto__packet_queue(context, packet);
+	return packet__queue(context, packet);
 }

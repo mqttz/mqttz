@@ -106,7 +106,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 		goto handle_connect_error;
 	}
 
-	if(mosquitto__read_string(&context->in_packet, &protocol_name)){
+	if(packet__read_string(&context->in_packet, &protocol_name)){
 		rc = 1;
 		goto handle_connect_error;
 		return 1;
@@ -116,7 +116,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 		goto handle_connect_error;
 		return 3;
 	}
-	if(mosquitto__read_byte(&context->in_packet, &protocol_version)){
+	if(packet__read_byte(&context->in_packet, &protocol_version)){
 		rc = 1;
 		goto handle_connect_error;
 		return 1;
@@ -162,7 +162,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 	mosquitto__free(protocol_name);
 
-	if(mosquitto__read_byte(&context->in_packet, &connect_flags)){
+	if(packet__read_byte(&context->in_packet, &connect_flags)){
 		rc = 1;
 		goto handle_connect_error;
 	}
@@ -179,12 +179,12 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	password_flag = connect_flags & 0x40;
 	username_flag = connect_flags & 0x80;
 
-	if(mosquitto__read_uint16(&context->in_packet, &(context->keepalive))){
+	if(packet__read_uint16(&context->in_packet, &(context->keepalive))){
 		rc = 1;
 		goto handle_connect_error;
 	}
 
-	if(mosquitto__read_string(&context->in_packet, &client_id)){
+	if(packet__read_string(&context->in_packet, &client_id)){
 		rc = 1;
 		goto handle_connect_error;
 	}
@@ -228,7 +228,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 			rc = MOSQ_ERR_NOMEM;
 			goto handle_connect_error;
 		}
-		if(mosquitto__read_string(&context->in_packet, &will_topic)){
+		if(packet__read_string(&context->in_packet, &will_topic)){
 			rc = 1;
 			goto handle_connect_error;
 		}
@@ -241,7 +241,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 			goto handle_connect_error;
 		}
 
-		if(mosquitto__read_uint16(&context->in_packet, &will_payloadlen)){
+		if(packet__read_uint16(&context->in_packet, &will_payloadlen)){
 			rc = 1;
 			goto handle_connect_error;
 		}
@@ -252,7 +252,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 				goto handle_connect_error;
 			}
 
-			rc = mosquitto__read_bytes(&context->in_packet, will_payload, will_payloadlen);
+			rc = packet__read_bytes(&context->in_packet, will_payload, will_payloadlen);
 			if(rc){
 				rc = 1;
 				goto handle_connect_error;
@@ -268,10 +268,10 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	if(username_flag){
-		rc = mosquitto__read_string(&context->in_packet, &username);
+		rc = packet__read_string(&context->in_packet, &username);
 		if(rc == MOSQ_ERR_SUCCESS){
 			if(password_flag){
-				rc = mosquitto__read_string(&context->in_packet, &password);
+				rc = packet__read_string(&context->in_packet, &password);
 				if(rc == MOSQ_ERR_NOMEM){
 					rc = MOSQ_ERR_NOMEM;
 					goto handle_connect_error;
@@ -608,11 +608,11 @@ int mqtt3_handle_subscribe(struct mosquitto_db *db, struct mosquitto *context)
 			return MOSQ_ERR_PROTOCOL;
 		}
 	}
-	if(mosquitto__read_uint16(&context->in_packet, &mid)) return 1;
+	if(packet__read_uint16(&context->in_packet, &mid)) return 1;
 
 	while(context->in_packet.pos < context->in_packet.remaining_length){
 		sub = NULL;
-		if(mosquitto__read_string(&context->in_packet, &sub)){
+		if(packet__read_string(&context->in_packet, &sub)){
 			if(payload) mosquitto__free(payload);
 			return 1;
 		}
@@ -633,7 +633,7 @@ int mqtt3_handle_subscribe(struct mosquitto_db *db, struct mosquitto *context)
 				return 1;
 			}
 
-			if(mosquitto__read_byte(&context->in_packet, &qos)){
+			if(packet__read_byte(&context->in_packet, &qos)){
 				mosquitto__free(sub);
 				if(payload) mosquitto__free(payload);
 				return 1;
@@ -743,11 +743,11 @@ int mqtt3_handle_unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 			return MOSQ_ERR_PROTOCOL;
 		}
 	}
-	if(mosquitto__read_uint16(&context->in_packet, &mid)) return 1;
+	if(packet__read_uint16(&context->in_packet, &mid)) return 1;
 
 	while(context->in_packet.pos < context->in_packet.remaining_length){
 		sub = NULL;
-		if(mosquitto__read_string(&context->in_packet, &sub)){
+		if(packet__read_string(&context->in_packet, &sub)){
 			return 1;
 		}
 

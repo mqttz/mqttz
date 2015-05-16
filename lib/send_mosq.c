@@ -208,7 +208,7 @@ int mosquitto__send_command_with_mid(struct mosquitto *mosq, uint8_t command, ui
 		packet->command |= 8;
 	}
 	packet->remaining_length = 2;
-	rc = mosquitto__packet_alloc(packet);
+	rc = packet__alloc(packet);
 	if(rc){
 		mosquitto__free(packet);
 		return rc;
@@ -217,7 +217,7 @@ int mosquitto__send_command_with_mid(struct mosquitto *mosq, uint8_t command, ui
 	packet->payload[packet->pos+0] = MOSQ_MSB(mid);
 	packet->payload[packet->pos+1] = MOSQ_LSB(mid);
 
-	return mosquitto__packet_queue(mosq, packet);
+	return packet__queue(mosq, packet);
 }
 
 /* For DISCONNECT, PINGREQ and PINGRESP */
@@ -233,13 +233,13 @@ int mosquitto__send_simple_command(struct mosquitto *mosq, uint8_t command)
 	packet->command = command;
 	packet->remaining_length = 0;
 
-	rc = mosquitto__packet_alloc(packet);
+	rc = packet__alloc(packet);
 	if(rc){
 		mosquitto__free(packet);
 		return rc;
 	}
 
-	return mosquitto__packet_queue(mosq, packet);
+	return packet__queue(mosq, packet);
 }
 
 int mosquitto__send_real_publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint32_t payloadlen, const void *payload, int qos, bool retain, bool dup)
@@ -259,21 +259,21 @@ int mosquitto__send_real_publish(struct mosquitto *mosq, uint16_t mid, const cha
 	packet->mid = mid;
 	packet->command = PUBLISH | ((dup&0x1)<<3) | (qos<<1) | retain;
 	packet->remaining_length = packetlen;
-	rc = mosquitto__packet_alloc(packet);
+	rc = packet__alloc(packet);
 	if(rc){
 		mosquitto__free(packet);
 		return rc;
 	}
 	/* Variable header (topic string) */
-	mosquitto__write_string(packet, topic, strlen(topic));
+	packet__write_string(packet, topic, strlen(topic));
 	if(qos > 0){
-		mosquitto__write_uint16(packet, mid);
+		packet__write_uint16(packet, mid);
 	}
 
 	/* Payload */
 	if(payloadlen){
-		mosquitto__write_bytes(packet, payload, payloadlen);
+		packet__write_bytes(packet, payload, payloadlen);
 	}
 
-	return mosquitto__packet_queue(mosq, packet);
+	return packet__queue(mosq, packet);
 }

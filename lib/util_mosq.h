@@ -25,7 +25,6 @@ Contributors:
 #  include "mosquitto_broker.h"
 #endif
 
-int mosquitto__packet_alloc(struct mosquitto__packet *packet);
 #ifdef WITH_BROKER
 void mosquitto__check_keepalive(struct mosquitto_db *db, struct mosquitto *mosq);
 #else

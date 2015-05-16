@@ -23,24 +23,25 @@ Contributors:
 struct mosquitto_db;
 #endif
 
-void mosquitto__packet_cleanup(struct mosquitto__packet *packet);
-int mosquitto__packet_queue(struct mosquitto *mosq, struct mosquitto__packet *packet);
+int packet__alloc(struct mosquitto__packet *packet);
+void packet__cleanup(struct mosquitto__packet *packet);
+int packet__queue(struct mosquitto *mosq, struct mosquitto__packet *packet);
 
-int mosquitto__read_byte(struct mosquitto__packet *packet, uint8_t *byte);
-int mosquitto__read_bytes(struct mosquitto__packet *packet, void *bytes, uint32_t count);
-int mosquitto__read_string(struct mosquitto__packet *packet, char **str);
-int mosquitto__read_uint16(struct mosquitto__packet *packet, uint16_t *word);
+int packet__read_byte(struct mosquitto__packet *packet, uint8_t *byte);
+int packet__read_bytes(struct mosquitto__packet *packet, void *bytes, uint32_t count);
+int packet__read_string(struct mosquitto__packet *packet, char **str);
+int packet__read_uint16(struct mosquitto__packet *packet, uint16_t *word);
 
-void mosquitto__write_byte(struct mosquitto__packet *packet, uint8_t byte);
-void mosquitto__write_bytes(struct mosquitto__packet *packet, const void *bytes, uint32_t count);
-void mosquitto__write_string(struct mosquitto__packet *packet, const char *str, uint16_t length);
-void mosquitto__write_uint16(struct mosquitto__packet *packet, uint16_t word);
+void packet__write_byte(struct mosquitto__packet *packet, uint8_t byte);
+void packet__write_bytes(struct mosquitto__packet *packet, const void *bytes, uint32_t count);
+void packet__write_string(struct mosquitto__packet *packet, const char *str, uint16_t length);
+void packet__write_uint16(struct mosquitto__packet *packet, uint16_t word);
 
-int mosquitto__packet_write(struct mosquitto *mosq);
+int packet__write(struct mosquitto *mosq);
 #ifdef WITH_BROKER
-int mosquitto__packet_read(struct mosquitto_db *db, struct mosquitto *mosq);
+int packet__read(struct mosquitto_db *db, struct mosquitto *mosq);
 #else
-int mosquitto__packet_read(struct mosquitto *mosq);
+int packet__read(struct mosquitto *mosq);
 #endif
 
 #endif

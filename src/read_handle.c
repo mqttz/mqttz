@@ -99,7 +99,7 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 	}
 	retain = (header & 0x01);
 
-	if(mosquitto__read_string(&context->in_packet, &topic)) return 1;
+	if(packet__read_string(&context->in_packet, &topic)) return 1;
 	if(strlen(topic) == 0){
 		/* Invalid publish topic, disconnect client. */
 		mosquitto__free(topic);
@@ -160,7 +160,7 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	if(qos > 0){
-		if(mosquitto__read_uint16(&context->in_packet, &mid)){
+		if(packet__read_uint16(&context->in_packet, &mid)){
 			mosquitto__free(topic);
 			return 1;
 		}
@@ -192,7 +192,7 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 			mosquitto__free(topic);
 			return 1;
 		}
-		if(mosquitto__read_bytes(&context->in_packet, payload, payloadlen)){
+		if(packet__read_bytes(&context->in_packet, payload, payloadlen)){
 			mosquitto__free(topic);
 			mosquitto__free(payload);
 			return 1;

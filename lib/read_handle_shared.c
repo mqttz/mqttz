@@ -65,7 +65,7 @@ int mosquitto__handle_pubackcomp(struct mosquitto *mosq, const char *type)
 	int rc;
 
 	assert(mosq);
-	rc = mosquitto__read_uint16(&mosq->in_packet, &mid);
+	rc = packet__read_uint16(&mosq->in_packet, &mid);
 	if(rc) return rc;
 #ifdef WITH_BROKER
 	mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Received %s from %s (Mid: %d)", type, mosq->id, mid);
@@ -98,7 +98,7 @@ int mosquitto__handle_pubrec(struct mosquitto *mosq)
 	int rc;
 
 	assert(mosq);
-	rc = mosquitto__read_uint16(&mosq->in_packet, &mid);
+	rc = packet__read_uint16(&mosq->in_packet, &mid);
 	if(rc) return rc;
 #ifdef WITH_BROKER
 	mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Received PUBREC from %s (Mid: %d)", mosq->id, mid);
@@ -130,7 +130,7 @@ int mosquitto__handle_pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 			return MOSQ_ERR_PROTOCOL;
 		}
 	}
-	rc = mosquitto__read_uint16(&mosq->in_packet, &mid);
+	rc = packet__read_uint16(&mosq->in_packet, &mid);
 	if(rc) return rc;
 #ifdef WITH_BROKER
 	mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Received PUBREL from %s (Mid: %d)", mosq->id, mid);
@@ -176,14 +176,14 @@ int mosquitto__handle_suback(struct mosquitto *mosq)
 #else
 	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s received SUBACK", mosq->id);
 #endif
-	rc = mosquitto__read_uint16(&mosq->in_packet, &mid);
+	rc = packet__read_uint16(&mosq->in_packet, &mid);
 	if(rc) return rc;
 
 	qos_count = mosq->in_packet.remaining_length - mosq->in_packet.pos;
 	granted_qos = mosquitto__malloc(qos_count*sizeof(int));
 	if(!granted_qos) return MOSQ_ERR_NOMEM;
 	while(mosq->in_packet.pos < mosq->in_packet.remaining_length){
-		rc = mosquitto__read_byte(&mosq->in_packet, &qos);
+		rc = packet__read_byte(&mosq->in_packet, &qos);
 		if(rc){
 			mosquitto__free(granted_qos);
 			return rc;
@@ -216,7 +216,7 @@ int mosquitto__handle_unsuback(struct mosquitto *mosq)
 #else
 	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s received UNSUBACK", mosq->id);
 #endif
-	rc = mosquitto__read_uint16(&mosq->in_packet, &mid);
+	rc = packet__read_uint16(&mosq->in_packet, &mid);
 	if(rc) return rc;
 #ifndef WITH_BROKER
 	pthread_mutex_lock(&mosq->callback_mutex);
