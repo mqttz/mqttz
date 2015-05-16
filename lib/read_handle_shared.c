@@ -32,7 +32,7 @@ Contributors:
 #include "mosquitto_broker.h"
 #endif
 
-int mosquitto__handle_pingreq(struct mosquitto *mosq)
+int handle__pingreq(struct mosquitto *mosq)
 {
 	assert(mosq);
 #ifdef WITH_BROKER
@@ -43,7 +43,7 @@ int mosquitto__handle_pingreq(struct mosquitto *mosq)
 	return send__pingresp(mosq);
 }
 
-int mosquitto__handle_pingresp(struct mosquitto *mosq)
+int handle__pingresp(struct mosquitto *mosq)
 {
 	assert(mosq);
 	mosq->ping_t = 0; /* No longer waiting for a PINGRESP. */
@@ -56,9 +56,9 @@ int mosquitto__handle_pingresp(struct mosquitto *mosq)
 }
 
 #ifdef WITH_BROKER
-int mosquitto__handle_pubackcomp(struct mosquitto_db *db, struct mosquitto *mosq, const char *type)
+int handle__pubackcomp(struct mosquitto_db *db, struct mosquitto *mosq, const char *type)
 #else
-int mosquitto__handle_pubackcomp(struct mosquitto *mosq, const char *type)
+int handle__pubackcomp(struct mosquitto *mosq, const char *type)
 #endif
 {
 	uint16_t mid;
@@ -92,7 +92,7 @@ int mosquitto__handle_pubackcomp(struct mosquitto *mosq, const char *type)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto__handle_pubrec(struct mosquitto *mosq)
+int handle__pubrec(struct mosquitto *mosq)
 {
 	uint16_t mid;
 	int rc;
@@ -116,7 +116,7 @@ int mosquitto__handle_pubrec(struct mosquitto *mosq)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto__handle_pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
+int handle__pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 {
 	uint16_t mid;
 #ifndef WITH_BROKER
@@ -161,7 +161,7 @@ int mosquitto__handle_pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto__handle_suback(struct mosquitto *mosq)
+int handle__suback(struct mosquitto *mosq)
 {
 	uint16_t mid;
 	uint8_t qos;
@@ -205,7 +205,7 @@ int mosquitto__handle_suback(struct mosquitto *mosq)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto__handle_unsuback(struct mosquitto *mosq)
+int handle__unsuback(struct mosquitto *mosq)
 {
 	uint16_t mid;
 	int rc;

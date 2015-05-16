@@ -23,7 +23,7 @@ Contributors:
 #include "packet_mosq.h"
 #include "read_handle.h"
 
-int mosquitto__handle_connack(struct mosquitto *mosq)
+int handle__connack(struct mosquitto *mosq)
 {
 	uint8_t byte;
 	uint8_t result;

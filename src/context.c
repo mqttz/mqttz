@@ -60,7 +60,7 @@ struct mosquitto *context__init(struct mosquitto_db *db, int sock)
 
 	context->address = NULL;
 	if((int)sock >= 0){
-		if(!mosquitto__socket_get_address(sock, address, 1024)){
+		if(!net__socket_get_address(sock, address, 1024)){
 			context->address = mosquitto__strdup(address);
 		}
 		if(!context->address){

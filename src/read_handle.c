@@ -35,34 +35,34 @@ int mqtt3_packet_handle(struct mosquitto_db *db, struct mosquitto *context)
 
 	switch((context->in_packet.command)&0xF0){
 		case PINGREQ:
-			return mosquitto__handle_pingreq(context);
+			return handle__pingreq(context);
 		case PINGRESP:
-			return mosquitto__handle_pingresp(context);
+			return handle__pingresp(context);
 		case PUBACK:
-			return mosquitto__handle_pubackcomp(db, context, "PUBACK");
+			return handle__pubackcomp(db, context, "PUBACK");
 		case PUBCOMP:
-			return mosquitto__handle_pubackcomp(db, context, "PUBCOMP");
+			return handle__pubackcomp(db, context, "PUBCOMP");
 		case PUBLISH:
-			return mqtt3_handle_publish(db, context);
+			return handle__publish(db, context);
 		case PUBREC:
-			return mosquitto__handle_pubrec(context);
+			return handle__pubrec(context);
 		case PUBREL:
-			return mosquitto__handle_pubrel(db, context);
+			return handle__pubrel(db, context);
 		case CONNECT:
-			return mqtt3_handle_connect(db, context);
+			return handle__connect(db, context);
 		case DISCONNECT:
-			return mqtt3_handle_disconnect(db, context);
+			return handle__disconnect(db, context);
 		case SUBSCRIBE:
-			return mqtt3_handle_subscribe(db, context);
+			return handle__subscribe(db, context);
 		case UNSUBSCRIBE:
-			return mqtt3_handle_unsubscribe(db, context);
+			return handle__unsubscribe(db, context);
 #ifdef WITH_BRIDGE
 		case CONNACK:
-			return mqtt3_handle_connack(db, context);
+			return handle__connack(db, context);
 		case SUBACK:
-			return mosquitto__handle_suback(context);
+			return handle__suback(context);
 		case UNSUBACK:
-			return mosquitto__handle_unsuback(context);
+			return handle__unsuback(context);
 #endif
 		default:
 			/* If we don't recognise the command, return an error straight away. */
@@ -70,7 +70,7 @@ int mqtt3_packet_handle(struct mosquitto_db *db, struct mosquitto *context)
 	}
 }
 
-int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
+int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 {
 	char *topic;
 	void *payload = NULL;

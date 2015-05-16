@@ -20,19 +20,19 @@ Contributors:
 struct mosquitto_db;
 
 int mosquitto__packet_handle(struct mosquitto *mosq);
-int mosquitto__handle_connack(struct mosquitto *mosq);
-int mosquitto__handle_pingreq(struct mosquitto *mosq);
-int mosquitto__handle_pingresp(struct mosquitto *mosq);
+int handle__pingreq(struct mosquitto *mosq);
+int handle__pingresp(struct mosquitto *mosq);
 #ifdef WITH_BROKER
-int mosquitto__handle_pubackcomp(struct mosquitto_db *db, struct mosquitto *mosq, const char *type);
+int handle__pubackcomp(struct mosquitto_db *db, struct mosquitto *mosq, const char *type);
 #else
-int mosquitto__handle_pubackcomp(struct mosquitto *mosq, const char *type);
+int handle__connack(struct mosquitto *mosq);
+int handle__pubackcomp(struct mosquitto *mosq, const char *type);
+int handle__publish(struct mosquitto *mosq);
 #endif
-int mosquitto__handle_publish(struct mosquitto *mosq);
-int mosquitto__handle_pubrec(struct mosquitto *mosq);
-int mosquitto__handle_pubrel(struct mosquitto_db *db, struct mosquitto *mosq);
-int mosquitto__handle_suback(struct mosquitto *mosq);
-int mosquitto__handle_unsuback(struct mosquitto *mosq);
+int handle__pubrec(struct mosquitto *mosq);
+int handle__pubrel(struct mosquitto_db *db, struct mosquitto *mosq);
+int handle__suback(struct mosquitto *mosq);
+int handle__unsuback(struct mosquitto *mosq);
 
 
 #endif

@@ -36,25 +36,25 @@ int mosquitto__packet_handle(struct mosquitto *mosq)
 
 	switch((mosq->in_packet.command)&0xF0){
 		case PINGREQ:
-			return mosquitto__handle_pingreq(mosq);
+			return handle__pingreq(mosq);
 		case PINGRESP:
-			return mosquitto__handle_pingresp(mosq);
+			return handle__pingresp(mosq);
 		case PUBACK:
-			return mosquitto__handle_pubackcomp(mosq, "PUBACK");
+			return handle__pubackcomp(mosq, "PUBACK");
 		case PUBCOMP:
-			return mosquitto__handle_pubackcomp(mosq, "PUBCOMP");
+			return handle__pubackcomp(mosq, "PUBCOMP");
 		case PUBLISH:
-			return mosquitto__handle_publish(mosq);
+			return handle__publish(mosq);
 		case PUBREC:
-			return mosquitto__handle_pubrec(mosq);
+			return handle__pubrec(mosq);
 		case PUBREL:
-			return mosquitto__handle_pubrel(NULL, mosq);
+			return handle__pubrel(NULL, mosq);
 		case CONNACK:
-			return mosquitto__handle_connack(mosq);
+			return handle__connack(mosq);
 		case SUBACK:
-			return mosquitto__handle_suback(mosq);
+			return handle__suback(mosq);
 		case UNSUBACK:
-			return mosquitto__handle_unsuback(mosq);
+			return handle__unsuback(mosq);
 		default:
 			/* If we don't recognise the command, return an error straight away. */
 			mosquitto__log_printf(mosq, MOSQ_LOG_ERR, "Error: Unrecognised command %d\n", (mosq->in_packet.command)&0xF0);
@@ -62,7 +62,7 @@ int mosquitto__packet_handle(struct mosquitto *mosq)
 	}
 }
 
-int mosquitto__handle_publish(struct mosquitto *mosq)
+int handle__publish(struct mosquitto *mosq)
 {
 	uint8_t header;
 	struct mosquitto_message_all *message;

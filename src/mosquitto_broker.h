@@ -437,20 +437,20 @@ int send__suback(struct mosquitto *context, uint16_t mid, uint32_t payloadlen, c
 /* ============================================================
  * Network functions
  * ============================================================ */
-int mqtt3_socket_accept(struct mosquitto_db *db, int listensock);
-int mqtt3_socket_listen(struct mqtt3__listener *listener);
-int mosquitto__socket_get_address(int sock, char *buf, int len);
+int net__socket_accept(struct mosquitto_db *db, int listensock);
+int net__socket_listen(struct mqtt3__listener *listener);
+int net__socket_get_address(int sock, char *buf, int len);
 
 /* ============================================================
  * Read handling functions
  * ============================================================ */
 int mqtt3_packet_handle(struct mosquitto_db *db, struct mosquitto *context);
-int mqtt3_handle_connack(struct mosquitto_db *db, struct mosquitto *context);
-int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context);
-int mqtt3_handle_disconnect(struct mosquitto_db *db, struct mosquitto *context);
-int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context);
-int mqtt3_handle_subscribe(struct mosquitto_db *db, struct mosquitto *context);
-int mqtt3_handle_unsubscribe(struct mosquitto_db *db, struct mosquitto *context);
+int handle__connack(struct mosquitto_db *db, struct mosquitto *context);
+int handle__connect(struct mosquitto_db *db, struct mosquitto *context);
+int handle__disconnect(struct mosquitto_db *db, struct mosquitto *context);
+int handle__publish(struct mosquitto_db *db, struct mosquitto *context);
+int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context);
+int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context);
 
 /* ============================================================
  * Database handling

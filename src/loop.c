@@ -320,7 +320,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 
 			for(i=0; i<listensock_count; i++){
 				if(pollfds[i].revents & (POLLIN | POLLPRI)){
-					while(mqtt3_socket_accept(db, listensock[i]) != -1){
+					while(net__socket_accept(db, listensock[i]) != -1){
 					}
 				}
 			}

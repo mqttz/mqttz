@@ -72,7 +72,7 @@ static char *client_id_gen(struct mosquitto_db *db)
 	return client_id;
 }
 
-int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
+int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 {
 	char *protocol_name = NULL;
 	uint8_t protocol_version;
@@ -566,7 +566,7 @@ handle_connect_error:
 	return rc;
 }
 
-int mqtt3_handle_disconnect(struct mosquitto_db *db, struct mosquitto *context)
+int handle__disconnect(struct mosquitto_db *db, struct mosquitto *context)
 {
 	if(!context){
 		return MOSQ_ERR_INVAL;
@@ -587,7 +587,7 @@ int mqtt3_handle_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 }
 
 
-int mqtt3_handle_subscribe(struct mosquitto_db *db, struct mosquitto *context)
+int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 {
 	int rc = 0;
 	int rc2;
@@ -730,7 +730,7 @@ int mqtt3_handle_subscribe(struct mosquitto_db *db, struct mosquitto *context)
 	return rc;
 }
 
-int mqtt3_handle_unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
+int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 {
 	uint16_t mid;
 	char *sub;

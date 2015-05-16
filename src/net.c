@@ -61,7 +61,7 @@ static int tls_ex_index_listener = -1;
 
 #include "sys_tree.h"
 
-int mqtt3_socket_accept(struct mosquitto_db *db, int listensock)
+int net__socket_accept(struct mosquitto_db *db, int listensock)
 {
 	int i;
 	int j;
@@ -315,7 +315,7 @@ static int mosquitto__tls_server_ctx(struct mqtt3__listener *listener)
  * Returns 1 on failure
  * Returns 0 on success.
  */
-int mqtt3_socket_listen(struct mqtt3__listener *listener)
+int net__socket_listen(struct mqtt3__listener *listener)
 {
 	int sock = -1;
 	struct addrinfo hints;
@@ -496,7 +496,7 @@ int mqtt3_socket_listen(struct mqtt3__listener *listener)
 	}
 }
 
-int mosquitto__socket_get_address(int sock, char *buf, int len)
+int net__socket_get_address(int sock, char *buf, int len)
 {
 	struct sockaddr_storage addr;
 	socklen_t addrlen;

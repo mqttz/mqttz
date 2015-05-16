@@ -25,7 +25,7 @@ Contributors:
 #include "send_mosq.h"
 #include "util_mosq.h"
 
-int mqtt3_handle_connack(struct mosquitto_db *db, struct mosquitto *context)
+int handle__connack(struct mosquitto_db *db, struct mosquitto *context)
 {
 	uint8_t byte;
 	uint8_t rc;
