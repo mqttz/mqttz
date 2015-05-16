@@ -23,17 +23,17 @@ Contributors:
 #include "packet_mosq.h"
 #include "read_handle.h"
 
-int mosquitto__handle_connack(struct mosquitto *mosq)
+int handle__connack(struct mosquitto *mosq)
 {
 	uint8_t byte;
 	uint8_t result;
 	int rc;
 
 	assert(mosq);
-	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s received CONNACK", mosq->id);
-	rc = mosquitto__read_byte(&mosq->in_packet, &byte); // Reserved byte, not used
+	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received CONNACK", mosq->id);
+	rc = packet__read_byte(&mosq->in_packet, &byte); // Reserved byte, not used
 	if(rc) return rc;
-	rc = mosquitto__read_byte(&mosq->in_packet, &result);
+	rc = packet__read_byte(&mosq->in_packet, &result);
 	if(rc) return rc;
 	pthread_mutex_lock(&mosq->callback_mutex);
 	if(mosq->on_connect){

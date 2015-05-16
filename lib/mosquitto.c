@@ -72,14 +72,14 @@ int mosquitto_lib_init(void)
 	srand(tv.tv_sec*1000 + tv.tv_usec/1000);
 #endif
 
-	mosquitto__net_init();
+	net__init();
 
 	return MOSQ_ERR_SUCCESS;
 }
 
 int mosquitto_lib_cleanup(void)
 {
-	mosquitto__net_cleanup();
+	net__cleanup();
 
 	return MOSQ_ERR_SUCCESS;
 }
@@ -169,7 +169,7 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 		}
 	}
 	mosq->in_packet.payload = NULL;
-	mosquitto__packet_cleanup(&mosq->in_packet);
+	packet__cleanup(&mosq->in_packet);
 	mosq->out_packet = NULL;
 	mosq->current_out_packet = NULL;
 	mosq->last_msg_in = mosquitto_time();
@@ -221,13 +221,13 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 int mosquitto_will_set(struct mosquitto *mosq, const char *topic, int payloadlen, const void *payload, int qos, bool retain)
 {
 	if(!mosq) return MOSQ_ERR_INVAL;
-	return mosquitto__will_set(mosq, topic, payloadlen, payload, qos, retain);
+	return will__set(mosq, topic, payloadlen, payload, qos, retain);
 }
 
 int mosquitto_will_clear(struct mosquitto *mosq)
 {
 	if(!mosq) return MOSQ_ERR_INVAL;
-	return mosquitto__will_clear(mosq);
+	return will__clear(mosq);
 }
 
 int mosquitto_username_pw_set(struct mosquitto *mosq, const char *username, const char *password)
@@ -297,10 +297,10 @@ void mosquitto__destroy(struct mosquitto *mosq)
 	}
 #endif
 	if(mosq->sock != INVALID_SOCKET){
-		mosquitto__socket_close(mosq);
+		net__socket_close(mosq);
 	}
-	mosquitto__message_cleanup_all(mosq);
-	mosquitto__will_clear(mosq);
+	message__cleanup_all(mosq);
+	will__clear(mosq);
 #ifdef WITH_TLS
 	if(mosq->ssl){
 		SSL_free(mosq->ssl);
@@ -357,11 +357,11 @@ void mosquitto__destroy(struct mosquitto *mosq)
 			mosq->out_packet = mosq->out_packet->next;
 		}
 
-		mosquitto__packet_cleanup(packet);
+		packet__cleanup(packet);
 		mosquitto__free(packet);
 	}
 
-	mosquitto__packet_cleanup(&mosq->in_packet);
+	packet__cleanup(&mosq->in_packet);
 	if(mosq->sockpairR != INVALID_SOCKET){
 		COMPAT_CLOSE(mosq->sockpairR);
 		mosq->sockpairR = INVALID_SOCKET;
@@ -404,8 +404,8 @@ static int mosquitto__connect_init(struct mosquitto *mosq, const char *host, int
 
 	mosq->keepalive = keepalive;
 
-	if(mosquitto__socketpair(&mosq->sockpairR, &mosq->sockpairW)){
-		mosquitto__log_printf(mosq, MOSQ_LOG_WARNING,
+	if(net__socketpair(&mosq->sockpairR, &mosq->sockpairW)){
+		log__printf(mosq, MOSQ_LOG_WARNING,
 				"Warning: Unable to open socket pair, outgoing publish commands may be delayed.");
 	}
 
@@ -482,7 +482,7 @@ static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking)
 
 	mosq->ping_t = 0;
 
-	mosquitto__packet_cleanup(&mosq->in_packet);
+	packet__cleanup(&mosq->in_packet);
 		
 	pthread_mutex_lock(&mosq->current_out_packet_mutex);
 	pthread_mutex_lock(&mosq->out_packet_mutex);
@@ -500,21 +500,21 @@ static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking)
 			mosq->out_packet = mosq->out_packet->next;
 		}
 
-		mosquitto__packet_cleanup(packet);
+		packet__cleanup(packet);
 		mosquitto__free(packet);
 	}
 	pthread_mutex_unlock(&mosq->out_packet_mutex);
 	pthread_mutex_unlock(&mosq->current_out_packet_mutex);
 
-	mosquitto__messages_reconnect_reset(mosq);
+	message__reconnect_reset(mosq);
 
 #ifdef WITH_SOCKS
 	if(mosq->socks5_host){
-		rc = mosquitto__socket_connect(mosq, mosq->socks5_host, mosq->socks5_port, mosq->bind_address, blocking);
+		rc = net__socket_connect(mosq, mosq->socks5_host, mosq->socks5_port, mosq->bind_address, blocking);
 	}else
 #endif
 	{
-		rc = mosquitto__socket_connect(mosq, mosq->host, mosq->port, mosq->bind_address, blocking);
+		rc = net__socket_connect(mosq, mosq->host, mosq->port, mosq->bind_address, blocking);
 	}
 	if(rc){
 		return rc;
@@ -522,11 +522,11 @@ static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking)
 
 #ifdef WITH_SOCKS
 	if(mosq->socks5_host){
-		return mosquitto__socks5_send(mosq);
+		return socks5__send(mosq);
 	}else
 #endif
 	{
-		return mosquitto__send_connect(mosq, mosq->keepalive, mosq->clean_session);
+		return send__connect(mosq, mosq->keepalive, mosq->clean_session);
 	}
 }
 
@@ -539,7 +539,7 @@ int mosquitto_disconnect(struct mosquitto *mosq)
 	pthread_mutex_unlock(&mosq->state_mutex);
 
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
-	return mosquitto__send_disconnect(mosq);
+	return send__disconnect(mosq);
 }
 
 int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int payloadlen, const void *payload, int qos, bool retain)
@@ -561,7 +561,7 @@ int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int p
 	}
 
 	if(qos == 0){
-		return mosquitto__send_publish(mosq, local_mid, topic, payloadlen, payload, qos, retain, false);
+		return send__publish(mosq, local_mid, topic, payloadlen, payload, qos, retain, false);
 	}else{
 		message = mosquitto__calloc(1, sizeof(struct mosquitto_message_all));
 		if(!message) return MOSQ_ERR_NOMEM;
@@ -571,14 +571,14 @@ int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int p
 		message->msg.mid = local_mid;
 		message->msg.topic = mosquitto__strdup(topic);
 		if(!message->msg.topic){
-			mosquitto__message_cleanup(&message);
+			message__cleanup(&message);
 			return MOSQ_ERR_NOMEM;
 		}
 		if(payloadlen){
 			message->msg.payloadlen = payloadlen;
 			message->msg.payload = mosquitto__malloc(payloadlen*sizeof(uint8_t));
 			if(!message->msg.payload){
-				mosquitto__message_cleanup(&message);
+				message__cleanup(&message);
 				return MOSQ_ERR_NOMEM;
 			}
 			memcpy(message->msg.payload, payload, payloadlen*sizeof(uint8_t));
@@ -591,7 +591,7 @@ int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int p
 		message->dup = false;
 
 		pthread_mutex_lock(&mosq->out_message_mutex);
-		mosquitto__message_queue(mosq, message, mosq_md_out);
+		message__queue(mosq, message, mosq_md_out);
 		if(mosq->max_inflight_messages == 0 || mosq->inflight_messages < mosq->max_inflight_messages){
 			mosq->inflight_messages++;
 			if(qos == 1){
@@ -600,7 +600,7 @@ int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int p
 				message->state = mosq_ms_wait_for_pubrec;
 			}
 			pthread_mutex_unlock(&mosq->out_message_mutex);
-			return mosquitto__send_publish(mosq, message->msg.mid, message->msg.topic, message->msg.payloadlen, message->msg.payload, message->msg.qos, message->msg.retain, message->dup);
+			return send__publish(mosq, message->msg.mid, message->msg.topic, message->msg.payloadlen, message->msg.payload, message->msg.qos, message->msg.retain, message->dup);
 		}else{
 			message->state = mosq_ms_invalid;
 			pthread_mutex_unlock(&mosq->out_message_mutex);
@@ -616,7 +616,7 @@ int mosquitto_subscribe(struct mosquitto *mosq, int *mid, const char *sub, int q
 
 	if(mosquitto_sub_topic_check(sub)) return MOSQ_ERR_INVAL;
 
-	return mosquitto__send_subscribe(mosq, mid, sub, qos);
+	return send__subscribe(mosq, mid, sub, qos);
 }
 
 int mosquitto_unsubscribe(struct mosquitto *mosq, int *mid, const char *sub)
@@ -626,7 +626,7 @@ int mosquitto_unsubscribe(struct mosquitto *mosq, int *mid, const char *sub)
 
 	if(mosquitto_sub_topic_check(sub)) return MOSQ_ERR_INVAL;
 
-	return mosquitto__send_unsubscribe(mosq, mid, sub);
+	return send__unsubscribe(mosq, mid, sub);
 }
 
 int mosquitto_tls_set(struct mosquitto *mosq, const char *cafile, const char *capath, const char *certfile, const char *keyfile, int (*pw_callback)(char *buf, int size, int rwflag, void *userdata))
@@ -921,7 +921,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 			if(FD_ISSET(mosq->sock, &readfds)){
 #ifdef WITH_TLS
 				if(mosq->want_connect){
-					rc = mosquitto__socket_connect_tls(mosq);
+					rc = net__socket_connect_tls(mosq);
 					if(rc) return rc;
 				}else
 #endif
@@ -947,7 +947,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 			if(FD_ISSET(mosq->sock, &writefds)){
 #ifdef WITH_TLS
 				if(mosq->want_connect){
-					rc = mosquitto__socket_connect_tls(mosq);
+					rc = net__socket_connect_tls(mosq);
 					if(rc) return rc;
 				}else
 #endif
@@ -1061,14 +1061,14 @@ int mosquitto_loop_misc(struct mosquitto *mosq)
 	mosquitto__check_keepalive(mosq);
 	now = mosquitto_time();
 	if(mosq->last_retry_check+1 < now){
-		mosquitto__message_retry_check(mosq);
+		message__retry_check(mosq);
 		mosq->last_retry_check = now;
 	}
 	if(mosq->ping_t && now - mosq->ping_t >= mosq->keepalive){
 		/* mosq->ping_t != 0 means we are waiting for a pingresp.
 		 * This hasn't happened in the keepalive time so we should disconnect.
 		 */
-		mosquitto__socket_close(mosq);
+		net__socket_close(mosq);
 		pthread_mutex_lock(&mosq->state_mutex);
 		if(mosq->state == mosq_cs_disconnecting){
 			rc = MOSQ_ERR_SUCCESS;
@@ -1091,7 +1091,7 @@ int mosquitto_loop_misc(struct mosquitto *mosq)
 static int mosquitto__loop_rc_handle(struct mosquitto *mosq, int rc)
 {
 	if(rc){
-		mosquitto__socket_close(mosq);
+		net__socket_close(mosq);
 		pthread_mutex_lock(&mosq->state_mutex);
 		if(mosq->state == mosq_cs_disconnecting){
 			rc = MOSQ_ERR_SUCCESS;
@@ -1130,11 +1130,11 @@ int mosquitto_loop_read(struct mosquitto *mosq, int max_packets)
 	for(i=0; i<max_packets; i++){
 #ifdef WITH_SOCKS
 		if(mosq->socks5_host){
-			rc = mosquitto__socks5_read(mosq);
+			rc = socks5__read(mosq);
 		}else
 #endif
 		{
-			rc = mosquitto__packet_read(mosq);
+			rc = packet__read(mosq);
 		}
 		if(rc || errno == EAGAIN || errno == COMPAT_EWOULDBLOCK){
 			return mosquitto__loop_rc_handle(mosq, rc);
@@ -1162,7 +1162,7 @@ int mosquitto_loop_write(struct mosquitto *mosq, int max_packets)
 	 * have QoS > 0. We should try to deal with that many in this loop in order
 	 * to keep up. */
 	for(i=0; i<max_packets; i++){
-		rc = mosquitto__packet_write(mosq);
+		rc = packet__write(mosq);
 		if(rc || errno == EAGAIN || errno == COMPAT_EWOULDBLOCK){
 			return mosquitto__loop_rc_handle(mosq, rc);
 		}

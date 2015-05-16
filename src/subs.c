@@ -81,7 +81,7 @@ static int subs__process(struct mosquitto_db *db, struct mosquitto__subhier *hie
 		}
 #endif
 		if(hier->retained){
-			mosquitto__db_msg_store_deref(db, &hier->retained);
+			db__msg_store_deref(db, &hier->retained);
 #ifdef WITH_SYS_TREE
 			db->retained_count--;
 #endif
@@ -133,7 +133,7 @@ static int subs__process(struct mosquitto_db *db, struct mosquitto__subhier *hie
 				 * retain should be false. */
 				client_retain = false;
 			}
-			if(mqtt3_db_message_insert(db, leaf->context, mid, mosq_md_out, msg_qos, client_retain, stored) == 1) rc = 1;
+			if(db__message_insert(db, leaf->context, mid, mosq_md_out, msg_qos, client_retain, stored) == 1) rc = 1;
 		}else{
 			return 1; /* Application error */
 		}
@@ -245,7 +245,7 @@ static void sub__topic_tokens_free(struct sub__token *tokens)
 	}
 }
 
-static int sub__add(struct mosquitto_db *db, struct mosquitto *context, int qos, struct mosquitto__subhier *subhier, struct sub__token *tokens)
+static int sub__add_recurse(struct mosquitto_db *db, struct mosquitto *context, int qos, struct mosquitto__subhier *subhier, struct sub__token *tokens)
 {
 	struct mosquitto__subhier *branch, *last = NULL;
 	struct mosquitto__subleaf *leaf, *last_leaf;
@@ -321,7 +321,7 @@ static int sub__add(struct mosquitto_db *db, struct mosquitto *context, int qos,
 	branch = subhier->children;
 	while(branch){
 		if(!strcmp(UHPA_ACCESS_TOPIC(branch), UHPA_ACCESS_TOPIC(tokens))){
-			return sub__add(db, context, qos, branch, tokens->next);
+			return sub__add_recurse(db, context, qos, branch, tokens->next);
 		}
 		last = branch;
 		branch = branch->next;
@@ -340,10 +340,10 @@ static int sub__add(struct mosquitto_db *db, struct mosquitto *context, int qos,
 	}else{
 		last->next = branch;
 	}
-	return sub__add(db, context, qos, branch, tokens->next);
+	return sub__add_recurse(db, context, qos, branch, tokens->next);
 }
 
-static int sub__remove(struct mosquitto_db *db, struct mosquitto *context, struct mosquitto__subhier *subhier, struct sub__token *tokens)
+static int sub__remove_recurse(struct mosquitto_db *db, struct mosquitto *context, struct mosquitto__subhier *subhier, struct sub__token *tokens)
 {
 	struct mosquitto__subhier *branch, *last = NULL;
 	struct mosquitto__subleaf *leaf;
@@ -386,7 +386,7 @@ static int sub__remove(struct mosquitto_db *db, struct mosquitto *context, struc
 	branch = subhier->children;
 	while(branch){
 		if(!strcmp(UHPA_ACCESS_TOPIC(branch), UHPA_ACCESS_TOPIC(tokens))){
-			sub__remove(db, context, branch, tokens->next);
+			sub__remove_recurse(db, context, branch, tokens->next);
 			if(!branch->children && !branch->subs && !branch->retained){
 				if(last){
 					last->next = branch->next;
@@ -438,7 +438,7 @@ static void sub__search(struct mosquitto_db *db, struct mosquitto__subhier *subh
 	}
 }
 
-int mqtt3_sub_add(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int qos, struct mosquitto__subhier *root)
+int sub__add(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int qos, struct mosquitto__subhier *root)
 {
 	int rc = 0;
 	struct mosquitto__subhier *subhier, *child;
@@ -452,7 +452,7 @@ int mqtt3_sub_add(struct mosquitto_db *db, struct mosquitto *context, const char
 	subhier = root->children;
 	while(subhier){
 		if(!strcmp(UHPA_ACCESS_TOPIC(subhier), UHPA_ACCESS_TOPIC(tokens))){
-			rc = sub__add(db, context, qos, subhier, tokens);
+			rc = sub__add_recurse(db, context, qos, subhier, tokens);
 			break;
 		}
 		subhier = subhier->next;
@@ -461,13 +461,13 @@ int mqtt3_sub_add(struct mosquitto_db *db, struct mosquitto *context, const char
 		child = mosquitto__malloc(sizeof(struct mosquitto__subhier));
 		if(!child){
 			sub__topic_tokens_free(tokens);
-			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
 		child->topic_len = tokens->topic_len;
 		if(UHPA_ALLOC_TOPIC(child) == 0){
 			sub__topic_tokens_free(tokens);
-			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
 		strncpy(UHPA_ACCESS_TOPIC(child), UHPA_ACCESS_TOPIC(tokens), child->topic_len+1);
@@ -482,7 +482,7 @@ int mqtt3_sub_add(struct mosquitto_db *db, struct mosquitto *context, const char
 		}
 		db->subs.children = child;
 
-		rc = sub__add(db, context, qos, child, tokens);
+		rc = sub__add_recurse(db, context, qos, child, tokens);
 	}
 
 	sub__topic_tokens_free(tokens);
@@ -492,7 +492,7 @@ int mqtt3_sub_add(struct mosquitto_db *db, struct mosquitto *context, const char
 	return rc;
 }
 
-int mqtt3_sub_remove(struct mosquitto_db *db, struct mosquitto *context, const char *sub, struct mosquitto__subhier *root)
+int sub__remove(struct mosquitto_db *db, struct mosquitto *context, const char *sub, struct mosquitto__subhier *root)
 {
 	int rc = 0;
 	struct mosquitto__subhier *subhier;
@@ -506,7 +506,7 @@ int mqtt3_sub_remove(struct mosquitto_db *db, struct mosquitto *context, const c
 	subhier = root->children;
 	while(subhier){
 		if(!strcmp(UHPA_ACCESS_TOPIC(subhier), UHPA_ACCESS_TOPIC(tokens))){
-			rc = sub__remove(db, context, subhier, tokens);
+			rc = sub__remove_recurse(db, context, subhier, tokens);
 			break;
 		}
 		subhier = subhier->next;
@@ -517,7 +517,7 @@ int mqtt3_sub_remove(struct mosquitto_db *db, struct mosquitto *context, const c
 	return rc;
 }
 
-int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store **stored)
+int sub__messages_queue(struct mosquitto_db *db, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store **stored)
 {
 	int rc = 0;
 	struct mosquitto__subhier *subhier;
@@ -530,7 +530,7 @@ int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, cons
 
 	/* Protect this message until we have sent it to all
 	clients - this is required because websockets client calls
-	mqtt3_db_message_write(), which could remove the message if ref_count==0.
+	db__message_write(), which could remove the message if ref_count==0.
 	*/
 	(*stored)->ref_count++;
 
@@ -541,7 +541,7 @@ int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, cons
 				/* We have a message that needs to be retained, so ensure that the subscription
 				 * tree for its topic exists.
 				 */
-				sub__add(db, NULL, 0, subhier, tokens);
+				sub__add_recurse(db, NULL, 0, subhier, tokens);
 			}
 			sub__search(db, subhier, tokens, source_id, topic, qos, retain, *stored, true);
 		}
@@ -550,14 +550,14 @@ int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, cons
 	sub__topic_tokens_free(tokens);
 
 	/* Remove our reference and free if needed. */
-	mosquitto__db_msg_store_deref(db, stored);
+	db__msg_store_deref(db, stored);
 
 	return rc;
 }
 
 /* Remove all subscriptions for a client.
  */
-int mqtt3_subs_clean_session(struct mosquitto_db *db, struct mosquitto *context)
+int sub__clean_session(struct mosquitto_db *db, struct mosquitto *context)
 {
 	int i;
 	struct mosquitto__subleaf *leaf;
@@ -593,7 +593,7 @@ int mqtt3_subs_clean_session(struct mosquitto_db *db, struct mosquitto *context)
 	return MOSQ_ERR_SUCCESS;
 }
 
-void mqtt3_sub_tree_print(struct mosquitto__subhier *root, int level)
+void sub__tree_print(struct mosquitto__subhier *root, int level)
 {
 	int i;
 	struct mosquitto__subhier *branch;
@@ -619,7 +619,7 @@ void mqtt3_sub_tree_print(struct mosquitto__subhier *root, int level)
 
 	branch = root->children;
 	while(branch){
-		mqtt3_sub_tree_print(branch, level+1);
+		sub__tree_print(branch, level+1);
 		branch = branch->next;
 	}
 }
@@ -645,7 +645,7 @@ static int retain__process(struct mosquitto_db *db, struct mosquitto_msg_store *
 	}else{
 		mid = 0;
 	}
-	return mqtt3_db_message_insert(db, context, mid, mosq_md_out, qos, true, retained);
+	return db__message_insert(db, context, mid, mosq_md_out, qos, true, retained);
 }
 
 static int retain__search(struct mosquitto_db *db, struct mosquitto__subhier *subhier, struct sub__token *tokens, struct mosquitto *context, const char *sub, int sub_qos, int level)
@@ -693,7 +693,7 @@ static int retain__search(struct mosquitto_db *db, struct mosquitto__subhier *su
 	return flag;
 }
 
-int mqtt3_retain_queue(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int sub_qos)
+int sub__retain_queue(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int sub_qos)
 {
 	struct mosquitto__subhier *subhier;
 	struct sub__token *tokens = NULL, *tail;

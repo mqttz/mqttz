@@ -14,7 +14,7 @@ set (MOSQ_SRCS
 	mosquitto_broker.h
 	net.c
 	../lib/net_mosq.c ../lib/net_mosq.h
-	../lib/packet.c ../lib/packet.h
+	../lib/packet_mosq.c ../lib/packet_mosq.h
 	persist.c persist.h
 	read_handle.c read_handle_client.c read_handle_server.c
 	../lib/read_handle_shared.c ../lib/read_handle.h
@@ -23,7 +23,7 @@ set (MOSQ_SRCS
 	../lib/send_client_mosq.c ../lib/send_mosq.h
 	../lib/send_mosq.c ../lib/send_mosq.h
 	send_server.c
-	sys_tree.c
+	sys_tree.c sys_tree.h
 	../lib/time_mosq.c
 	../lib/tls_mosq.c
 	../lib/util_mosq.c ../lib/util_mosq.h

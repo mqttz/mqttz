@@ -38,45 +38,6 @@ Contributors:
 #include <libwebsockets.h>
 #endif
 
-int mosquitto__packet_alloc(struct mosquitto__packet *packet)
-{
-	uint8_t remaining_bytes[5], byte;
-	uint32_t remaining_length;
-	int i;
-
-	assert(packet);
-
-	remaining_length = packet->remaining_length;
-	packet->payload = NULL;
-	packet->remaining_count = 0;
-	do{
-		byte = remaining_length % 128;
-		remaining_length = remaining_length / 128;
-		/* If there are more digits to encode, set the top bit of this digit */
-		if(remaining_length > 0){
-			byte = byte | 0x80;
-		}
-		remaining_bytes[packet->remaining_count] = byte;
-		packet->remaining_count++;
-	}while(remaining_length > 0 && packet->remaining_count < 5);
-	if(packet->remaining_count == 5) return MOSQ_ERR_PAYLOAD_SIZE;
-	packet->packet_length = packet->remaining_length + 1 + packet->remaining_count;
-#ifdef WITH_WEBSOCKETS
-	packet->payload = mosquitto__malloc(sizeof(uint8_t)*packet->packet_length + LWS_SEND_BUFFER_PRE_PADDING + LWS_SEND_BUFFER_POST_PADDING);
-#else
-	packet->payload = mosquitto__malloc(sizeof(uint8_t)*packet->packet_length);
-#endif
-	if(!packet->payload) return MOSQ_ERR_NOMEM;
-
-	packet->payload[0] = packet->command;
-	for(i=0; i<packet->remaining_count; i++){
-		packet->payload[i+1] = remaining_bytes[i];
-	}
-	packet->pos = 1 + packet->remaining_count;
-
-	return MOSQ_ERR_SUCCESS;
-}
-
 #ifdef WITH_BROKER
 void mosquitto__check_keepalive(struct mosquitto_db *db, struct mosquitto *mosq)
 #else
@@ -97,8 +58,8 @@ void mosquitto__check_keepalive(struct mosquitto *mosq)
 				&& mosq->sock != INVALID_SOCKET
 				&& now - mosq->last_msg_out >= mosq->bridge->idle_timeout){
 
-		mosquitto__log_printf(NULL, MOSQ_LOG_NOTICE, "Bridge connection %s has exceeded idle timeout, disconnecting.", mosq->id);
-		mosquitto__socket_close(db, mosq);
+		log__printf(NULL, MOSQ_LOG_NOTICE, "Bridge connection %s has exceeded idle timeout, disconnecting.", mosq->id);
+		net__socket_close(db, mosq);
 		return;
 	}
 #endif
@@ -110,7 +71,7 @@ void mosquitto__check_keepalive(struct mosquitto *mosq)
 			(now - last_msg_out >= mosq->keepalive || now - last_msg_in >= mosq->keepalive)){
 
 		if(mosq->state == mosq_cs_connected && mosq->ping_t == 0){
-			mosquitto__send_pingreq(mosq);
+			send__pingreq(mosq);
 			/* Reset last msg times to give the server time to send a pingresp */
 			pthread_mutex_lock(&mosq->msgtime_mutex);
 			mosq->last_msg_in = now;
@@ -123,9 +84,9 @@ void mosquitto__check_keepalive(struct mosquitto *mosq)
 				assert(mosq->listener->client_count >= 0);
 			}
 			mosq->listener = NULL;
-			mosquitto__socket_close(db, mosq);
+			net__socket_close(db, mosq);
 #else
-			mosquitto__socket_close(mosq);
+			net__socket_close(mosq);
 			pthread_mutex_lock(&mosq->state_mutex);
 			if(mosq->state == mosq_cs_disconnecting){
 				rc = MOSQ_ERR_SUCCESS;

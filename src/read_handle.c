@@ -29,40 +29,40 @@ Contributors:
 #include "sys_tree.h"
 #include "util_mosq.h"
 
-int mqtt3_packet_handle(struct mosquitto_db *db, struct mosquitto *context)
+int handle__packet(struct mosquitto_db *db, struct mosquitto *context)
 {
 	if(!context) return MOSQ_ERR_INVAL;
 
 	switch((context->in_packet.command)&0xF0){
 		case PINGREQ:
-			return mosquitto__handle_pingreq(context);
+			return handle__pingreq(context);
 		case PINGRESP:
-			return mosquitto__handle_pingresp(context);
+			return handle__pingresp(context);
 		case PUBACK:
-			return mosquitto__handle_pubackcomp(db, context, "PUBACK");
+			return handle__pubackcomp(db, context, "PUBACK");
 		case PUBCOMP:
-			return mosquitto__handle_pubackcomp(db, context, "PUBCOMP");
+			return handle__pubackcomp(db, context, "PUBCOMP");
 		case PUBLISH:
-			return mqtt3_handle_publish(db, context);
+			return handle__publish(db, context);
 		case PUBREC:
-			return mosquitto__handle_pubrec(context);
+			return handle__pubrec(context);
 		case PUBREL:
-			return mosquitto__handle_pubrel(db, context);
+			return handle__pubrel(db, context);
 		case CONNECT:
-			return mqtt3_handle_connect(db, context);
+			return handle__connect(db, context);
 		case DISCONNECT:
-			return mqtt3_handle_disconnect(db, context);
+			return handle__disconnect(db, context);
 		case SUBSCRIBE:
-			return mqtt3_handle_subscribe(db, context);
+			return handle__subscribe(db, context);
 		case UNSUBSCRIBE:
-			return mqtt3_handle_unsubscribe(db, context);
+			return handle__unsubscribe(db, context);
 #ifdef WITH_BRIDGE
 		case CONNACK:
-			return mqtt3_handle_connack(db, context);
+			return handle__connack(db, context);
 		case SUBACK:
-			return mosquitto__handle_suback(context);
+			return handle__suback(context);
 		case UNSUBACK:
-			return mosquitto__handle_unsuback(context);
+			return handle__unsuback(context);
 #endif
 		default:
 			/* If we don't recognise the command, return an error straight away. */
@@ -70,7 +70,7 @@ int mqtt3_packet_handle(struct mosquitto_db *db, struct mosquitto *context)
 	}
 }
 
-int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
+int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 {
 	char *topic;
 	void *payload = NULL;
@@ -86,20 +86,20 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 #ifdef WITH_BRIDGE
 	char *topic_temp;
 	int i;
-	struct mqtt3__bridge_topic *cur_topic;
+	struct mosquitto__bridge_topic *cur_topic;
 	bool match;
 #endif
 
 	dup = (header & 0x08)>>3;
 	qos = (header & 0x06)>>1;
 	if(qos == 3){
-		mosquitto__log_printf(NULL, MOSQ_LOG_INFO,
+		log__printf(NULL, MOSQ_LOG_INFO,
 				"Invalid QoS in PUBLISH from %s, disconnecting.", context->id);
 		return 1;
 	}
 	retain = (header & 0x01);
 
-	if(mosquitto__read_string(&context->in_packet, &topic)) return 1;
+	if(packet__read_string(&context->in_packet, &topic)) return 1;
 	if(strlen(topic) == 0){
 		/* Invalid publish topic, disconnect client. */
 		mosquitto__free(topic);
@@ -160,7 +160,7 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	if(qos > 0){
-		if(mosquitto__read_uint16(&context->in_packet, &mid)){
+		if(packet__read_uint16(&context->in_packet, &mid)){
 			mosquitto__free(topic);
 			return 1;
 		}
@@ -184,7 +184,7 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 
 	if(payloadlen){
 		if(db->config->message_size_limit && payloadlen > db->config->message_size_limit){
-			mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Dropped too large PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->id, dup, qos, retain, mid, topic, (long)payloadlen);
+			log__printf(NULL, MOSQ_LOG_DEBUG, "Dropped too large PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->id, dup, qos, retain, mid, topic, (long)payloadlen);
 			goto process_bad_message;
 		}
 		payload = mosquitto__calloc(payloadlen+1, 1);
@@ -192,7 +192,7 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 			mosquitto__free(topic);
 			return 1;
 		}
-		if(mosquitto__read_bytes(&context->in_packet, payload, payloadlen)){
+		if(packet__read_bytes(&context->in_packet, payload, payloadlen)){
 			mosquitto__free(topic);
 			mosquitto__free(payload);
 			return 1;
@@ -202,7 +202,7 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 	/* Check for topic access */
 	rc = mosquitto_acl_check(db, context, topic, MOSQ_ACL_WRITE);
 	if(rc == MOSQ_ERR_ACL_DENIED){
-		mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Denied PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->id, dup, qos, retain, mid, topic, (long)payloadlen);
+		log__printf(NULL, MOSQ_LOG_DEBUG, "Denied PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->id, dup, qos, retain, mid, topic, (long)payloadlen);
 		goto process_bad_message;
 	}else if(rc != MOSQ_ERR_SUCCESS){
 		mosquitto__free(topic);
@@ -210,13 +210,13 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 		return rc;
 	}
 
-	mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Received PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->id, dup, qos, retain, mid, topic, (long)payloadlen);
+	log__printf(NULL, MOSQ_LOG_DEBUG, "Received PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->id, dup, qos, retain, mid, topic, (long)payloadlen);
 	if(qos > 0){
-		mqtt3_db_message_store_find(context, mid, &stored);
+		db__message_store_find(context, mid, &stored);
 	}
 	if(!stored){
 		dup = 0;
-		if(mqtt3_db_message_store(db, context->id, mid, topic, qos, payloadlen, payload, retain, &stored, 0)){
+		if(db__message_store(db, context->id, mid, topic, qos, payloadlen, payload, retain, &stored, 0)){
 			mosquitto__free(topic);
 			if(payload) mosquitto__free(payload);
 			return 1;
@@ -226,22 +226,22 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 	}
 	switch(qos){
 		case 0:
-			if(mqtt3_db_messages_queue(db, context->id, topic, qos, retain, &stored)) rc = 1;
+			if(sub__messages_queue(db, context->id, topic, qos, retain, &stored)) rc = 1;
 			break;
 		case 1:
-			if(mqtt3_db_messages_queue(db, context->id, topic, qos, retain, &stored)) rc = 1;
-			if(mosquitto__send_puback(context, mid)) rc = 1;
+			if(sub__messages_queue(db, context->id, topic, qos, retain, &stored)) rc = 1;
+			if(send__puback(context, mid)) rc = 1;
 			break;
 		case 2:
 			if(!dup){
-				res = mqtt3_db_message_insert(db, context, mid, mosq_md_in, qos, retain, stored);
+				res = db__message_insert(db, context, mid, mosq_md_in, qos, retain, stored);
 			}else{
 				res = 0;
 			}
-			/* mqtt3_db_message_insert() returns 2 to indicate dropped message
+			/* db__message_insert() returns 2 to indicate dropped message
 			 * due to queue. This isn't an error so don't disconnect them. */
 			if(!res){
-				if(mosquitto__send_pubrec(context, mid)) rc = 1;
+				if(send__pubrec(context, mid)) rc = 1;
 			}else if(res == 1){
 				rc = 1;
 			}
@@ -258,19 +258,19 @@ process_bad_message:
 		case 0:
 			return MOSQ_ERR_SUCCESS;
 		case 1:
-			return mosquitto__send_puback(context, mid);
+			return send__puback(context, mid);
 		case 2:
-			mqtt3_db_message_store_find(context, mid, &stored);
+			db__message_store_find(context, mid, &stored);
 			if(!stored){
-				if(mqtt3_db_message_store(db, context->id, mid, NULL, qos, 0, NULL, false, &stored, 0)){
+				if(db__message_store(db, context->id, mid, NULL, qos, 0, NULL, false, &stored, 0)){
 					return 1;
 				}
-				res = mqtt3_db_message_insert(db, context, mid, mosq_md_in, qos, false, stored);
+				res = db__message_insert(db, context, mid, mosq_md_in, qos, false, stored);
 			}else{
 				res = 0;
 			}
 			if(!res){
-				res = mosquitto__send_pubrec(context, mid);
+				res = send__pubrec(context, mid);
 			}
 			return res;
 	}

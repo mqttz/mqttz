@@ -37,7 +37,7 @@ typedef int ssize_t;
 #include "send_mosq.h"
 #include "util_mosq.h"
 
-int mosquitto__will_set(struct mosquitto *mosq, const char *topic, int payloadlen, const void *payload, int qos, bool retain)
+int will__set(struct mosquitto *mosq, const char *topic, int payloadlen, const void *payload, int qos, bool retain)
 {
 	int rc = MOSQ_ERR_SUCCESS;
 
@@ -97,7 +97,7 @@ cleanup:
 	return rc;
 }
 
-int mosquitto__will_clear(struct mosquitto *mosq)
+int will__clear(struct mosquitto *mosq)
 {
 	if(!mosq->will) return MOSQ_ERR_SUCCESS;
 

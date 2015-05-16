@@ -78,7 +78,7 @@ Contributors:
 int tls_ex_index_mosq = -1;
 #endif
 
-void mosquitto__net_init(void)
+void net__init(void)
 {
 #ifdef WIN32
 	WSADATA wsaData;
@@ -99,7 +99,7 @@ void mosquitto__net_init(void)
 #endif
 }
 
-void mosquitto__net_cleanup(void)
+void net__cleanup(void)
 {
 #ifdef WITH_TLS
 	ERR_remove_state(0);
@@ -125,9 +125,9 @@ void mosquitto__net_cleanup(void)
  * Returns 0 on success.
  */
 #ifdef WITH_BROKER
-int mosquitto__socket_close(struct mosquitto_db *db, struct mosquitto *mosq)
+int net__socket_close(struct mosquitto_db *db, struct mosquitto *mosq)
 #else
-int mosquitto__socket_close(struct mosquitto *mosq)
+int net__socket_close(struct mosquitto *mosq)
 #endif
 {
 	int rc = 0;
@@ -195,7 +195,7 @@ static unsigned int psk_client_callback(SSL *ssl, const char *hint,
 #endif
 
 
-int mosquitto__try_connect(struct mosquitto *mosq, const char *host, uint16_t port, int *sock, const char *bind_address, bool blocking)
+int net__try_connect(struct mosquitto *mosq, const char *host, uint16_t port, int *sock, const char *bind_address, bool blocking)
 {
 	struct addrinfo hints;
 	struct addrinfo *ainfo, *rp;
@@ -261,7 +261,7 @@ int mosquitto__try_connect(struct mosquitto *mosq, const char *host, uint16_t po
 
 		if(!blocking){
 			/* Set non-blocking */
-			if(mosquitto__socket_nonblock(*sock)){
+			if(net__socket_nonblock(*sock)){
 				COMPAT_CLOSE(*sock);
 				continue;
 			}
@@ -278,7 +278,7 @@ int mosquitto__try_connect(struct mosquitto *mosq, const char *host, uint16_t po
 
 			if(blocking){
 				/* Set non-blocking */
-				if(mosquitto__socket_nonblock(*sock)){
+				if(net__socket_nonblock(*sock)){
 					COMPAT_CLOSE(*sock);
 					continue;
 				}
@@ -301,7 +301,7 @@ int mosquitto__try_connect(struct mosquitto *mosq, const char *host, uint16_t po
 
 
 #ifdef WITH_TLS
-int mosquitto__socket_connect_tls(struct mosquitto *mosq)
+int net__socket_connect_tls(struct mosquitto *mosq)
 {
 	int ret;
 
@@ -331,7 +331,7 @@ int mosquitto__socket_connect_tls(struct mosquitto *mosq)
  * Returns -1 on failure (ip is NULL, socket creation/connection error)
  * Returns sock number on success.
  */
-int mosquitto__socket_connect(struct mosquitto *mosq, const char *host, uint16_t port, const char *bind_address, bool blocking)
+int net__socket_connect(struct mosquitto *mosq, const char *host, uint16_t port, const char *bind_address, bool blocking)
 {
 	int sock = INVALID_SOCKET;
 	int rc;
@@ -342,7 +342,7 @@ int mosquitto__socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 
 	if(!mosq || !host || !port) return MOSQ_ERR_INVAL;
 
-	rc = mosquitto__try_connect(mosq, host, port, &sock, bind_address, blocking);
+	rc = net__try_connect(mosq, host, port, &sock, bind_address, blocking);
 	if(rc > 0) return rc;
 
 #ifdef WITH_TLS
@@ -355,7 +355,7 @@ int mosquitto__socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 		}else if(!strcmp(mosq->tls_version, "tlsv1")){
 			mosq->ssl_ctx = SSL_CTX_new(TLSv1_client_method());
 		}else{
-			mosquitto__log_printf(mosq, MOSQ_LOG_ERR, "Error: Protocol %s not supported.", mosq->tls_version);
+			log__printf(mosq, MOSQ_LOG_ERR, "Error: Protocol %s not supported.", mosq->tls_version);
 			COMPAT_CLOSE(sock);
 			return MOSQ_ERR_INVAL;
 		}
@@ -363,13 +363,13 @@ int mosquitto__socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 		if(!mosq->tls_version || !strcmp(mosq->tls_version, "tlsv1")){
 			mosq->ssl_ctx = SSL_CTX_new(TLSv1_client_method());
 		}else{
-			mosquitto__log_printf(mosq, MOSQ_LOG_ERR, "Error: Protocol %s not supported.", mosq->tls_version);
+			log__printf(mosq, MOSQ_LOG_ERR, "Error: Protocol %s not supported.", mosq->tls_version);
 			COMPAT_CLOSE(sock);
 			return MOSQ_ERR_INVAL;
 		}
 #endif
 		if(!mosq->ssl_ctx){
-			mosquitto__log_printf(mosq, MOSQ_LOG_ERR, "Error: Unable to create TLS context.");
+			log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to create TLS context.");
 			COMPAT_CLOSE(sock);
 			return MOSQ_ERR_TLS;
 		}
@@ -386,7 +386,7 @@ int mosquitto__socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 		if(mosq->tls_ciphers){
 			ret = SSL_CTX_set_cipher_list(mosq->ssl_ctx, mosq->tls_ciphers);
 			if(ret == 0){
-				mosquitto__log_printf(mosq, MOSQ_LOG_ERR, "Error: Unable to set TLS ciphers. Check cipher list \"%s\".", mosq->tls_ciphers);
+				log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to set TLS ciphers. Check cipher list \"%s\".", mosq->tls_ciphers);
 				COMPAT_CLOSE(sock);
 				return MOSQ_ERR_TLS;
 			}
@@ -396,19 +396,19 @@ int mosquitto__socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 			if(ret == 0){
 #ifdef WITH_BROKER
 				if(mosq->tls_cafile && mosq->tls_capath){
-					mosquitto__log_printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check bridge_cafile \"%s\" and bridge_capath \"%s\".", mosq->tls_cafile, mosq->tls_capath);
+					log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check bridge_cafile \"%s\" and bridge_capath \"%s\".", mosq->tls_cafile, mosq->tls_capath);
 				}else if(mosq->tls_cafile){
-					mosquitto__log_printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check bridge_cafile \"%s\".", mosq->tls_cafile);
+					log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check bridge_cafile \"%s\".", mosq->tls_cafile);
 				}else{
-					mosquitto__log_printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check bridge_capath \"%s\".", mosq->tls_capath);
+					log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check bridge_capath \"%s\".", mosq->tls_capath);
 				}
 #else
 				if(mosq->tls_cafile && mosq->tls_capath){
-					mosquitto__log_printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check cafile \"%s\" and capath \"%s\".", mosq->tls_cafile, mosq->tls_capath);
+					log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check cafile \"%s\" and capath \"%s\".", mosq->tls_cafile, mosq->tls_capath);
 				}else if(mosq->tls_cafile){
-					mosquitto__log_printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check cafile \"%s\".", mosq->tls_cafile);
+					log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check cafile \"%s\".", mosq->tls_cafile);
 				}else{
-					mosquitto__log_printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check capath \"%s\".", mosq->tls_capath);
+					log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check capath \"%s\".", mosq->tls_capath);
 				}
 #endif
 				COMPAT_CLOSE(sock);
@@ -429,9 +429,9 @@ int mosquitto__socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 				ret = SSL_CTX_use_certificate_chain_file(mosq->ssl_ctx, mosq->tls_certfile);
 				if(ret != 1){
 #ifdef WITH_BROKER
-					mosquitto__log_printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load client certificate, check bridge_certfile \"%s\".", mosq->tls_certfile);
+					log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load client certificate, check bridge_certfile \"%s\".", mosq->tls_certfile);
 #else
-					mosquitto__log_printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load client certificate \"%s\".", mosq->tls_certfile);
+					log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load client certificate \"%s\".", mosq->tls_certfile);
 #endif
 					COMPAT_CLOSE(sock);
 					return MOSQ_ERR_TLS;
@@ -441,16 +441,16 @@ int mosquitto__socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 				ret = SSL_CTX_use_PrivateKey_file(mosq->ssl_ctx, mosq->tls_keyfile, SSL_FILETYPE_PEM);
 				if(ret != 1){
 #ifdef WITH_BROKER
-					mosquitto__log_printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load client key file, check bridge_keyfile \"%s\".", mosq->tls_keyfile);
+					log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load client key file, check bridge_keyfile \"%s\".", mosq->tls_keyfile);
 #else
-					mosquitto__log_printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load client key file \"%s\".", mosq->tls_keyfile);
+					log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load client key file \"%s\".", mosq->tls_keyfile);
 #endif
 					COMPAT_CLOSE(sock);
 					return MOSQ_ERR_TLS;
 				}
 				ret = SSL_CTX_check_private_key(mosq->ssl_ctx);
 				if(ret != 1){
-					mosquitto__log_printf(mosq, MOSQ_LOG_ERR, "Error: Client certificate/key are inconsistent.");
+					log__printf(mosq, MOSQ_LOG_ERR, "Error: Client certificate/key are inconsistent.");
 					COMPAT_CLOSE(sock);
 					return MOSQ_ERR_TLS;
 				}
@@ -475,7 +475,7 @@ int mosquitto__socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 		SSL_set_bio(mosq->ssl, bio, bio);
 
 		mosq->sock = sock;
-		if(mosquitto__socket_connect_tls(mosq)){
+		if(net__socket_connect_tls(mosq)){
 			return MOSQ_ERR_TLS;
 		}
 
@@ -488,7 +488,7 @@ int mosquitto__socket_connect(struct mosquitto *mosq, const char *host, uint16_t
 }
 
 
-ssize_t mosquitto__net_read(struct mosquitto *mosq, void *buf, size_t count)
+ssize_t net__read(struct mosquitto *mosq, void *buf, size_t count)
 {
 #ifdef WITH_TLS
 	int ret;
@@ -513,7 +513,7 @@ ssize_t mosquitto__net_read(struct mosquitto *mosq, void *buf, size_t count)
 			}else{
 				e = ERR_get_error();
 				while(e){
-					mosquitto__log_printf(mosq, MOSQ_LOG_ERR, "OpenSSL Error: %s", ERR_error_string(e, ebuf));
+					log__printf(mosq, MOSQ_LOG_ERR, "OpenSSL Error: %s", ERR_error_string(e, ebuf));
 					e = ERR_get_error();
 				}
 				errno = EPROTO;
@@ -536,7 +536,7 @@ ssize_t mosquitto__net_read(struct mosquitto *mosq, void *buf, size_t count)
 #endif
 }
 
-ssize_t mosquitto__net_write(struct mosquitto *mosq, void *buf, size_t count)
+ssize_t net__write(struct mosquitto *mosq, void *buf, size_t count)
 {
 #ifdef WITH_TLS
 	int ret;
@@ -562,7 +562,7 @@ ssize_t mosquitto__net_write(struct mosquitto *mosq, void *buf, size_t count)
 			}else{
 				e = ERR_get_error();
 				while(e){
-					mosquitto__log_printf(mosq, MOSQ_LOG_ERR, "OpenSSL Error: %s", ERR_error_string(e, ebuf));
+					log__printf(mosq, MOSQ_LOG_ERR, "OpenSSL Error: %s", ERR_error_string(e, ebuf));
 					e = ERR_get_error();
 				}
 				errno = EPROTO;
@@ -585,7 +585,7 @@ ssize_t mosquitto__net_write(struct mosquitto *mosq, void *buf, size_t count)
 }
 
 
-int mosquitto__socket_nonblock(int sock)
+int net__socket_nonblock(int sock)
 {
 #ifndef WIN32
 	int opt;
@@ -612,7 +612,7 @@ int mosquitto__socket_nonblock(int sock)
 
 
 #ifndef WITH_BROKER
-int mosquitto__socketpair(int *pairR, int *pairW)
+int net__socketpair(int *pairR, int *pairW)
 {
 #ifdef WIN32
 	int family[2] = {AF_INET, AF_INET6};
@@ -665,7 +665,7 @@ int mosquitto__socketpair(int *pairR, int *pairW)
 			continue;
 		}
 
-		if(mosquitto__socket_nonblock(listensock)){
+		if(net__socket_nonblock(listensock)){
 			continue;
 		}
 
@@ -684,7 +684,7 @@ int mosquitto__socketpair(int *pairR, int *pairW)
 			COMPAT_CLOSE(listensock);
 			continue;
 		}
-		if(mosquitto__socket_nonblock(spR)){
+		if(net__socket_nonblock(spR)){
 			COMPAT_CLOSE(listensock);
 			continue;
 		}
@@ -710,7 +710,7 @@ int mosquitto__socketpair(int *pairR, int *pairW)
 			}
 		}
 
-		if(mosquitto__socket_nonblock(spW)){
+		if(net__socket_nonblock(spW)){
 			COMPAT_CLOSE(spR);
 			COMPAT_CLOSE(listensock);
 			continue;
@@ -728,12 +728,12 @@ int mosquitto__socketpair(int *pairR, int *pairW)
 	if(socketpair(AF_UNIX, SOCK_STREAM, 0, sv) == -1){
 		return MOSQ_ERR_ERRNO;
 	}
-	if(mosquitto__socket_nonblock(sv[0])){
+	if(net__socket_nonblock(sv[0])){
 		COMPAT_CLOSE(sv[0]);
 		COMPAT_CLOSE(sv[1]);
 		return MOSQ_ERR_ERRNO;
 	}
-	if(mosquitto__socket_nonblock(sv[1])){
+	if(net__socket_nonblock(sv[1])){
 		COMPAT_CLOSE(sv[0]);
 		COMPAT_CLOSE(sv[1]);
 		return MOSQ_ERR_ERRNO;

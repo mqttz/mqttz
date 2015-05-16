@@ -81,7 +81,7 @@ struct mosquitto_db *mosquitto__get_db(void)
  * Note that setting config->user to "root" does not produce an error, but it
  * strongly discouraged.
  */
-int drop_privileges(struct mqtt3_config *config, bool temporary)
+int drop_privileges(struct mosquitto__config *config, bool temporary)
 {
 #if !defined(__CYGWIN__) && !defined(WIN32)
 	struct passwd *pwd;
@@ -92,12 +92,12 @@ int drop_privileges(struct mqtt3_config *config, bool temporary)
 		if(config->user && strcmp(config->user, "root")){
 			pwd = getpwnam(config->user);
 			if(!pwd){
-				mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid user '%s'.", config->user);
+				log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid user '%s'.", config->user);
 				return 1;
 			}
 			if(initgroups(config->user, pwd->pw_gid) == -1){
 				strerror_r(errno, err, 256);
-				mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error setting groups whilst dropping privileges: %s.", err);
+				log__printf(NULL, MOSQ_LOG_ERR, "Error setting groups whilst dropping privileges: %s.", err);
 				return 1;
 			}
 			if(temporary){
@@ -107,7 +107,7 @@ int drop_privileges(struct mqtt3_config *config, bool temporary)
 			}
 			if(rc == -1){
 				strerror_r(errno, err, 256);
-				mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error setting gid whilst dropping privileges: %s.", err);
+				log__printf(NULL, MOSQ_LOG_ERR, "Error setting gid whilst dropping privileges: %s.", err);
 				return 1;
 			}
 			if(temporary){
@@ -117,12 +117,12 @@ int drop_privileges(struct mqtt3_config *config, bool temporary)
 			}
 			if(rc == -1){
 				strerror_r(errno, err, 256);
-				mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error setting uid whilst dropping privileges: %s.", err);
+				log__printf(NULL, MOSQ_LOG_ERR, "Error setting uid whilst dropping privileges: %s.", err);
 				return 1;
 			}
 		}
 		if(geteuid() == 0 || getegid() == 0){
-			mosquitto__log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Mosquitto should not be run as root/administrator.");
+			log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Mosquitto should not be run as root/administrator.");
 		}
 	}
 #endif
@@ -139,13 +139,13 @@ int restore_privileges(void)
 		rc = setegid(0);
 		if(rc == -1){
 			strerror_r(errno, err, 256);
-			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error setting gid whilst restoring privileges: %s.", err);
+			log__printf(NULL, MOSQ_LOG_ERR, "Error setting gid whilst restoring privileges: %s.", err);
 			return 1;
 		}
 		rc = seteuid(0);
 		if(rc == -1){
 			strerror_r(errno, err, 256);
-			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error setting uid whilst restoring privileges: %s.", err);
+			log__printf(NULL, MOSQ_LOG_ERR, "Error setting uid whilst restoring privileges: %s.", err);
 			return 1;
 		}
 	}
@@ -186,7 +186,7 @@ int main(int argc, char *argv[])
 	int *listensock = NULL;
 	int listensock_count = 0;
 	int listensock_index = 0;
-	struct mqtt3_config config;
+	struct mosquitto__config config;
 #ifdef WITH_SYS_TREE
 	char buf[1024];
 #endif
@@ -228,10 +228,10 @@ int main(int argc, char *argv[])
 
 	memset(&int_db, 0, sizeof(struct mosquitto_db));
 
-	mosquitto__net_init();
+	net__init();
 
-	mqtt3_config_init(&config);
-	rc = mqtt3_config_parse_args(&config, argc, argv);
+	config__init(&config);
+	rc = config__parse_args(&config, argc, argv);
 	if(rc != MOSQ_ERR_SUCCESS) return rc;
 	int_db.config = &config;
 
@@ -242,13 +242,13 @@ int main(int argc, char *argv[])
 				break;
 			case -1:
 				strerror_r(errno, err, 256);
-			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error in fork: %s", err);
+			log__printf(NULL, MOSQ_LOG_ERR, "Error in fork: %s", err);
 				return 1;
 			default:
 				return MOSQ_ERR_SUCCESS;
 		}
 #else
-		mosquitto__log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Can't start in daemon mode in Windows.");
+		log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Can't start in daemon mode in Windows.");
 #endif
 	}
 
@@ -258,25 +258,25 @@ int main(int argc, char *argv[])
 			fprintf(pid, "%d", getpid());
 			fclose(pid);
 		}else{
-			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to write pid file.");
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to write pid file.");
 			return 1;
 		}
 	}
 
-	rc = mqtt3_db_open(&config, &int_db);
+	rc = db__open(&config, &int_db);
 	if(rc != MOSQ_ERR_SUCCESS){
-		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Couldn't open database.");
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Couldn't open database.");
 		return rc;
 	}
 
 	/* Initialise logging only after initialising the database in case we're
 	 * logging to topics */
-	mqtt3_log_init(&config);
-	mosquitto__log_printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s (build date %s) starting", VERSION, TIMESTAMP);
+	log__init(&config);
+	log__printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s (build date %s) starting", VERSION, TIMESTAMP);
 	if(config.config_file){
-		mosquitto__log_printf(NULL, MOSQ_LOG_INFO, "Config loaded from %s.", config.config_file);
+		log__printf(NULL, MOSQ_LOG_INFO, "Config loaded from %s.", config.config_file);
 	}else{
-		mosquitto__log_printf(NULL, MOSQ_LOG_INFO, "Using default config.");
+		log__printf(NULL, MOSQ_LOG_INFO, "Using default config.");
 	}
 
 	rc = mosquitto_security_module_init(&int_db);
@@ -288,9 +288,9 @@ int main(int argc, char *argv[])
 	if(config.sys_interval > 0){
 		/* Set static $SYS messages */
 		snprintf(buf, 1024, "mosquitto version %s", VERSION);
-		mqtt3_db_messages_easy_queue(&int_db, NULL, "$SYS/broker/version", 2, strlen(buf), buf, 1);
+		db__messages_easy_queue(&int_db, NULL, "$SYS/broker/version", 2, strlen(buf), buf, 1);
 		snprintf(buf, 1024, "%s", TIMESTAMP);
-		mqtt3_db_messages_easy_queue(&int_db, NULL, "$SYS/broker/timestamp", 2, strlen(buf), buf, 1);
+		db__messages_easy_queue(&int_db, NULL, "$SYS/broker/timestamp", 2, strlen(buf), buf, 1);
 	}
 #endif
 
@@ -298,8 +298,8 @@ int main(int argc, char *argv[])
 	listensock_index = 0;
 	for(i=0; i<config.listener_count; i++){
 		if(config.listeners[i].protocol == mp_mqtt){
-			if(mqtt3_socket_listen(&config.listeners[i])){
-				mqtt3_db_close(&int_db);
+			if(net__socket_listen(&config.listeners[i])){
+				db__close(&int_db);
 				if(config.pid_file){
 					remove(config.pid_file);
 				}
@@ -308,7 +308,7 @@ int main(int argc, char *argv[])
 			listensock_count += config.listeners[i].sock_count;
 			listensock = mosquitto__realloc(listensock, sizeof(int)*listensock_count);
 			if(!listensock){
-				mqtt3_db_close(&int_db);
+				db__close(&int_db);
 				if(config.pid_file){
 					remove(config.pid_file);
 				}
@@ -316,7 +316,7 @@ int main(int argc, char *argv[])
 			}
 			for(j=0; j<config.listeners[i].sock_count; j++){
 				if(config.listeners[i].socks[j] == INVALID_SOCKET){
-					mqtt3_db_close(&int_db);
+					db__close(&int_db);
 					if(config.pid_file){
 						remove(config.pid_file);
 					}
@@ -332,7 +332,7 @@ int main(int argc, char *argv[])
 #ifdef WITH_WEBSOCKETS
 			config.listeners[i].ws_context = mosq_websockets_init(&config.listeners[i], config.websockets_log_level);
 			if(!config.listeners[i].ws_context){
-				mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create websockets listener on port %d.", config.listeners[i].port);
+				log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create websockets listener on port %d.", config.listeners[i].port);
 				return 1;
 			}
 #endif
@@ -355,8 +355,8 @@ int main(int argc, char *argv[])
 
 #ifdef WITH_BRIDGE
 	for(i=0; i<config.bridge_count; i++){
-		if(mqtt3_bridge_new(&int_db, &(config.bridges[i]))){
-			mosquitto__log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Unable to connect to bridge %s.", 
+		if(bridge__new(&int_db, &(config.bridges[i]))){
+			log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Unable to connect to bridge %s.", 
 					config.bridges[i].name);
 		}
 	}
@@ -365,12 +365,12 @@ int main(int argc, char *argv[])
 	run = 1;
 	rc = mosquitto_main_loop(&int_db, listensock, listensock_count, listener_max);
 
-	mosquitto__log_printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s terminating", VERSION);
-	mqtt3_log_close(&config);
+	log__printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s terminating", VERSION);
+	log__close(&config);
 
 #ifdef WITH_PERSISTENCE
 	if(config.persistence){
-		mqtt3_db_backup(&int_db, true);
+		persist__backup(&int_db, true);
 	}
 #endif
 
@@ -388,28 +388,28 @@ int main(int argc, char *argv[])
 	HASH_ITER(hh_id, int_db.contexts_by_id, ctxt, ctxt_tmp){
 #ifdef WITH_WEBSOCKETS
 		if(!ctxt->wsi){
-			mqtt3_context_cleanup(&int_db, ctxt, true);
+			context__cleanup(&int_db, ctxt, true);
 		}
 #else
-		mqtt3_context_cleanup(&int_db, ctxt, true);
+		context__cleanup(&int_db, ctxt, true);
 #endif
 	}
 	HASH_ITER(hh_sock, int_db.contexts_by_sock, ctxt, ctxt_tmp){
-		mqtt3_context_cleanup(&int_db, ctxt, true);
+		context__cleanup(&int_db, ctxt, true);
 	}
 #ifdef WITH_BRIDGE
 	for(i=0; i<int_db.bridge_count; i++){
 		if(int_db.bridges[i]){
-			mqtt3_context_cleanup(&int_db, int_db.bridges[i], true);
+			context__cleanup(&int_db, int_db.bridges[i], true);
 		}
 	}
 	if(int_db.bridges){
 		mosquitto__free(int_db.bridges);
 	}
 #endif
-	mosquitto__free_disused_contexts(&int_db);
+	context__free_disused(&int_db);
 
-	mqtt3_db_close(&int_db);
+	db__close(&int_db);
 
 	if(listensock){
 		for(i=0; i<listensock_count; i++){
@@ -430,8 +430,8 @@ int main(int argc, char *argv[])
 		remove(config.pid_file);
 	}
 
-	mqtt3_config_cleanup(int_db.config);
-	mosquitto__net_cleanup();
+	config__cleanup(int_db.config);
+	net__cleanup();
 
 	return rc;
 }

@@ -40,7 +40,46 @@ Contributors:
 #  define G_PUB_MSGS_SENT_INC(A)
 #endif
 
-void mosquitto__packet_cleanup(struct mosquitto__packet *packet)
+int packet__alloc(struct mosquitto__packet *packet)
+{
+	uint8_t remaining_bytes[5], byte;
+	uint32_t remaining_length;
+	int i;
+
+	assert(packet);
+
+	remaining_length = packet->remaining_length;
+	packet->payload = NULL;
+	packet->remaining_count = 0;
+	do{
+		byte = remaining_length % 128;
+		remaining_length = remaining_length / 128;
+		/* If there are more digits to encode, set the top bit of this digit */
+		if(remaining_length > 0){
+			byte = byte | 0x80;
+		}
+		remaining_bytes[packet->remaining_count] = byte;
+		packet->remaining_count++;
+	}while(remaining_length > 0 && packet->remaining_count < 5);
+	if(packet->remaining_count == 5) return MOSQ_ERR_PAYLOAD_SIZE;
+	packet->packet_length = packet->remaining_length + 1 + packet->remaining_count;
+#ifdef WITH_WEBSOCKETS
+	packet->payload = mosquitto__malloc(sizeof(uint8_t)*packet->packet_length + LWS_SEND_BUFFER_PRE_PADDING + LWS_SEND_BUFFER_POST_PADDING);
+#else
+	packet->payload = mosquitto__malloc(sizeof(uint8_t)*packet->packet_length);
+#endif
+	if(!packet->payload) return MOSQ_ERR_NOMEM;
+
+	packet->payload[0] = packet->command;
+	for(i=0; i<packet->remaining_count; i++){
+		packet->payload[i+1] = remaining_bytes[i];
+	}
+	packet->pos = 1 + packet->remaining_count;
+
+	return MOSQ_ERR_SUCCESS;
+}
+
+void packet__cleanup(struct mosquitto__packet *packet)
 {
 	if(!packet) return;
 
@@ -55,7 +94,7 @@ void mosquitto__packet_cleanup(struct mosquitto__packet *packet)
 	packet->pos = 0;
 }
 
-int mosquitto__packet_queue(struct mosquitto *mosq, struct mosquitto__packet *packet)
+int packet__queue(struct mosquitto *mosq, struct mosquitto__packet *packet)
 {
 #ifndef WITH_BROKER
 	char sockpair_data = 0;
@@ -81,10 +120,10 @@ int mosquitto__packet_queue(struct mosquitto *mosq, struct mosquitto__packet *pa
 		libwebsocket_callback_on_writable(mosq->ws_context, mosq->wsi);
 		return 0;
 	}else{
-		return mosquitto__packet_write(mosq);
+		return packet__write(mosq);
 	}
 #  else
-	return mosquitto__packet_write(mosq);
+	return packet__write(mosq);
 #  endif
 #else
 
@@ -100,7 +139,7 @@ int mosquitto__packet_queue(struct mosquitto *mosq, struct mosquitto__packet *pa
 	}
 
 	if(mosq->in_callback == false && mosq->threaded == false){
-		return mosquitto__packet_write(mosq);
+		return packet__write(mosq);
 	}else{
 		return MOSQ_ERR_SUCCESS;
 	}
@@ -108,7 +147,7 @@ int mosquitto__packet_queue(struct mosquitto *mosq, struct mosquitto__packet *pa
 }
 
 
-int mosquitto__read_byte(struct mosquitto__packet *packet, uint8_t *byte)
+int packet__read_byte(struct mosquitto__packet *packet, uint8_t *byte)
 {
 	assert(packet);
 	if(packet->pos+1 > packet->remaining_length) return MOSQ_ERR_PROTOCOL;
@@ -120,7 +159,7 @@ int mosquitto__read_byte(struct mosquitto__packet *packet, uint8_t *byte)
 }
 
 
-void mosquitto__write_byte(struct mosquitto__packet *packet, uint8_t byte)
+void packet__write_byte(struct mosquitto__packet *packet, uint8_t byte)
 {
 	assert(packet);
 	assert(packet->pos+1 <= packet->packet_length);
@@ -130,7 +169,7 @@ void mosquitto__write_byte(struct mosquitto__packet *packet, uint8_t byte)
 }
 
 
-int mosquitto__read_bytes(struct mosquitto__packet *packet, void *bytes, uint32_t count)
+int packet__read_bytes(struct mosquitto__packet *packet, void *bytes, uint32_t count)
 {
 	assert(packet);
 	if(packet->pos+count > packet->remaining_length) return MOSQ_ERR_PROTOCOL;
@@ -142,7 +181,7 @@ int mosquitto__read_bytes(struct mosquitto__packet *packet, void *bytes, uint32_
 }
 
 
-void mosquitto__write_bytes(struct mosquitto__packet *packet, const void *bytes, uint32_t count)
+void packet__write_bytes(struct mosquitto__packet *packet, const void *bytes, uint32_t count)
 {
 	assert(packet);
 	assert(packet->pos+count <= packet->packet_length);
@@ -152,13 +191,13 @@ void mosquitto__write_bytes(struct mosquitto__packet *packet, const void *bytes,
 }
 
 
-int mosquitto__read_string(struct mosquitto__packet *packet, char **str)
+int packet__read_string(struct mosquitto__packet *packet, char **str)
 {
 	uint16_t len;
 	int rc;
 
 	assert(packet);
-	rc = mosquitto__read_uint16(packet, &len);
+	rc = packet__read_uint16(packet, &len);
 	if(rc) return rc;
 
 	if(packet->pos+len > packet->remaining_length) return MOSQ_ERR_PROTOCOL;
@@ -176,15 +215,15 @@ int mosquitto__read_string(struct mosquitto__packet *packet, char **str)
 }
 
 
-void mosquitto__write_string(struct mosquitto__packet *packet, const char *str, uint16_t length)
+void packet__write_string(struct mosquitto__packet *packet, const char *str, uint16_t length)
 {
 	assert(packet);
-	mosquitto__write_uint16(packet, length);
-	mosquitto__write_bytes(packet, str, length);
+	packet__write_uint16(packet, length);
+	packet__write_bytes(packet, str, length);
 }
 
 
-int mosquitto__read_uint16(struct mosquitto__packet *packet, uint16_t *word)
+int packet__read_uint16(struct mosquitto__packet *packet, uint16_t *word)
 {
 	uint8_t msb, lsb;
 
@@ -202,14 +241,14 @@ int mosquitto__read_uint16(struct mosquitto__packet *packet, uint16_t *word)
 }
 
 
-void mosquitto__write_uint16(struct mosquitto__packet *packet, uint16_t word)
+void packet__write_uint16(struct mosquitto__packet *packet, uint16_t word)
 {
-	mosquitto__write_byte(packet, MOSQ_MSB(word));
-	mosquitto__write_byte(packet, MOSQ_LSB(word));
+	packet__write_byte(packet, MOSQ_MSB(word));
+	packet__write_byte(packet, MOSQ_LSB(word));
 }
 
 
-int mosquitto__packet_write(struct mosquitto *mosq)
+int packet__write(struct mosquitto *mosq)
 {
 	ssize_t write_length;
 	struct mosquitto__packet *packet;
@@ -237,7 +276,7 @@ int mosquitto__packet_write(struct mosquitto *mosq)
 		packet = mosq->current_out_packet;
 
 		while(packet->to_process > 0){
-			write_length = mosquitto__net_write(mosq, &(packet->payload[packet->pos]), packet->to_process);
+			write_length = net__write(mosq, &(packet->payload[packet->pos]), packet->to_process);
 			if(write_length > 0){
 				G_BYTES_SENT_INC(write_length);
 				packet->to_process -= write_length;
@@ -276,7 +315,7 @@ int mosquitto__packet_write(struct mosquitto *mosq)
 		}else if(((packet->command)&0xF0) == DISCONNECT){
 			/* FIXME what cleanup needs doing here? 
 			 * incoming/outgoing messages? */
-			mosquitto__socket_close(mosq);
+			net__socket_close(mosq);
 
 			/* Start of duplicate, possibly unnecessary code.
 			 * This does leave things in a consistent state at least. */
@@ -291,7 +330,7 @@ int mosquitto__packet_write(struct mosquitto *mosq)
 			}
 			pthread_mutex_unlock(&mosq->out_packet_mutex);
 
-			mosquitto__packet_cleanup(packet);
+			packet__cleanup(packet);
 			mosquitto__free(packet);
 
 			pthread_mutex_lock(&mosq->msgtime_mutex);
@@ -322,7 +361,7 @@ int mosquitto__packet_write(struct mosquitto *mosq)
 		}
 		pthread_mutex_unlock(&mosq->out_packet_mutex);
 
-		mosquitto__packet_cleanup(packet);
+		packet__cleanup(packet);
 		mosquitto__free(packet);
 
 		pthread_mutex_lock(&mosq->msgtime_mutex);
@@ -335,9 +374,9 @@ int mosquitto__packet_write(struct mosquitto *mosq)
 
 
 #ifdef WITH_BROKER
-int mosquitto__packet_read(struct mosquitto_db *db, struct mosquitto *mosq)
+int packet__read(struct mosquitto_db *db, struct mosquitto *mosq)
 #else
-int mosquitto__packet_read(struct mosquitto *mosq)
+int packet__read(struct mosquitto *mosq)
 #endif
 {
 	uint8_t byte;
@@ -365,7 +404,7 @@ int mosquitto__packet_read(struct mosquitto *mosq)
 	 * Finally, free the memory and reset everything to starting conditions.
 	 */
 	if(!mosq->in_packet.command){
-		read_length = mosquitto__net_read(mosq, &byte, 1);
+		read_length = net__read(mosq, &byte, 1);
 		if(read_length == 1){
 			mosq->in_packet.command = byte;
 #ifdef WITH_BROKER
@@ -401,7 +440,7 @@ int mosquitto__packet_read(struct mosquitto *mosq)
 	 */
 	if(mosq->in_packet.remaining_count <= 0){
 		do{
-			read_length = mosquitto__net_read(mosq, &byte, 1);
+			read_length = net__read(mosq, &byte, 1);
 			if(read_length == 1){
 				mosq->in_packet.remaining_count--;
 				/* Max 4 bytes length for remaining length as defined by protocol.
@@ -440,7 +479,7 @@ int mosquitto__packet_read(struct mosquitto *mosq)
 		}
 	}
 	while(mosq->in_packet.to_process>0){
-		read_length = mosquitto__net_read(mosq, &(mosq->in_packet.payload[mosq->in_packet.pos]), mosq->in_packet.to_process);
+		read_length = net__read(mosq, &(mosq->in_packet.payload[mosq->in_packet.pos]), mosq->in_packet.to_process);
 		if(read_length > 0){
 			G_BYTES_RECEIVED_INC(read_length);
 			mosq->in_packet.to_process -= read_length;
@@ -479,13 +518,13 @@ int mosquitto__packet_read(struct mosquitto *mosq)
 	if(((mosq->in_packet.command)&0xF5) == PUBLISH){
 		G_PUB_MSGS_RECEIVED_INC(1);
 	}
-	rc = mqtt3_packet_handle(db, mosq);
+	rc = handle__packet(db, mosq);
 #else
-	rc = mosquitto__packet_handle(mosq);
+	rc = handle__packet(mosq);
 #endif
 
 	/* Free data and reset values */
-	mosquitto__packet_cleanup(&mosq->in_packet);
+	packet__cleanup(&mosq->in_packet);
 
 	pthread_mutex_lock(&mosq->msgtime_mutex);
 	mosq->last_msg_in = mosquitto_time();

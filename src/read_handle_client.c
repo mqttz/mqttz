@@ -25,7 +25,7 @@ Contributors:
 #include "send_mosq.h"
 #include "util_mosq.h"
 
-int mqtt3_handle_connack(struct mosquitto_db *db, struct mosquitto *context)
+int handle__connack(struct mosquitto_db *db, struct mosquitto *context)
 {
 	uint8_t byte;
 	uint8_t rc;
@@ -37,21 +37,21 @@ int mqtt3_handle_connack(struct mosquitto_db *db, struct mosquitto *context)
 	if(!context){
 		return MOSQ_ERR_INVAL;
 	}
-	mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Received CONNACK on connection %s.", context->id);
-	if(mosquitto__read_byte(&context->in_packet, &byte)) return 1; // Reserved byte, not used
-	if(mosquitto__read_byte(&context->in_packet, &rc)) return 1;
+	log__printf(NULL, MOSQ_LOG_DEBUG, "Received CONNACK on connection %s.", context->id);
+	if(packet__read_byte(&context->in_packet, &byte)) return 1; // Reserved byte, not used
+	if(packet__read_byte(&context->in_packet, &rc)) return 1;
 	switch(rc){
 		case CONNACK_ACCEPTED:
 			if(context->bridge){
 				if(context->bridge->notifications){
 					notification_payload = '1';
 					if(context->bridge->notification_topic){
-						if(mosquitto__send_real_publish(context, mosquitto__mid_generate(context),
+						if(send__real_publish(context, mosquitto__mid_generate(context),
 								context->bridge->notification_topic, 1, &notification_payload, 1, true, 0)){
 
 							return 1;
 						}
-						mqtt3_db_messages_easy_queue(db, context, context->bridge->notification_topic, 1, 1, &notification_payload, 1);
+						db__messages_easy_queue(db, context, context->bridge->notification_topic, 1, 1, &notification_payload, 1);
 					}else{
 						notification_topic_len = strlen(context->bridge->remote_clientid)+strlen("$SYS/broker/connection//state");
 						notification_topic = mosquitto__malloc(sizeof(char)*(notification_topic_len+1));
@@ -59,24 +59,24 @@ int mqtt3_handle_connack(struct mosquitto_db *db, struct mosquitto *context)
 
 						snprintf(notification_topic, notification_topic_len+1, "$SYS/broker/connection/%s/state", context->bridge->remote_clientid);
 						notification_payload = '1';
-						if(mosquitto__send_real_publish(context, mosquitto__mid_generate(context),
+						if(send__real_publish(context, mosquitto__mid_generate(context),
 								notification_topic, 1, &notification_payload, 1, true, 0)){
 
 							mosquitto__free(notification_topic);
 							return 1;
 						}
-						mqtt3_db_messages_easy_queue(db, context, notification_topic, 1, 1, &notification_payload, 1);
+						db__messages_easy_queue(db, context, notification_topic, 1, 1, &notification_payload, 1);
 						mosquitto__free(notification_topic);
 					}
 				}
 				for(i=0; i<context->bridge->topic_count; i++){
 					if(context->bridge->topics[i].direction == bd_in || context->bridge->topics[i].direction == bd_both){
-						if(mosquitto__send_subscribe(context, NULL, context->bridge->topics[i].remote_topic, context->bridge->topics[i].qos)){
+						if(send__subscribe(context, NULL, context->bridge->topics[i].remote_topic, context->bridge->topics[i].qos)){
 							return 1;
 						}
 					}else{
 						if(context->bridge->attempt_unsubscribe){
-							if(mosquitto__send_unsubscribe(context, NULL, context->bridge->topics[i].remote_topic)){
+							if(send__unsubscribe(context, NULL, context->bridge->topics[i].remote_topic)){
 								/* direction = inwards only. This means we should not be subscribed
 								* to the topic. It is possible that we used to be subscribed to
 								* this topic so unsubscribe. */
@@ -92,22 +92,22 @@ int mqtt3_handle_connack(struct mosquitto_db *db, struct mosquitto *context)
 			if(context->bridge){
 				context->bridge->try_private_accepted = false;
 			}
-			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Connection Refused: unacceptable protocol version");
+			log__printf(NULL, MOSQ_LOG_ERR, "Connection Refused: unacceptable protocol version");
 			return 1;
 		case CONNACK_REFUSED_IDENTIFIER_REJECTED:
-			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Connection Refused: identifier rejected");
+			log__printf(NULL, MOSQ_LOG_ERR, "Connection Refused: identifier rejected");
 			return 1;
 		case CONNACK_REFUSED_SERVER_UNAVAILABLE:
-			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Connection Refused: broker unavailable");
+			log__printf(NULL, MOSQ_LOG_ERR, "Connection Refused: broker unavailable");
 			return 1;
 		case CONNACK_REFUSED_BAD_USERNAME_PASSWORD:
-			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Connection Refused: broker unavailable");
+			log__printf(NULL, MOSQ_LOG_ERR, "Connection Refused: broker unavailable");
 			return 1;
 		case CONNACK_REFUSED_NOT_AUTHORIZED:
-			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Connection Refused: not authorised");
+			log__printf(NULL, MOSQ_LOG_ERR, "Connection Refused: not authorised");
 			return 1;
 		default:
-			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Connection Refused: unknown reason");
+			log__printf(NULL, MOSQ_LOG_ERR, "Connection Refused: unknown reason");
 			return 1;
 	}
 	return 1;

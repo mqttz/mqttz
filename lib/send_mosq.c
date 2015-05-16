@@ -36,59 +36,59 @@ Contributors:
 #  define G_PUB_BYTES_SENT_INC(A)
 #endif
 
-int mosquitto__send_pingreq(struct mosquitto *mosq)
+int send__pingreq(struct mosquitto *mosq)
 {
 	int rc;
 	assert(mosq);
 #ifdef WITH_BROKER
-	mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Sending PINGREQ to %s", mosq->id);
+	log__printf(NULL, MOSQ_LOG_DEBUG, "Sending PINGREQ to %s", mosq->id);
 #else
-	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PINGREQ", mosq->id);
+	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PINGREQ", mosq->id);
 #endif
-	rc = mosquitto__send_simple_command(mosq, PINGREQ);
+	rc = send__simple_command(mosq, PINGREQ);
 	if(rc == MOSQ_ERR_SUCCESS){
 		mosq->ping_t = mosquitto_time();
 	}
 	return rc;
 }
 
-int mosquitto__send_pingresp(struct mosquitto *mosq)
+int send__pingresp(struct mosquitto *mosq)
 {
 #ifdef WITH_BROKER
-	if(mosq) mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Sending PINGRESP to %s", mosq->id);
+	if(mosq) log__printf(NULL, MOSQ_LOG_DEBUG, "Sending PINGRESP to %s", mosq->id);
 #else
-	if(mosq) mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PINGRESP", mosq->id);
+	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PINGRESP", mosq->id);
 #endif
-	return mosquitto__send_simple_command(mosq, PINGRESP);
+	return send__simple_command(mosq, PINGRESP);
 }
 
-int mosquitto__send_puback(struct mosquitto *mosq, uint16_t mid)
+int send__puback(struct mosquitto *mosq, uint16_t mid)
 {
 #ifdef WITH_BROKER
-	if(mosq) mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBACK to %s (Mid: %d)", mosq->id, mid);
+	if(mosq) log__printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBACK to %s (Mid: %d)", mosq->id, mid);
 #else
-	if(mosq) mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBACK (Mid: %d)", mosq->id, mid);
+	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBACK (Mid: %d)", mosq->id, mid);
 #endif
-	return mosquitto__send_command_with_mid(mosq, PUBACK, mid, false);
+	return send__command_with_mid(mosq, PUBACK, mid, false);
 }
 
-int mosquitto__send_pubcomp(struct mosquitto *mosq, uint16_t mid)
+int send__pubcomp(struct mosquitto *mosq, uint16_t mid)
 {
 #ifdef WITH_BROKER
-	if(mosq) mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBCOMP to %s (Mid: %d)", mosq->id, mid);
+	if(mosq) log__printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBCOMP to %s (Mid: %d)", mosq->id, mid);
 #else
-	if(mosq) mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBCOMP (Mid: %d)", mosq->id, mid);
+	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBCOMP (Mid: %d)", mosq->id, mid);
 #endif
-	return mosquitto__send_command_with_mid(mosq, PUBCOMP, mid, false);
+	return send__command_with_mid(mosq, PUBCOMP, mid, false);
 }
 
-int mosquitto__send_publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint32_t payloadlen, const void *payload, int qos, bool retain, bool dup)
+int send__publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint32_t payloadlen, const void *payload, int qos, bool retain, bool dup)
 {
 #ifdef WITH_BROKER
 	size_t len;
 #ifdef WITH_BRIDGE
 	int i;
-	struct mqtt3__bridge_topic *cur_topic;
+	struct mosquitto__bridge_topic *cur_topic;
 	bool match;
 	int rc;
 	char *mapped_topic = NULL;
@@ -154,9 +154,9 @@ int mosquitto__send_publish(struct mosquitto *mosq, uint16_t mid, const char *to
 						mosquitto__free(mapped_topic);
 						mapped_topic = topic_temp;
 					}
-					mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBLISH to %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", mosq->id, dup, qos, retain, mid, mapped_topic, (long)payloadlen);
+					log__printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBLISH to %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", mosq->id, dup, qos, retain, mid, mapped_topic, (long)payloadlen);
 					G_PUB_BYTES_SENT_INC(payloadlen);
-					rc =  mosquitto__send_real_publish(mosq, mid, mapped_topic, payloadlen, payload, qos, retain, dup);
+					rc =  send__real_publish(mosq, mid, mapped_topic, payloadlen, payload, qos, retain, dup);
 					mosquitto__free(mapped_topic);
 					return rc;
 				}
@@ -164,37 +164,37 @@ int mosquitto__send_publish(struct mosquitto *mosq, uint16_t mid, const char *to
 		}
 	}
 #endif
-	mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBLISH to %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", mosq->id, dup, qos, retain, mid, topic, (long)payloadlen);
+	log__printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBLISH to %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", mosq->id, dup, qos, retain, mid, topic, (long)payloadlen);
 	G_PUB_BYTES_SENT_INC(payloadlen);
 #else
-	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBLISH (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", mosq->id, dup, qos, retain, mid, topic, (long)payloadlen);
+	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBLISH (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", mosq->id, dup, qos, retain, mid, topic, (long)payloadlen);
 #endif
 
-	return mosquitto__send_real_publish(mosq, mid, topic, payloadlen, payload, qos, retain, dup);
+	return send__real_publish(mosq, mid, topic, payloadlen, payload, qos, retain, dup);
 }
 
-int mosquitto__send_pubrec(struct mosquitto *mosq, uint16_t mid)
+int send__pubrec(struct mosquitto *mosq, uint16_t mid)
 {
 #ifdef WITH_BROKER
-	if(mosq) mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBREC to %s (Mid: %d)", mosq->id, mid);
+	if(mosq) log__printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBREC to %s (Mid: %d)", mosq->id, mid);
 #else
-	if(mosq) mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBREC (Mid: %d)", mosq->id, mid);
+	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBREC (Mid: %d)", mosq->id, mid);
 #endif
-	return mosquitto__send_command_with_mid(mosq, PUBREC, mid, false);
+	return send__command_with_mid(mosq, PUBREC, mid, false);
 }
 
-int mosquitto__send_pubrel(struct mosquitto *mosq, uint16_t mid)
+int send__pubrel(struct mosquitto *mosq, uint16_t mid)
 {
 #ifdef WITH_BROKER
-	if(mosq) mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBREL to %s (Mid: %d)", mosq->id, mid);
+	if(mosq) log__printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBREL to %s (Mid: %d)", mosq->id, mid);
 #else
-	if(mosq) mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBREL (Mid: %d)", mosq->id, mid);
+	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBREL (Mid: %d)", mosq->id, mid);
 #endif
-	return mosquitto__send_command_with_mid(mosq, PUBREL|2, mid, false);
+	return send__command_with_mid(mosq, PUBREL|2, mid, false);
 }
 
 /* For PUBACK, PUBCOMP, PUBREC, and PUBREL */
-int mosquitto__send_command_with_mid(struct mosquitto *mosq, uint8_t command, uint16_t mid, bool dup)
+int send__command_with_mid(struct mosquitto *mosq, uint8_t command, uint16_t mid, bool dup)
 {
 	struct mosquitto__packet *packet = NULL;
 	int rc;
@@ -208,7 +208,7 @@ int mosquitto__send_command_with_mid(struct mosquitto *mosq, uint8_t command, ui
 		packet->command |= 8;
 	}
 	packet->remaining_length = 2;
-	rc = mosquitto__packet_alloc(packet);
+	rc = packet__alloc(packet);
 	if(rc){
 		mosquitto__free(packet);
 		return rc;
@@ -217,11 +217,11 @@ int mosquitto__send_command_with_mid(struct mosquitto *mosq, uint8_t command, ui
 	packet->payload[packet->pos+0] = MOSQ_MSB(mid);
 	packet->payload[packet->pos+1] = MOSQ_LSB(mid);
 
-	return mosquitto__packet_queue(mosq, packet);
+	return packet__queue(mosq, packet);
 }
 
 /* For DISCONNECT, PINGREQ and PINGRESP */
-int mosquitto__send_simple_command(struct mosquitto *mosq, uint8_t command)
+int send__simple_command(struct mosquitto *mosq, uint8_t command)
 {
 	struct mosquitto__packet *packet = NULL;
 	int rc;
@@ -233,16 +233,16 @@ int mosquitto__send_simple_command(struct mosquitto *mosq, uint8_t command)
 	packet->command = command;
 	packet->remaining_length = 0;
 
-	rc = mosquitto__packet_alloc(packet);
+	rc = packet__alloc(packet);
 	if(rc){
 		mosquitto__free(packet);
 		return rc;
 	}
 
-	return mosquitto__packet_queue(mosq, packet);
+	return packet__queue(mosq, packet);
 }
 
-int mosquitto__send_real_publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint32_t payloadlen, const void *payload, int qos, bool retain, bool dup)
+int send__real_publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint32_t payloadlen, const void *payload, int qos, bool retain, bool dup)
 {
 	struct mosquitto__packet *packet = NULL;
 	int packetlen;
@@ -259,21 +259,21 @@ int mosquitto__send_real_publish(struct mosquitto *mosq, uint16_t mid, const cha
 	packet->mid = mid;
 	packet->command = PUBLISH | ((dup&0x1)<<3) | (qos<<1) | retain;
 	packet->remaining_length = packetlen;
-	rc = mosquitto__packet_alloc(packet);
+	rc = packet__alloc(packet);
 	if(rc){
 		mosquitto__free(packet);
 		return rc;
 	}
 	/* Variable header (topic string) */
-	mosquitto__write_string(packet, topic, strlen(topic));
+	packet__write_string(packet, topic, strlen(topic));
 	if(qos > 0){
-		mosquitto__write_uint16(packet, mid);
+		packet__write_uint16(packet, mid);
 	}
 
 	/* Payload */
 	if(payloadlen){
-		mosquitto__write_bytes(packet, payload, payloadlen);
+		packet__write_bytes(packet, payload, payloadlen);
 	}
 
-	return mosquitto__packet_queue(mosq, packet);
+	return packet__queue(mosq, packet);
 }

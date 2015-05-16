@@ -19,13 +19,13 @@ Contributors:
 #include "mosquitto_internal.h"
 #include "mosquitto.h"
 
-void mosquitto__message_cleanup_all(struct mosquitto *mosq);
-void mosquitto__message_cleanup(struct mosquitto_message_all **message);
-int mosquitto__message_delete(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_direction dir);
-void mosquitto__message_queue(struct mosquitto *mosq, struct mosquitto_message_all *message, enum mosquitto_msg_direction dir);
-void mosquitto__messages_reconnect_reset(struct mosquitto *mosq);
-int mosquitto__message_remove(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_direction dir, struct mosquitto_message_all **message);
-void mosquitto__message_retry_check(struct mosquitto *mosq);
-int mosquitto__message_out_update(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_state state);
+void message__cleanup_all(struct mosquitto *mosq);
+void message__cleanup(struct mosquitto_message_all **message);
+int message__delete(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_direction dir);
+void message__queue(struct mosquitto *mosq, struct mosquitto_message_all *message, enum mosquitto_msg_direction dir);
+void message__reconnect_reset(struct mosquitto *mosq);
+int message__remove(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_direction dir, struct mosquitto_message_all **message);
+void message__retry_check(struct mosquitto *mosq);
+int message__out_update(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_state state);
 
 #endif

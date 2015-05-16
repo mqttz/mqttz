@@ -89,7 +89,7 @@ int mosquitto_socks5_set(struct mosquitto *mosq, const char *host, int port, con
 }
 
 #ifdef WITH_SOCKS
-int mosquitto__socks5_send(struct mosquitto *mosq)
+int socks5__send(struct mosquitto *mosq)
 {
 	struct mosquitto__packet *packet;
 	int slen;
@@ -130,7 +130,7 @@ int mosquitto__socks5_send(struct mosquitto *mosq)
 			return MOSQ_ERR_NOMEM;
 		}
 
-		return mosquitto__packet_queue(mosq, packet);
+		return packet__queue(mosq, packet);
 	}else if(mosq->state == mosq_cs_socks5_auth_ok){
 		packet = mosquitto__calloc(1, sizeof(struct mosquitto__packet));
 		if(!packet) return MOSQ_ERR_NOMEM;
@@ -163,7 +163,7 @@ int mosquitto__socks5_send(struct mosquitto *mosq)
 			return MOSQ_ERR_NOMEM;
 		}
 
-		return mosquitto__packet_queue(mosq, packet);
+		return packet__queue(mosq, packet);
 	}else if(mosq->state == mosq_cs_socks5_send_userpass){
 		packet = mosquitto__calloc(1, sizeof(struct mosquitto__packet));
 		if(!packet) return MOSQ_ERR_NOMEM;
@@ -194,12 +194,12 @@ int mosquitto__socks5_send(struct mosquitto *mosq)
 			return MOSQ_ERR_NOMEM;
 		}
 
-		return mosquitto__packet_queue(mosq, packet);
+		return packet__queue(mosq, packet);
 	}
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto__socks5_read(struct mosquitto *mosq)
+int socks5__read(struct mosquitto *mosq)
 {
 	ssize_t len;
 	uint8_t *payload;
@@ -207,7 +207,7 @@ int mosquitto__socks5_read(struct mosquitto *mosq)
 
 	if(mosq->state == mosq_cs_socks5_start){
 		while(mosq->in_packet.to_process > 0){
-			len = mosquitto__net_read(mosq, &(mosq->in_packet.payload[mosq->in_packet.pos]), mosq->in_packet.to_process);
+			len = net__read(mosq, &(mosq->in_packet.payload[mosq->in_packet.pos]), mosq->in_packet.to_process);
 			if(len > 0){
 				mosq->in_packet.pos += len;
 				mosq->in_packet.to_process -= len;
@@ -218,7 +218,7 @@ int mosquitto__socks5_read(struct mosquitto *mosq)
 				if(errno == EAGAIN || errno == COMPAT_EWOULDBLOCK){
 					return MOSQ_ERR_SUCCESS;
 				}else{
-					mosquitto__packet_cleanup(&mosq->in_packet);
+					packet__cleanup(&mosq->in_packet);
 					switch(errno){
 						case 0:
 							return MOSQ_ERR_PROXY;
@@ -231,25 +231,25 @@ int mosquitto__socks5_read(struct mosquitto *mosq)
 			}
 		}
 		if(mosq->in_packet.payload[0] != 5){
-			mosquitto__packet_cleanup(&mosq->in_packet);
+			packet__cleanup(&mosq->in_packet);
 			return MOSQ_ERR_PROXY;
 		}
 		switch(mosq->in_packet.payload[1]){
 			case SOCKS_AUTH_NONE:
-				mosquitto__packet_cleanup(&mosq->in_packet);
+				packet__cleanup(&mosq->in_packet);
 				mosq->state = mosq_cs_socks5_auth_ok;
-				return mosquitto__socks5_send(mosq);
+				return socks5__send(mosq);
 			case SOCKS_AUTH_USERPASS:
-				mosquitto__packet_cleanup(&mosq->in_packet);
+				packet__cleanup(&mosq->in_packet);
 				mosq->state = mosq_cs_socks5_send_userpass;
-				return mosquitto__socks5_send(mosq);
+				return socks5__send(mosq);
 			default:
-				mosquitto__packet_cleanup(&mosq->in_packet);
+				packet__cleanup(&mosq->in_packet);
 				return MOSQ_ERR_AUTH;
 		}
 	}else if(mosq->state == mosq_cs_socks5_userpass_reply){
 		while(mosq->in_packet.to_process > 0){
-			len = mosquitto__net_read(mosq, &(mosq->in_packet.payload[mosq->in_packet.pos]), mosq->in_packet.to_process);
+			len = net__read(mosq, &(mosq->in_packet.payload[mosq->in_packet.pos]), mosq->in_packet.to_process);
 			if(len > 0){
 				mosq->in_packet.pos += len;
 				mosq->in_packet.to_process -= len;
@@ -260,7 +260,7 @@ int mosquitto__socks5_read(struct mosquitto *mosq)
 				if(errno == EAGAIN || errno == COMPAT_EWOULDBLOCK){
 					return MOSQ_ERR_SUCCESS;
 				}else{
-					mosquitto__packet_cleanup(&mosq->in_packet);
+					packet__cleanup(&mosq->in_packet);
 					switch(errno){
 						case 0:
 							return MOSQ_ERR_PROXY;
@@ -273,16 +273,16 @@ int mosquitto__socks5_read(struct mosquitto *mosq)
 			}
 		}
 		if(mosq->in_packet.payload[0] != 1){
-			mosquitto__packet_cleanup(&mosq->in_packet);
+			packet__cleanup(&mosq->in_packet);
 			return MOSQ_ERR_PROXY;
 		}
 		if(mosq->in_packet.payload[1] == 0){
-			mosquitto__packet_cleanup(&mosq->in_packet);
+			packet__cleanup(&mosq->in_packet);
 			mosq->state = mosq_cs_socks5_auth_ok;
-			return mosquitto__socks5_send(mosq);
+			return socks5__send(mosq);
 		}else{
 			i = mosq->in_packet.payload[1];
-			mosquitto__packet_cleanup(&mosq->in_packet);
+			packet__cleanup(&mosq->in_packet);
 			switch(i){
 				case SOCKS_REPLY_CONNECTION_NOT_ALLOWED:
 					return MOSQ_ERR_AUTH;
@@ -305,7 +305,7 @@ int mosquitto__socks5_read(struct mosquitto *mosq)
 		}
 	}else if(mosq->state == mosq_cs_socks5_request){
 		while(mosq->in_packet.to_process > 0){
-			len = mosquitto__net_read(mosq, &(mosq->in_packet.payload[mosq->in_packet.pos]), mosq->in_packet.to_process);
+			len = net__read(mosq, &(mosq->in_packet.payload[mosq->in_packet.pos]), mosq->in_packet.to_process);
 			if(len > 0){
 				mosq->in_packet.pos += len;
 				mosq->in_packet.to_process -= len;
@@ -316,7 +316,7 @@ int mosquitto__socks5_read(struct mosquitto *mosq)
 				if(errno == EAGAIN || errno == COMPAT_EWOULDBLOCK){
 					return MOSQ_ERR_SUCCESS;
 				}else{
-					mosquitto__packet_cleanup(&mosq->in_packet);
+					packet__cleanup(&mosq->in_packet);
 					switch(errno){
 						case 0:
 							return MOSQ_ERR_PROXY;
@@ -343,21 +343,21 @@ int mosquitto__socks5_read(struct mosquitto *mosq)
 					mosq->in_packet.packet_length += mosq->in_packet.payload[4];
 				}
 			}else{
-				mosquitto__packet_cleanup(&mosq->in_packet);
+				packet__cleanup(&mosq->in_packet);
 				return MOSQ_ERR_PROTOCOL;
 			}
 			payload = mosquitto__realloc(mosq->in_packet.payload, mosq->in_packet.packet_length);
 			if(payload){
 				mosq->in_packet.payload = payload;
 			}else{
-				mosquitto__packet_cleanup(&mosq->in_packet);
+				packet__cleanup(&mosq->in_packet);
 				return MOSQ_ERR_NOMEM;
 			}
 			payload = mosquitto__realloc(mosq->in_packet.payload, mosq->in_packet.packet_length);
 			if(payload){
 				mosq->in_packet.payload = payload;
 			}else{
-				mosquitto__packet_cleanup(&mosq->in_packet);
+				packet__cleanup(&mosq->in_packet);
 				return MOSQ_ERR_NOMEM;
 			}
 			return MOSQ_ERR_SUCCESS;
@@ -365,17 +365,17 @@ int mosquitto__socks5_read(struct mosquitto *mosq)
 
 		/* Entire packet is now read. */
 		if(mosq->in_packet.payload[0] != 5){
-			mosquitto__packet_cleanup(&mosq->in_packet);
+			packet__cleanup(&mosq->in_packet);
 			return MOSQ_ERR_PROXY;
 		}
 		if(mosq->in_packet.payload[1] == 0){
 			/* Auth passed */
-			mosquitto__packet_cleanup(&mosq->in_packet);
+			packet__cleanup(&mosq->in_packet);
 			mosq->state = mosq_cs_new;
-			return mosquitto__send_connect(mosq, mosq->keepalive, mosq->clean_session);
+			return send__connect(mosq, mosq->keepalive, mosq->clean_session);
 		}else{
 			i = mosq->in_packet.payload[1];
-			mosquitto__packet_cleanup(&mosq->in_packet);
+			packet__cleanup(&mosq->in_packet);
 			mosq->state = mosq_cs_socks5_new;
 			switch(i){
 				case SOCKS_REPLY_CONNECTION_NOT_ALLOWED:
@@ -397,7 +397,7 @@ int mosquitto__socks5_read(struct mosquitto *mosq)
 			}
 		}
 	}else{
-		return mosquitto__packet_read(mosq);
+		return packet__read(mosq);
 	}
 	return MOSQ_ERR_SUCCESS;
 }

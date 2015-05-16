@@ -41,7 +41,7 @@ int mosquitto_security_init_default(struct mosquitto_db *db, bool reload)
 	if(db->config->password_file){
 		rc = unpwd__file_parse(db);
 		if(rc){
-			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error opening password file \"%s\".", db->config->password_file);
+			log__printf(NULL, MOSQ_LOG_ERR, "Error opening password file \"%s\".", db->config->password_file);
 			return rc;
 		}
 	}
@@ -50,7 +50,7 @@ int mosquitto_security_init_default(struct mosquitto_db *db, bool reload)
 	if(db->config->acl_file){
 		rc = aclfile__parse(db);
 		if(rc){
-			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error opening acl file \"%s\".", db->config->acl_file);
+			log__printf(NULL, MOSQ_LOG_ERR, "Error opening acl file \"%s\".", db->config->acl_file);
 			return rc;
 		}
 	}
@@ -59,7 +59,7 @@ int mosquitto_security_init_default(struct mosquitto_db *db, bool reload)
 	if(db->config->psk_file){
 		rc = psk__file_parse(db);
 		if(rc){
-			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error opening psk file \"%s\".", db->config->psk_file);
+			log__printf(NULL, MOSQ_LOG_ERR, "Error opening psk file \"%s\".", db->config->psk_file);
 			return rc;
 		}
 	}
@@ -334,7 +334,7 @@ static int aclfile__parse(struct mosquitto_db *db)
 
 	aclfile = mosquitto__fopen(db->config->acl_file, "rt");
 	if(!aclfile){
-		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open acl_file \"%s\".", db->config->acl_file);
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open acl_file \"%s\".", db->config->acl_file);
 		return 1;
 	}
 
@@ -361,7 +361,7 @@ static int aclfile__parse(struct mosquitto_db *db)
 
 				access_s = strtok_r(NULL, " ", &saveptr);
 				if(!access_s){
-					mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty topic in acl_file.");
+					log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty topic in acl_file.");
 					if(user) mosquitto__free(user);
 					fclose(aclfile);
 					return MOSQ_ERR_INVAL;
@@ -385,7 +385,7 @@ static int aclfile__parse(struct mosquitto_db *db)
 					}else if(!strcmp(access_s, "readwrite")){
 						access = MOSQ_ACL_READ | MOSQ_ACL_WRITE;
 					}else{
-						mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid topic access type \"%s\" in acl_file.", access_s);
+						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid topic access type \"%s\" in acl_file.", access_s);
 						if(user) mosquitto__free(user);
 						fclose(aclfile);
 						return MOSQ_ERR_INVAL;
@@ -416,7 +416,7 @@ static int aclfile__parse(struct mosquitto_db *db)
 						return MOSQ_ERR_NOMEM;
 					}
 				}else{
-					mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Missing username in acl_file.");
+					log__printf(NULL, MOSQ_LOG_ERR, "Error: Missing username in acl_file.");
 					if(user) mosquitto__free(user);
 					fclose(aclfile);
 					return 1;
@@ -492,7 +492,7 @@ static int pwfile__parse(const char *file, struct mosquitto__unpwd **root)
 
 	pwfile = mosquitto__fopen(file, "rt");
 	if(!pwfile){
-		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open pwfile \"%s\".", file);
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open pwfile \"%s\".", file);
 		return 1;
 	}
 
@@ -569,7 +569,7 @@ static int unpwd__file_parse(struct mosquitto_db *db)
 				if(token){
 					rc = base64__decode(token, &salt, &salt_len);
 					if(rc){
-						mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to decode password salt for user %s.", u->username);
+						log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to decode password salt for user %s.", u->username);
 						return MOSQ_ERR_INVAL;
 					}
 					u->salt = salt;
@@ -578,22 +578,22 @@ static int unpwd__file_parse(struct mosquitto_db *db)
 					if(token){
 						rc = base64__decode(token, &password, &password_len);
 						if(rc){
-							mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to decode password for user %s.", u->username);
+							log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to decode password for user %s.", u->username);
 							return MOSQ_ERR_INVAL;
 						}
 						mosquitto__free(u->password);
 						u->password = (char *)password;
 						u->password_len = password_len;
 					}else{
-						mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid password hash for user %s.", u->username);
+						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid password hash for user %s.", u->username);
 						return MOSQ_ERR_INVAL;
 					}
 				}else{
-					mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid password hash for user %s.", u->username);
+					log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid password hash for user %s.", u->username);
 					return MOSQ_ERR_INVAL;
 				}
 			}else{
-				mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid password hash for user %s.", u->username);
+				log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid password hash for user %s.", u->username);
 				return MOSQ_ERR_INVAL;
 			}
 		}
@@ -618,11 +618,11 @@ static int psk__file_parse(struct mosquitto_db *db)
 	HASH_ITER(hh, db->psk_id, u, tmp){
 		/* Check for hex only digits */
 		if(!u->password){
-			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty psk for identity \"%s\".", u->username);
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty psk for identity \"%s\".", u->username);
 			return MOSQ_ERR_INVAL;
 		}
 		if(strspn(u->password, "0123456789abcdefABCDEF") < strlen(u->password)){
-			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: psk for identity \"%s\" contains non-hexadecimal characters.", u->username);
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: psk for identity \"%s\" contains non-hexadecimal characters.", u->username);
 			return MOSQ_ERR_INVAL;
 		}
 	}

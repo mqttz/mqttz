@@ -30,39 +30,39 @@ Contributors:
 #include "time_mosq.h"
 #include "util_mosq.h"
 
-int mosquitto__packet_handle(struct mosquitto *mosq)
+int handle__packet(struct mosquitto *mosq)
 {
 	assert(mosq);
 
 	switch((mosq->in_packet.command)&0xF0){
 		case PINGREQ:
-			return mosquitto__handle_pingreq(mosq);
+			return handle__pingreq(mosq);
 		case PINGRESP:
-			return mosquitto__handle_pingresp(mosq);
+			return handle__pingresp(mosq);
 		case PUBACK:
-			return mosquitto__handle_pubackcomp(mosq, "PUBACK");
+			return handle__pubackcomp(mosq, "PUBACK");
 		case PUBCOMP:
-			return mosquitto__handle_pubackcomp(mosq, "PUBCOMP");
+			return handle__pubackcomp(mosq, "PUBCOMP");
 		case PUBLISH:
-			return mosquitto__handle_publish(mosq);
+			return handle__publish(mosq);
 		case PUBREC:
-			return mosquitto__handle_pubrec(mosq);
+			return handle__pubrec(mosq);
 		case PUBREL:
-			return mosquitto__handle_pubrel(NULL, mosq);
+			return handle__pubrel(NULL, mosq);
 		case CONNACK:
-			return mosquitto__handle_connack(mosq);
+			return handle__connack(mosq);
 		case SUBACK:
-			return mosquitto__handle_suback(mosq);
+			return handle__suback(mosq);
 		case UNSUBACK:
-			return mosquitto__handle_unsuback(mosq);
+			return handle__unsuback(mosq);
 		default:
 			/* If we don't recognise the command, return an error straight away. */
-			mosquitto__log_printf(mosq, MOSQ_LOG_ERR, "Error: Unrecognised command %d\n", (mosq->in_packet.command)&0xF0);
+			log__printf(mosq, MOSQ_LOG_ERR, "Error: Unrecognised command %d\n", (mosq->in_packet.command)&0xF0);
 			return MOSQ_ERR_PROTOCOL;
 	}
 }
 
-int mosquitto__handle_publish(struct mosquitto *mosq)
+int handle__publish(struct mosquitto *mosq)
 {
 	uint8_t header;
 	struct mosquitto_message_all *message;
@@ -80,20 +80,20 @@ int mosquitto__handle_publish(struct mosquitto *mosq)
 	message->msg.qos = (header & 0x06)>>1;
 	message->msg.retain = (header & 0x01);
 
-	rc = mosquitto__read_string(&mosq->in_packet, &message->msg.topic);
+	rc = packet__read_string(&mosq->in_packet, &message->msg.topic);
 	if(rc){
-		mosquitto__message_cleanup(&message);
+		message__cleanup(&message);
 		return rc;
 	}
 	if(!strlen(message->msg.topic)){
-		mosquitto__message_cleanup(&message);
+		message__cleanup(&message);
 		return MOSQ_ERR_PROTOCOL;
 	}
 
 	if(message->msg.qos > 0){
-		rc = mosquitto__read_uint16(&mosq->in_packet, &mid);
+		rc = packet__read_uint16(&mosq->in_packet, &mid);
 		if(rc){
-			mosquitto__message_cleanup(&message);
+			message__cleanup(&message);
 			return rc;
 		}
 		message->msg.mid = (int)mid;
@@ -103,16 +103,16 @@ int mosquitto__handle_publish(struct mosquitto *mosq)
 	if(message->msg.payloadlen){
 		message->msg.payload = mosquitto__calloc(message->msg.payloadlen+1, sizeof(uint8_t));
 		if(!message->msg.payload){
-			mosquitto__message_cleanup(&message);
+			message__cleanup(&message);
 			return MOSQ_ERR_NOMEM;
 		}
-		rc = mosquitto__read_bytes(&mosq->in_packet, message->msg.payload, message->msg.payloadlen);
+		rc = packet__read_bytes(&mosq->in_packet, message->msg.payload, message->msg.payloadlen);
 		if(rc){
-			mosquitto__message_cleanup(&message);
+			message__cleanup(&message);
 			return rc;
 		}
 	}
-	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG,
+	log__printf(mosq, MOSQ_LOG_DEBUG,
 			"Client %s received PUBLISH (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))",
 			mosq->id, message->dup, message->msg.qos, message->msg.retain,
 			message->msg.mid, message->msg.topic,
@@ -128,10 +128,10 @@ int mosquitto__handle_publish(struct mosquitto *mosq)
 				mosq->in_callback = false;
 			}
 			pthread_mutex_unlock(&mosq->callback_mutex);
-			mosquitto__message_cleanup(&message);
+			message__cleanup(&message);
 			return MOSQ_ERR_SUCCESS;
 		case 1:
-			rc = mosquitto__send_puback(mosq, message->msg.mid);
+			rc = send__puback(mosq, message->msg.mid);
 			pthread_mutex_lock(&mosq->callback_mutex);
 			if(mosq->on_message){
 				mosq->in_callback = true;
@@ -139,17 +139,17 @@ int mosquitto__handle_publish(struct mosquitto *mosq)
 				mosq->in_callback = false;
 			}
 			pthread_mutex_unlock(&mosq->callback_mutex);
-			mosquitto__message_cleanup(&message);
+			message__cleanup(&message);
 			return rc;
 		case 2:
-			rc = mosquitto__send_pubrec(mosq, message->msg.mid);
+			rc = send__pubrec(mosq, message->msg.mid);
 			pthread_mutex_lock(&mosq->in_message_mutex);
 			message->state = mosq_ms_wait_for_pubrel;
-			mosquitto__message_queue(mosq, message, mosq_md_in);
+			message__queue(mosq, message, mosq_md_in);
 			pthread_mutex_unlock(&mosq->in_message_mutex);
 			return rc;
 		default:
-			mosquitto__message_cleanup(&message);
+			message__cleanup(&message);
 			return MOSQ_ERR_PROTOCOL;
 	}
 }

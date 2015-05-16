@@ -34,6 +34,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "mosquitto_broker.h"
 #include "mqtt3_protocol.h"
 #include "memory_mosq.h"
+#include "packet_mosq.h"
 #include "sys_tree.h"
 
 #include <stdlib.h>
@@ -123,7 +124,7 @@ static void easy_address(int sock, struct mosquitto *mosq)
 {
 	char address[1024];
 
-	if(!mosquitto__socket_get_address(sock, address, 1024)){
+	if(!net__socket_get_address(sock, address, 1024)){
 		mosq->address = mosquitto__strdup(address);
 	}
 }
@@ -149,7 +150,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 
 	switch (reason) {
 		case LWS_CALLBACK_ESTABLISHED:
-			mosq = mqtt3_context_init(db, WEBSOCKET_CLIENT);
+			mosq = context__init(db, WEBSOCKET_CLIENT);
 			if(mosq){
 				mosq->ws_context = context;
 				mosq->wsi = wsi;
@@ -230,7 +231,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 					}
 				}
 
-				mosquitto__packet_cleanup(packet);
+				packet__cleanup(packet);
 				mosquitto__free(packet);
 
 				mosq->last_msg_out = mosquitto_time();
@@ -308,15 +309,15 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				mosq->in_packet.pos = 0;
 
 #ifdef WITH_SYS_TREE
-				G_MSGS_RECEIVED_INC();
+				G_MSGS_RECEIVED_INC(1);
 				if(((mosq->in_packet.command)&0xF5) == PUBLISH){
-					G_PUB_MSGS_RECEIVED_INC();
+					G_PUB_MSGS_RECEIVED_INC(1);
 				}
 #endif
-				rc = mqtt3_packet_handle(db, mosq);
+				rc = handle__packet(db, mosq);
 
 				/* Free data and reset values */
-				mosquitto__packet_cleanup(&mosq->in_packet);
+				packet__cleanup(&mosq->in_packet);
 
 				mosq->last_msg_in = mosquitto_time();
 
@@ -426,7 +427,7 @@ static int callback_http(struct libwebsocket_context *context,
 			}
 			free(filename_canonical);
 
-			mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "http serving file \"%s\".", filename);
+			log__printf(NULL, MOSQ_LOG_DEBUG, "http serving file \"%s\".", filename);
 			u->fptr = fopen(filename, "rb");
 			mosquitto__free(filename);
 			if(!u->fptr){
@@ -511,10 +512,10 @@ static void log_wrap(int level, const char *line)
 {
 	char *l = (char *)line;
 	l[strlen(line)-1] = '\0'; // Remove \n
-	mosquitto__log_printf(NULL, MOSQ_LOG_WEBSOCKETS, "%s", l);
+	log__printf(NULL, MOSQ_LOG_WEBSOCKETS, "%s", l);
 }
 
-struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listener, int log_level)
+struct libwebsocket_context *mosq_websockets_init(struct mosquitto__listener *listener, int log_level)
 {
 	struct lws_context_creation_info info;
 	struct libwebsocket_protocols *p;
@@ -527,7 +528,7 @@ struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listen
 
 	p = mosquitto__calloc(protocol_count+1, sizeof(struct libwebsocket_protocols));
 	if(!p){
-		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Out of memory.");
+		log__printf(NULL, MOSQ_LOG_ERR, "Out of memory.");
 		return NULL;
 	}
 	for(i=0; protocols[i].name; i++){
@@ -581,7 +582,7 @@ struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listen
 
 	lws_set_log_level(log_level, log_wrap);
 
-	mosquitto__log_printf(NULL, MOSQ_LOG_INFO, "Opening websockets listen socket on port %d.", listener->port);
+	log__printf(NULL, MOSQ_LOG_INFO, "Opening websockets listen socket on port %d.", listener->port);
 	return libwebsocket_create_context(&info);
 }
 

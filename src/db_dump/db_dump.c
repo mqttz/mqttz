@@ -31,7 +31,7 @@ Contributors:
 static uint32_t db_version;
 static int stats = 0;
 
-static int _db_client_chunk_restore(struct mosquitto_db *db, FILE *db_fd)
+static int db__client_chunk_restore(struct mosquitto_db *db, FILE *db_fd)
 {
 	uint16_t i16temp, slen, last_mid;
 	char *client_id = NULL;
@@ -75,7 +75,7 @@ error:
 	return 1;
 }
 
-static int _db_client_msg_chunk_restore(struct mosquitto_db *db, FILE *db_fd)
+static int db__client_msg_chunk_restore(struct mosquitto_db *db, FILE *db_fd)
 {
 	dbid_t i64temp, store_id;
 	uint16_t i16temp, slen, mid;
@@ -127,7 +127,7 @@ error:
 	return 1;
 }
 
-static int _db_msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fd)
+static int db__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fd)
 {
 	dbid_t i64temp, store_id;
 	uint32_t i32temp, payloadlen;
@@ -240,7 +240,7 @@ error:
 	return 1;
 }
 
-static int _db_retain_chunk_restore(struct mosquitto_db *db, FILE *db_fd)
+static int db__retain_chunk_restore(struct mosquitto_db *db, FILE *db_fd)
 {
 	dbid_t i64temp, store_id;
 
@@ -254,7 +254,7 @@ static int _db_retain_chunk_restore(struct mosquitto_db *db, FILE *db_fd)
 	return 0;
 }
 
-static int _db_sub_chunk_restore(struct mosquitto_db *db, FILE *db_fd)
+static int db__sub_chunk_restore(struct mosquitto_db *db, FILE *db_fd)
 {
 	uint16_t i16temp, slen;
 	uint8_t qos;
@@ -364,35 +364,35 @@ int main(int argc, char *argv[])
 					msg_store_count++;
 					if(!stats) printf("DB_CHUNK_MSG_STORE:\n");
 					if(!stats) printf("\tLength: %d\n", length);
-					if(_db_msg_store_chunk_restore(&db, fd)) return 1;
+					if(db__msg_store_chunk_restore(&db, fd)) return 1;
 					break;
 
 				case DB_CHUNK_CLIENT_MSG:
 					client_msg_count++;
 					if(!stats) printf("DB_CHUNK_CLIENT_MSG:\n");
 					if(!stats) printf("\tLength: %d\n", length);
-					if(_db_client_msg_chunk_restore(&db, fd)) return 1;
+					if(db__client_msg_chunk_restore(&db, fd)) return 1;
 					break;
 
 				case DB_CHUNK_RETAIN:
 					retain_count++;
 					if(!stats) printf("DB_CHUNK_RETAIN:\n");
 					if(!stats) printf("\tLength: %d\n", length);
-					if(_db_retain_chunk_restore(&db, fd)) return 1;
+					if(db__retain_chunk_restore(&db, fd)) return 1;
 					break;
 
 				case DB_CHUNK_SUB:
 					sub_count++;
 					if(!stats) printf("DB_CHUNK_SUB:\n");
 					if(!stats) printf("\tLength: %d\n", length);
-					if(_db_sub_chunk_restore(&db, fd)) return 1;
+					if(db__sub_chunk_restore(&db, fd)) return 1;
 					break;
 
 				case DB_CHUNK_CLIENT:
 					client_count++;
 					if(!stats) printf("DB_CHUNK_CLIENT:\n");
 					if(!stats) printf("\tLength: %d\n", length);
-					if(_db_client_chunk_restore(&db, fd)) return 1;
+					if(db__client_chunk_restore(&db, fd)) return 1;
 					break;
 
 				default:
