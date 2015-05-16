@@ -50,7 +50,7 @@ HANDLE syslog_h;
 static int log_destinations = MQTT3_LOG_STDERR;
 static int log_priorities = MOSQ_LOG_ERR | MOSQ_LOG_WARNING | MOSQ_LOG_NOTICE | MOSQ_LOG_INFO;
 
-int log__init(struct mqtt3_config *config)
+int log__init(struct mosquitto__config *config)
 {
 	int rc = 0;
 
@@ -79,7 +79,7 @@ int log__init(struct mqtt3_config *config)
 	return rc;
 }
 
-int log__close(struct mqtt3_config *config)
+int log__close(struct mosquitto__config *config)
 {
 	if(log_destinations & MQTT3_LOG_SYSLOG){
 #ifndef WIN32

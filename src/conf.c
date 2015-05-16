@@ -62,7 +62,7 @@ extern SERVICE_STATUS_HANDLE service_handle;
 static int conf__parse_bool(char **token, const char *name, bool *value, char *saveptr);
 static int conf__parse_int(char **token, const char *name, int *value, char *saveptr);
 static int conf__parse_string(char **token, const char *name, char **value, char *saveptr);
-static int config__read_file(struct mqtt3_config *config, bool reload, const char *file, struct config_recurse *config_tmp, int level, int *lineno);
+static int config__read_file(struct mosquitto__config *config, bool reload, const char *file, struct config_recurse *config_tmp, int level, int *lineno);
 
 static int conf__attempt_resolve(const char *host, const char *text, int log, const char *msg)
 {
@@ -100,7 +100,7 @@ static int conf__attempt_resolve(const char *host, const char *text, int log, co
 	return MOSQ_ERR_SUCCESS;
 }
 
-static void config__init_reload(struct mqtt3_config *config)
+static void config__init_reload(struct mosquitto__config *config)
 {
 	int i;
 	/* Set defaults */
@@ -168,9 +168,9 @@ static void config__init_reload(struct mqtt3_config *config)
 	}
 }
 
-void config__init(struct mqtt3_config *config)
+void config__init(struct mosquitto__config *config)
 {
-	memset(config, 0, sizeof(struct mqtt3_config));
+	memset(config, 0, sizeof(struct mosquitto__config));
 	config__init_reload(config);
 	config->config_file = NULL;
 	config->daemon = false;
@@ -208,7 +208,7 @@ void config__init(struct mqtt3_config *config)
 	config->message_size_limit = 0;
 }
 
-void config__cleanup(struct mqtt3_config *config)
+void config__cleanup(struct mosquitto__config *config)
 {
 	int i;
 #ifdef WITH_BRIDGE
@@ -320,7 +320,7 @@ static void print_usage(void)
 	printf("\nSee http://mosquitto.org/ for more information.\n\n");
 }
 
-int config__parse_args(struct mqtt3_config *config, int argc, char *argv[])
+int config__parse_args(struct mosquitto__config *config, int argc, char *argv[])
 {
 	int i;
 	int port_tmp;
@@ -394,12 +394,12 @@ int config__parse_args(struct mqtt3_config *config, int argc, char *argv[])
 			|| config->default_listener.protocol != mp_mqtt){
 
 		config->listener_count++;
-		config->listeners = mosquitto__realloc(config->listeners, sizeof(struct mqtt3__listener)*config->listener_count);
+		config->listeners = mosquitto__realloc(config->listeners, sizeof(struct mosquitto__listener)*config->listener_count);
 		if(!config->listeners){
 			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
-		memset(&config->listeners[config->listener_count-1], 0, sizeof(struct mqtt3__listener));
+		memset(&config->listeners[config->listener_count-1], 0, sizeof(struct mosquitto__listener));
 		if(config->default_listener.port){
 			config->listeners[config->listener_count-1].port = config->default_listener.port;
 		}else{
@@ -447,7 +447,7 @@ int config__parse_args(struct mqtt3_config *config, int argc, char *argv[])
 	return MOSQ_ERR_SUCCESS;
 }
 
-int config__read(struct mqtt3_config *config, bool reload)
+int config__read(struct mosquitto__config *config, bool reload)
 {
 	int rc = MOSQ_ERR_SUCCESS;
 	struct config_recurse cr;
@@ -495,7 +495,7 @@ int config__read(struct mqtt3_config *config, bool reload)
 	}
 #endif
 	/* Default to drop to mosquitto user if no other user specified. This must
-	 * remain here even though it is covered in mqtt3_parse_args() because this
+	 * remain here even though it is covered in config__parse_args() because this
 	 * function may be called on its own. */
 	if(!config->user){
 		config->user = "mosquitto";
@@ -533,7 +533,7 @@ int config__read(struct mqtt3_config *config, bool reload)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int config__read_file_core(struct mqtt3_config *config, bool reload, const char *file, struct config_recurse *cr, int level, int *lineno, FILE *fptr)
+int config__read_file_core(struct mosquitto__config *config, bool reload, const char *file, struct config_recurse *cr, int level, int *lineno, FILE *fptr)
 {
 	int rc;
 	char buf[1024];
@@ -541,8 +541,8 @@ int config__read_file_core(struct mqtt3_config *config, bool reload, const char 
 	int tmp_int;
 	char *saveptr = NULL;
 #ifdef WITH_BRIDGE
-	struct mqtt3__bridge *cur_bridge = NULL;
-	struct mqtt3__bridge_topic *cur_topic;
+	struct mosquitto__bridge *cur_bridge = NULL;
+	struct mosquitto__bridge_topic *cur_topic;
 #endif
 	time_t expiration_mult;
 	char *key;
@@ -556,7 +556,7 @@ int config__read_file_core(struct mqtt3_config *config, bool reload, const char 
 	struct dirent *de;
 #endif
 	int len;
-	struct mqtt3__listener *cur_listener = &config->default_listener;
+	struct mosquitto__listener *cur_listener = &config->default_listener;
 #ifdef WITH_BRIDGE
 	char *address;
 	int i;
@@ -1023,13 +1023,13 @@ int config__read_file_core(struct mqtt3_config *config, bool reload, const char 
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
 						config->bridge_count++;
-						config->bridges = mosquitto__realloc(config->bridges, config->bridge_count*sizeof(struct mqtt3__bridge));
+						config->bridges = mosquitto__realloc(config->bridges, config->bridge_count*sizeof(struct mosquitto__bridge));
 						if(!config->bridges){
 							mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 							return MOSQ_ERR_NOMEM;
 						}
 						cur_bridge = &(config->bridges[config->bridge_count-1]);
-						memset(cur_bridge, 0, sizeof(struct mqtt3__bridge));
+						memset(cur_bridge, 0, sizeof(struct mosquitto__bridge));
 						cur_bridge->name = mosquitto__strdup(token);
 						if(!cur_bridge->name){
 							mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
@@ -1177,7 +1177,7 @@ int config__read_file_core(struct mqtt3_config *config, bool reload, const char 
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
 						config->listener_count++;
-						config->listeners = mosquitto__realloc(config->listeners, sizeof(struct mqtt3__listener)*config->listener_count);
+						config->listeners = mosquitto__realloc(config->listeners, sizeof(struct mosquitto__listener)*config->listener_count);
 						if(!config->listeners){
 							mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 							return MOSQ_ERR_NOMEM;
@@ -1188,7 +1188,7 @@ int config__read_file_core(struct mqtt3_config *config, bool reload, const char 
 							return MOSQ_ERR_INVAL;
 						}
 						cur_listener = &config->listeners[config->listener_count-1];
-						memset(cur_listener, 0, sizeof(struct mqtt3__listener));
+						memset(cur_listener, 0, sizeof(struct mosquitto__listener));
 						cur_listener->protocol = mp_mqtt;
 						cur_listener->port = tmp_int;
 						token = strtok_r(NULL, " ", &saveptr);
@@ -1699,7 +1699,7 @@ int config__read_file_core(struct mqtt3_config *config, bool reload, const char 
 					if(token){
 						cur_bridge->topic_count++;
 						cur_bridge->topics = mosquitto__realloc(cur_bridge->topics, 
-								sizeof(struct mqtt3__bridge_topic)*cur_bridge->topic_count);
+								sizeof(struct mosquitto__bridge_topic)*cur_bridge->topic_count);
 						if(!cur_bridge->topics){
 							mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 							return MOSQ_ERR_NOMEM;
@@ -1911,7 +1911,7 @@ int config__read_file_core(struct mqtt3_config *config, bool reload, const char 
 	return MOSQ_ERR_SUCCESS;
 }
 
-int config__read_file(struct mqtt3_config *config, bool reload, const char *file, struct config_recurse *cr, int level, int *lineno)
+int config__read_file(struct mosquitto__config *config, bool reload, const char *file, struct config_recurse *cr, int level, int *lineno)
 {
 	int rc;
 	FILE *fptr = NULL;

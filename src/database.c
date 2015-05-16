@@ -28,7 +28,7 @@ Contributors:
 static int max_inflight = 20;
 static int max_queued = 100;
 
-int db__open(struct mqtt3_config *config, struct mosquitto_db *db)
+int db__open(struct mosquitto__config *config, struct mosquitto_db *db)
 {
 	int rc = 0;
 	struct mosquitto__subhier *child;

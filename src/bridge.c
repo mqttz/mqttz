@@ -43,7 +43,7 @@ Contributors:
 
 #ifdef WITH_BRIDGE
 
-int bridge__new(struct mosquitto_db *db, struct mqtt3__bridge *bridge)
+int bridge__new(struct mosquitto_db *db, struct mosquitto__bridge *bridge)
 {
 	struct mosquitto *new_context = NULL;
 	struct mosquitto **bridges;

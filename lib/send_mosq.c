@@ -88,7 +88,7 @@ int send__publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint3
 	size_t len;
 #ifdef WITH_BRIDGE
 	int i;
-	struct mqtt3__bridge_topic *cur_topic;
+	struct mosquitto__bridge_topic *cur_topic;
 	bool match;
 	int rc;
 	char *mapped_topic = NULL;

@@ -86,7 +86,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 #ifdef WITH_BRIDGE
 	char *topic_temp;
 	int i;
-	struct mqtt3__bridge_topic *cur_topic;
+	struct mosquitto__bridge_topic *cur_topic;
 	bool match;
 #endif
 

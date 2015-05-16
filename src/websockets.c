@@ -515,7 +515,7 @@ static void log_wrap(int level, const char *line)
 	mosquitto__log_printf(NULL, MOSQ_LOG_WEBSOCKETS, "%s", l);
 }
 
-struct libwebsocket_context *mosq_websockets_init(struct mqtt3__listener *listener, int log_level)
+struct libwebsocket_context *mosq_websockets_init(struct mosquitto__listener *listener, int log_level)
 {
 	struct lws_context_creation_info info;
 	struct libwebsocket_protocols *p;

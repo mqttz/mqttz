@@ -184,7 +184,7 @@ static unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned
 {
 	struct mosquitto_db *db;
 	struct mosquitto *context;
-	struct mqtt3__listener *listener;
+	struct mosquitto__listener *listener;
 	char *psk_key = NULL;
 	int len;
 	const char *psk_hint;
@@ -231,7 +231,7 @@ static unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned
 #endif
 
 #ifdef WITH_TLS
-static int mosquitto__tls_server_ctx(struct mqtt3__listener *listener)
+static int mosquitto__tls_server_ctx(struct mosquitto__listener *listener)
 {
 	int ssl_options = 0;
 	char buf[256];
@@ -315,7 +315,7 @@ static int mosquitto__tls_server_ctx(struct mqtt3__listener *listener)
  * Returns 1 on failure
  * Returns 0 on success.
  */
-int net__socket_listen(struct mqtt3__listener *listener)
+int net__socket_listen(struct mosquitto__listener *listener)
 {
 	int sock = -1;
 	struct addrinfo hints;

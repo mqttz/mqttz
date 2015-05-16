@@ -194,13 +194,13 @@ struct mosquitto {
 #ifdef WITH_BROKER
 	bool is_dropping;
 	bool is_bridge;
-	struct mqtt3__bridge *bridge;
+	struct mosquitto__bridge *bridge;
 	struct mosquitto_client_msg *msgs;
 	struct mosquitto_client_msg *last_msg;
 	int msg_count;
 	int msg_count12;
 	struct mosquitto__acl_user *acl_list;
-	struct mqtt3__listener *listener;
+	struct mosquitto__listener *listener;
 	time_t disconnect_t;
 	struct mosquitto__packet *out_packet_last;
 	struct mosquitto__subhier **subs;

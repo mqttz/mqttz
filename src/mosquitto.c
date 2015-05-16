@@ -81,7 +81,7 @@ struct mosquitto_db *mosquitto__get_db(void)
  * Note that setting config->user to "root" does not produce an error, but it
  * strongly discouraged.
  */
-int drop_privileges(struct mqtt3_config *config, bool temporary)
+int drop_privileges(struct mosquitto__config *config, bool temporary)
 {
 #if !defined(__CYGWIN__) && !defined(WIN32)
 	struct passwd *pwd;
@@ -186,7 +186,7 @@ int main(int argc, char *argv[])
 	int *listensock = NULL;
 	int listensock_count = 0;
 	int listensock_index = 0;
-	struct mqtt3_config config;
+	struct mosquitto__config config;
 #ifdef WITH_SYS_TREE
 	char buf[1024];
 #endif
