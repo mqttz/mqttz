@@ -168,7 +168,7 @@ static void config__init_reload(struct mqtt3_config *config)
 	}
 }
 
-void mqtt3_config_init(struct mqtt3_config *config)
+void config__init(struct mqtt3_config *config)
 {
 	memset(config, 0, sizeof(struct mqtt3_config));
 	config__init_reload(config);
@@ -208,7 +208,7 @@ void mqtt3_config_init(struct mqtt3_config *config)
 	config->message_size_limit = 0;
 }
 
-void mqtt3_config_cleanup(struct mqtt3_config *config)
+void config__cleanup(struct mqtt3_config *config)
 {
 	int i;
 #ifdef WITH_BRIDGE
@@ -320,7 +320,7 @@ static void print_usage(void)
 	printf("\nSee http://mosquitto.org/ for more information.\n\n");
 }
 
-int mqtt3_config_parse_args(struct mqtt3_config *config, int argc, char *argv[])
+int config__parse_args(struct mqtt3_config *config, int argc, char *argv[])
 {
 	int i;
 	int port_tmp;
@@ -334,7 +334,7 @@ int mqtt3_config_parse_args(struct mqtt3_config *config, int argc, char *argv[])
 					return MOSQ_ERR_NOMEM;
 				}
 
-				if(mqtt3_config_read(config, false)){
+				if(config__read(config, false)){
 					mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open configuration file.");
 					return MOSQ_ERR_INVAL;
 				}
@@ -447,7 +447,7 @@ int mqtt3_config_parse_args(struct mqtt3_config *config, int argc, char *argv[])
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mqtt3_config_read(struct mqtt3_config *config, bool reload)
+int config__read(struct mqtt3_config *config, bool reload)
 {
 	int rc = MOSQ_ERR_SUCCESS;
 	struct config_recurse cr;
@@ -501,7 +501,7 @@ int mqtt3_config_read(struct mqtt3_config *config, bool reload)
 		config->user = "mosquitto";
 	}
 
-	mqtt3_db_limits_set(cr.max_inflight_messages, cr.max_queued_messages);
+	db__limits_set(cr.max_inflight_messages, cr.max_queued_messages);
 
 #ifdef WITH_BRIDGE
 	for(i=0; i<config->bridge_count; i++){

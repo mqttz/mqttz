@@ -38,16 +38,16 @@ Contributors:
 static uint32_t db_version;
 
 
-static int db__restore_sub(struct mosquitto_db *db, const char *client_id, const char *sub, int qos);
+static int persist__restore_sub(struct mosquitto_db *db, const char *client_id, const char *sub, int qos);
 
-static struct mosquitto *db__find_or_add_context(struct mosquitto_db *db, const char *client_id, uint16_t last_mid)
+static struct mosquitto *persist__find_or_add_context(struct mosquitto_db *db, const char *client_id, uint16_t last_mid)
 {
 	struct mosquitto *context;
 
 	context = NULL;
 	HASH_FIND(hh_id, db->contexts_by_id, client_id, strlen(client_id), context);
 	if(!context){
-		context = mqtt3_context_init(db, -1);
+		context = context__init(db, -1);
 		if(!context) return NULL;
 		context->id = mosquitto__strdup(client_id);
 		if(!context->id){
@@ -65,7 +65,7 @@ static struct mosquitto *db__find_or_add_context(struct mosquitto_db *db, const 
 	return context;
 }
 
-static int mqtt3_db_client_messages_write(struct mosquitto_db *db, FILE *db_fptr, struct mosquitto *context)
+static int persist__client_messages_write(struct mosquitto_db *db, FILE *db_fptr, struct mosquitto *context)
 {
 	uint32_t length;
 	dbid_t i64temp;
@@ -124,7 +124,7 @@ error:
 }
 
 
-static int mqtt3_db_message_store_write(struct mosquitto_db *db, FILE *db_fptr)
+static int persist__message_store_write(struct mosquitto_db *db, FILE *db_fptr)
 {
 	uint32_t length;
 	dbid_t i64temp;
@@ -202,7 +202,7 @@ error:
 	return 1;
 }
 
-static int mqtt3_db_client_write(struct mosquitto_db *db, FILE *db_fptr)
+static int persist__client_write(struct mosquitto_db *db, FILE *db_fptr)
 {
 	struct mosquitto *context, *ctxt_tmp;
 	uint16_t i16temp, slen;
@@ -233,7 +233,7 @@ static int mqtt3_db_client_write(struct mosquitto_db *db, FILE *db_fptr)
 			}
 			write_e(db_fptr, &disconnect_t, sizeof(time_t));
 
-			if(mqtt3_db_client_messages_write(db, db_fptr, context)) return 1;
+			if(persist__client_messages_write(db, db_fptr, context)) return 1;
 		}
 	}
 
@@ -243,7 +243,7 @@ error:
 	return 1;
 }
 
-static int db__subs_retain_write(struct mosquitto_db *db, FILE *db_fptr, struct mosquitto__subhier *node, const char *topic)
+static int persist__subs_retain_write(struct mosquitto_db *db, FILE *db_fptr, struct mosquitto__subhier *node, const char *topic)
 {
 	struct mosquitto__subhier *subhier;
 	struct mosquitto__subleaf *sub;
@@ -301,7 +301,7 @@ static int db__subs_retain_write(struct mosquitto_db *db, FILE *db_fptr, struct 
 
 	subhier = node->children;
 	while(subhier){
-		db__subs_retain_write(db, db_fptr, subhier, thistopic);
+		persist__subs_retain_write(db, db_fptr, subhier, thistopic);
 		subhier = subhier->next;
 	}
 	mosquitto__free(thistopic);
@@ -311,20 +311,20 @@ error:
 	return 1;
 }
 
-static int mqtt3_db_subs_retain_write(struct mosquitto_db *db, FILE *db_fptr)
+static int persist__subs_retain_write_all(struct mosquitto_db *db, FILE *db_fptr)
 {
 	struct mosquitto__subhier *subhier;
 
 	subhier = db->subs.children;
 	while(subhier){
-		db__subs_retain_write(db, db_fptr, subhier, "");
+		persist__subs_retain_write(db, db_fptr, subhier, "");
 		subhier = subhier->next;
 	}
 	
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mqtt3_db_backup(struct mosquitto_db *db, bool shutdown)
+int persist__backup(struct mosquitto_db *db, bool shutdown)
 {
 	int rc = 0;
 	FILE *db_fptr = NULL;
@@ -375,12 +375,12 @@ int mqtt3_db_backup(struct mosquitto_db *db, bool shutdown)
 	i64temp = db->last_db_id;
 	write_e(db_fptr, &i64temp, sizeof(dbid_t));
 
-	if(mqtt3_db_message_store_write(db, db_fptr)){
+	if(persist__message_store_write(db, db_fptr)){
 		goto error;
 	}
 
-	mqtt3_db_client_write(db, db_fptr);
-	mqtt3_db_subs_retain_write(db, db_fptr);
+	persist__client_write(db, db_fptr);
+	persist__subs_retain_write_all(db, db_fptr);
 
 	fclose(db_fptr);
 
@@ -403,7 +403,7 @@ error:
 	return 1;
 }
 
-static int db__client_msg_restore(struct mosquitto_db *db, const char *client_id, uint16_t mid, uint8_t qos, uint8_t retain, uint8_t direction, uint8_t state, uint8_t dup, uint64_t store_id)
+static int persist__client_msg_restore(struct mosquitto_db *db, const char *client_id, uint16_t mid, uint8_t qos, uint8_t retain, uint8_t direction, uint8_t state, uint8_t dup, uint64_t store_id)
 {
 	struct mosquitto_client_msg *cmsg;
 	struct mosquitto_msg_store_load *load;
@@ -434,7 +434,7 @@ static int db__client_msg_restore(struct mosquitto_db *db, const char *client_id
 	cmsg->store = load->store;
 	cmsg->store->ref_count++;
 
-	context = db__find_or_add_context(db, client_id, 0);
+	context = persist__find_or_add_context(db, client_id, 0);
 	if(!context){
 		mosquitto__free(cmsg);
 		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error restoring persistent database, message store corrupt.");
@@ -450,7 +450,7 @@ static int db__client_msg_restore(struct mosquitto_db *db, const char *client_id
 	return MOSQ_ERR_SUCCESS;
 }
 
-static int db__client_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
+static int persist__client_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 {
 	uint16_t i16temp, slen, last_mid;
 	char *client_id = NULL;
@@ -483,7 +483,7 @@ static int db__client_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 		read_e(db_fptr, &disconnect_t, sizeof(time_t));
 	}
 
-	context = db__find_or_add_context(db, client_id, last_mid);
+	context = persist__find_or_add_context(db, client_id, last_mid);
 	if(context){
 		context->disconnect_t = disconnect_t;
 	}else{
@@ -500,7 +500,7 @@ error:
 	return 1;
 }
 
-static int db__client_msg_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
+static int persist__client_msg_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 {
 	dbid_t i64temp, store_id;
 	uint16_t i16temp, slen, mid;
@@ -537,7 +537,7 @@ static int db__client_msg_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 	read_e(db_fptr, &state, sizeof(uint8_t));
 	read_e(db_fptr, &dup, sizeof(uint8_t));
 
-	rc = db__client_msg_restore(db, client_id, mid, qos, retain, direction, state, dup, store_id);
+	rc = persist__client_msg_restore(db, client_id, mid, qos, retain, direction, state, dup, store_id);
 	mosquitto__free(client_id);
 
 	return rc;
@@ -549,7 +549,7 @@ error:
 	return 1;
 }
 
-static int db__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
+static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 {
 	dbid_t i64temp, store_id;
 	uint32_t i32temp, payloadlen;
@@ -630,7 +630,7 @@ static int db__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 		read_e(db_fptr, payload, payloadlen);
 	}
 
-	rc = mqtt3_db_message_store(db, source_id, source_mid, topic, qos, payloadlen, payload, retain, &stored, store_id);
+	rc = db__message_store(db, source_id, source_mid, topic, qos, payloadlen, payload, retain, &stored, store_id);
 
 	load->db_id = stored->db_id;
 	load->store = stored;
@@ -652,7 +652,7 @@ error:
 	return 1;
 }
 
-static int db__retain_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
+static int persist__retain_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 {
 	dbid_t i64temp, store_id;
 	struct mosquitto_msg_store_load *load;
@@ -675,7 +675,7 @@ static int db__retain_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 	return MOSQ_ERR_SUCCESS;
 }
 
-static int db__sub_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
+static int persist__sub_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 {
 	uint16_t i16temp, slen;
 	uint8_t qos;
@@ -708,7 +708,7 @@ static int db__sub_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 	topic[slen] = '\0';
 
 	read_e(db_fptr, &qos, sizeof(uint8_t));
-	if(db__restore_sub(db, client_id, topic, qos)){
+	if(persist__restore_sub(db, client_id, topic, qos)){
 		rc = 1;
 	}
 	mosquitto__free(client_id);
@@ -722,7 +722,7 @@ error:
 	return 1;
 }
 
-int mqtt3_db_restore(struct mosquitto_db *db)
+int persist__restore(struct mosquitto_db *db)
 {
 	FILE *fptr;
 	char header[15];
@@ -782,23 +782,23 @@ int mqtt3_db_restore(struct mosquitto_db *db)
 					break;
 
 				case DB_CHUNK_MSG_STORE:
-					if(db__msg_store_chunk_restore(db, fptr)) return 1;
+					if(persist__msg_store_chunk_restore(db, fptr)) return 1;
 					break;
 
 				case DB_CHUNK_CLIENT_MSG:
-					if(db__client_msg_chunk_restore(db, fptr)) return 1;
+					if(persist__client_msg_chunk_restore(db, fptr)) return 1;
 					break;
 
 				case DB_CHUNK_RETAIN:
-					if(db__retain_chunk_restore(db, fptr)) return 1;
+					if(persist__retain_chunk_restore(db, fptr)) return 1;
 					break;
 
 				case DB_CHUNK_SUB:
-					if(db__sub_chunk_restore(db, fptr)) return 1;
+					if(persist__sub_chunk_restore(db, fptr)) return 1;
 					break;
 
 				case DB_CHUNK_CLIENT:
-					if(db__client_chunk_restore(db, fptr)) return 1;
+					if(persist__client_chunk_restore(db, fptr)) return 1;
 					break;
 
 				default:
@@ -827,7 +827,7 @@ error:
 	return 1;
 }
 
-static int db__restore_sub(struct mosquitto_db *db, const char *client_id, const char *sub, int qos)
+static int persist__restore_sub(struct mosquitto_db *db, const char *client_id, const char *sub, int qos)
 {
 	struct mosquitto *context;
 
@@ -835,7 +835,7 @@ static int db__restore_sub(struct mosquitto_db *db, const char *client_id, const
 	assert(client_id);
 	assert(sub);
 
-	context = db__find_or_add_context(db, client_id, 0);
+	context = persist__find_or_add_context(db, client_id, 0);
 	if(!context) return 1;
 	return mqtt3_sub_add(db, context, sub, qos, &db->subs);
 }

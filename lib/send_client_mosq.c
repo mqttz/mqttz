@@ -30,7 +30,7 @@ Contributors:
 #include "mosquitto_broker.h"
 #endif
 
-int mosquitto__send_connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session)
+int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session)
 {
 	struct mosquitto__packet *packet = NULL;
 	int payloadlen;
@@ -148,7 +148,7 @@ int mosquitto__send_connect(struct mosquitto *mosq, uint16_t keepalive, bool cle
 	return packet__queue(mosq, packet);
 }
 
-int mosquitto__send_disconnect(struct mosquitto *mosq)
+int send__disconnect(struct mosquitto *mosq)
 {
 	assert(mosq);
 #ifdef WITH_BROKER
@@ -158,10 +158,10 @@ int mosquitto__send_disconnect(struct mosquitto *mosq)
 #else
 	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending DISCONNECT", mosq->id);
 #endif
-	return mosquitto__send_simple_command(mosq, DISCONNECT);
+	return send__simple_command(mosq, DISCONNECT);
 }
 
-int mosquitto__send_subscribe(struct mosquitto *mosq, int *mid, const char *topic, uint8_t topic_qos)
+int send__subscribe(struct mosquitto *mosq, int *mid, const char *topic, uint8_t topic_qos)
 {
 	/* FIXME - only deals with a single topic */
 	struct mosquitto__packet *packet = NULL;
@@ -206,7 +206,7 @@ int mosquitto__send_subscribe(struct mosquitto *mosq, int *mid, const char *topi
 }
 
 
-int mosquitto__send_unsubscribe(struct mosquitto *mosq, int *mid, const char *topic)
+int send__unsubscribe(struct mosquitto *mosq, int *mid, const char *topic)
 {
 	/* FIXME - only deals with a single topic */
 	struct mosquitto__packet *packet = NULL;

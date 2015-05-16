@@ -242,7 +242,7 @@ int message__remove(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_dir
 						}else if(cur->msg.qos == 2){
 							cur->state = mosq_ms_wait_for_pubrec;
 						}
-						rc = mosquitto__send_publish(mosq, cur->msg.mid, cur->msg.topic, cur->msg.payloadlen, cur->msg.payload, cur->msg.qos, cur->msg.retain, cur->dup);
+						rc = send__publish(mosq, cur->msg.mid, cur->msg.topic, cur->msg.payloadlen, cur->msg.payload, cur->msg.qos, cur->msg.retain, cur->dup);
 						if(rc){
 							pthread_mutex_unlock(&mosq->out_message_mutex);
 							return rc;
@@ -313,17 +313,17 @@ void message__retry_check_actual(struct mosquitto *mosq, struct mosquitto_messag
 				case mosq_ms_wait_for_pubrec:
 					messages->timestamp = now;
 					messages->dup = true;
-					mosquitto__send_publish(mosq, messages->msg.mid, messages->msg.topic, messages->msg.payloadlen, messages->msg.payload, messages->msg.qos, messages->msg.retain, messages->dup);
+					send__publish(mosq, messages->msg.mid, messages->msg.topic, messages->msg.payloadlen, messages->msg.payload, messages->msg.qos, messages->msg.retain, messages->dup);
 					break;
 				case mosq_ms_wait_for_pubrel:
 					messages->timestamp = now;
 					messages->dup = true;
-					mosquitto__send_pubrec(mosq, messages->msg.mid);
+					send__pubrec(mosq, messages->msg.mid);
 					break;
 				case mosq_ms_wait_for_pubcomp:
 					messages->timestamp = now;
 					messages->dup = true;
-					mosquitto__send_pubrel(mosq, messages->msg.mid);
+					send__pubrel(mosq, messages->msg.mid);
 					break;
 				default:
 					break;

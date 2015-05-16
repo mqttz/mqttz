@@ -81,7 +81,7 @@ static int subs__process(struct mosquitto_db *db, struct mosquitto__subhier *hie
 		}
 #endif
 		if(hier->retained){
-			mosquitto__db_msg_store_deref(db, &hier->retained);
+			db__msg_store_deref(db, &hier->retained);
 #ifdef WITH_SYS_TREE
 			db->retained_count--;
 #endif
@@ -133,7 +133,7 @@ static int subs__process(struct mosquitto_db *db, struct mosquitto__subhier *hie
 				 * retain should be false. */
 				client_retain = false;
 			}
-			if(mqtt3_db_message_insert(db, leaf->context, mid, mosq_md_out, msg_qos, client_retain, stored) == 1) rc = 1;
+			if(db__message_insert(db, leaf->context, mid, mosq_md_out, msg_qos, client_retain, stored) == 1) rc = 1;
 		}else{
 			return 1; /* Application error */
 		}
@@ -530,7 +530,7 @@ int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, cons
 
 	/* Protect this message until we have sent it to all
 	clients - this is required because websockets client calls
-	mqtt3_db_message_write(), which could remove the message if ref_count==0.
+	db__message_write(), which could remove the message if ref_count==0.
 	*/
 	(*stored)->ref_count++;
 
@@ -550,7 +550,7 @@ int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, cons
 	sub__topic_tokens_free(tokens);
 
 	/* Remove our reference and free if needed. */
-	mosquitto__db_msg_store_deref(db, stored);
+	db__msg_store_deref(db, stored);
 
 	return rc;
 }
@@ -645,7 +645,7 @@ static int retain__process(struct mosquitto_db *db, struct mosquitto_msg_store *
 	}else{
 		mid = 0;
 	}
-	return mqtt3_db_message_insert(db, context, mid, mosq_md_out, qos, true, retained);
+	return db__message_insert(db, context, mid, mosq_md_out, qos, true, retained);
 }
 
 static int retain__search(struct mosquitto_db *db, struct mosquitto__subhier *subhier, struct sub__token *tokens, struct mosquitto *context, const char *sub, int sub_qos, int level)

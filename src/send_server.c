@@ -22,7 +22,7 @@ Contributors:
 #include "packet_mosq.h"
 #include "util_mosq.h"
 
-int mosquitto__send_connack(struct mosquitto *context, int ack, int result)
+int send__connack(struct mosquitto *context, int ack, int result)
 {
 	struct mosquitto__packet *packet = NULL;
 	int rc;
@@ -51,7 +51,7 @@ int mosquitto__send_connack(struct mosquitto *context, int ack, int result)
 	return packet__queue(context, packet);
 }
 
-int mosquitto__send_suback(struct mosquitto *context, uint16_t mid, uint32_t payloadlen, const void *payload)
+int send__suback(struct mosquitto *context, uint16_t mid, uint32_t payloadlen, const void *payload)
 {
 	struct mosquitto__packet *packet = NULL;
 	int rc;

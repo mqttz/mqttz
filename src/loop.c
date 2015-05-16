@@ -126,10 +126,10 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 	}
 
 	while(run){
-		mosquitto__free_disused_contexts(db);
+		context__free_disused(db);
 #ifdef WITH_SYS_TREE
 		if(db->config->sys_interval > 0){
-			mqtt3_db_sys_update(db, db->config->sys_interval, start_time);
+			sys__update(db, db->config->sys_interval, start_time);
 		}
 #endif
 
@@ -191,7 +191,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 						|| context->bridge
 						|| now - context->last_msg_in < (time_t)(context->keepalive)*3/2){
 
-					if(mqtt3_db_message_write(db, context) == MOSQ_ERR_SUCCESS){
+					if(db__message_write(db, context) == MOSQ_ERR_SUCCESS){
 						pollfds[pollfd_index].fd = context->sock;
 						pollfds[pollfd_index].events = POLLIN;
 						pollfds[pollfd_index].revents = 0;
@@ -244,7 +244,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 					}
 				}else{
 					if(context->bridge->start_type == bst_lazy && context->bridge->lazy_reconnect){
-						rc = mqtt3_bridge_connect(db, context);
+						rc = bridge__connect(db, context);
 						if(rc){
 							context->bridge->cur_address++;
 							if(context->bridge->cur_address == context->bridge->address_count){
@@ -254,7 +254,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 					}
 					if(context->bridge->start_type == bst_automatic && now > context->bridge->restart_t){
 						context->bridge->restart_t = 0;
-						rc = mqtt3_bridge_connect(db, context);
+						rc = bridge__connect(db, context);
 						if(rc == MOSQ_ERR_SUCCESS){
 							pollfds[pollfd_index].fd = context->sock;
 							pollfds[pollfd_index].events = POLLIN;
@@ -304,7 +304,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 			expiration_check_time = time(NULL) + 3600;
 		}
 
-		mqtt3_db_message_timeout_check(db, db->config->retry_interval);
+		db__message_timeout_check(db, db->config->retry_interval);
 
 #ifndef WIN32
 		sigprocmask(SIG_SETMASK, &sigblock, &origsig);
@@ -329,12 +329,12 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 		if(db->config->persistence && db->config->autosave_interval){
 			if(db->config->autosave_on_changes){
 				if(db->persistence_changes > db->config->autosave_interval){
-					mqtt3_db_backup(db, false);
+					persist__backup(db, false);
 					db->persistence_changes = 0;
 				}
 			}else{
 				if(last_backup + db->config->autosave_interval < mosquitto_time()){
-					mqtt3_db_backup(db, false);
+					persist__backup(db, false);
 					last_backup = mosquitto_time();
 				}
 			}
@@ -343,18 +343,18 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 
 #ifdef WITH_PERSISTENCE
 		if(flag_db_backup){
-			mqtt3_db_backup(db, false);
+			persist__backup(db, false);
 			flag_db_backup = false;
 		}
 #endif
 		if(flag_reload){
 			mosquitto__log_printf(NULL, MOSQ_LOG_INFO, "Reloading config.");
-			mqtt3_config_read(db->config, true);
+			config__read(db->config, true);
 			mosquitto_security_cleanup(db, true);
 			mosquitto_security_init(db, true);
 			mosquitto_security_apply(db);
-			mqtt3_log_close(db->config);
-			mqtt3_log_init(db->config);
+			log__close(db->config);
+			log__init(db->config);
 			flag_reload = false;
 		}
 		if(flag_tree_print){
@@ -412,13 +412,13 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 				mosquitto__log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s disconnected.", id);
 			}
 		}
-		mqtt3_context_disconnect(db, context);
+		context__disconnect(db, context);
 #ifdef WITH_BRIDGE
 		if(context->clean_session && !context->bridge){
 #else
 		if(context->clean_session){
 #endif
-			mosquitto__add_context_to_disused(db, context);
+			context__add_to_disused(db, context);
 			if(context->id){
 				HASH_DELETE(hh_id, db->contexts_by_id, context);
 				mosquitto__free(context->id);

@@ -71,7 +71,7 @@ void mosquitto__check_keepalive(struct mosquitto *mosq)
 			(now - last_msg_out >= mosq->keepalive || now - last_msg_in >= mosq->keepalive)){
 
 		if(mosq->state == mosq_cs_connected && mosq->ping_t == 0){
-			mosquitto__send_pingreq(mosq);
+			send__pingreq(mosq);
 			/* Reset last msg times to give the server time to send a pingresp */
 			pthread_mutex_lock(&mosq->msgtime_mutex);
 			mosq->last_msg_in = now;

@@ -50,7 +50,7 @@ HANDLE syslog_h;
 static int log_destinations = MQTT3_LOG_STDERR;
 static int log_priorities = MOSQ_LOG_ERR | MOSQ_LOG_WARNING | MOSQ_LOG_NOTICE | MOSQ_LOG_INFO;
 
-int mqtt3_log_init(struct mqtt3_config *config)
+int log__init(struct mqtt3_config *config)
 {
 	int rc = 0;
 
@@ -79,7 +79,7 @@ int mqtt3_log_init(struct mqtt3_config *config)
 	return rc;
 }
 
-int mqtt3_log_close(struct mqtt3_config *config)
+int log__close(struct mqtt3_config *config)
 {
 	if(log_destinations & MQTT3_LOG_SYSLOG){
 #ifndef WIN32
@@ -239,10 +239,10 @@ int mosquitto__log_vprintf(struct mosquitto *mosq, int priority, const char *fmt
 					return MOSQ_ERR_NOMEM;
 				}
 				snprintf(st, len, "%d: %s", (int)now, s);
-				mqtt3_db_messages_easy_queue(&int_db, NULL, topic, 2, strlen(st), st, 0);
+				db__messages_easy_queue(&int_db, NULL, topic, 2, strlen(st), st, 0);
 				mosquitto__free(st);
 			}else{
-				mqtt3_db_messages_easy_queue(&int_db, NULL, topic, 2, strlen(s), s, 0);
+				db__messages_easy_queue(&int_db, NULL, topic, 2, strlen(s), s, 0);
 			}
 		}
 		mosquitto__free(s);

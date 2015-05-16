@@ -26,7 +26,7 @@ Contributors:
 
 #include "uthash.h"
 
-struct mosquitto *mqtt3_context_init(struct mosquitto_db *db, int sock)
+struct mosquitto *context__init(struct mosquitto_db *db, int sock)
 {
 	struct mosquitto *context;
 	char address[1024];
@@ -90,7 +90,7 @@ struct mosquitto *mqtt3_context_init(struct mosquitto_db *db, int sock)
  * but it will mean that CONNACK messages will never get sent for bad protocol
  * versions for example.
  */
-void mqtt3_context_cleanup(struct mosquitto_db *db, struct mosquitto *context, bool do_free)
+void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool do_free)
 {
 	struct mosquitto__packet *packet;
 	struct mosquitto_client_msg *msg, *next;
@@ -137,7 +137,7 @@ void mqtt3_context_cleanup(struct mosquitto_db *db, struct mosquitto *context, b
 	mosquitto__socket_close(db, context);
 	if((do_free || context->clean_session) && db){
 		mqtt3_subs_clean_session(db, context);
-		mqtt3_db_messages_delete(db, context);
+		db__messages_delete(db, context);
 	}
 	if(context->address){
 		mosquitto__free(context->address);
@@ -174,7 +174,7 @@ void mqtt3_context_cleanup(struct mosquitto_db *db, struct mosquitto *context, b
 		msg = context->msgs;
 		while(msg){
 			next = msg->next;
-			mosquitto__db_msg_store_deref(db, &msg->store);
+			db__msg_store_deref(db, &msg->store);
 			mosquitto__free(msg);
 			msg = next;
 		}
@@ -186,11 +186,11 @@ void mqtt3_context_cleanup(struct mosquitto_db *db, struct mosquitto *context, b
 	}
 }
 
-void mqtt3_context_disconnect(struct mosquitto_db *db, struct mosquitto *ctxt)
+void context__disconnect(struct mosquitto_db *db, struct mosquitto *ctxt)
 {
 	if(ctxt->state != mosq_cs_disconnecting && ctxt->will){
 		/* Unexpected disconnect, queue the client will. */
-		mqtt3_db_messages_easy_queue(db, ctxt, ctxt->will->topic, ctxt->will->qos, ctxt->will->payloadlen, ctxt->will->payload, ctxt->will->retain);
+		db__messages_easy_queue(db, ctxt, ctxt->will->topic, ctxt->will->qos, ctxt->will->payloadlen, ctxt->will->payload, ctxt->will->retain);
 	}
 	if(ctxt->will){
 		if(ctxt->will->topic) mosquitto__free(ctxt->will->topic);
@@ -202,7 +202,7 @@ void mqtt3_context_disconnect(struct mosquitto_db *db, struct mosquitto *ctxt)
 	mosquitto__socket_close(db, ctxt);
 }
 
-void mosquitto__add_context_to_disused(struct mosquitto_db *db, struct mosquitto *context)
+void context__add_to_disused(struct mosquitto_db *db, struct mosquitto *context)
 {
 	if(db->ll_for_free){
 		context->for_free_next = db->ll_for_free;
@@ -212,7 +212,7 @@ void mosquitto__add_context_to_disused(struct mosquitto_db *db, struct mosquitto
 	}
 }
 
-void mosquitto__free_disused_contexts(struct mosquitto_db *db)
+void context__free_disused(struct mosquitto_db *db)
 {
 	struct mosquitto *context, *next;
 	assert(db);
@@ -220,7 +220,7 @@ void mosquitto__free_disused_contexts(struct mosquitto_db *db)
 	context = db->ll_for_free;
 	while(context){
 		next = context->for_free_next;
-		mqtt3_context_cleanup(db, context, true);
+		context__cleanup(db, context, true);
 		context = next;
 	}
 	db->ll_for_free = NULL;

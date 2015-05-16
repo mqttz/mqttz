@@ -40,7 +40,7 @@ int mosquitto__handle_pingreq(struct mosquitto *mosq)
 #else
 	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s received PINGREQ", mosq->id);
 #endif
-	return mosquitto__send_pingresp(mosq);
+	return send__pingresp(mosq);
 }
 
 int mosquitto__handle_pingresp(struct mosquitto *mosq)
@@ -71,7 +71,7 @@ int mosquitto__handle_pubackcomp(struct mosquitto *mosq, const char *type)
 	mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Received %s from %s (Mid: %d)", type, mosq->id, mid);
 
 	if(mid){
-		rc = mqtt3_db_message_delete(db, mosq, mid, mosq_md_out);
+		rc = db__message_delete(db, mosq, mid, mosq_md_out);
 		if(rc) return rc;
 	}
 #else
@@ -103,14 +103,14 @@ int mosquitto__handle_pubrec(struct mosquitto *mosq)
 #ifdef WITH_BROKER
 	mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Received PUBREC from %s (Mid: %d)", mosq->id, mid);
 
-	rc = mqtt3_db_message_update(mosq, mid, mosq_md_out, mosq_ms_wait_for_pubcomp);
+	rc = db__message_update(mosq, mid, mosq_md_out, mosq_ms_wait_for_pubcomp);
 #else
 	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s received PUBREC (Mid: %d)", mosq->id, mid);
 
 	rc = message__out_update(mosq, mid, mosq_ms_wait_for_pubcomp);
 #endif
 	if(rc) return rc;
-	rc = mosquitto__send_pubrel(mosq, mid);
+	rc = send__pubrel(mosq, mid);
 	if(rc) return rc;
 
 	return MOSQ_ERR_SUCCESS;
@@ -135,7 +135,7 @@ int mosquitto__handle_pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 #ifdef WITH_BROKER
 	mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Received PUBREL from %s (Mid: %d)", mosq->id, mid);
 
-	if(mqtt3_db_message_release(db, mosq, mid, mosq_md_in)){
+	if(db__message_release(db, mosq, mid, mosq_md_in)){
 		/* Message not found. Still send a PUBCOMP anyway because this could be
 		 * due to a repeated PUBREL after a client has reconnected. */
 	}
@@ -155,7 +155,7 @@ int mosquitto__handle_pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 		message__cleanup(&message);
 	}
 #endif
-	rc = mosquitto__send_pubcomp(mosq, mid);
+	rc = send__pubcomp(mosq, mid);
 	if(rc) return rc;
 
 	return MOSQ_ERR_SUCCESS;

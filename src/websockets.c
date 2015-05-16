@@ -150,7 +150,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 
 	switch (reason) {
 		case LWS_CALLBACK_ESTABLISHED:
-			mosq = mqtt3_context_init(db, WEBSOCKET_CLIENT);
+			mosq = context__init(db, WEBSOCKET_CLIENT);
 			if(mosq){
 				mosq->ws_context = context;
 				mosq->wsi = wsi;

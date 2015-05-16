@@ -89,7 +89,7 @@ int mosquitto_socks5_set(struct mosquitto *mosq, const char *host, int port, con
 }
 
 #ifdef WITH_SOCKS
-int mosquitto__socks5_send(struct mosquitto *mosq)
+int socks5__send(struct mosquitto *mosq)
 {
 	struct mosquitto__packet *packet;
 	int slen;
@@ -199,7 +199,7 @@ int mosquitto__socks5_send(struct mosquitto *mosq)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto__socks5_read(struct mosquitto *mosq)
+int socks5__read(struct mosquitto *mosq)
 {
 	ssize_t len;
 	uint8_t *payload;
@@ -238,11 +238,11 @@ int mosquitto__socks5_read(struct mosquitto *mosq)
 			case SOCKS_AUTH_NONE:
 				packet__cleanup(&mosq->in_packet);
 				mosq->state = mosq_cs_socks5_auth_ok;
-				return mosquitto__socks5_send(mosq);
+				return socks5__send(mosq);
 			case SOCKS_AUTH_USERPASS:
 				packet__cleanup(&mosq->in_packet);
 				mosq->state = mosq_cs_socks5_send_userpass;
-				return mosquitto__socks5_send(mosq);
+				return socks5__send(mosq);
 			default:
 				packet__cleanup(&mosq->in_packet);
 				return MOSQ_ERR_AUTH;
@@ -279,7 +279,7 @@ int mosquitto__socks5_read(struct mosquitto *mosq)
 		if(mosq->in_packet.payload[1] == 0){
 			packet__cleanup(&mosq->in_packet);
 			mosq->state = mosq_cs_socks5_auth_ok;
-			return mosquitto__socks5_send(mosq);
+			return socks5__send(mosq);
 		}else{
 			i = mosq->in_packet.payload[1];
 			packet__cleanup(&mosq->in_packet);
@@ -372,7 +372,7 @@ int mosquitto__socks5_read(struct mosquitto *mosq)
 			/* Auth passed */
 			packet__cleanup(&mosq->in_packet);
 			mosq->state = mosq_cs_new;
-			return mosquitto__send_connect(mosq, mosq->keepalive, mosq->clean_session);
+			return send__connect(mosq, mosq->keepalive, mosq->clean_session);
 		}else{
 			i = mosq->in_packet.payload[1];
 			packet__cleanup(&mosq->in_packet);

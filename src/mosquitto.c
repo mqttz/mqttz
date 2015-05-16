@@ -230,8 +230,8 @@ int main(int argc, char *argv[])
 
 	mosquitto__net_init();
 
-	mqtt3_config_init(&config);
-	rc = mqtt3_config_parse_args(&config, argc, argv);
+	config__init(&config);
+	rc = config__parse_args(&config, argc, argv);
 	if(rc != MOSQ_ERR_SUCCESS) return rc;
 	int_db.config = &config;
 
@@ -263,7 +263,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	rc = mqtt3_db_open(&config, &int_db);
+	rc = db__open(&config, &int_db);
 	if(rc != MOSQ_ERR_SUCCESS){
 		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Couldn't open database.");
 		return rc;
@@ -271,7 +271,7 @@ int main(int argc, char *argv[])
 
 	/* Initialise logging only after initialising the database in case we're
 	 * logging to topics */
-	mqtt3_log_init(&config);
+	log__init(&config);
 	mosquitto__log_printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s (build date %s) starting", VERSION, TIMESTAMP);
 	if(config.config_file){
 		mosquitto__log_printf(NULL, MOSQ_LOG_INFO, "Config loaded from %s.", config.config_file);
@@ -288,9 +288,9 @@ int main(int argc, char *argv[])
 	if(config.sys_interval > 0){
 		/* Set static $SYS messages */
 		snprintf(buf, 1024, "mosquitto version %s", VERSION);
-		mqtt3_db_messages_easy_queue(&int_db, NULL, "$SYS/broker/version", 2, strlen(buf), buf, 1);
+		db__messages_easy_queue(&int_db, NULL, "$SYS/broker/version", 2, strlen(buf), buf, 1);
 		snprintf(buf, 1024, "%s", TIMESTAMP);
-		mqtt3_db_messages_easy_queue(&int_db, NULL, "$SYS/broker/timestamp", 2, strlen(buf), buf, 1);
+		db__messages_easy_queue(&int_db, NULL, "$SYS/broker/timestamp", 2, strlen(buf), buf, 1);
 	}
 #endif
 
@@ -299,7 +299,7 @@ int main(int argc, char *argv[])
 	for(i=0; i<config.listener_count; i++){
 		if(config.listeners[i].protocol == mp_mqtt){
 			if(mqtt3_socket_listen(&config.listeners[i])){
-				mqtt3_db_close(&int_db);
+				db__close(&int_db);
 				if(config.pid_file){
 					remove(config.pid_file);
 				}
@@ -308,7 +308,7 @@ int main(int argc, char *argv[])
 			listensock_count += config.listeners[i].sock_count;
 			listensock = mosquitto__realloc(listensock, sizeof(int)*listensock_count);
 			if(!listensock){
-				mqtt3_db_close(&int_db);
+				db__close(&int_db);
 				if(config.pid_file){
 					remove(config.pid_file);
 				}
@@ -316,7 +316,7 @@ int main(int argc, char *argv[])
 			}
 			for(j=0; j<config.listeners[i].sock_count; j++){
 				if(config.listeners[i].socks[j] == INVALID_SOCKET){
-					mqtt3_db_close(&int_db);
+					db__close(&int_db);
 					if(config.pid_file){
 						remove(config.pid_file);
 					}
@@ -355,7 +355,7 @@ int main(int argc, char *argv[])
 
 #ifdef WITH_BRIDGE
 	for(i=0; i<config.bridge_count; i++){
-		if(mqtt3_bridge_new(&int_db, &(config.bridges[i]))){
+		if(bridge__new(&int_db, &(config.bridges[i]))){
 			mosquitto__log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Unable to connect to bridge %s.", 
 					config.bridges[i].name);
 		}
@@ -366,11 +366,11 @@ int main(int argc, char *argv[])
 	rc = mosquitto_main_loop(&int_db, listensock, listensock_count, listener_max);
 
 	mosquitto__log_printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s terminating", VERSION);
-	mqtt3_log_close(&config);
+	log__close(&config);
 
 #ifdef WITH_PERSISTENCE
 	if(config.persistence){
-		mqtt3_db_backup(&int_db, true);
+		persist__backup(&int_db, true);
 	}
 #endif
 
@@ -388,28 +388,28 @@ int main(int argc, char *argv[])
 	HASH_ITER(hh_id, int_db.contexts_by_id, ctxt, ctxt_tmp){
 #ifdef WITH_WEBSOCKETS
 		if(!ctxt->wsi){
-			mqtt3_context_cleanup(&int_db, ctxt, true);
+			context__cleanup(&int_db, ctxt, true);
 		}
 #else
-		mqtt3_context_cleanup(&int_db, ctxt, true);
+		context__cleanup(&int_db, ctxt, true);
 #endif
 	}
 	HASH_ITER(hh_sock, int_db.contexts_by_sock, ctxt, ctxt_tmp){
-		mqtt3_context_cleanup(&int_db, ctxt, true);
+		context__cleanup(&int_db, ctxt, true);
 	}
 #ifdef WITH_BRIDGE
 	for(i=0; i<int_db.bridge_count; i++){
 		if(int_db.bridges[i]){
-			mqtt3_context_cleanup(&int_db, int_db.bridges[i], true);
+			context__cleanup(&int_db, int_db.bridges[i], true);
 		}
 	}
 	if(int_db.bridges){
 		mosquitto__free(int_db.bridges);
 	}
 #endif
-	mosquitto__free_disused_contexts(&int_db);
+	context__free_disused(&int_db);
 
-	mqtt3_db_close(&int_db);
+	db__close(&int_db);
 
 	if(listensock){
 		for(i=0; i<listensock_count; i++){
@@ -430,7 +430,7 @@ int main(int argc, char *argv[])
 		remove(config.pid_file);
 	}
 
-	mqtt3_config_cleanup(int_db.config);
+	config__cleanup(int_db.config);
 	mosquitto__net_cleanup();
 
 	return rc;
