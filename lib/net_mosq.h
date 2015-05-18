@@ -49,25 +49,25 @@ struct mosquitto_db;
 #define MOSQ_MSB(A) (uint8_t)((A & 0xFF00) >> 8)
 #define MOSQ_LSB(A) (uint8_t)(A & 0x00FF)
 
-void mosquitto__net_init(void);
-void mosquitto__net_cleanup(void);
+void net__init(void);
+void net__cleanup(void);
 
-int mosquitto__socket_connect(struct mosquitto *mosq, const char *host, uint16_t port, const char *bind_address, bool blocking);
+int net__socket_connect(struct mosquitto *mosq, const char *host, uint16_t port, const char *bind_address, bool blocking);
 #ifdef WITH_BROKER
-int mosquitto__socket_close(struct mosquitto_db *db, struct mosquitto *mosq);
+int net__socket_close(struct mosquitto_db *db, struct mosquitto *mosq);
 #else
-int mosquitto__socket_close(struct mosquitto *mosq);
+int net__socket_close(struct mosquitto *mosq);
 #endif
-int mosquitto__try_connect(struct mosquitto *mosq, const char *host, uint16_t port, int *sock, const char *bind_address, bool blocking);
-int mosquitto__socket_nonblock(int sock);
-int mosquitto__socketpair(int *sp1, int *sp2);
+int net__try_connect(struct mosquitto *mosq, const char *host, uint16_t port, int *sock, const char *bind_address, bool blocking);
+int net__socket_nonblock(int sock);
+int net__socketpair(int *sp1, int *sp2);
 
-ssize_t mosquitto__net_read(struct mosquitto *mosq, void *buf, size_t count);
-ssize_t mosquitto__net_write(struct mosquitto *mosq, void *buf, size_t count);
+ssize_t net__read(struct mosquitto *mosq, void *buf, size_t count);
+ssize_t net__write(struct mosquitto *mosq, void *buf, size_t count);
 
 #ifdef WITH_TLS
-int mosquitto__socket_apply_tls(struct mosquitto *mosq);
-int mosquitto__socket_connect_tls(struct mosquitto *mosq);
+int net__socket_apply_tls(struct mosquitto *mosq);
+int net__socket_connect_tls(struct mosquitto *mosq);
 #endif
 
 #endif

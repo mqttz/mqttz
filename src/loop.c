@@ -177,9 +177,9 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 							&& context->bridge->cur_address != 0
 							&& now > context->bridge->primary_retry){
 
-						if(mosquitto__try_connect(context, context->bridge->addresses[0].address, context->bridge->addresses[0].port, &bridge_sock, NULL, false) == MOSQ_ERR_SUCCESS){
+						if(net__try_connect(context, context->bridge->addresses[0].address, context->bridge->addresses[0].port, &bridge_sock, NULL, false) == MOSQ_ERR_SUCCESS){
 							COMPAT_CLOSE(bridge_sock);
-							mosquitto__socket_close(db, context);
+							net__socket_close(db, context);
 							context->bridge->cur_address = context->bridge->address_count-1;
 						}
 					}
@@ -358,7 +358,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 			flag_reload = false;
 		}
 		if(flag_tree_print){
-			mqtt3_sub_tree_print(&db->subs, 0);
+			sub__tree_print(&db->subs, 0);
 			flag_tree_print = false;
 		}
 #ifdef WITH_WEBSOCKETS

@@ -691,9 +691,9 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 #endif
 
 			if(qos != 0x80){
-				rc2 = mqtt3_sub_add(db, context, sub, qos, &db->subs);
+				rc2 = sub__add(db, context, sub, qos, &db->subs);
 				if(rc2 == MOSQ_ERR_SUCCESS){
-					if(mqtt3_retain_queue(db, context, sub, qos)) rc = 1;
+					if(sub__retain_queue(db, context, sub, qos)) rc = 1;
 				}else if(rc2 != -1){
 					rc = rc2;
 				}
@@ -766,7 +766,7 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 			}
 
 			log__printf(NULL, MOSQ_LOG_DEBUG, "\t%s", sub);
-			mqtt3_sub_remove(db, context, sub, &db->subs);
+			sub__remove(db, context, sub, &db->subs);
 			log__printf(NULL, MOSQ_LOG_UNSUBSCRIBE, "%s %s", context->id, sub);
 			mosquitto__free(sub);
 		}

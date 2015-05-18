@@ -72,14 +72,14 @@ int mosquitto_lib_init(void)
 	srand(tv.tv_sec*1000 + tv.tv_usec/1000);
 #endif
 
-	mosquitto__net_init();
+	net__init();
 
 	return MOSQ_ERR_SUCCESS;
 }
 
 int mosquitto_lib_cleanup(void)
 {
-	mosquitto__net_cleanup();
+	net__cleanup();
 
 	return MOSQ_ERR_SUCCESS;
 }
@@ -297,7 +297,7 @@ void mosquitto__destroy(struct mosquitto *mosq)
 	}
 #endif
 	if(mosq->sock != INVALID_SOCKET){
-		mosquitto__socket_close(mosq);
+		net__socket_close(mosq);
 	}
 	message__cleanup_all(mosq);
 	will__clear(mosq);
@@ -404,7 +404,7 @@ static int mosquitto__connect_init(struct mosquitto *mosq, const char *host, int
 
 	mosq->keepalive = keepalive;
 
-	if(mosquitto__socketpair(&mosq->sockpairR, &mosq->sockpairW)){
+	if(net__socketpair(&mosq->sockpairR, &mosq->sockpairW)){
 		log__printf(mosq, MOSQ_LOG_WARNING,
 				"Warning: Unable to open socket pair, outgoing publish commands may be delayed.");
 	}
@@ -510,11 +510,11 @@ static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking)
 
 #ifdef WITH_SOCKS
 	if(mosq->socks5_host){
-		rc = mosquitto__socket_connect(mosq, mosq->socks5_host, mosq->socks5_port, mosq->bind_address, blocking);
+		rc = net__socket_connect(mosq, mosq->socks5_host, mosq->socks5_port, mosq->bind_address, blocking);
 	}else
 #endif
 	{
-		rc = mosquitto__socket_connect(mosq, mosq->host, mosq->port, mosq->bind_address, blocking);
+		rc = net__socket_connect(mosq, mosq->host, mosq->port, mosq->bind_address, blocking);
 	}
 	if(rc){
 		return rc;
@@ -921,7 +921,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 			if(FD_ISSET(mosq->sock, &readfds)){
 #ifdef WITH_TLS
 				if(mosq->want_connect){
-					rc = mosquitto__socket_connect_tls(mosq);
+					rc = net__socket_connect_tls(mosq);
 					if(rc) return rc;
 				}else
 #endif
@@ -947,7 +947,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 			if(FD_ISSET(mosq->sock, &writefds)){
 #ifdef WITH_TLS
 				if(mosq->want_connect){
-					rc = mosquitto__socket_connect_tls(mosq);
+					rc = net__socket_connect_tls(mosq);
 					if(rc) return rc;
 				}else
 #endif
@@ -1068,7 +1068,7 @@ int mosquitto_loop_misc(struct mosquitto *mosq)
 		/* mosq->ping_t != 0 means we are waiting for a pingresp.
 		 * This hasn't happened in the keepalive time so we should disconnect.
 		 */
-		mosquitto__socket_close(mosq);
+		net__socket_close(mosq);
 		pthread_mutex_lock(&mosq->state_mutex);
 		if(mosq->state == mosq_cs_disconnecting){
 			rc = MOSQ_ERR_SUCCESS;
@@ -1091,7 +1091,7 @@ int mosquitto_loop_misc(struct mosquitto *mosq)
 static int mosquitto__loop_rc_handle(struct mosquitto *mosq, int rc)
 {
 	if(rc){
-		mosquitto__socket_close(mosq);
+		net__socket_close(mosq);
 		pthread_mutex_lock(&mosq->state_mutex);
 		if(mosq->state == mosq_cs_disconnecting){
 			rc = MOSQ_ERR_SUCCESS;

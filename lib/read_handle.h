@@ -19,12 +19,12 @@ Contributors:
 #include "mosquitto.h"
 struct mosquitto_db;
 
-int mosquitto__packet_handle(struct mosquitto *mosq);
 int handle__pingreq(struct mosquitto *mosq);
 int handle__pingresp(struct mosquitto *mosq);
 #ifdef WITH_BROKER
 int handle__pubackcomp(struct mosquitto_db *db, struct mosquitto *mosq, const char *type);
 #else
+int handle__packet(struct mosquitto *mosq);
 int handle__connack(struct mosquitto *mosq);
 int handle__pubackcomp(struct mosquitto *mosq, const char *type);
 int handle__publish(struct mosquitto *mosq);

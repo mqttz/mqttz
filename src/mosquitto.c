@@ -228,7 +228,7 @@ int main(int argc, char *argv[])
 
 	memset(&int_db, 0, sizeof(struct mosquitto_db));
 
-	mosquitto__net_init();
+	net__init();
 
 	config__init(&config);
 	rc = config__parse_args(&config, argc, argv);
@@ -431,7 +431,7 @@ int main(int argc, char *argv[])
 	}
 
 	config__cleanup(int_db.config);
-	mosquitto__net_cleanup();
+	net__cleanup();
 
 	return rc;
 }

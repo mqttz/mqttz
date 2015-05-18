@@ -30,7 +30,7 @@ Contributors:
 #include "time_mosq.h"
 #include "util_mosq.h"
 
-int mosquitto__packet_handle(struct mosquitto *mosq)
+int handle__packet(struct mosquitto *mosq)
 {
 	assert(mosq);
 

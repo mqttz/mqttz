@@ -134,9 +134,9 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 		}
 	}
 #endif
-	mosquitto__socket_close(db, context);
+	net__socket_close(db, context);
 	if((do_free || context->clean_session) && db){
-		mqtt3_subs_clean_session(db, context);
+		sub__clean_session(db, context);
 		db__messages_delete(db, context);
 	}
 	if(context->address){
@@ -199,7 +199,7 @@ void context__disconnect(struct mosquitto_db *db, struct mosquitto *ctxt)
 		ctxt->will = NULL;
 	}
 	ctxt->disconnect_t = time(NULL);
-	mosquitto__socket_close(db, ctxt);
+	net__socket_close(db, ctxt);
 }
 
 void context__add_to_disused(struct mosquitto_db *db, struct mosquitto *context)

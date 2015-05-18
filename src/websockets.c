@@ -314,7 +314,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 					G_PUB_MSGS_RECEIVED_INC(1);
 				}
 #endif
-				rc = mqtt3_packet_handle(db, mosq);
+				rc = handle__packet(db, mosq);
 
 				/* Free data and reset values */
 				packet__cleanup(&mosq->in_packet);

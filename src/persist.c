@@ -667,7 +667,7 @@ static int persist__retain_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 	store_id = i64temp;
 	HASH_FIND(hh, db->msg_store_load, &store_id, sizeof(dbid_t), load);
 	if(load){
-		mqtt3_db_messages_queue(db, NULL, load->store->topic, load->store->qos, load->store->retain, &load->store);
+		sub__messages_queue(db, NULL, load->store->topic, load->store->qos, load->store->retain, &load->store);
 	}else{
 		log__printf(NULL, MOSQ_LOG_ERR, "Error: Corrupt database whilst restoring a retained message.");
 		return MOSQ_ERR_INVAL;
@@ -837,7 +837,7 @@ static int persist__restore_sub(struct mosquitto_db *db, const char *client_id, 
 
 	context = persist__find_or_add_context(db, client_id, 0);
 	if(!context) return 1;
-	return mqtt3_sub_add(db, context, sub, qos, &db->subs);
+	return sub__add(db, context, sub, qos, &db->subs);
 }
 
 #endif

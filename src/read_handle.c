@@ -29,7 +29,7 @@ Contributors:
 #include "sys_tree.h"
 #include "util_mosq.h"
 
-int mqtt3_packet_handle(struct mosquitto_db *db, struct mosquitto *context)
+int handle__packet(struct mosquitto_db *db, struct mosquitto *context)
 {
 	if(!context) return MOSQ_ERR_INVAL;
 
@@ -226,10 +226,10 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	}
 	switch(qos){
 		case 0:
-			if(mqtt3_db_messages_queue(db, context->id, topic, qos, retain, &stored)) rc = 1;
+			if(sub__messages_queue(db, context->id, topic, qos, retain, &stored)) rc = 1;
 			break;
 		case 1:
-			if(mqtt3_db_messages_queue(db, context->id, topic, qos, retain, &stored)) rc = 1;
+			if(sub__messages_queue(db, context->id, topic, qos, retain, &stored)) rc = 1;
 			if(send__puback(context, mid)) rc = 1;
 			break;
 		case 2:

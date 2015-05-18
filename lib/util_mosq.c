@@ -59,7 +59,7 @@ void mosquitto__check_keepalive(struct mosquitto *mosq)
 				&& now - mosq->last_msg_out >= mosq->bridge->idle_timeout){
 
 		log__printf(NULL, MOSQ_LOG_NOTICE, "Bridge connection %s has exceeded idle timeout, disconnecting.", mosq->id);
-		mosquitto__socket_close(db, mosq);
+		net__socket_close(db, mosq);
 		return;
 	}
 #endif
@@ -84,9 +84,9 @@ void mosquitto__check_keepalive(struct mosquitto *mosq)
 				assert(mosq->listener->client_count >= 0);
 			}
 			mosq->listener = NULL;
-			mosquitto__socket_close(db, mosq);
+			net__socket_close(db, mosq);
 #else
-			mosquitto__socket_close(mosq);
+			net__socket_close(mosq);
 			pthread_mutex_lock(&mosq->state_mutex);
 			if(mosq->state == mosq_cs_disconnecting){
 				rc = MOSQ_ERR_SUCCESS;

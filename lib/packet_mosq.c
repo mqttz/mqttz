@@ -276,7 +276,7 @@ int packet__write(struct mosquitto *mosq)
 		packet = mosq->current_out_packet;
 
 		while(packet->to_process > 0){
-			write_length = mosquitto__net_write(mosq, &(packet->payload[packet->pos]), packet->to_process);
+			write_length = net__write(mosq, &(packet->payload[packet->pos]), packet->to_process);
 			if(write_length > 0){
 				G_BYTES_SENT_INC(write_length);
 				packet->to_process -= write_length;
@@ -315,7 +315,7 @@ int packet__write(struct mosquitto *mosq)
 		}else if(((packet->command)&0xF0) == DISCONNECT){
 			/* FIXME what cleanup needs doing here? 
 			 * incoming/outgoing messages? */
-			mosquitto__socket_close(mosq);
+			net__socket_close(mosq);
 
 			/* Start of duplicate, possibly unnecessary code.
 			 * This does leave things in a consistent state at least. */
@@ -404,7 +404,7 @@ int packet__read(struct mosquitto *mosq)
 	 * Finally, free the memory and reset everything to starting conditions.
 	 */
 	if(!mosq->in_packet.command){
-		read_length = mosquitto__net_read(mosq, &byte, 1);
+		read_length = net__read(mosq, &byte, 1);
 		if(read_length == 1){
 			mosq->in_packet.command = byte;
 #ifdef WITH_BROKER
@@ -440,7 +440,7 @@ int packet__read(struct mosquitto *mosq)
 	 */
 	if(mosq->in_packet.remaining_count <= 0){
 		do{
-			read_length = mosquitto__net_read(mosq, &byte, 1);
+			read_length = net__read(mosq, &byte, 1);
 			if(read_length == 1){
 				mosq->in_packet.remaining_count--;
 				/* Max 4 bytes length for remaining length as defined by protocol.
@@ -479,7 +479,7 @@ int packet__read(struct mosquitto *mosq)
 		}
 	}
 	while(mosq->in_packet.to_process>0){
-		read_length = mosquitto__net_read(mosq, &(mosq->in_packet.payload[mosq->in_packet.pos]), mosq->in_packet.to_process);
+		read_length = net__read(mosq, &(mosq->in_packet.payload[mosq->in_packet.pos]), mosq->in_packet.to_process);
 		if(read_length > 0){
 			G_BYTES_RECEIVED_INC(read_length);
 			mosq->in_packet.to_process -= read_length;
@@ -518,9 +518,9 @@ int packet__read(struct mosquitto *mosq)
 	if(((mosq->in_packet.command)&0xF5) == PUBLISH){
 		G_PUB_MSGS_RECEIVED_INC(1);
 	}
-	rc = mqtt3_packet_handle(db, mosq);
+	rc = handle__packet(db, mosq);
 #else
-	rc = mosquitto__packet_handle(mosq);
+	rc = handle__packet(mosq);
 #endif
 
 	/* Free data and reset values */

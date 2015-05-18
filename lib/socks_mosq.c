@@ -207,7 +207,7 @@ int socks5__read(struct mosquitto *mosq)
 
 	if(mosq->state == mosq_cs_socks5_start){
 		while(mosq->in_packet.to_process > 0){
-			len = mosquitto__net_read(mosq, &(mosq->in_packet.payload[mosq->in_packet.pos]), mosq->in_packet.to_process);
+			len = net__read(mosq, &(mosq->in_packet.payload[mosq->in_packet.pos]), mosq->in_packet.to_process);
 			if(len > 0){
 				mosq->in_packet.pos += len;
 				mosq->in_packet.to_process -= len;
@@ -249,7 +249,7 @@ int socks5__read(struct mosquitto *mosq)
 		}
 	}else if(mosq->state == mosq_cs_socks5_userpass_reply){
 		while(mosq->in_packet.to_process > 0){
-			len = mosquitto__net_read(mosq, &(mosq->in_packet.payload[mosq->in_packet.pos]), mosq->in_packet.to_process);
+			len = net__read(mosq, &(mosq->in_packet.payload[mosq->in_packet.pos]), mosq->in_packet.to_process);
 			if(len > 0){
 				mosq->in_packet.pos += len;
 				mosq->in_packet.to_process -= len;
@@ -305,7 +305,7 @@ int socks5__read(struct mosquitto *mosq)
 		}
 	}else if(mosq->state == mosq_cs_socks5_request){
 		while(mosq->in_packet.to_process > 0){
-			len = mosquitto__net_read(mosq, &(mosq->in_packet.payload[mosq->in_packet.pos]), mosq->in_packet.to_process);
+			len = net__read(mosq, &(mosq->in_packet.payload[mosq->in_packet.pos]), mosq->in_packet.to_process);
 			if(len > 0){
 				mosq->in_packet.pos += len;
 				mosq->in_packet.to_process -= len;

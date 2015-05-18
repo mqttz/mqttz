@@ -444,7 +444,7 @@ int net__socket_get_address(int sock, char *buf, int len);
 /* ============================================================
  * Read handling functions
  * ============================================================ */
-int mqtt3_packet_handle(struct mosquitto_db *db, struct mosquitto *context);
+int handle__packet(struct mosquitto_db *db, struct mosquitto *context);
 int handle__connack(struct mosquitto_db *db, struct mosquitto *context);
 int handle__connect(struct mosquitto_db *db, struct mosquitto *context);
 int handle__disconnect(struct mosquitto_db *db, struct mosquitto *context);
@@ -471,7 +471,6 @@ int db__message_update(struct mosquitto *context, uint16_t mid, enum mosquitto_m
 int db__message_write(struct mosquitto_db *db, struct mosquitto *context);
 int db__messages_delete(struct mosquitto_db *db, struct mosquitto *context);
 int db__messages_easy_queue(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain);
-int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store **stored);
 int db__message_store(struct mosquitto_db *db, const char *source, uint16_t source_mid, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain, struct mosquitto_msg_store **stored, dbid_t store_id);
 int db__message_store_find(struct mosquitto *context, uint16_t mid, struct mosquitto_msg_store **stored);
 void db__msg_store_add(struct mosquitto_db *db, struct mosquitto_msg_store *store);
@@ -483,16 +482,16 @@ int db__message_timeout_check(struct mosquitto_db *db, unsigned int timeout);
 int db__message_reconnect_reset(struct mosquitto_db *db, struct mosquitto *context);
 void db__vacuum(void);
 void sys__update(struct mosquitto_db *db, int interval, time_t start_time);
-int mqtt3_retain_queue(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int sub_qos);
 
 /* ============================================================
  * Subscription functions
  * ============================================================ */
-int mqtt3_sub_add(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int qos, struct mosquitto__subhier *root);
-int mqtt3_sub_remove(struct mosquitto_db *db, struct mosquitto *context, const char *sub, struct mosquitto__subhier *root);
-int mqtt3_sub_search(struct mosquitto_db *db, struct mosquitto__subhier *root, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored);
-void mqtt3_sub_tree_print(struct mosquitto__subhier *root, int level);
-int mqtt3_subs_clean_session(struct mosquitto_db *db, struct mosquitto *context);
+int sub__add(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int qos, struct mosquitto__subhier *root);
+int sub__remove(struct mosquitto_db *db, struct mosquitto *context, const char *sub, struct mosquitto__subhier *root);
+void sub__tree_print(struct mosquitto__subhier *root, int level);
+int sub__clean_session(struct mosquitto_db *db, struct mosquitto *context);
+int sub__retain_queue(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int sub_qos);
+int sub__messages_queue(struct mosquitto_db *db, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store **stored);
 
 /* ============================================================
  * Context functions
