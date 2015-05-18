@@ -22,7 +22,7 @@ Contributors:
 #include "mosquitto.h"
 #include "memory_mosq.h"
 
-int mosquitto__log_printf(struct mosquitto *mosq, int priority, const char *fmt, ...)
+int log__printf(struct mosquitto *mosq, int priority, const char *fmt, ...)
 {
 	va_list va;
 	char *s;

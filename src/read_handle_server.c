@@ -124,7 +124,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	if(!strcmp(protocol_name, PROTOCOL_NAME_v31)){
 		if((protocol_version&0x7F) != PROTOCOL_VERSION_v31){
 			if(db->config->connection_messages == true){
-				mosquitto__log_printf(NULL, MOSQ_LOG_INFO, "Invalid protocol version %d in CONNECT from %s.",
+				log__printf(NULL, MOSQ_LOG_INFO, "Invalid protocol version %d in CONNECT from %s.",
 						protocol_version, context->address);
 			}
 			send__connack(context, 0, CONNACK_REFUSED_PROTOCOL_VERSION);
@@ -136,7 +136,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	}else if(!strcmp(protocol_name, PROTOCOL_NAME_v311)){
 		if((protocol_version&0x7F) != PROTOCOL_VERSION_v311){
 			if(db->config->connection_messages == true){
-				mosquitto__log_printf(NULL, MOSQ_LOG_INFO, "Invalid protocol version %d in CONNECT from %s.",
+				log__printf(NULL, MOSQ_LOG_INFO, "Invalid protocol version %d in CONNECT from %s.",
 						protocol_version, context->address);
 			}
 			send__connack(context, 0, CONNACK_REFUSED_PROTOCOL_VERSION);
@@ -153,7 +153,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		context->protocol = mosq_p_mqtt311;
 	}else{
 		if(db->config->connection_messages == true){
-			mosquitto__log_printf(NULL, MOSQ_LOG_INFO, "Invalid protocol \"%s\" in CONNECT from %s.",
+			log__printf(NULL, MOSQ_LOG_INFO, "Invalid protocol \"%s\" in CONNECT from %s.",
 					protocol_name, context->address);
 		}
 		mosquitto__free(protocol_name);
@@ -170,7 +170,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	will = connect_flags & 0x04;
 	will_qos = (connect_flags & 0x18) >> 3;
 	if(will_qos == 3){
-		mosquitto__log_printf(NULL, MOSQ_LOG_INFO, "Invalid Will QoS in CONNECT from %s.",
+		log__printf(NULL, MOSQ_LOG_INFO, "Invalid Will QoS in CONNECT from %s.",
 				context->address);
 		rc = MOSQ_ERR_PROTOCOL;
 		goto handle_connect_error;
@@ -414,7 +414,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			/* Client is already connected, disconnect old version. This is
 			 * done in context__cleanup() below. */
 			if(db->config->connection_messages == true){
-				mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Client %s already connected, closing old connection.", client_id);
+				log__printf(NULL, MOSQ_LOG_ERR, "Client %s already connected, closing old connection.", client_id);
 			}
 		}
 
@@ -493,15 +493,15 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	if(db->config->connection_messages == true){
 		if(context->is_bridge){
 			if(context->username){
-				mosquitto__log_printf(NULL, MOSQ_LOG_NOTICE, "New bridge connected from %s as %s (c%d, k%d, u'%s').", context->address, client_id, clean_session, context->keepalive, context->username);
+				log__printf(NULL, MOSQ_LOG_NOTICE, "New bridge connected from %s as %s (c%d, k%d, u'%s').", context->address, client_id, clean_session, context->keepalive, context->username);
 			}else{
-				mosquitto__log_printf(NULL, MOSQ_LOG_NOTICE, "New bridge connected from %s as %s (c%d, k%d).", context->address, client_id, clean_session, context->keepalive);
+				log__printf(NULL, MOSQ_LOG_NOTICE, "New bridge connected from %s as %s (c%d, k%d).", context->address, client_id, clean_session, context->keepalive);
 			}
 		}else{
 			if(context->username){
-				mosquitto__log_printf(NULL, MOSQ_LOG_NOTICE, "New client connected from %s as %s (c%d, k%d, u'%s').", context->address, client_id, clean_session, context->keepalive, context->username);
+				log__printf(NULL, MOSQ_LOG_NOTICE, "New client connected from %s as %s (c%d, k%d, u'%s').", context->address, client_id, clean_session, context->keepalive, context->username);
 			}else{
-				mosquitto__log_printf(NULL, MOSQ_LOG_NOTICE, "New client connected from %s as %s (c%d, k%d).", context->address, client_id, clean_session, context->keepalive);
+				log__printf(NULL, MOSQ_LOG_NOTICE, "New client connected from %s as %s (c%d, k%d).", context->address, client_id, clean_session, context->keepalive);
 			}
 		}
 	}
@@ -574,7 +574,7 @@ int handle__disconnect(struct mosquitto_db *db, struct mosquitto *context)
 	if(context->in_packet.remaining_length != 0){
 		return MOSQ_ERR_PROTOCOL;
 	}
-	mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Received DISCONNECT from %s", context->id);
+	log__printf(NULL, MOSQ_LOG_DEBUG, "Received DISCONNECT from %s", context->id);
 	if(context->protocol == mosq_p_mqtt311){
 		if((context->in_packet.command&0x0F) != 0x00){
 			do_disconnect(db, context);
@@ -600,7 +600,7 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 	char *sub_mount;
 
 	if(!context) return MOSQ_ERR_INVAL;
-	mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Received SUBSCRIBE from %s", context->id);
+	log__printf(NULL, MOSQ_LOG_DEBUG, "Received SUBSCRIBE from %s", context->id);
 	/* FIXME - plenty of potential for memory leaks here */
 
 	if(context->protocol == mosq_p_mqtt311){
@@ -619,14 +619,14 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 
 		if(sub){
 			if(!strlen(sub)){
-				mosquitto__log_printf(NULL, MOSQ_LOG_INFO, "Empty subscription string from %s, disconnecting.",
+				log__printf(NULL, MOSQ_LOG_INFO, "Empty subscription string from %s, disconnecting.",
 					context->address);
 				mosquitto__free(sub);
 				if(payload) mosquitto__free(payload);
 				return 1;
 			}
 			if(mosquitto_sub_topic_check(sub)){
-				mosquitto__log_printf(NULL, MOSQ_LOG_INFO, "Invalid subscription string from %s, disconnecting.",
+				log__printf(NULL, MOSQ_LOG_INFO, "Invalid subscription string from %s, disconnecting.",
 					context->address);
 				mosquitto__free(sub);
 				if(payload) mosquitto__free(payload);
@@ -639,7 +639,7 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 				return 1;
 			}
 			if(qos > 2){
-				mosquitto__log_printf(NULL, MOSQ_LOG_INFO, "Invalid QoS in subscription command from %s, disconnecting.",
+				log__printf(NULL, MOSQ_LOG_INFO, "Invalid QoS in subscription command from %s, disconnecting.",
 					context->address);
 				mosquitto__free(sub);
 				if(payload) mosquitto__free(payload);
@@ -660,7 +660,7 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 				sub = sub_mount;
 
 			}
-			mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "\t%s (QoS %d)", sub, qos);
+			log__printf(NULL, MOSQ_LOG_DEBUG, "\t%s (QoS %d)", sub, qos);
 
 #if 0
 			/* FIXME
@@ -697,7 +697,7 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 				}else if(rc2 != -1){
 					rc = rc2;
 				}
-				mosquitto__log_printf(NULL, MOSQ_LOG_SUBSCRIBE, "%s %d %s", context->id, qos, sub);
+				log__printf(NULL, MOSQ_LOG_SUBSCRIBE, "%s %d %s", context->id, qos, sub);
 			}
 			mosquitto__free(sub);
 
@@ -736,7 +736,7 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 	char *sub;
 
 	if(!context) return MOSQ_ERR_INVAL;
-	mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Received UNSUBSCRIBE from %s", context->id);
+	log__printf(NULL, MOSQ_LOG_DEBUG, "Received UNSUBSCRIBE from %s", context->id);
 
 	if(context->protocol == mosq_p_mqtt311){
 		if((context->in_packet.command&0x0F) != 0x02){
@@ -753,21 +753,21 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 
 		if(sub){
 			if(!strlen(sub)){
-				mosquitto__log_printf(NULL, MOSQ_LOG_INFO, "Empty unsubscription string from %s, disconnecting.",
+				log__printf(NULL, MOSQ_LOG_INFO, "Empty unsubscription string from %s, disconnecting.",
 					context->id);
 				mosquitto__free(sub);
 				return 1;
 			}
 			if(mosquitto_sub_topic_check(sub)){
-				mosquitto__log_printf(NULL, MOSQ_LOG_INFO, "Invalid unsubscription string from %s, disconnecting.",
+				log__printf(NULL, MOSQ_LOG_INFO, "Invalid unsubscription string from %s, disconnecting.",
 					context->id);
 				mosquitto__free(sub);
 				return 1;
 			}
 
-			mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "\t%s", sub);
+			log__printf(NULL, MOSQ_LOG_DEBUG, "\t%s", sub);
 			mqtt3_sub_remove(db, context, sub, &db->subs);
-			mosquitto__log_printf(NULL, MOSQ_LOG_UNSUBSCRIBE, "%s %s", context->id, sub);
+			log__printf(NULL, MOSQ_LOG_UNSUBSCRIBE, "%s %s", context->id, sub);
 			mosquitto__free(sub);
 		}
 	}

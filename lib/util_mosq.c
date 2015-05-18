@@ -58,7 +58,7 @@ void mosquitto__check_keepalive(struct mosquitto *mosq)
 				&& mosq->sock != INVALID_SOCKET
 				&& now - mosq->last_msg_out >= mosq->bridge->idle_timeout){
 
-		mosquitto__log_printf(NULL, MOSQ_LOG_NOTICE, "Bridge connection %s has exceeded idle timeout, disconnecting.", mosq->id);
+		log__printf(NULL, MOSQ_LOG_NOTICE, "Bridge connection %s has exceeded idle timeout, disconnecting.", mosq->id);
 		mosquitto__socket_close(db, mosq);
 		return;
 	}

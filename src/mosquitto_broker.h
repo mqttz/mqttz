@@ -508,7 +508,7 @@ void context__free_disused(struct mosquitto_db *db);
  * ============================================================ */
 int log__init(struct mosquitto__config *config);
 int log__close(struct mosquitto__config *config);
-int mosquitto__log_printf(struct mosquitto *mosq, int level, const char *fmt, ...) __attribute__((format(printf, 3, 4)));
+int log__printf(struct mosquitto *mosq, int level, const char *fmt, ...) __attribute__((format(printf, 3, 4)));
 
 /* ============================================================
  * Bridge functions

@@ -119,7 +119,7 @@ static int persist__client_messages_write(struct mosquitto_db *db, FILE *db_fptr
 
 	return MOSQ_ERR_SUCCESS;
 error:
-	mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", strerror(errno));
+	log__printf(NULL, MOSQ_LOG_ERR, "Error: %s.", strerror(errno));
 	return 1;
 }
 
@@ -198,7 +198,7 @@ static int persist__message_store_write(struct mosquitto_db *db, FILE *db_fptr)
 
 	return MOSQ_ERR_SUCCESS;
 error:
-	mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", strerror(errno));
+	log__printf(NULL, MOSQ_LOG_ERR, "Error: %s.", strerror(errno));
 	return 1;
 }
 
@@ -239,7 +239,7 @@ static int persist__client_write(struct mosquitto_db *db, FILE *db_fptr)
 
 	return MOSQ_ERR_SUCCESS;
 error:
-	mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", strerror(errno));
+	log__printf(NULL, MOSQ_LOG_ERR, "Error: %s.", strerror(errno));
 	return 1;
 }
 
@@ -307,7 +307,7 @@ static int persist__subs_retain_write(struct mosquitto_db *db, FILE *db_fptr, st
 	mosquitto__free(thistopic);
 	return MOSQ_ERR_SUCCESS;
 error:
-	mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", strerror(errno));
+	log__printf(NULL, MOSQ_LOG_ERR, "Error: %s.", strerror(errno));
 	return 1;
 }
 
@@ -339,19 +339,19 @@ int persist__backup(struct mosquitto_db *db, bool shutdown)
 	int len;
 
 	if(!db || !db->config || !db->config->persistence_filepath) return MOSQ_ERR_INVAL;
-	mosquitto__log_printf(NULL, MOSQ_LOG_INFO, "Saving in-memory database to %s.", db->config->persistence_filepath);
+	log__printf(NULL, MOSQ_LOG_INFO, "Saving in-memory database to %s.", db->config->persistence_filepath);
 
 	len = strlen(db->config->persistence_filepath)+5;
 	outfile = mosquitto__malloc(len+1);
 	if(!outfile){
-		mosquitto__log_printf(NULL, MOSQ_LOG_INFO, "Error saving in-memory database, out of memory.");
+		log__printf(NULL, MOSQ_LOG_INFO, "Error saving in-memory database, out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}
 	snprintf(outfile, len, "%s.new", db->config->persistence_filepath);
 	outfile[len] = '\0';
 	db_fptr = mosquitto__fopen(outfile, "wb");
 	if(db_fptr == NULL){
-		mosquitto__log_printf(NULL, MOSQ_LOG_INFO, "Error saving in-memory database, unable to open %s for writing.", outfile);
+		log__printf(NULL, MOSQ_LOG_INFO, "Error saving in-memory database, unable to open %s for writing.", outfile);
 		goto error;
 	}
 
@@ -398,7 +398,7 @@ int persist__backup(struct mosquitto_db *db, bool shutdown)
 error:
 	if(outfile) mosquitto__free(outfile);
 	strerror_r(errno, err, 256);
-	mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
+	log__printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
 	if(db_fptr) fclose(db_fptr);
 	return 1;
 }
@@ -411,7 +411,7 @@ static int persist__client_msg_restore(struct mosquitto_db *db, const char *clie
 
 	cmsg = mosquitto__malloc(sizeof(struct mosquitto_client_msg));
 	if(!cmsg){
-		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}
 
@@ -428,7 +428,7 @@ static int persist__client_msg_restore(struct mosquitto_db *db, const char *clie
 	HASH_FIND(hh, db->msg_store_load, &store_id, sizeof(dbid_t), load);
 	if(!load){
 		mosquitto__free(cmsg);
-		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error restoring persistent database, message store corrupt.");
+		log__printf(NULL, MOSQ_LOG_ERR, "Error restoring persistent database, message store corrupt.");
 		return 1;
 	}
 	cmsg->store = load->store;
@@ -437,7 +437,7 @@ static int persist__client_msg_restore(struct mosquitto_db *db, const char *clie
 	context = persist__find_or_add_context(db, client_id, 0);
 	if(!context){
 		mosquitto__free(cmsg);
-		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error restoring persistent database, message store corrupt.");
+		log__printf(NULL, MOSQ_LOG_ERR, "Error restoring persistent database, message store corrupt.");
 		return 1;
 	}
 	if(context->msgs){
@@ -461,14 +461,14 @@ static int persist__client_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 	read_e(db_fptr, &i16temp, sizeof(uint16_t));
 	slen = ntohs(i16temp);
 	if(!slen){
-		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Corrupt persistent database.");
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Corrupt persistent database.");
 		fclose(db_fptr);
 		return 1;
 	}
 	client_id = mosquitto__malloc(slen+1);
 	if(!client_id){
 		fclose(db_fptr);
-		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}
 	read_e(db_fptr, client_id, slen);
@@ -494,7 +494,7 @@ static int persist__client_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 
 	return rc;
 error:
-	mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", strerror(errno));
+	log__printf(NULL, MOSQ_LOG_ERR, "Error: %s.", strerror(errno));
 	fclose(db_fptr);
 	if(client_id) mosquitto__free(client_id);
 	return 1;
@@ -512,14 +512,14 @@ static int persist__client_msg_chunk_restore(struct mosquitto_db *db, FILE *db_f
 	read_e(db_fptr, &i16temp, sizeof(uint16_t));
 	slen = ntohs(i16temp);
 	if(!slen){
-		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Corrupt persistent database.");
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Corrupt persistent database.");
 		fclose(db_fptr);
 		return 1;
 	}
 	client_id = mosquitto__malloc(slen+1);
 	if(!client_id){
 		fclose(db_fptr);
-		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}
 	read_e(db_fptr, client_id, slen);
@@ -543,7 +543,7 @@ static int persist__client_msg_chunk_restore(struct mosquitto_db *db, FILE *db_f
 	return rc;
 error:
 	strerror_r(errno, err, 256);
-	mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
+	log__printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
 	fclose(db_fptr);
 	if(client_id) mosquitto__free(client_id);
 	return 1;
@@ -565,7 +565,7 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 	load = mosquitto__malloc(sizeof(struct mosquitto_msg_store_load));
 	if(!load){
 		fclose(db_fptr);
-		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}
 
@@ -579,7 +579,7 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 		if(!source_id){
 			mosquitto__free(load);
 			fclose(db_fptr);
-			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
 		read_e(db_fptr, source_id, slen);
@@ -599,14 +599,14 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 			mosquitto__free(load);
 			fclose(db_fptr);
 			if(source_id) mosquitto__free(source_id);
-			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
 		read_e(db_fptr, topic, slen);
 		topic[slen] = '\0';
 	}else{
 		mosquitto__free(load);
-		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid msg_store chunk when restoring persistent database.");
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid msg_store chunk when restoring persistent database.");
 		fclose(db_fptr);
 		if(source_id) mosquitto__free(source_id);
 		return 1;
@@ -624,7 +624,7 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 			fclose(db_fptr);
 			if(source_id) mosquitto__free(source_id);
 			mosquitto__free(topic);
-			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
 		read_e(db_fptr, payload, payloadlen);
@@ -644,7 +644,7 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 	return rc;
 error:
 	strerror_r(errno, err, 256);
-	mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
+	log__printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
 	fclose(db_fptr);
 	if(source_id) mosquitto__free(source_id);
 	if(topic) mosquitto__free(topic);
@@ -660,7 +660,7 @@ static int persist__retain_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 
 	if(fread(&i64temp, sizeof(dbid_t), 1, db_fptr) != 1){
 		strerror_r(errno, err, 256);
-		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
 		fclose(db_fptr);
 		return 1;
 	}
@@ -669,7 +669,7 @@ static int persist__retain_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 	if(load){
 		mqtt3_db_messages_queue(db, NULL, load->store->topic, load->store->qos, load->store->retain, &load->store);
 	}else{
-		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Corrupt database whilst restoring a retained message.");
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Corrupt database whilst restoring a retained message.");
 		return MOSQ_ERR_INVAL;
 	}
 	return MOSQ_ERR_SUCCESS;
@@ -689,7 +689,7 @@ static int persist__sub_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 	client_id = mosquitto__malloc(slen+1);
 	if(!client_id){
 		fclose(db_fptr);
-		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}
 	read_e(db_fptr, client_id, slen);
@@ -700,7 +700,7 @@ static int persist__sub_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 	topic = mosquitto__malloc(slen+1);
 	if(!topic){
 		fclose(db_fptr);
-		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		mosquitto__free(client_id);
 		return MOSQ_ERR_NOMEM;
 	}
@@ -717,7 +717,7 @@ static int persist__sub_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 	return rc;
 error:
 	strerror_r(errno, err, 256);
-	mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
+	log__printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
 	fclose(db_fptr);
 	return 1;
 }
@@ -758,7 +758,7 @@ int persist__restore(struct mosquitto_db *db)
 				/* Addition of disconnect_t to client chunk in v3. */
 			}else{
 				fclose(fptr);
-				mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Unsupported persistent database format version %d (need version %d).", db_version, MOSQ_DB_VERSION);
+				log__printf(NULL, MOSQ_LOG_ERR, "Error: Unsupported persistent database format version %d (need version %d).", db_version, MOSQ_DB_VERSION);
 				return 1;
 			}
 		}
@@ -772,7 +772,7 @@ int persist__restore(struct mosquitto_db *db)
 					read_e(fptr, &i8temp, sizeof(uint8_t)); // shutdown
 					read_e(fptr, &i8temp, sizeof(uint8_t)); // sizeof(dbid_t)
 					if(i8temp != sizeof(dbid_t)){
-						mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Incompatible database configuration (dbid size is %d bytes, expected %lu)",
+						log__printf(NULL, MOSQ_LOG_ERR, "Error: Incompatible database configuration (dbid size is %d bytes, expected %lu)",
 								i8temp, (unsigned long)sizeof(dbid_t));
 						fclose(fptr);
 						return 1;
@@ -802,14 +802,14 @@ int persist__restore(struct mosquitto_db *db)
 					break;
 
 				default:
-					mosquitto__log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Unsupported chunk \"%d\" in persistent database file. Ignoring.", chunk);
+					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Unsupported chunk \"%d\" in persistent database file. Ignoring.", chunk);
 					fseek(fptr, length, SEEK_CUR);
 					break;
 			}
 		}
 		if(rlen < 0) goto error;
 	}else{
-		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to restore persistent database. Unrecognised file format.");
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to restore persistent database. Unrecognised file format.");
 		rc = 1;
 	}
 
@@ -822,7 +822,7 @@ int persist__restore(struct mosquitto_db *db)
 	return rc;
 error:
 	strerror_r(errno, err, 256);
-	mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
+	log__printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
 	if(fptr) fclose(fptr);
 	return 1;
 }

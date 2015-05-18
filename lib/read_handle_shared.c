@@ -36,9 +36,9 @@ int handle__pingreq(struct mosquitto *mosq)
 {
 	assert(mosq);
 #ifdef WITH_BROKER
-	mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Received PINGREQ from %s", mosq->id);
+	log__printf(NULL, MOSQ_LOG_DEBUG, "Received PINGREQ from %s", mosq->id);
 #else
-	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s received PINGREQ", mosq->id);
+	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received PINGREQ", mosq->id);
 #endif
 	return send__pingresp(mosq);
 }
@@ -48,9 +48,9 @@ int handle__pingresp(struct mosquitto *mosq)
 	assert(mosq);
 	mosq->ping_t = 0; /* No longer waiting for a PINGRESP. */
 #ifdef WITH_BROKER
-	mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Received PINGRESP from %s", mosq->id);
+	log__printf(NULL, MOSQ_LOG_DEBUG, "Received PINGRESP from %s", mosq->id);
 #else
-	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s received PINGRESP", mosq->id);
+	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received PINGRESP", mosq->id);
 #endif
 	return MOSQ_ERR_SUCCESS;
 }
@@ -68,14 +68,14 @@ int handle__pubackcomp(struct mosquitto *mosq, const char *type)
 	rc = packet__read_uint16(&mosq->in_packet, &mid);
 	if(rc) return rc;
 #ifdef WITH_BROKER
-	mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Received %s from %s (Mid: %d)", type, mosq->id, mid);
+	log__printf(NULL, MOSQ_LOG_DEBUG, "Received %s from %s (Mid: %d)", type, mosq->id, mid);
 
 	if(mid){
 		rc = db__message_delete(db, mosq, mid, mosq_md_out);
 		if(rc) return rc;
 	}
 #else
-	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s received %s (Mid: %d)", mosq->id, type, mid);
+	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received %s (Mid: %d)", mosq->id, type, mid);
 
 	if(!message__delete(mosq, mid, mosq_md_out)){
 		/* Only inform the client the message has been sent once. */
@@ -101,11 +101,11 @@ int handle__pubrec(struct mosquitto *mosq)
 	rc = packet__read_uint16(&mosq->in_packet, &mid);
 	if(rc) return rc;
 #ifdef WITH_BROKER
-	mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Received PUBREC from %s (Mid: %d)", mosq->id, mid);
+	log__printf(NULL, MOSQ_LOG_DEBUG, "Received PUBREC from %s (Mid: %d)", mosq->id, mid);
 
 	rc = db__message_update(mosq, mid, mosq_md_out, mosq_ms_wait_for_pubcomp);
 #else
-	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s received PUBREC (Mid: %d)", mosq->id, mid);
+	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received PUBREC (Mid: %d)", mosq->id, mid);
 
 	rc = message__out_update(mosq, mid, mosq_ms_wait_for_pubcomp);
 #endif
@@ -133,14 +133,14 @@ int handle__pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 	rc = packet__read_uint16(&mosq->in_packet, &mid);
 	if(rc) return rc;
 #ifdef WITH_BROKER
-	mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Received PUBREL from %s (Mid: %d)", mosq->id, mid);
+	log__printf(NULL, MOSQ_LOG_DEBUG, "Received PUBREL from %s (Mid: %d)", mosq->id, mid);
 
 	if(db__message_release(db, mosq, mid, mosq_md_in)){
 		/* Message not found. Still send a PUBCOMP anyway because this could be
 		 * due to a repeated PUBREL after a client has reconnected. */
 	}
 #else
-	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s received PUBREL (Mid: %d)", mosq->id, mid);
+	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received PUBREL (Mid: %d)", mosq->id, mid);
 
 	if(!message__remove(mosq, mid, mosq_md_in, &message)){
 		/* Only pass the message on if we have removed it from the queue - this
@@ -172,9 +172,9 @@ int handle__suback(struct mosquitto *mosq)
 
 	assert(mosq);
 #ifdef WITH_BROKER
-	mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Received SUBACK from %s", mosq->id);
+	log__printf(NULL, MOSQ_LOG_DEBUG, "Received SUBACK from %s", mosq->id);
 #else
-	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s received SUBACK", mosq->id);
+	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received SUBACK", mosq->id);
 #endif
 	rc = packet__read_uint16(&mosq->in_packet, &mid);
 	if(rc) return rc;
@@ -212,9 +212,9 @@ int handle__unsuback(struct mosquitto *mosq)
 
 	assert(mosq);
 #ifdef WITH_BROKER
-	mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Received UNSUBACK from %s", mosq->id);
+	log__printf(NULL, MOSQ_LOG_DEBUG, "Received UNSUBACK from %s", mosq->id);
 #else
-	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s received UNSUBACK", mosq->id);
+	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received UNSUBACK", mosq->id);
 #endif
 	rc = packet__read_uint16(&mosq->in_packet, &mid);
 	if(rc) return rc;

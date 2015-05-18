@@ -53,7 +53,7 @@ int db__open(struct mosquitto__config *config, struct mosquitto_db *db)
 	db->subs.topic_len = strlen("");
 	if(UHPA_ALLOC(db->subs.topic, db->subs.topic_len+1) == 0){
 		db->subs.topic_len = 0;
-		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}else{
 		strncpy(UHPA_ACCESS(db->subs.topic, db->subs.topic_len+1), "", db->subs.topic_len+1);
@@ -61,14 +61,14 @@ int db__open(struct mosquitto__config *config, struct mosquitto_db *db)
 
 	child = mosquitto__malloc(sizeof(struct mosquitto__subhier));
 	if(!child){
-		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}
 	child->next = NULL;
 	child->topic_len = strlen("");
 	if(UHPA_ALLOC_TOPIC(child) == 0){
 		child->topic_len = 0;
-		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}else{
 		strncpy(UHPA_ACCESS_TOPIC(child), "", child->topic_len+1);
@@ -80,14 +80,14 @@ int db__open(struct mosquitto__config *config, struct mosquitto_db *db)
 
 	child = mosquitto__malloc(sizeof(struct mosquitto__subhier));
 	if(!child){
-		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}
 	child->next = NULL;
 	child->topic_len = strlen("$SYS");
 	if(UHPA_ALLOC_TOPIC(child) == 0){
 		child->topic_len = 0;
-		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}else{
 		strncpy(UHPA_ACCESS_TOPIC(child), "$SYS", child->topic_len+1);
@@ -353,7 +353,7 @@ int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint1
 			/* Dropping message due to full queue. */
 			if(context->is_dropping == false){
 				context->is_dropping = true;
-				mosquitto__log_printf(NULL, MOSQ_LOG_NOTICE,
+				log__printf(NULL, MOSQ_LOG_NOTICE,
 						"Outgoing messages are being dropped for client %s.",
 						context->id);
 			}
@@ -365,7 +365,7 @@ int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint1
 			G_MSGS_DROPPED_INC();
 			if(context->is_dropping == false){
 				context->is_dropping = true;
-				mosquitto__log_printf(NULL, MOSQ_LOG_NOTICE,
+				log__printf(NULL, MOSQ_LOG_NOTICE,
 						"Outgoing messages are being dropped for client %s.",
 						context->id);
 			}
@@ -520,7 +520,7 @@ int db__message_store(struct mosquitto_db *db, const char *source, uint16_t sour
 	}
 	if(!temp->source_id){
 		mosquitto__free(temp);
-		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}
 	temp->source_mid = source_mid;
@@ -532,7 +532,7 @@ int db__message_store(struct mosquitto_db *db, const char *source, uint16_t sour
 		if(!temp->topic){
 			mosquitto__free(temp->source_id);
 			mosquitto__free(temp);
-			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
 	}else{

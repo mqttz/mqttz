@@ -71,7 +71,7 @@ int log__init(struct mosquitto__config *config)
 		}
 		config->log_fptr = mosquitto__fopen(config->log_file, "at");
 		if(!config->log_fptr){
-			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open log file %s for writing.", config->log_file);
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open log file %s for writing.", config->log_file);
 			return MOSQ_ERR_INVAL;
 		}
 		restore_privileges();
@@ -99,7 +99,7 @@ int log__close(struct mosquitto__config *config)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto__log_vprintf(struct mosquitto *mosq, int priority, const char *fmt, va_list va)
+int log__vprintf(int priority, const char *fmt, va_list va)
 {
 	char *s;
 	char *st;
@@ -251,16 +251,21 @@ int mosquitto__log_vprintf(struct mosquitto *mosq, int priority, const char *fmt
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto__log_printf(struct mosquitto *mosq, int priority, const char *fmt, ...)
+int log__printf(struct mosquitto *mosq, int priority, const char *fmt, ...)
 {
 	va_list va;
 	int rc;
 
 	va_start(va, fmt);
-	rc = mosquitto__log_vprintf(mosq, priority, fmt, va);
+	rc = log__vprintf(priority, fmt, va);
 	va_end(va);
 
 	return rc;
+}
+
+int mosquitto_log_vprintf(int level, const char *fmt, va_list va)
+{
+	return log__vprintf(level, fmt, va);
 }
 
 void mosquitto_log_printf(int level, const char *fmt, ...)
@@ -268,7 +273,7 @@ void mosquitto_log_printf(int level, const char *fmt, ...)
 	va_list va;
 
 	va_start(va, fmt);
-	mosquitto__log_vprintf(NULL, level, fmt, va);
+	log__vprintf(level, fmt, va);
 	va_end(va);
 }
 

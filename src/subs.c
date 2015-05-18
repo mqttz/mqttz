@@ -461,13 +461,13 @@ int mqtt3_sub_add(struct mosquitto_db *db, struct mosquitto *context, const char
 		child = mosquitto__malloc(sizeof(struct mosquitto__subhier));
 		if(!child){
 			sub__topic_tokens_free(tokens);
-			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
 		child->topic_len = tokens->topic_len;
 		if(UHPA_ALLOC_TOPIC(child) == 0){
 			sub__topic_tokens_free(tokens);
-			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
 		strncpy(UHPA_ACCESS_TOPIC(child), UHPA_ACCESS_TOPIC(tokens), child->topic_len+1);

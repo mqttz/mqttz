@@ -140,10 +140,10 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 	mosq->keepalive = keepalive;
 #ifdef WITH_BROKER
 # ifdef WITH_BRIDGE
-	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Bridge %s sending CONNECT", clientid);
+	log__printf(mosq, MOSQ_LOG_DEBUG, "Bridge %s sending CONNECT", clientid);
 # endif
 #else
-	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending CONNECT", clientid);
+	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending CONNECT", clientid);
 #endif
 	return packet__queue(mosq, packet);
 }
@@ -153,10 +153,10 @@ int send__disconnect(struct mosquitto *mosq)
 	assert(mosq);
 #ifdef WITH_BROKER
 # ifdef WITH_BRIDGE
-	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Bridge %s sending DISCONNECT", mosq->id);
+	log__printf(mosq, MOSQ_LOG_DEBUG, "Bridge %s sending DISCONNECT", mosq->id);
 # endif
 #else
-	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending DISCONNECT", mosq->id);
+	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending DISCONNECT", mosq->id);
 #endif
 	return send__simple_command(mosq, DISCONNECT);
 }
@@ -196,10 +196,10 @@ int send__subscribe(struct mosquitto *mosq, int *mid, const char *topic, uint8_t
 
 #ifdef WITH_BROKER
 # ifdef WITH_BRIDGE
-	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Bridge %s sending SUBSCRIBE (Mid: %d, Topic: %s, QoS: %d)", mosq->id, local_mid, topic, topic_qos);
+	log__printf(mosq, MOSQ_LOG_DEBUG, "Bridge %s sending SUBSCRIBE (Mid: %d, Topic: %s, QoS: %d)", mosq->id, local_mid, topic, topic_qos);
 # endif
 #else
-	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending SUBSCRIBE (Mid: %d, Topic: %s, QoS: %d)", mosq->id, local_mid, topic, topic_qos);
+	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending SUBSCRIBE (Mid: %d, Topic: %s, QoS: %d)", mosq->id, local_mid, topic, topic_qos);
 #endif
 
 	return packet__queue(mosq, packet);
@@ -240,10 +240,10 @@ int send__unsubscribe(struct mosquitto *mosq, int *mid, const char *topic)
 
 #ifdef WITH_BROKER
 # ifdef WITH_BRIDGE
-	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Bridge %s sending UNSUBSCRIBE (Mid: %d, Topic: %s)", mosq->id, local_mid, topic);
+	log__printf(mosq, MOSQ_LOG_DEBUG, "Bridge %s sending UNSUBSCRIBE (Mid: %d, Topic: %s)", mosq->id, local_mid, topic);
 # endif
 #else
-	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending UNSUBSCRIBE (Mid: %d, Topic: %s)", mosq->id, local_mid, topic);
+	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending UNSUBSCRIBE (Mid: %d, Topic: %s)", mosq->id, local_mid, topic);
 #endif
 	return packet__queue(mosq, packet);
 }

@@ -405,7 +405,7 @@ static int mosquitto__connect_init(struct mosquitto *mosq, const char *host, int
 	mosq->keepalive = keepalive;
 
 	if(mosquitto__socketpair(&mosq->sockpairR, &mosq->sockpairW)){
-		mosquitto__log_printf(mosq, MOSQ_LOG_WARNING,
+		log__printf(mosq, MOSQ_LOG_WARNING,
 				"Warning: Unable to open socket pair, outgoing publish commands may be delayed.");
 	}
 

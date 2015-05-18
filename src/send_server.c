@@ -29,9 +29,9 @@ int send__connack(struct mosquitto *context, int ack, int result)
 
 	if(context){
 		if(context->id){
-			mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Sending CONNACK to %s (%d, %d)", context->id, ack, result);
+			log__printf(NULL, MOSQ_LOG_DEBUG, "Sending CONNACK to %s (%d, %d)", context->id, ack, result);
 		}else{
-			mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Sending CONNACK to %s (%d, %d)", context->address, ack, result);
+			log__printf(NULL, MOSQ_LOG_DEBUG, "Sending CONNACK to %s (%d, %d)", context->address, ack, result);
 		}
 	}
 
@@ -56,7 +56,7 @@ int send__suback(struct mosquitto *context, uint16_t mid, uint32_t payloadlen, c
 	struct mosquitto__packet *packet = NULL;
 	int rc;
 
-	mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Sending SUBACK to %s", context->id);
+	log__printf(NULL, MOSQ_LOG_DEBUG, "Sending SUBACK to %s", context->id);
 
 	packet = mosquitto__calloc(1, sizeof(struct mosquitto__packet));
 	if(!packet) return MOSQ_ERR_NOMEM;

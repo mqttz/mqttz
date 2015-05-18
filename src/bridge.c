@@ -170,7 +170,7 @@ int bridge__connect(struct mosquitto_db *db, struct mosquitto *context)
 
 	for(i=0; i<context->bridge->topic_count; i++){
 		if(context->bridge->topics[i].direction == bd_out || context->bridge->topics[i].direction == bd_both){
-			mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Bridge %s doing local SUBSCRIBE on topic %s", context->id, context->bridge->topics[i].local_topic);
+			log__printf(NULL, MOSQ_LOG_DEBUG, "Bridge %s doing local SUBSCRIBE on topic %s", context->id, context->bridge->topics[i].local_topic);
 			if(mqtt3_sub_add(db, context, context->bridge->topics[i].local_topic, context->bridge->topics[i].qos, &db->subs)) return 1;
 		}
 	}
@@ -209,15 +209,15 @@ int bridge__connect(struct mosquitto_db *db, struct mosquitto *context)
 		}
 	}
 
-	mosquitto__log_printf(NULL, MOSQ_LOG_NOTICE, "Connecting bridge %s (%s:%d)", context->bridge->name, context->bridge->addresses[context->bridge->cur_address].address, context->bridge->addresses[context->bridge->cur_address].port);
+	log__printf(NULL, MOSQ_LOG_NOTICE, "Connecting bridge %s (%s:%d)", context->bridge->name, context->bridge->addresses[context->bridge->cur_address].address, context->bridge->addresses[context->bridge->cur_address].port);
 	rc = mosquitto__socket_connect(context, context->bridge->addresses[context->bridge->cur_address].address, context->bridge->addresses[context->bridge->cur_address].port, NULL, false);
 	if(rc > 0 ){
 		if(rc == MOSQ_ERR_TLS){
 			return rc; /* Error already printed */
 		}else if(rc == MOSQ_ERR_ERRNO){
-			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error creating bridge: %s.", strerror(errno));
+			log__printf(NULL, MOSQ_LOG_ERR, "Error creating bridge: %s.", strerror(errno));
 		}else if(rc == MOSQ_ERR_EAI){
-			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error creating bridge: %s.", gai_strerror(errno));
+			log__printf(NULL, MOSQ_LOG_ERR, "Error creating bridge: %s.", gai_strerror(errno));
 		}
 
 		return rc;
@@ -237,9 +237,9 @@ int bridge__connect(struct mosquitto_db *db, struct mosquitto *context)
 		if(rc == MOSQ_ERR_TLS){
 			return rc; /* Error already printed */
 		}else if(rc == MOSQ_ERR_ERRNO){
-			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error creating bridge: %s.", strerror(errno));
+			log__printf(NULL, MOSQ_LOG_ERR, "Error creating bridge: %s.", strerror(errno));
 		}else if(rc == MOSQ_ERR_EAI){
-			mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error creating bridge: %s.", gai_strerror(errno));
+			log__printf(NULL, MOSQ_LOG_ERR, "Error creating bridge: %s.", gai_strerror(errno));
 		}
 		mosquitto__socket_close(db, context);
 		return rc;

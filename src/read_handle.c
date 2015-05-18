@@ -93,7 +93,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	dup = (header & 0x08)>>3;
 	qos = (header & 0x06)>>1;
 	if(qos == 3){
-		mosquitto__log_printf(NULL, MOSQ_LOG_INFO,
+		log__printf(NULL, MOSQ_LOG_INFO,
 				"Invalid QoS in PUBLISH from %s, disconnecting.", context->id);
 		return 1;
 	}
@@ -184,7 +184,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 
 	if(payloadlen){
 		if(db->config->message_size_limit && payloadlen > db->config->message_size_limit){
-			mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Dropped too large PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->id, dup, qos, retain, mid, topic, (long)payloadlen);
+			log__printf(NULL, MOSQ_LOG_DEBUG, "Dropped too large PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->id, dup, qos, retain, mid, topic, (long)payloadlen);
 			goto process_bad_message;
 		}
 		payload = mosquitto__calloc(payloadlen+1, 1);
@@ -202,7 +202,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	/* Check for topic access */
 	rc = mosquitto_acl_check(db, context, topic, MOSQ_ACL_WRITE);
 	if(rc == MOSQ_ERR_ACL_DENIED){
-		mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Denied PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->id, dup, qos, retain, mid, topic, (long)payloadlen);
+		log__printf(NULL, MOSQ_LOG_DEBUG, "Denied PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->id, dup, qos, retain, mid, topic, (long)payloadlen);
 		goto process_bad_message;
 	}else if(rc != MOSQ_ERR_SUCCESS){
 		mosquitto__free(topic);
@@ -210,7 +210,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 		return rc;
 	}
 
-	mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "Received PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->id, dup, qos, retain, mid, topic, (long)payloadlen);
+	log__printf(NULL, MOSQ_LOG_DEBUG, "Received PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->id, dup, qos, retain, mid, topic, (long)payloadlen);
 	if(qos > 0){
 		db__message_store_find(context, mid, &stored);
 	}

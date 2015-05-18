@@ -427,7 +427,7 @@ static int callback_http(struct libwebsocket_context *context,
 			}
 			free(filename_canonical);
 
-			mosquitto__log_printf(NULL, MOSQ_LOG_DEBUG, "http serving file \"%s\".", filename);
+			log__printf(NULL, MOSQ_LOG_DEBUG, "http serving file \"%s\".", filename);
 			u->fptr = fopen(filename, "rb");
 			mosquitto__free(filename);
 			if(!u->fptr){
@@ -512,7 +512,7 @@ static void log_wrap(int level, const char *line)
 {
 	char *l = (char *)line;
 	l[strlen(line)-1] = '\0'; // Remove \n
-	mosquitto__log_printf(NULL, MOSQ_LOG_WEBSOCKETS, "%s", l);
+	log__printf(NULL, MOSQ_LOG_WEBSOCKETS, "%s", l);
 }
 
 struct libwebsocket_context *mosq_websockets_init(struct mosquitto__listener *listener, int log_level)
@@ -528,7 +528,7 @@ struct libwebsocket_context *mosq_websockets_init(struct mosquitto__listener *li
 
 	p = mosquitto__calloc(protocol_count+1, sizeof(struct libwebsocket_protocols));
 	if(!p){
-		mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Out of memory.");
+		log__printf(NULL, MOSQ_LOG_ERR, "Out of memory.");
 		return NULL;
 	}
 	for(i=0; protocols[i].name; i++){
@@ -582,7 +582,7 @@ struct libwebsocket_context *mosq_websockets_init(struct mosquitto__listener *li
 
 	lws_set_log_level(log_level, log_wrap);
 
-	mosquitto__log_printf(NULL, MOSQ_LOG_INFO, "Opening websockets listen socket on port %d.", listener->port);
+	log__printf(NULL, MOSQ_LOG_INFO, "Opening websockets listen socket on port %d.", listener->port);
 	return libwebsocket_create_context(&info);
 }
 

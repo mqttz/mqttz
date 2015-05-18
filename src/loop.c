@@ -76,7 +76,7 @@ static void temp__expire_websockets_clients(struct mosquitto_db *db)
 						}else{
 							id = "<unknown>";
 						}
-						mosquitto__log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", id);
+						log__printf(NULL, MOSQ_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", id);
 					}
 					/* Client has exceeded keepalive*1.5 */
 					do_disconnect(db, context);
@@ -142,7 +142,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 			pollfd_count = listensock_count + context_count;
 			pollfds = mosquitto__realloc(pollfds, sizeof(struct pollfd)*pollfd_count);
 			if(!pollfds){
-				mosquitto__log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+				log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 				return MOSQ_ERR_NOMEM;
 			}
 		}
@@ -210,7 +210,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 						}else{
 							id = "<unknown>";
 						}
-						mosquitto__log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", id);
+						log__printf(NULL, MOSQ_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", id);
 					}
 					/* Client has exceeded keepalive*1.5 */
 					do_disconnect(db, context);
@@ -293,7 +293,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 						}else{
 							id = "<unknown>";
 						}
-						mosquitto__log_printf(NULL, MOSQ_LOG_NOTICE, "Expiring persistent client %s due to timeout.", id);
+						log__printf(NULL, MOSQ_LOG_NOTICE, "Expiring persistent client %s due to timeout.", id);
 						G_CLIENTS_EXPIRED_INC();
 						context->clean_session = true;
 						context->state = mosq_cs_expiring;
@@ -348,7 +348,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 		}
 #endif
 		if(flag_reload){
-			mosquitto__log_printf(NULL, MOSQ_LOG_INFO, "Reloading config.");
+			log__printf(NULL, MOSQ_LOG_INFO, "Reloading config.");
 			config__read(db->config, true);
 			mosquitto_security_cleanup(db, true);
 			mosquitto_security_init(db, true);
@@ -407,9 +407,9 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 				id = "<unknown>";
 			}
 			if(context->state != mosq_cs_disconnecting){
-				mosquitto__log_printf(NULL, MOSQ_LOG_NOTICE, "Socket error on client %s, disconnecting.", id);
+				log__printf(NULL, MOSQ_LOG_NOTICE, "Socket error on client %s, disconnecting.", id);
 			}else{
-				mosquitto__log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s disconnected.", id);
+				log__printf(NULL, MOSQ_LOG_NOTICE, "Client %s disconnected.", id);
 			}
 		}
 		context__disconnect(db, context);

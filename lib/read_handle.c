@@ -57,7 +57,7 @@ int mosquitto__packet_handle(struct mosquitto *mosq)
 			return handle__unsuback(mosq);
 		default:
 			/* If we don't recognise the command, return an error straight away. */
-			mosquitto__log_printf(mosq, MOSQ_LOG_ERR, "Error: Unrecognised command %d\n", (mosq->in_packet.command)&0xF0);
+			log__printf(mosq, MOSQ_LOG_ERR, "Error: Unrecognised command %d\n", (mosq->in_packet.command)&0xF0);
 			return MOSQ_ERR_PROTOCOL;
 	}
 }
@@ -112,7 +112,7 @@ int handle__publish(struct mosquitto *mosq)
 			return rc;
 		}
 	}
-	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG,
+	log__printf(mosq, MOSQ_LOG_DEBUG,
 			"Client %s received PUBLISH (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))",
 			mosq->id, message->dup, message->msg.qos, message->msg.retain,
 			message->msg.mid, message->msg.topic,

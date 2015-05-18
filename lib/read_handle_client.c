@@ -30,7 +30,7 @@ int handle__connack(struct mosquitto *mosq)
 	int rc;
 
 	assert(mosq);
-	mosquitto__log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s received CONNACK", mosq->id);
+	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received CONNACK", mosq->id);
 	rc = packet__read_byte(&mosq->in_packet, &byte); // Reserved byte, not used
 	if(rc) return rc;
 	rc = packet__read_byte(&mosq->in_packet, &result);
