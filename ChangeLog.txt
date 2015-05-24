@@ -3,6 +3,20 @@
 
 Broker:
 - Reduce calls to malloc through the use of UHPA.
+- Outgoing messages with QoS>1 are no longer retried after a timeout period.
+  Messages will be retried when a client reconnects.  This change in behaviour
+  can be justified by considering when the timeout may have occurred.
+  * If a connection is unreliable and has dropped, but without one end
+    noticing, the messages will be retried on reconnection. Sending
+    additional PUBLISH or PUBREL would not have changed anything.
+  * If a client is overloaded/unable to respond/has a slow connection then
+    sending additional PUBLISH or PUBREL would not help the client catch
+    up. Once the backlog has cleared the client will respond. If it is not
+    able to catch up, sending additional duplicates would not help either.
+
+Client library:
+- Outgoing messages with QoS>1 are no longer retried after a timeout period.
+  Messages will be retried when a client reconnects. 
 
 Client:
 - Add -x to mosquitto_sub for printing the payload in hexadecimal format.

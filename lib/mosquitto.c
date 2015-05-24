@@ -145,8 +145,6 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 	mosq->sockpairR = INVALID_SOCKET;
 	mosq->sockpairW = INVALID_SOCKET;
 	mosq->keepalive = 60;
-	mosq->message_retry = 20;
-	mosq->last_retry_check = 0;
 	mosq->clean_session = clean_session;
 	if(id){
 		if(strlen(id) == 0){
@@ -1060,10 +1058,6 @@ int mosquitto_loop_misc(struct mosquitto *mosq)
 
 	mosquitto__check_keepalive(mosq);
 	now = mosquitto_time();
-	if(mosq->last_retry_check+1 < now){
-		message__retry_check(mosq);
-		mosq->last_retry_check = now;
-	}
 	if(mosq->ping_t && now - mosq->ping_t >= mosq->keepalive){
 		/* mosq->ping_t != 0 means we are waiting for a pingresp.
 		 * This hasn't happened in the keepalive time so we should disconnect.

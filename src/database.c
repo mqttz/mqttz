@@ -675,48 +675,6 @@ int db__message_reconnect_reset(struct mosquitto_db *db, struct mosquitto *conte
 	return MOSQ_ERR_SUCCESS;
 }
 
-int db__message_timeout_check(struct mosquitto_db *db, unsigned int timeout)
-{
-	time_t threshold;
-	enum mosquitto_msg_state new_state;
-	struct mosquitto *context, *ctxt_tmp;
-	struct mosquitto_client_msg *msg;
-
-	threshold = mosquitto_time() - timeout;
-
-	HASH_ITER(hh_sock, db->contexts_by_sock, context, ctxt_tmp){
-		msg = context->msgs;
-		while(msg){
-			new_state = mosq_ms_invalid;
-			if(msg->timestamp < threshold && msg->state != mosq_ms_queued){
-				switch(msg->state){
-					case mosq_ms_wait_for_puback:
-						new_state = mosq_ms_publish_qos1;
-						break;
-					case mosq_ms_wait_for_pubrec:
-						new_state = mosq_ms_publish_qos2;
-						break;
-					case mosq_ms_wait_for_pubrel:
-						new_state = mosq_ms_send_pubrec;
-						break;
-					case mosq_ms_wait_for_pubcomp:
-						new_state = mosq_ms_resend_pubrel;
-						break;
-					default:
-						break;
-				}
-				if(new_state != mosq_ms_invalid){
-					msg->timestamp = mosquitto_time();
-					msg->state = new_state;
-					msg->dup = true;
-				}
-			}
-			msg = msg->next;
-		}
-	}
-
-	return MOSQ_ERR_SUCCESS;
-}
 
 int db__message_release(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir)
 {

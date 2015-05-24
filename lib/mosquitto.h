@@ -1297,13 +1297,7 @@ libmosq_EXPORT int mosquitto_max_inflight_messages_set(struct mosquitto *mosq, u
 /*
  * Function: mosquitto_message_retry_set
  *
- * Set the number of seconds to wait before retrying messages. This applies to
- * publish messages with QoS>0. May be called at any time.
- * 
- * Parameters:
- *  mosq -          a valid mosquitto instance.
- *  message_retry - the number of seconds to wait for a response before
- *                  retrying. Defaults to 20.
+ * This function now has no effect.
  */
 libmosq_EXPORT void mosquitto_message_retry_set(struct mosquitto *mosq, unsigned int message_retry);
 

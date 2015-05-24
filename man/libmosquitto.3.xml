@@ -279,11 +279,6 @@
 					<paramdef>unsigned int <parameter>max_inflight_messages</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 
-			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_message_retry_set</function></funcdef>
-					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
-					<paramdef>unsigned int <parameter>message_retry</parameter></paramdef>
-			</funcprototype></funcsynopsis>
-
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_reconnect_delay_set</function></funcdef>
 					<paramdef>struct mosquitto *<parameter>mosq</parameter></paramdef>
 					<paramdef>unsigned int <parameter>reconnect_delay</parameter></paramdef>

@@ -526,16 +526,6 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>retry_interval</option> <replaceable>seconds</replaceable></term>
-				<listitem>
-					<para>The integer number of seconds after a QoS=1 or QoS=2
-						message has been sent that mosquitto will wait before
-						retrying when no response is received. If unset,
-						defaults to 20 seconds.</para>
-					<para>Reloaded on reload signal.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
 				<term><option>store_clean_interval</option> <replaceable>seconds</replaceable></term>
 				<listitem>
 					<para>The integer number of seconds between the internal

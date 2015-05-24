@@ -154,7 +154,6 @@ static void config__init_reload(struct mosquitto__config *config)
 	if(config->psk_file) mosquitto__free(config->psk_file);
 	config->psk_file = NULL;
 	config->queue_qos0_messages = false;
-	config->retry_interval = 20;
 	config->sys_interval = 10;
 	config->upgrade_outgoing_qos = false;
 	if(config->auth_options){
@@ -1613,11 +1612,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "retry_interval")){
-					if(conf__parse_int(&token, "retry_interval", &config->retry_interval, saveptr)) return MOSQ_ERR_INVAL;
-					if(config->retry_interval < 1 || config->retry_interval > 3600){
-						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid retry_interval value (%d).", config->retry_interval);
-						return MOSQ_ERR_INVAL;
-					}
+					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: The retry_interval option is no longer available.");
 				}else if(!strcmp(token, "round_robin")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME

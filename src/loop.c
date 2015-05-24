@@ -304,8 +304,6 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 			expiration_check_time = time(NULL) + 3600;
 		}
 
-		db__message_timeout_check(db, db->config->retry_interval);
-
 #ifndef WIN32
 		sigprocmask(SIG_SETMASK, &sigblock, &origsig);
 		fdcount = poll(pollfds, pollfd_index, 100);

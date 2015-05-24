@@ -183,7 +183,6 @@ struct mosquitto__config {
 	char *pid_file;
 	char *psk_file;
 	bool queue_qos0_messages;
-	int retry_interval;
 	int sys_interval;
 	bool upgrade_outgoing_qos;
 	char *user;
@@ -477,8 +476,6 @@ void db__msg_store_add(struct mosquitto_db *db, struct mosquitto_msg_store *stor
 void db__msg_store_remove(struct mosquitto_db *db, struct mosquitto_msg_store *store);
 void db__msg_store_deref(struct mosquitto_db *db, struct mosquitto_msg_store **store);
 void db__msg_store_clean(struct mosquitto_db *db);
-/* Check all messages waiting on a client reply and resend if timeout has been exceeded. */
-int db__message_timeout_check(struct mosquitto_db *db, unsigned int timeout);
 int db__message_reconnect_reset(struct mosquitto_db *db, struct mosquitto *context);
 void db__vacuum(void);
 void sys__update(struct mosquitto_db *db, int interval, time_t start_time);

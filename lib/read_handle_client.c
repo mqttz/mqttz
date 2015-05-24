@@ -19,6 +19,7 @@ Contributors:
 #include "mosquitto.h"
 #include "logging_mosq.h"
 #include "memory_mosq.h"
+#include "messages_mosq.h"
 #include "net_mosq.h"
 #include "packet_mosq.h"
 #include "read_handle.h"
@@ -47,6 +48,7 @@ int handle__connack(struct mosquitto *mosq)
 			if(mosq->state != mosq_cs_disconnecting){
 				mosq->state = mosq_cs_connected;
 			}
+			message__retry_check(mosq);
 			return MOSQ_ERR_SUCCESS;
 		case 1:
 		case 2:
