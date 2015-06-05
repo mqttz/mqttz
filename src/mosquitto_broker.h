@@ -142,6 +142,7 @@ struct mosquitto__listener {
 	SSL_CTX *ssl_ctx;
 	char *crlfile;
 	bool use_identity_as_username;
+	bool use_subject_as_username;
 	char *tls_version;
 #endif
 #ifdef WITH_WEBSOCKETS

@@ -308,7 +308,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 #ifdef WITH_TLS
-	if(context->listener && context->listener->ssl_ctx && context->listener->use_identity_as_username){
+	if(context->listener && context->listener->ssl_ctx && (context->listener->use_identity_as_username || context->listener->use_subject_as_username)){
 		if(!context->ssl){
 			send__connack(context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
 			rc = 1;
@@ -336,15 +336,26 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 				rc = 1;
 				goto handle_connect_error;
 			}
-
-			i = X509_NAME_get_index_by_NID(name, NID_commonName, -1);
-			if(i == -1){
-				send__connack(context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
-				rc = 1;
-				goto handle_connect_error;
+			if (context->listener->use_identity_as_username) { //use_identity_as_username
+				i = X509_NAME_get_index_by_NID(name, NID_commonName, -1);
+				if(i == -1){
+					send__connack(context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
+					rc = 1;
+					goto handle_connect_error;
+				}
+				name_entry = X509_NAME_get_entry(name, i);
+				context->username = _mosquitto_strdup((char *)ASN1_STRING_data(name_entry->value));
+			} else { // use_subject_as_username
+				BIO *subjectBio = BIO_new(BIO_s_mem());
+				X509_NAME_print_ex(subjectBio, X509_get_subject_name(client_cert) , 0, XN_FLAG_RFC2253);
+				char *dataStart = NULL;
+				long nameLength = BIO_get_mem_data(subjectBio, &dataStart);
+				char *subject = mosquitto__malloc(sizeof(char)*nameLength);
+				memset(subject, 0x00, sizeof(char)*(nameLength + 1));
+				memcpy(subject, dataStart, nameLength);
+				BIO_free(subjectBio);
+				context->username = subject;
 			}
-			name_entry = X509_NAME_get_entry(name, i);
-			context->username = mosquitto__strdup((char *)ASN1_STRING_data(name_entry->value));
 			if(!context->username){
 				rc = 1;
 				goto handle_connect_error;

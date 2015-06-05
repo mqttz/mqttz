@@ -194,6 +194,7 @@ void config__init(struct mosquitto__config *config)
 	config->default_listener.require_certificate = false;
 	config->default_listener.crlfile = NULL;
 	config->default_listener.use_identity_as_username = false;
+	config->default_listener.use_subject_as_username = false;
 #endif
 	config->listeners = NULL;
 	config->listener_count = 0;
@@ -385,6 +386,7 @@ int config__parse_args(struct mosquitto__config *config, int argc, char *argv[])
 			|| config->default_listener.require_certificate
 			|| config->default_listener.crlfile
 			|| config->default_listener.use_identity_as_username
+			|| config->default_listener.use_subject_as_username
 #endif
 			|| config->default_listener.use_username_as_clientid
 			|| config->default_listener.host
@@ -434,6 +436,7 @@ int config__parse_args(struct mosquitto__config *config, int argc, char *argv[])
 		config->listeners[config->listener_count-1].ssl_ctx = NULL;
 		config->listeners[config->listener_count-1].crlfile = config->default_listener.crlfile;
 		config->listeners[config->listener_count-1].use_identity_as_username = config->default_listener.use_identity_as_username;
+		config->listeners[config->listener_count-1].use_subject_as_username = config->default_listener.use_subject_as_username;
 #endif
 	}
 
@@ -1849,6 +1852,13 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 #ifdef WITH_TLS
 					if(reload) continue; // Listeners not valid for reloading.
 					if(conf__parse_bool(&token, "use_identity_as_username", &cur_listener->use_identity_as_username, saveptr)) return MOSQ_ERR_INVAL;
+#else
+					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
+#endif
+				}else if(!strcmp(token, "use_subject_as_username")){
+#ifdef WITH_TLS
+					if(reload) continue; // Listeners not valid for reloading.
+					if(conf__parse_bool(&token, "use_subject_as_username", &cur_listener->use_subject_as_username, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
 #endif
