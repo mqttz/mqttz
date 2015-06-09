@@ -47,44 +47,12 @@ int bridge__new(struct mosquitto_db *db, struct mosquitto__bridge *bridge)
 {
 	struct mosquitto *new_context = NULL;
 	struct mosquitto **bridges;
-	char hostname[256];
-	int len;
-	char *id, *local_id;
+	char *local_id;
 
 	assert(db);
 	assert(bridge);
 
-	if(!bridge->remote_clientid){
-		if(!gethostname(hostname, 256)){
-			len = strlen(hostname) + strlen(bridge->name) + 2;
-			id = mosquitto__malloc(len);
-			if(!id){
-				return MOSQ_ERR_NOMEM;
-			}
-			snprintf(id, len, "%s.%s", hostname, bridge->name);
-		}else{
-			return 1;
-		}
-		bridge->remote_clientid = id;
-	}
-	if(bridge->local_clientid){
-		local_id = mosquitto__strdup(bridge->local_clientid);
-		if(!local_id){
-			return MOSQ_ERR_NOMEM;
-		}
-	}else{
-		len = strlen(bridge->remote_clientid) + strlen("local.") + 2;
-		local_id = mosquitto__malloc(len);
-		if(!local_id){
-			return MOSQ_ERR_NOMEM;
-		}
-		snprintf(local_id, len, "local.%s", bridge->remote_clientid);
-		bridge->local_clientid = mosquitto__strdup(local_id);
-		if(!bridge->local_clientid){
-			mosquitto__free(local_id);
-			return MOSQ_ERR_NOMEM;
-		}
-	}
+	local_id = mosquitto__strdup(bridge->local_clientid);
 
 	HASH_FIND(hh_id, db->contexts_by_id, local_id, strlen(local_id), new_context);
 	if(new_context){

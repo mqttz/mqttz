@@ -13,6 +13,7 @@ Broker:
     sending additional PUBLISH or PUBREL would not help the client catch
     up. Once the backlog has cleared the client will respond. If it is not
     able to catch up, sending additional duplicates would not help either.
+- Produce an error if two bridges share the same local_clientid.
 
 Client library:
 - Outgoing messages with QoS>1 are no longer retried after a timeout period.
