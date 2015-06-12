@@ -344,16 +344,23 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 					goto handle_connect_error;
 				}
 				name_entry = X509_NAME_get_entry(name, i);
-				context->username = _mosquitto_strdup((char *)ASN1_STRING_data(name_entry->value));
+				if(name_entry){
+					context->username = mosquitto__strdup((char *)ASN1_STRING_data(name_entry->value));
+				}
 			} else { // use_subject_as_username
-				BIO *subjectBio = BIO_new(BIO_s_mem());
-				X509_NAME_print_ex(subjectBio, X509_get_subject_name(client_cert) , 0, XN_FLAG_RFC2253);
-				char *dataStart = NULL;
-				long nameLength = BIO_get_mem_data(subjectBio, &dataStart);
-				char *subject = mosquitto__malloc(sizeof(char)*nameLength);
-				memset(subject, 0x00, sizeof(char)*(nameLength + 1));
-				memcpy(subject, dataStart, nameLength);
-				BIO_free(subjectBio);
+				BIO *subject_bio = BIO_new(BIO_s_mem());
+				X509_NAME_print_ex(subject_bio, X509_get_subject_name(client_cert), 0, XN_FLAG_RFC2253);
+				char *data_start = NULL;
+				long name_length = BIO_get_mem_data(subject_bio, &data_start);
+				char *subject = mosquitto__malloc(sizeof(char)*name_length+1);
+				if(!subject){
+					BIO_free(subject_bio);
+					rc = MOSQ_ERR_NOMEM;
+					goto handle_connect_error;
+				}
+				memcpy(subject, data_start, name_length);
+				subject[name_length] = '\0';
+				BIO_free(subject_bio);
 				context->username = subject;
 			}
 			if(!context->username){

@@ -52,7 +52,7 @@
 			usernames and passwords. Be sure to use network encryption if you
 			are using this option otherwise the username and password will be
 			vulnerable to interception.</para>
-		<para>When using certificate based encryption there are two options
+		<para>When using certificate based encryption there are three options
 			that affect authentication. The first is require_certificate, which
 			may be set to true or false. If false, the SSL/TLS component of the
 			client will verify the server but there is no requirement for the
@@ -60,14 +60,17 @@
 			limited to the MQTT built in username/password. If
 			require_certificate is true, the client must provide a valid
 			certificate in order to connect successfully. In this case, the
-			second option, use_identity_as_username, becomes relevant. If set
-			to true, the Common Name (CN) from the client certificate is used
-			instead of the MQTT username for access control purposes. The
-			password is not replaced because it is assumed that only
-			authenticated clients have valid certificates. If
+			second and third options, use_identity_as_username and
+			use_subject_as_username, become relevant. If set to true,
+			use_identity_as_user causes the Common Name (CN) from the client
+			certificate to be used instead of the MQTT username for access
+			control purposes. The password is not replaced because it is
+			assumed that only authenticated clients have valid certificates. If
 			use_identity_as_username is false, the client must authenticate as
-			normal (if required by password_file) through the MQTT
-			options.</para>
+			normal (if required by password_file) through the MQTT options. The
+			same principle applies for the use_subject_as_username option, but
+			the entire certificate subject is used as the username instead of
+			just the CN.</para>
 		<para>When using pre-shared-key based encryption through the psk_hint
 			and psk_file options, the client must provide a valid identity and
 			key in order to connect to the broker before any MQTT communication
@@ -823,6 +826,28 @@
 							is <replaceable>true</replaceable>, the
 							<option>password_file</option> option will not be
 							used for this listener.</para>
+						<para>This takes priority over
+							<option>use_subject_as_username</option> if both
+							are set to <replaceable>true</replaceable>.</para>
+						<para>See also
+							<option>use_subject_as_username</option></para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>use_subject_as_username</option> [ true | false ]</term>
+					<listitem>
+						<para>If <option>require_certificate</option> is
+							<replaceable>true</replaceable>, you may set
+							<option>use_subject_as_username</option> to
+							<replaceable>true</replaceable> to use the complete subject value
+							from the client certificate as a username. If this
+							is <replaceable>true</replaceable>, the
+							<option>password_file</option> option will not be
+							used for this listener.</para>
+						<para>The subject will be generated in a form similar
+							to <option>CN=test client,OU=Production,O=Server,L=Nottingham,ST=Nottinghamshire,C=GB</option>.</para>
+						<para>See also
+							<option>use_identity_as_username</option></para>
 					</listitem>
 				</varlistentry>
 			</variablelist>

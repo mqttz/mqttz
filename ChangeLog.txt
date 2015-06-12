@@ -14,6 +14,9 @@ Broker:
     up. Once the backlog has cleared the client will respond. If it is not
     able to catch up, sending additional duplicates would not help either.
 - Produce an error if two bridges share the same local_clientid.
+- Add use_subject_as_username option for certificate based client
+  authentication to use the entire certificate subject as a username, rather
+  than just the CN. Closes #469467.
 
 Client library:
 - Outgoing messages with QoS>1 are no longer retried after a timeout period.
