@@ -17,6 +17,7 @@ Broker:
 - Add use_subject_as_username option for certificate based client
   authentication to use the entire certificate subject as a username, rather
   than just the CN. Closes #469467.
+- Add systemd startup notification and services. Closes #471053.
 
 Client library:
 - Outgoing messages with QoS>1 are no longer retried after a timeout period.

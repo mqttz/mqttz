@@ -67,6 +67,16 @@ if (${WITH_SYS_TREE} STREQUAL ON)
 	add_definitions("-DWITH_SYS_TREE")
 endif (${WITH_SYS_TREE} STREQUAL ON)
 
+if (CMAKE_SYSTEM_NAME STREQUAL Linux)
+	option(WITH_SYSTEMD
+		"Include systemd support?" OFF)
+	if (${WITH_SYSTEMD} STREQUAL ON)
+		add_definitions("-DWITH_SYSTEMD")
+		find_library(SYSTEMD_LIBRARY systemd)
+		set (MOSQ_LIBS ${MOSQ_LIBS} ${SYSTEMD_LIBRARY})
+	endif (${WITH_SYSTEMD} STREQUAL ON)
+endif (CMAKE_SYSTEM_NAME STREQUAL Linux)
+
 option(WITH_WEBSOCKETS
 	"Include websockets support?" OFF)
 if (${WITH_WEBSOCKETS} STREQUAL ON)
