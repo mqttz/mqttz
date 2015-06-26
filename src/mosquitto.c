@@ -39,6 +39,9 @@ Contributors:
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
+#ifdef WITH_SYSTEMD
+#  include <systemd/sd-daemon.h>
+#endif
 #ifdef WITH_WRAP
 #include <tcpd.h>
 #endif
@@ -360,6 +363,10 @@ int main(int argc, char *argv[])
 					config.bridges[i].name);
 		}
 	}
+#endif
+
+#ifdef WITH_SYSTEMD
+	sd_notify(0, "READY=1");
 #endif
 
 	run = 1;
