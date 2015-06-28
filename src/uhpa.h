@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 Roger Light <roger@atchoo.org>
+Copyright (c) 2015-2016 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -83,6 +83,14 @@ Contributors:
  *		u : the uhpa data type that has already had memory allocated.
  *		size : the length of the stored data, in bytes.
  *		
+ * UHPA_MOVE(dest, src, src_size)
+ *		Call to move memory stored in one uhpa variable to another. If the data
+ *		is stored with heap allocated memory, then dest.ptr is set to src.ptr.
+ *		If the data is stored as an array, memmove is used to copy data from
+ *		src to dest. In both cases the data stored in src is invalidated by
+ *		setting src.ptr to NULL and calling memset(src.array, 0, src_size)
+ *		respectively.
+ *
  * =============================================================================
  * String Functions
  * =============================================================================
@@ -94,6 +102,7 @@ Contributors:
  * UHPA_ALLOC_STR(u, size)
  * UHPA_ACCESS_STR(u, size)
  * UHPA_FREE_STR(u, size)
+ * UHPA_MOVE_STR(dest, src, size)
  *		
  * =============================================================================
  * Forcing use of malloc
@@ -133,18 +142,30 @@ Contributors:
 		(u).ptr = NULL; \
 	} 
 
+#define UHPA_MOVE_CHK(dest, src, src_size) \
+	if((src_size) > sizeof((src).array) && (src).ptr){ \
+		(dest).ptr = (src).ptr; \
+		(src).ptr = NULL; \
+	}else{ \
+		memmove((dest).array, (src).array, (src_size)); \
+		memset((src).array, 0, (src_size)); \
+	}
+
 #ifdef UHPA_FORCE_MALLOC
 #  define UHPA_ALLOC(u, size) ((u).ptr = uhpa_malloc(size))
 #  define UHPA_ACCESS(u, size) (u).ptr
 #  define UHPA_FREE(u, size) uhpa_free((u).ptr); (u).ptr = NULL;
+#  define UHPA_MOVE(dest, src, src_size) {(dest).ptr = (src).ptr; (src).ptr = NULL}
 #else
 #  define UHPA_ALLOC(u, size) UHPA_ALLOC_CHK(u, size)
 #  define UHPA_ACCESS(u, size) UHPA_ACCESS_CHK(u, size)
 #  define UHPA_FREE(u, size) UHPA_FREE_CHK(u, size)
+#  define UHPA_MOVE(dest, src, src_size) UHPA_MOVE_CHK(dest, src, src_size)
 #endif
 
 #define UHPA_ALLOC_STR(u, size) UHPA_ALLOC((u), (size)+1)
 #define UHPA_ACCESS_STR(u, size) ((char *)UHPA_ACCESS((u), (size)+1))
 #define UHPA_FREE_STR(u, size) UHPA_FREE((u), (size)+1)
+#define UHPA_MOVE_STR(dest, src, src_size) UHPA_MOVE((dest), (src), (src_size)+1)
 
 #endif
