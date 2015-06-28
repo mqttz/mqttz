@@ -217,13 +217,15 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	if(!stored){
 		dup = 0;
 		if(db__message_store(db, context->id, mid, topic, qos, payloadlen, payload, retain, &stored, 0)){
-			mosquitto__free(topic);
 			if(payload) mosquitto__free(payload);
 			return 1;
 		}
 	}else{
+		mosquitto__free(topic);
+		topic = stored->topic;
 		dup = 1;
 	}
+
 	switch(qos){
 		case 0:
 			if(sub__messages_queue(db, context->id, topic, qos, retain, &stored)) rc = 1;
@@ -247,7 +249,6 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 			}
 			break;
 	}
-	mosquitto__free(topic);
 	if(payload) mosquitto__free(payload);
 
 	return rc;

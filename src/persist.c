@@ -632,13 +632,13 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 
 	rc = db__message_store(db, source_id, source_mid, topic, qos, payloadlen, payload, retain, &stored, store_id);
 
-	load->db_id = stored->db_id;
-	load->store = stored;
+	if(rc == MOSQ_ERR_SUCCESS){
+		load->db_id = stored->db_id;
+		load->store = stored;
 
-	HASH_ADD(hh, db->msg_store_load, db_id, sizeof(dbid_t), load);
-
+		HASH_ADD(hh, db->msg_store_load, db_id, sizeof(dbid_t), load);
+	}
 	if(source_id) mosquitto__free(source_id);
-	mosquitto__free(topic);
 	mosquitto__free(payload);
 
 	return rc;
