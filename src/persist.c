@@ -552,15 +552,18 @@ error:
 static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 {
 	dbid_t i64temp, store_id;
-	uint32_t i32temp, payloadlen;
+	uint32_t i32temp, payloadlen = 0;
 	uint16_t i16temp, slen, source_mid;
-	uint8_t qos, retain, *payload = NULL;
+	uint8_t qos, retain;
+	mosquitto__payload_uhpa payload;
 	char *source_id = NULL;
 	char *topic = NULL;
 	int rc = 0;
 	struct mosquitto_msg_store *stored = NULL;
 	struct mosquitto_msg_store_load *load;
 	char err[256];
+
+	payload.ptr = NULL;
 
 	load = mosquitto__malloc(sizeof(struct mosquitto_msg_store_load));
 	if(!load){
@@ -618,8 +621,7 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 	payloadlen = ntohl(i32temp);
 
 	if(payloadlen){
-		payload = mosquitto__malloc(payloadlen);
-		if(!payload){
+		if(UHPA_ALLOC(payload, payloadlen) == 0){
 			mosquitto__free(load);
 			fclose(db_fptr);
 			if(source_id) mosquitto__free(source_id);
@@ -627,10 +629,10 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 			log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
-		read_e(db_fptr, payload, payloadlen);
+		read_e(db_fptr, UHPA_ACCESS(payload, payloadlen), payloadlen);
 	}
 
-	rc = db__message_store(db, source_id, source_mid, topic, qos, payloadlen, payload, retain, &stored, store_id);
+	rc = db__message_store(db, source_id, source_mid, topic, qos, payloadlen, &payload, retain, &stored, store_id);
 
 	if(rc == MOSQ_ERR_SUCCESS){
 		load->db_id = stored->db_id;
@@ -639,7 +641,6 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 		HASH_ADD(hh, db->msg_store_load, db_id, sizeof(dbid_t), load);
 	}
 	if(source_id) mosquitto__free(source_id);
-	mosquitto__free(payload);
 
 	return rc;
 error:
@@ -648,7 +649,7 @@ error:
 	fclose(db_fptr);
 	if(source_id) mosquitto__free(source_id);
 	if(topic) mosquitto__free(topic);
-	if(payload) mosquitto__free(payload);
+	UHPA_FREE(payload, payloadlen);
 	return 1;
 }
 

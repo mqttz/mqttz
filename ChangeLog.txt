@@ -18,6 +18,8 @@ Broker:
   authentication to use the entire certificate subject as a username, rather
   than just the CN. Closes #469467.
 - Add systemd startup notification and services. Closes #471053.
+- Reduce unnecessary malloc and memcpy when receiving a message and storing
+  it. Closes #470258.
 
 Client library:
 - Outgoing messages with QoS>1 are no longer retried after a timeout period.

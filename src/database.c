@@ -488,25 +488,33 @@ int db__messages_easy_queue(struct mosquitto_db *db, struct mosquitto *context, 
 	struct mosquitto_msg_store *stored;
 	char *source_id;
 	char *topic_heap;
+	mosquitto__payload_uhpa payload_uhpa;
 
 	assert(db);
+
+	payload_uhpa.ptr = NULL;
 
 	if(!topic) return MOSQ_ERR_INVAL;
 	topic_heap = mosquitto__strdup(topic);
 	if(!topic_heap) return MOSQ_ERR_INVAL;
+
+	if(UHPA_ALLOC(payload_uhpa, payloadlen) == 0){
+		return MOSQ_ERR_NOMEM;
+	}
+	memcpy(UHPA_ACCESS(payload_uhpa, payloadlen), payload, payloadlen);
 
 	if(context && context->id){
 		source_id = context->id;
 	}else{
 		source_id = "";
 	}
-	if(db__message_store(db, source_id, 0, topic_heap, qos, payloadlen, payload, retain, &stored, 0)) return 1;
+	if(db__message_store(db, source_id, 0, topic_heap, qos, payloadlen, &payload_uhpa, retain, &stored, 0)) return 1;
 
 	return sub__messages_queue(db, source_id, topic_heap, qos, retain, &stored);
 }
 
-/* This function requires topic to be allocated on the heap. Once called, it owns topic and will free it on error. */
-int db__message_store(struct mosquitto_db *db, const char *source, uint16_t source_mid, char *topic, int qos, uint32_t payloadlen, const void *payload, int retain, struct mosquitto_msg_store **stored, dbid_t store_id)
+/* This function requires topic to be allocated on the heap. Once called, it owns topic and will free it on error. Likewise payload. */
+int db__message_store(struct mosquitto_db *db, const char *source, uint16_t source_mid, char *topic, int qos, uint32_t payloadlen, mosquitto__payload_uhpa *payload, int retain, struct mosquitto_msg_store **stored, dbid_t store_id)
 {
 	struct mosquitto_msg_store *temp = NULL;
 	int rc = MOSQ_ERR_SUCCESS;
@@ -542,11 +550,7 @@ int db__message_store(struct mosquitto_db *db, const char *source, uint16_t sour
 	topic = NULL;
 	temp->payloadlen = payloadlen;
 	if(payloadlen){
-		if(UHPA_ALLOC_PAYLOAD(temp) == 0){
-			rc = MOSQ_ERR_NOMEM;
-			goto error;
-		}
-		memcpy(UHPA_ACCESS_PAYLOAD(temp), payload, sizeof(char)*payloadlen);
+		UHPA_MOVE(temp->payload, *payload, payloadlen);
 	}else{
 		temp->payload.ptr = NULL;
 	}

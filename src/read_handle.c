@@ -73,7 +73,7 @@ int handle__packet(struct mosquitto_db *db, struct mosquitto *context)
 int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 {
 	char *topic;
-	void *payload = NULL;
+	mosquitto__payload_uhpa payload;
 	uint32_t payloadlen;
 	uint8_t dup, qos, retain;
 	uint16_t mid = 0;
@@ -89,6 +89,8 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	struct mosquitto__bridge_topic *cur_topic;
 	bool match;
 #endif
+
+	payload.ptr = NULL;
 
 	dup = (header & 0x08)>>3;
 	qos = (header & 0x06)>>1;
@@ -187,14 +189,13 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 			log__printf(NULL, MOSQ_LOG_DEBUG, "Dropped too large PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->id, dup, qos, retain, mid, topic, (long)payloadlen);
 			goto process_bad_message;
 		}
-		payload = mosquitto__calloc(payloadlen+1, 1);
-		if(!payload){
+		if(UHPA_ALLOC(payload, payloadlen+1) == 0){
 			mosquitto__free(topic);
-			return 1;
+			return MOSQ_ERR_NOMEM;
 		}
-		if(packet__read_bytes(&context->in_packet, payload, payloadlen)){
+		if(packet__read_bytes(&context->in_packet, UHPA_ACCESS(payload, payloadlen), payloadlen)){
 			mosquitto__free(topic);
-			mosquitto__free(payload);
+			UHPA_FREE(payload, payloadlen);
 			return 1;
 		}
 	}
@@ -206,7 +207,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 		goto process_bad_message;
 	}else if(rc != MOSQ_ERR_SUCCESS){
 		mosquitto__free(topic);
-		if(payload) mosquitto__free(payload);
+		UHPA_FREE(payload, payloadlen);
 		return rc;
 	}
 
@@ -216,8 +217,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	}
 	if(!stored){
 		dup = 0;
-		if(db__message_store(db, context->id, mid, topic, qos, payloadlen, payload, retain, &stored, 0)){
-			if(payload) mosquitto__free(payload);
+		if(db__message_store(db, context->id, mid, topic, qos, payloadlen, &payload, retain, &stored, 0)){
 			return 1;
 		}
 	}else{
@@ -249,12 +249,11 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 			}
 			break;
 	}
-	if(payload) mosquitto__free(payload);
 
 	return rc;
 process_bad_message:
 	mosquitto__free(topic);
-	if(payload) mosquitto__free(payload);
+	UHPA_FREE(payload, payloadlen);
 	switch(qos){
 		case 0:
 			return MOSQ_ERR_SUCCESS;
