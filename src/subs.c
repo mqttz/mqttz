@@ -599,23 +599,25 @@ void sub__tree_print(struct mosquitto__subhier *root, int level)
 	struct mosquitto__subhier *branch;
 	struct mosquitto__subleaf *leaf;
 
-	for(i=0; i<level*2; i++){
-		printf(" ");
-	}
-	printf("%s", UHPA_ACCESS_TOPIC(root));
-	leaf = root->subs;
-	while(leaf){
-		if(leaf->context){
-			printf(" (%s, %d)", leaf->context->id, leaf->qos);
-		}else{
-			printf(" (%s, %d)", "", leaf->qos);
+	if(level > 1){
+		for(i=0; i<(level-2)*2; i++){
+			printf(" ");
 		}
-		leaf = leaf->next;
+		printf("%s", UHPA_ACCESS_TOPIC(root));
+		leaf = root->subs;
+		while(leaf){
+			if(leaf->context){
+				printf(" (%s, %d)", leaf->context->id, leaf->qos);
+			}else{
+				printf(" (%s, %d)", "", leaf->qos);
+			}
+			leaf = leaf->next;
+		}
+		if(root->retained){
+			printf(" (r)");
+		}
+		printf("\n");
 	}
-	if(root->retained){
-		printf(" (r)");
-	}
-	printf("\n");
 
 	branch = root->children;
 	while(branch){

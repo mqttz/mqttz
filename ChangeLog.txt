@@ -20,6 +20,8 @@ Broker:
 - Add systemd startup notification and services. Closes #471053.
 - Reduce unnecessary malloc and memcpy when receiving a message and storing
   it. Closes #470258.
+- Change sys tree printing output. This format shouldn't be relied upon and
+  may change at any time. Closes #470246.
 
 Client library:
 - Outgoing messages with QoS>1 are no longer retried after a timeout period.
