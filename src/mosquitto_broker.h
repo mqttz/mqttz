@@ -154,6 +154,13 @@ struct mosquitto__listener {
 #endif
 };
 
+struct mosquitto__auth_plugin_config
+{
+	char *path;
+	struct mosquitto_auth_opt *options;
+	int option_count;
+};
+
 struct mosquitto__config {
 	char *config_file;
 	char *acl_file;
@@ -198,9 +205,8 @@ struct mosquitto__config {
 	struct mosquitto__bridge *bridges;
 	int bridge_count;
 #endif
-	char *auth_plugin;
-	struct mosquitto_auth_opt *auth_options;
-	int auth_option_count;
+	struct mosquitto__auth_plugin_config *auth_plugins;
+	int auth_plugin_count;
 };
 
 struct mosquitto__subleaf {
@@ -314,7 +320,8 @@ struct mosquitto_db{
 	int msg_store_count;
 	struct mosquitto__config *config;
 	int persistence_changes;
-	struct mosquitto__auth_plugin auth_plugin;
+	struct mosquitto__auth_plugin *auth_plugins;
+	int auth_plugin_count;
 #ifdef WITH_SYS_TREE
 	int subscription_count;
 	int retained_count;

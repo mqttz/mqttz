@@ -80,7 +80,8 @@ enum mosq_err_t {
 	MOSQ_ERR_UNKNOWN = 13,
 	MOSQ_ERR_ERRNO = 14,
 	MOSQ_ERR_EAI = 15,
-	MOSQ_ERR_PROXY = 16
+	MOSQ_ERR_PROXY = 16,
+	MOSQ_ERR_PLUGIN_DEFER = 17
 };
 
 /* Error values */

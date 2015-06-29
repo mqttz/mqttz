@@ -202,6 +202,9 @@
 						and access control. This allows custom
 						username/password and access control functions to be
 						created.</para>
+					<para>Can be specified multiple times to load multiple
+						plugins. The plugins will be processed in the order
+						that they are specified.</para>
 					<para>Not currently reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
