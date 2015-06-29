@@ -197,18 +197,13 @@ int mosquitto_security_init(struct mosquitto_db *db, bool reload)
 	int i;
 	int rc;
 
-	if(!db->auth_plugins){
-		return mosquitto_security_init_default(db, reload);
-	}else{
-		for(i=0; i<db->config->auth_plugin_count; i++){
-			rc = db->auth_plugins[i].security_init(db->auth_plugins[i].user_data, db->config->auth_plugins[i].options, db->config->auth_plugins[i].option_count, reload);
-			if(rc != MOSQ_ERR_SUCCESS){
-				return rc;
-			}
+	for(i=0; i<db->config->auth_plugin_count; i++){
+		rc = db->auth_plugins[i].security_init(db->auth_plugins[i].user_data, db->config->auth_plugins[i].options, db->config->auth_plugins[i].option_count, reload);
+		if(rc != MOSQ_ERR_SUCCESS){
+			return rc;
 		}
 	}
-
-	return MOSQ_ERR_SUCCESS;
+	return mosquitto_security_init_default(db, reload);
 }
 
 /* Apply security settings after a reload.
@@ -219,10 +214,7 @@ int mosquitto_security_init(struct mosquitto_db *db, bool reload)
  */
 int mosquitto_security_apply(struct mosquitto_db *db)
 {
-	if(!db->auth_plugins){
-		return mosquitto_security_apply_default(db);
-	}
-	return MOSQ_ERR_SUCCESS;
+	return mosquitto_security_apply_default(db);
 }
 
 int mosquitto_security_cleanup(struct mosquitto_db *db, bool reload)
@@ -230,17 +222,13 @@ int mosquitto_security_cleanup(struct mosquitto_db *db, bool reload)
 	int i;
 	int rc;
 
-	if(!db->auth_plugins){
-		return mosquitto_security_cleanup_default(db, reload);
-	}else{
-		for(i=0; i<db->config->auth_plugin_count; i++){
-			rc = db->auth_plugins[i].security_cleanup(db->auth_plugins[i].user_data, db->config->auth_plugins[i].options, db->config->auth_plugins[i].option_count, reload);
-			if(rc != MOSQ_ERR_SUCCESS){
-				return rc;
-			}
+	for(i=0; i<db->config->auth_plugin_count; i++){
+		rc = db->auth_plugins[i].security_cleanup(db->auth_plugins[i].user_data, db->config->auth_plugins[i].options, db->config->auth_plugins[i].option_count, reload);
+		if(rc != MOSQ_ERR_SUCCESS){
+			return rc;
 		}
 	}
-	return MOSQ_ERR_SUCCESS;
+	return mosquitto_security_cleanup_default(db, reload);
 }
 
 int mosquitto_acl_check(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int access)
@@ -252,25 +240,22 @@ int mosquitto_acl_check(struct mosquitto_db *db, struct mosquitto *context, cons
 	if(!context->id){
 		return MOSQ_ERR_ACL_DENIED;
 	}
-	if(!db->auth_plugins){
-		return mosquitto_acl_check_default(db, context, topic, access);
-	}else{
+
 #ifdef WITH_BRIDGE
-		if(context->bridge){
-			username = context->bridge->local_username;
-		}else
+	if(context->bridge){
+		username = context->bridge->local_username;
+	}else
 #endif
-		{
-			username = context->username;
-		}
-		for(i=0; i<db->auth_plugin_count; i++){
-			rc = db->auth_plugins[i].acl_check(db->auth_plugins[i].user_data, context->id, username, topic, access);
-			if(rc != MOSQ_ERR_PLUGIN_DEFER){
-				return rc;
-			}
+	{
+		username = context->username;
+	}
+	for(i=0; i<db->auth_plugin_count; i++){
+		rc = db->auth_plugins[i].acl_check(db->auth_plugins[i].user_data, context->id, username, topic, access);
+		if(rc != MOSQ_ERR_PLUGIN_DEFER){
+			return rc;
 		}
 	}
-	return MOSQ_ERR_ACL_DENIED;
+	return mosquitto_acl_check_default(db, context, topic, access);
 }
 
 int mosquitto_unpwd_check(struct mosquitto_db *db, const char *username, const char *password)
@@ -278,17 +263,13 @@ int mosquitto_unpwd_check(struct mosquitto_db *db, const char *username, const c
 	int rc;
 	int i;
 
-	if(!db->auth_plugins){
-		return mosquitto_unpwd_check_default(db, username, password);
-	}else{
-		for(i=0; i<db->auth_plugin_count; i++){
-			rc = db->auth_plugins[i].unpwd_check(db->auth_plugins[i].user_data, username, password);
-			if(rc != MOSQ_ERR_PLUGIN_DEFER){
-				return rc;
-			}
+	for(i=0; i<db->auth_plugin_count; i++){
+		rc = db->auth_plugins[i].unpwd_check(db->auth_plugins[i].user_data, username, password);
+		if(rc != MOSQ_ERR_PLUGIN_DEFER){
+			return rc;
 		}
 	}
-	return MOSQ_ERR_AUTH;
+	return mosquitto_unpwd_check_default(db, username, password);
 }
 
 int mosquitto_psk_key_get(struct mosquitto_db *db, const char *hint, const char *identity, char *key, int max_key_len)
@@ -296,16 +277,12 @@ int mosquitto_psk_key_get(struct mosquitto_db *db, const char *hint, const char 
 	int rc;
 	int i;
 
-	if(!db->auth_plugins){
-		return mosquitto_psk_key_get_default(db, hint, identity, key, max_key_len);
-	}else{
-		for(i=0; i<db->auth_plugin_count; i++){
-			rc = db->auth_plugins[i].psk_key_get(db->auth_plugins[i].user_data, hint, identity, key, max_key_len);
-			if(rc != MOSQ_ERR_PLUGIN_DEFER){
-				return rc;
-			}
+	for(i=0; i<db->auth_plugin_count; i++){
+		rc = db->auth_plugins[i].psk_key_get(db->auth_plugins[i].user_data, hint, identity, key, max_key_len);
+		if(rc != MOSQ_ERR_PLUGIN_DEFER){
+			return rc;
 		}
 	}
-	return MOSQ_ERR_AUTH;
+	return mosquitto_psk_key_get_default(db, hint, identity, key, max_key_len);
 }
 

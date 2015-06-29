@@ -80,9 +80,9 @@
 			authenticate using the MQTT username/password if using the
 			password_file option.</para>
 		<para>Both certificate and PSK based encryption are configured on a per-listener basis.</para>
-		<para>Authentication plugins can be created to replace the
-			password_file and psk_file options (as well as the ACL options)
-			with e.g. SQL based lookups.</para>
+		<para>Authentication plugins can be created to augment the
+			password_file, acl_file and psk_file options with e.g. SQL based
+			lookups.</para>
 		<para>It is possible to support multiple authentication schemes at
 			once. A config could be created that had a listener for all of the
 			different encryption options described above and hence a large
@@ -205,6 +205,12 @@
 					<para>Can be specified multiple times to load multiple
 						plugins. The plugins will be processed in the order
 						that they are specified.</para>
+					<para>If <option>password_file</option>, or
+						<option>acl_file</option> are used in the config file
+						alongsize <option>auth_plugin</option>, the plugin
+						checks will run first. If a plugin is used but neither
+						of the default password or acl options are used, access
+						will be denied.</para>
 					<para>Not currently reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>

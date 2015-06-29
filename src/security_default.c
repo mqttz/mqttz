@@ -231,7 +231,7 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 	char *s;
 
 	if(!db || !context || !topic) return MOSQ_ERR_INVAL;
-	if(!db->acl_list && !db->acl_patterns) return MOSQ_ERR_SUCCESS;
+	if(!db->acl_list && !db->acl_patterns && !db->auth_plugins) return MOSQ_ERR_SUCCESS;
 	if(context->bridge) return MOSQ_ERR_SUCCESS;
 	if(!context->acl_list && !db->acl_patterns) return MOSQ_ERR_ACL_DENIED;
 
@@ -639,7 +639,7 @@ int mosquitto_unpwd_check_default(struct mosquitto_db *db, const char *username,
 #endif
 
 	if(!db) return MOSQ_ERR_INVAL;
-	if(!db->unpwd) return MOSQ_ERR_SUCCESS;
+	if(!db->unpwd && !db->auth_plugins) return MOSQ_ERR_SUCCESS;
 	if(!username) return MOSQ_ERR_INVAL; /* Check must be made only after checking db->unpwd. */
 
 	HASH_ITER(hh, db->unpwd, u, tmp){

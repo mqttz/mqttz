@@ -38,7 +38,20 @@ struct mosquitto_auth_opt {
  *
  * Authentication plugins can implement one or both of authentication and
  * access control. If your plugin does not wish to handle either of
- * authentication or access control it should return MOSQ_ERR_DEFER.
+ * authentication or access control it should return MOSQ_ERR_DEFER. In this
+ * case, the next plugin will handle it. If all plugins return MOSQ_ERR_DEFER,
+ * the request will be denied.
+ *
+ * For each check, the following flow happens:
+ *
+ * * First plugin does the check, if it returns anything other than
+ *   MOSQ_ERR_DEFER, then the check returns immediately. If the plugin returns
+ *   MOSQ_ERR_DEFER then the next plugin runs its check.
+ * * If the final plugin returns MOSQ_ERR_DEFER, then the default password file
+ *   and/or acl file check will be made if they are specified in the config
+ *   file.
+ * * If plugins are defined and the password file and/or acl file are not
+ *   specified, then the request will be denied.
  */
 
 /* =========================================================================
@@ -228,7 +241,7 @@ int mosquitto_auth_unpwd_check(void *user_data, const char *username, const char
  * Return value:
  *	Return 0 on success.
  *	Return >0 on failure.
- *	Return >0 if this function is not required.
+ *	Return MOSQ_ERR_DEFER if your plugin does not wish to handle this check.
  */
 int mosquitto_auth_psk_key_get(void *user_data, const char *hint, const char *identity, char *key, int max_key_len);
 
