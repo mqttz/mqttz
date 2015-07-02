@@ -156,8 +156,8 @@ int mosquitto_security_module_init(struct mosquitto_db *db)
 				if(rc){
 					log__printf(NULL, MOSQ_LOG_ERR,
 							"Error: Authentication plugin returned %d when initialising.", rc);
+					return rc;
 				}
-				return rc;
 			}
 		}
 	}
