@@ -169,14 +169,14 @@ void db__msg_store_remove(struct mosquitto_db *db, struct mosquitto_msg_store *s
 	}
 	db->msg_store_count--;
 
-	if(store->source_id) mosquitto__free(store->source_id);
+	mosquitto__free(store->source_id);
 	if(store->dest_ids){
 		for(i=0; i<store->dest_id_count; i++){
-			if(store->dest_ids[i]) mosquitto__free(store->dest_ids[i]);
+			mosquitto__free(store->dest_ids[i]);
 		}
 		mosquitto__free(store->dest_ids);
 	}
-	if(store->topic) mosquitto__free(store->topic);
+	mosquitto__free(store->topic);
 	UHPA_FREE_PAYLOAD(store);
 	mosquitto__free(store);
 }
@@ -574,8 +574,8 @@ error:
 		mosquitto__free(topic);
 	}
 	if(temp){
-		if(temp->source_id) mosquitto__free(temp->source_id);
-		if(temp->topic) mosquitto__free(temp->topic);
+		mosquitto__free(temp->source_id);
+		mosquitto__free(temp->topic);
 		mosquitto__free(temp);
 	}
 	return rc;

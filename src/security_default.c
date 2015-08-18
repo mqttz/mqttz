@@ -362,7 +362,7 @@ static int aclfile__parse(struct mosquitto_db *db)
 				access_s = strtok_r(NULL, " ", &saveptr);
 				if(!access_s){
 					log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty topic in acl_file.");
-					if(user) mosquitto__free(user);
+					mosquitto__free(user);
 					fclose(aclfile);
 					return MOSQ_ERR_INVAL;
 				}
@@ -386,7 +386,7 @@ static int aclfile__parse(struct mosquitto_db *db)
 						access = MOSQ_ACL_READ | MOSQ_ACL_WRITE;
 					}else{
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid topic access type \"%s\" in acl_file.", access_s);
-						if(user) mosquitto__free(user);
+						mosquitto__free(user);
 						fclose(aclfile);
 						return MOSQ_ERR_INVAL;
 					}
@@ -409,7 +409,7 @@ static int aclfile__parse(struct mosquitto_db *db)
 					while(token[0] == ' '){
 						token++;
 					}
-					if(user) mosquitto__free(user);
+					mosquitto__free(user);
 					user = mosquitto__strdup(token);
 					if(!user){
 						fclose(aclfile);
@@ -417,7 +417,7 @@ static int aclfile__parse(struct mosquitto_db *db)
 					}
 				}else{
 					log__printf(NULL, MOSQ_LOG_ERR, "Error: Missing username in acl_file.");
-					if(user) mosquitto__free(user);
+					mosquitto__free(user);
 					fclose(aclfile);
 					return 1;
 				}
@@ -425,7 +425,7 @@ static int aclfile__parse(struct mosquitto_db *db)
 		}
 	}
 
-	if(user) mosquitto__free(user);
+	mosquitto__free(user);
 	fclose(aclfile);
 
 	return MOSQ_ERR_SUCCESS;
@@ -682,10 +682,10 @@ static int unpwd__cleanup(struct mosquitto__unpwd **root, bool reload)
 
 	HASH_ITER(hh, *root, u, tmp){
 		HASH_DEL(*root, u);
-		if(u->password) mosquitto__free(u->password);
-		if(u->username) mosquitto__free(u->username);
+		mosquitto__free(u->password);
+		mosquitto__free(u->username);
 #ifdef WITH_TLS
-		if(u->salt) mosquitto__free(u->salt);
+		mosquitto__free(u->salt);
 #endif
 		mosquitto__free(u);
 	}

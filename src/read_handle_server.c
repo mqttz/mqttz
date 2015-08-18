@@ -571,12 +571,12 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	return send__connack(context, connect_ack, CONNACK_ACCEPTED);
 
 handle_connect_error:
-	if(client_id) mosquitto__free(client_id);
-	if(username) mosquitto__free(username);
-	if(password) mosquitto__free(password);
-	if(will_payload) mosquitto__free(will_payload);
-	if(will_topic) mosquitto__free(will_topic);
-	if(will_struct) mosquitto__free(will_struct);
+	mosquitto__free(client_id);
+	mosquitto__free(username);
+	mosquitto__free(password);
+	mosquitto__free(will_payload);
+	mosquitto__free(will_topic);
+	mosquitto__free(will_struct);
 #ifdef WITH_TLS
 	if(client_cert) X509_free(client_cert);
 #endif
@@ -631,7 +631,7 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 	while(context->in_packet.pos < context->in_packet.remaining_length){
 		sub = NULL;
 		if(packet__read_string(&context->in_packet, &sub)){
-			if(payload) mosquitto__free(payload);
+			mosquitto__free(payload);
 			return 1;
 		}
 
@@ -640,27 +640,27 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 				log__printf(NULL, MOSQ_LOG_INFO, "Empty subscription string from %s, disconnecting.",
 					context->address);
 				mosquitto__free(sub);
-				if(payload) mosquitto__free(payload);
+				mosquitto__free(payload);
 				return 1;
 			}
 			if(mosquitto_sub_topic_check(sub)){
 				log__printf(NULL, MOSQ_LOG_INFO, "Invalid subscription string from %s, disconnecting.",
 					context->address);
 				mosquitto__free(sub);
-				if(payload) mosquitto__free(payload);
+				mosquitto__free(payload);
 				return 1;
 			}
 
 			if(packet__read_byte(&context->in_packet, &qos)){
 				mosquitto__free(sub);
-				if(payload) mosquitto__free(payload);
+				mosquitto__free(payload);
 				return 1;
 			}
 			if(qos > 2){
 				log__printf(NULL, MOSQ_LOG_INFO, "Invalid QoS in subscription command from %s, disconnecting.",
 					context->address);
 				mosquitto__free(sub);
-				if(payload) mosquitto__free(payload);
+				mosquitto__free(payload);
 				return 1;
 			}
 			if(context->listener && context->listener->mount_point){
@@ -668,7 +668,7 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 				sub_mount = mosquitto__malloc(len+1);
 				if(!sub_mount){
 					mosquitto__free(sub);
-					if(payload) mosquitto__free(payload);
+					mosquitto__free(payload);
 					return MOSQ_ERR_NOMEM;
 				}
 				snprintf(sub_mount, len, "%s%s", context->listener->mount_point, sub);
@@ -725,7 +725,7 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 				payload[payloadlen] = qos;
 				payloadlen++;
 			}else{
-				if(payload) mosquitto__free(payload);
+				mosquitto__free(payload);
 
 				return MOSQ_ERR_NOMEM;
 			}

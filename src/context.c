@@ -165,8 +165,8 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 		mosquitto__free(packet);
 	}
 	if(context->will){
-		if(context->will->topic) mosquitto__free(context->will->topic);
-		if(context->will->payload) mosquitto__free(context->will->payload);
+		mosquitto__free(context->will->topic);
+		mosquitto__free(context->will->payload);
 		mosquitto__free(context->will);
 		context->will = NULL;
 	}
@@ -193,8 +193,8 @@ void context__disconnect(struct mosquitto_db *db, struct mosquitto *ctxt)
 		db__messages_easy_queue(db, ctxt, ctxt->will->topic, ctxt->will->qos, ctxt->will->payloadlen, ctxt->will->payload, ctxt->will->retain);
 	}
 	if(ctxt->will){
-		if(ctxt->will->topic) mosquitto__free(ctxt->will->topic);
-		if(ctxt->will->payload) mosquitto__free(ctxt->will->payload);
+		mosquitto__free(ctxt->will->topic);
+		mosquitto__free(ctxt->will->payload);
 		mosquitto__free(ctxt->will);
 		ctxt->will = NULL;
 	}

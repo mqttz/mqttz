@@ -375,7 +375,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 #endif
 	}
 
-	if(pollfds) mosquitto__free(pollfds);
+	mosquitto__free(pollfds);
 	return MOSQ_ERR_SUCCESS;
 }
 

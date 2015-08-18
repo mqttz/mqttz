@@ -33,8 +33,8 @@ void message__cleanup(struct mosquitto_message_all **message)
 
 	msg = *message;
 
-	if(msg->msg.topic) mosquitto__free(msg->msg.topic);
-	if(msg->msg.payload) mosquitto__free(msg->msg.payload);
+	mosquitto__free(msg->msg.topic);
+	mosquitto__free(msg->msg.payload);
 	mosquitto__free(msg);
 }
 
@@ -101,8 +101,8 @@ void mosquitto_message_free(struct mosquitto_message **message)
 
 	msg = *message;
 
-	if(msg->topic) mosquitto__free(msg->topic);
-	if(msg->payload) mosquitto__free(msg->payload);
+	mosquitto__free(msg->topic);
+	mosquitto__free(msg->payload);
 	mosquitto__free(msg);
 }
 

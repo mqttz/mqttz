@@ -88,8 +88,8 @@ int will__set(struct mosquitto *mosq, const char *topic, int payloadlen, const v
 
 cleanup:
 	if(mosq->will){
-		if(mosq->will->topic) mosquitto__free(mosq->will->topic);
-		if(mosq->will->payload) mosquitto__free(mosq->will->payload);
+		mosquitto__free(mosq->will->topic);
+		mosquitto__free(mosq->will->payload);
 	}
 	mosquitto__free(mosq->will);
 	mosq->will = NULL;

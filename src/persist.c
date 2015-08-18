@@ -396,7 +396,7 @@ int persist__backup(struct mosquitto_db *db, bool shutdown)
 	outfile = NULL;
 	return rc;
 error:
-	if(outfile) mosquitto__free(outfile);
+	mosquitto__free(outfile);
 	strerror_r(errno, err, 256);
 	log__printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
 	if(db_fptr) fclose(db_fptr);
@@ -496,7 +496,7 @@ static int persist__client_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 error:
 	log__printf(NULL, MOSQ_LOG_ERR, "Error: %s.", strerror(errno));
 	fclose(db_fptr);
-	if(client_id) mosquitto__free(client_id);
+	mosquitto__free(client_id);
 	return 1;
 }
 
@@ -545,7 +545,7 @@ error:
 	strerror_r(errno, err, 256);
 	log__printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
 	fclose(db_fptr);
-	if(client_id) mosquitto__free(client_id);
+	mosquitto__free(client_id);
 	return 1;
 }
 
@@ -601,7 +601,7 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 		if(!topic){
 			mosquitto__free(load);
 			fclose(db_fptr);
-			if(source_id) mosquitto__free(source_id);
+			mosquitto__free(source_id);
 			log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
@@ -611,7 +611,7 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 		mosquitto__free(load);
 		log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid msg_store chunk when restoring persistent database.");
 		fclose(db_fptr);
-		if(source_id) mosquitto__free(source_id);
+		mosquitto__free(source_id);
 		return 1;
 	}
 	read_e(db_fptr, &qos, sizeof(uint8_t));
@@ -624,7 +624,7 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 		if(UHPA_ALLOC(payload, payloadlen) == 0){
 			mosquitto__free(load);
 			fclose(db_fptr);
-			if(source_id) mosquitto__free(source_id);
+			mosquitto__free(source_id);
 			mosquitto__free(topic);
 			log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
@@ -640,15 +640,15 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 
 		HASH_ADD(hh, db->msg_store_load, db_id, sizeof(dbid_t), load);
 	}
-	if(source_id) mosquitto__free(source_id);
+	mosquitto__free(source_id);
 
 	return rc;
 error:
 	strerror_r(errno, err, 256);
 	log__printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
 	fclose(db_fptr);
-	if(source_id) mosquitto__free(source_id);
-	if(topic) mosquitto__free(topic);
+	mosquitto__free(source_id);
+	mosquitto__free(topic);
 	UHPA_FREE(payload, payloadlen);
 	return 1;
 }
