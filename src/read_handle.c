@@ -102,7 +102,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	retain = (header & 0x01);
 
 	if(packet__read_string(&context->in_packet, &topic)) return 1;
-	if(strlen(topic) == 0){
+	if(STREMPTY(topic)){
 		/* Invalid publish topic, disconnect client. */
 		mosquitto__free(topic);
 		return 1;

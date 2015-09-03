@@ -14,17 +14,8 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
-#include <assert.h>
-#include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#ifndef WIN32
-#include <sys/select.h>
-#include <unistd.h>
-#else
-#include <winsock2.h>
-typedef int ssize_t;
-#endif
 
 #include "mosquitto.h"
 #include "mosquitto_internal.h"

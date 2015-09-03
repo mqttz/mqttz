@@ -399,6 +399,7 @@ static int aclfile__parse(struct mosquitto_db *db)
 					rc = add__acl_pattern(db, topic, access);
 				}
 				if(rc){
+					mosquitto__free(user);
 					fclose(aclfile);
 					return rc;
 				}

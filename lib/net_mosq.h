@@ -58,9 +58,9 @@ int net__socket_close(struct mosquitto_db *db, struct mosquitto *mosq);
 #else
 int net__socket_close(struct mosquitto *mosq);
 #endif
-int net__try_connect(struct mosquitto *mosq, const char *host, uint16_t port, int *sock, const char *bind_address, bool blocking);
-int net__socket_nonblock(int sock);
-int net__socketpair(int *sp1, int *sp2);
+int net__try_connect(struct mosquitto *mosq, const char *host, uint16_t port, mosq_sock_t *sock, const char *bind_address, bool blocking);
+int net__socket_nonblock(mosq_sock_t sock);
+int net__socketpair(mosq_sock_t *sp1, mosq_sock_t *sp2);
 
 ssize_t net__read(struct mosquitto *mosq, void *buf, size_t count);
 ssize_t net__write(struct mosquitto *mosq, void *buf, size_t count);

@@ -232,7 +232,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			rc = 1;
 			goto handle_connect_error;
 		}
-		if(strlen(will_topic) == 0){
+		if(STREMPTY(will_topic)){
 			rc = 1;
 			goto handle_connect_error;
 		}
@@ -380,7 +380,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 				case MOSQ_ERR_SUCCESS:
 					break;
 				case MOSQ_ERR_AUTH:
-					send__connack(context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
+					send__connack(context, 0, CONNACK_REFUSED_NOT_AUTHORIZED);
 					context__disconnect(db, context);
 					rc = 1;
 					goto handle_connect_error;

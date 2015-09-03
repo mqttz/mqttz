@@ -45,6 +45,8 @@ typedef int ssize_t;
 #include "util_mosq.h"
 #include "will_mosq.h"
 
+#include "config.h"
+
 #if !defined(WIN32) && !defined(__SYMBIAN32__)
 #define HAVE_PSELECT
 #endif
@@ -147,7 +149,7 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 	mosq->keepalive = 60;
 	mosq->clean_session = clean_session;
 	if(id){
-		if(strlen(id) == 0){
+		if(STREMPTY(id)){
 			return MOSQ_ERR_INVAL;
 		}
 		mosq->id = mosquitto__strdup(id);
@@ -210,6 +212,7 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 	pthread_mutex_init(&mosq->msgtime_mutex, NULL);
 	pthread_mutex_init(&mosq->in_message_mutex, NULL);
 	pthread_mutex_init(&mosq->out_message_mutex, NULL);
+	pthread_mutex_init(&mosq->mid_mutex, NULL);
 	mosq->thread_id = pthread_self();
 #endif
 
@@ -292,6 +295,7 @@ void mosquitto__destroy(struct mosquitto *mosq)
 		pthread_mutex_destroy(&mosq->msgtime_mutex);
 		pthread_mutex_destroy(&mosq->in_message_mutex);
 		pthread_mutex_destroy(&mosq->out_message_mutex);
+		pthread_mutex_destroy(&mosq->mid_mutex);
 	}
 #endif
 	if(mosq->sock != INVALID_SOCKET){
@@ -380,7 +384,7 @@ void mosquitto_destroy(struct mosquitto *mosq)
 
 int mosquitto_socket(struct mosquitto *mosq)
 {
-	if(!mosq) return -1;
+	if(!mosq) return INVALID_SOCKET;
 	return mosq->sock;
 }
 
@@ -514,7 +518,7 @@ static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking)
 	{
 		rc = net__socket_connect(mosq, mosq->host, mosq->port, mosq->bind_address, blocking);
 	}
-	if(rc){
+	if(rc>0){
 		return rc;
 	}
 
@@ -544,9 +548,10 @@ int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int p
 {
 	struct mosquitto_message_all *message;
 	uint16_t local_mid;
+	int queue_status;
 
 	if(!mosq || !topic || qos<0 || qos>2) return MOSQ_ERR_INVAL;
-	if(strlen(topic) == 0) return MOSQ_ERR_INVAL;
+	if(STREMPTY(topic)) return MOSQ_ERR_INVAL;
 	if(payloadlen < 0 || payloadlen > MQTT_MAX_PAYLOAD) return MOSQ_ERR_PAYLOAD_SIZE;
 
 	if(mosquitto_pub_topic_check(topic) != MOSQ_ERR_SUCCESS){
@@ -589,9 +594,8 @@ int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int p
 		message->dup = false;
 
 		pthread_mutex_lock(&mosq->out_message_mutex);
-		message__queue(mosq, message, mosq_md_out);
-		if(mosq->max_inflight_messages == 0 || mosq->inflight_messages < mosq->max_inflight_messages){
-			mosq->inflight_messages++;
+		queue_status = message__queue(mosq, message, mosq_md_out);
+		if(queue_status == 0){
 			if(qos == 1){
 				message->state = mosq_ms_wait_for_puback;
 			}else if(qos == 2){
@@ -829,6 +833,11 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 	int maxfd = 0;
 
 	if(!mosq || max_packets < 1) return MOSQ_ERR_INVAL;
+#ifndef WIN32
+	if(mosq->sock >= FD_SETSIZE || mosq->sockpairR >= FD_SETSIZE){
+		return MOSQ_ERR_INVAL;
+	}
+#endif
 
 	FD_ZERO(&readfds);
 	FD_ZERO(&writefds);
@@ -924,10 +933,12 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 				}else
 #endif
 				{
-					rc = mosquitto_loop_read(mosq, max_packets);
-					if(rc || mosq->sock == INVALID_SOCKET){
-						return rc;
-					}
+					do{
+						rc = mosquitto_loop_read(mosq, max_packets);
+						if(rc || mosq->sock == INVALID_SOCKET){
+							return rc;
+						}
+					}while(SSL_DATA_PENDING(mosq));
 				}
 			}
 			if(mosq->sockpairR != INVALID_SOCKET && FD_ISSET(mosq->sockpairR, &readfds)){
@@ -1260,6 +1271,8 @@ void mosquitto_user_data_set(struct mosquitto *mosq, void *userdata)
 const char *mosquitto_strerror(int mosq_errno)
 {
 	switch(mosq_errno){
+		case MOSQ_ERR_CONN_PENDING:
+			return "Connection pending.";
 		case MOSQ_ERR_SUCCESS:
 			return "No error.";
 		case MOSQ_ERR_NOMEM:
@@ -1290,6 +1303,8 @@ const char *mosquitto_strerror(int mosq_errno)
 			return "Unknown error.";
 		case MOSQ_ERR_ERRNO:
 			return strerror(errno);
+		case MOSQ_ERR_EAI:
+			return "Lookup error.";
 		case MOSQ_ERR_PROXY:
 			return "Proxy error.";
 		default:

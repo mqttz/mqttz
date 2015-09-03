@@ -36,12 +36,63 @@ Client:
 ================
 
 Broker:
+- Fix incorrect bridge notification on initial connection. Closes #467096.
+- Build fixes for OpenBSD.
+- Fix incorrect behaviour for autosave_interval, most noticable for
+  autosave_interval=1. Closes #465438.
+- Fix handling of outgoing QoS>0 messages for bridges that could not be sent
+  because the bridge connection was down.
+- Free unused topic tree elements. Closes #468987.
+- Fix some potential memory leaks. Closes #470253.
+- Fix potential crash on libwebsockets error.
+
+Client library:
+- Add missing error strings to mosquitto_strerror.
+- Handle fragmented TLS packets without a delay. Closes #470660.
+- Fix incorrect loop timeout being chosen when using threaded interface and
+  keepalive = 0. Closes #471334.
+- Increment inflight messages count correctly. Closes #474935.
+
+Clients:
+- Report error string on connection failure rather than error code.
+
+1.4.2 - 20150507
+================
+
+Broker:
+- Fix bridge prefixes only working for the first outgoing message. Closes
+  #464437.
+- Fix incorrect bridge connection notifications on local broker.
+- Fix persistent db writing on Windows. Closes #464779.
+- ACLs are now checked before sending a will message.
+- Fix possible crash when using bridges on Windows. Closes #465384.
+- Fix parsing of auth_opt_ arguments with extra spaces/tabs.
+- Broker will return CONNACK rc=5 when a username/password is not authorised.
+  This was being incorrectly set as rc=4.
+- Fix handling of payload lengths>4096 with websockets.
+
+Client library:
+- Inflight message count wasn't being decreased for outgoing messages using
+  QoS 2, meaning that only up to 20 QoS 2 messages could be sent. This has
+  been fixed. Closes #464436.
+- Fix CMake dependencies for C++ wrapper building. Closes #463884.
+- Fix possibility of select() being called with a socket that is >FD_SETSIZE.
+  This is a fix for #464632 that will be followed up by removing the select()
+  call in a future version.
+- Fix calls to mosquitto_connect*_async() not completing.
+
+
+1.4.1 - 20150403
+================
+
+Broker:
 - Fix possible crash under heavy network load. Closes #463241.
 - Fix possible crash when using pattern ACLs.
 - Fix problems parsing config strings with multiple leading spaces. Closes
   #462154.
 - Websockets clients are now periodically disconnected if they have not
   maintained their keepalive timer. Closes #461619.
+- Fix possible minor memory leak on acl parsing.
 
 Client library:
 - Inflight limits should only apply to outgoing messages. Closes #461620.
@@ -50,6 +101,7 @@ Client library:
 - Fix crash on multiple calls to mosquitto_lib_init/mosquitto_lib_cleanup.
   Closes #462780.
 - Allow longer paths on Windows. Closes #462781.
+- Make _mosquitto_mid_generate() thread safe. Closes #463479.
 
 
 1.4 - 20150218

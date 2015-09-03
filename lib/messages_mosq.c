@@ -106,8 +106,10 @@ void mosquitto_message_free(struct mosquitto_message **message)
 	mosquitto__free(msg);
 }
 
-void message__queue(struct mosquitto *mosq, struct mosquitto_message_all *message, enum mosquitto_msg_direction dir)
+int message__queue(struct mosquitto *mosq, struct mosquitto_message_all *message, enum mosquitto_msg_direction dir)
 {
+	int rc = 0;
+
 	/* mosq->*_message_mutex should be locked before entering this function */
 	assert(mosq);
 	assert(message);
@@ -121,8 +123,12 @@ void message__queue(struct mosquitto *mosq, struct mosquitto_message_all *messag
 			mosq->out_messages = message;
 		}
 		mosq->out_messages_last = message;
-		if(message->msg.qos > 0 && (mosq->max_inflight_messages == 0 || mosq->inflight_messages < mosq->max_inflight_messages)){
-			mosq->inflight_messages++;
+		if(message->msg.qos > 0){
+			if(mosq->max_inflight_messages == 0 || mosq->inflight_messages < mosq->max_inflight_messages){
+				mosq->inflight_messages++;
+			}else{
+				rc = 1;
+			}
 		}
 	}else{
 		mosq->in_queue_len++;
@@ -134,6 +140,7 @@ void message__queue(struct mosquitto *mosq, struct mosquitto_message_all *messag
 		}
 		mosq->in_messages_last = message;
 	}
+	return rc;
 }
 
 void message__reconnect_reset(struct mosquitto *mosq)

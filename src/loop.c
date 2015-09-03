@@ -88,7 +88,7 @@ static void temp__expire_websockets_clients(struct mosquitto_db *db)
 }
 #endif
 
-int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock_count, int listener_max)
+int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int listensock_count, int listener_max)
 {
 #ifdef WITH_SYS_TREE
 	time_t start_time = mosquitto_time();
@@ -109,7 +109,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 	int pollfd_count = 0;
 	int pollfd_index;
 #ifdef WITH_BRIDGE
-	int bridge_sock;
+	mosq_sock_t bridge_sock;
 	int rc;
 #endif
 	int context_count;
@@ -281,7 +281,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 		now_time = time(NULL);
 		if(db->config->persistent_client_expiration > 0 && now_time > expiration_check_time){
 			HASH_ITER(hh_id, db->contexts_by_id, context, ctxt_tmp){
-				if(context->sock == -1 && context->clean_session == 0){
+				if(context->sock == INVALID_SOCKET && context->clean_session == 0){
 					/* This is a persistent client, check to see if the
 					 * last time it connected was longer than
 					 * persistent_client_expiration seconds ago. If so,
@@ -326,7 +326,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock
 #ifdef WITH_PERSISTENCE
 		if(db->config->persistence && db->config->autosave_interval){
 			if(db->config->autosave_on_changes){
-				if(db->persistence_changes > db->config->autosave_interval){
+				if(db->persistence_changes >= db->config->autosave_interval){
 					persist__backup(db, false);
 					db->persistence_changes = 0;
 				}
@@ -448,11 +448,7 @@ static void loop_handle_errors(struct mosquitto_db *db, struct pollfd *pollfds)
 static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pollfds)
 {
 	struct mosquitto *context, *ctxt_tmp;
-#ifdef WIN32
-	char err;
-#else
 	int err;
-#endif
 	socklen_t len;
 
 	HASH_ITER(hh_sock, db->contexts_by_sock, context, ctxt_tmp){
@@ -470,7 +466,7 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 #endif
 			if(context->state == mosq_cs_connect_pending){
 				len = sizeof(int);
-				if(!getsockopt(context->sock, SOL_SOCKET, SO_ERROR, &err, &len)){
+				if(!getsockopt(context->sock, SOL_SOCKET, SO_ERROR, (char *)&err, &len)){
 					if(err == 0){
 						context->state = mosq_cs_new;
 					}
@@ -497,10 +493,12 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 #else
 		if(pollfds[context->pollfd_index].revents & POLLIN){
 #endif
-			if(packet__read(db, context)){
-				do_disconnect(db, context);
-				continue;
-			}
+			do{
+				if(packet__read(db, context)){
+					do_disconnect(db, context);
+					continue;
+				}
+			}while(SSL_DATA_PENDING(context));
 		}
 	}
 }

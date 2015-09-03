@@ -128,7 +128,7 @@ struct mosquitto__listener {
 	uint16_t port;
 	int max_connections;
 	char *mount_point;
-	int *socks;
+	mosq_sock_t *socks;
 	int sock_count;
 	int client_count;
 	enum mosquitto_protocol protocol;
@@ -217,6 +217,7 @@ struct mosquitto__subleaf {
 };
 
 struct mosquitto__subhier {
+	struct mosquitto__subhier *parent;
 	struct mosquitto__subhier *children;
 	struct mosquitto__subhier *next;
 	struct mosquitto__subleaf *subs;
@@ -387,6 +388,7 @@ struct mosquitto__bridge{
 	int threshold;
 	bool lazy_reconnect;
 	bool attempt_unsubscribe;
+	bool initial_notification_done;
 #ifdef WITH_TLS
 	char *tls_cafile;
 	char *tls_capath;
@@ -416,7 +418,7 @@ struct libws_mqtt_data {
 /* ============================================================
  * Main functions
  * ============================================================ */
-int mosquitto_main_loop(struct mosquitto_db *db, int *listensock, int listensock_count, int listener_max);
+int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int listensock_count, int listener_max);
 struct mosquitto_db *mosquitto__get_db(void);
 
 /* ============================================================
@@ -446,9 +448,9 @@ int send__suback(struct mosquitto *context, uint16_t mid, uint32_t payloadlen, c
 /* ============================================================
  * Network functions
  * ============================================================ */
-int net__socket_accept(struct mosquitto_db *db, int listensock);
+int net__socket_accept(struct mosquitto_db *db, mosq_sock_t listensock);
 int net__socket_listen(struct mosquitto__listener *listener);
-int net__socket_get_address(int sock, char *buf, int len);
+int net__socket_get_address(mosq_sock_t sock, char *buf, int len);
 
 /* ============================================================
  * Read handling functions
@@ -503,7 +505,7 @@ int sub__messages_queue(struct mosquitto_db *db, const char *source_id, const ch
 /* ============================================================
  * Context functions
  * ============================================================ */
-struct mosquitto *context__init(struct mosquitto_db *db, int sock);
+struct mosquitto *context__init(struct mosquitto_db *db, mosq_sock_t sock);
 void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool do_free);
 void context__disconnect(struct mosquitto_db *db, struct mosquitto *context);
 void context__add_to_disused(struct mosquitto_db *db, struct mosquitto *context);

@@ -275,7 +275,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 						mosq->in_packet.to_process = mosq->in_packet.remaining_length;
 					}
 				}
-				while(mosq->in_packet.to_process>0){
+				if(mosq->in_packet.to_process>0){
 					if(len - pos >= mosq->in_packet.to_process){
 						memcpy(&mosq->in_packet.payload[mosq->in_packet.pos], &buf[pos], mosq->in_packet.to_process);
 						mosq->in_packet.pos += mosq->in_packet.to_process;
@@ -285,10 +285,9 @@ static int callback_mqtt(struct libwebsocket_context *context,
 						memcpy(&mosq->in_packet.payload[mosq->in_packet.pos], &buf[pos], len-pos);
 						mosq->in_packet.pos += len-pos;
 						mosq->in_packet.to_process -= len-pos;
-						break;
+						return 0;
 					}
 				}
-
 				/* All data for this packet is read. */
 				mosq->in_packet.pos = 0;
 
@@ -340,6 +339,10 @@ static int callback_http(struct libwebsocket_context *context,
 
 	switch (reason) {
 		case LWS_CALLBACK_HTTP:
+			if(!u){
+				return -1;
+			}
+
 			hack = (struct libws_mqtt_hack *)libwebsocket_context_user(context);
 			if(!hack){
 				return -1;
@@ -453,7 +456,7 @@ static int callback_http(struct libwebsocket_context *context,
 
 		case LWS_CALLBACK_HTTP_WRITEABLE:
 			/* Send our data here */
-			if(u->fptr){
+			if(u && u->fptr){
 				do{
 					buflen = fread(buf, 1, sizeof(buf), u->fptr);
 					if(buflen < 1){

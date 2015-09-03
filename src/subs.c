@@ -246,6 +246,7 @@ static void sub__topic_tokens_free(struct sub__token *tokens)
 }
 
 static int sub__add_recurse(struct mosquitto_db *db, struct mosquitto *context, int qos, struct mosquitto__subhier *subhier, struct sub__token *tokens)
+	/* FIXME - this function has the potential to leak subhier, audit calling functions. */
 {
 	struct mosquitto__subhier *branch, *last = NULL;
 	struct mosquitto__subleaf *leaf, *last_leaf;
@@ -278,31 +279,21 @@ static int sub__add_recurse(struct mosquitto_db *db, struct mosquitto *context, 
 			leaf->next = NULL;
 			leaf->context = context;
 			leaf->qos = qos;
-			if(context->subs){
-				for(i=0; i<context->sub_count; i++){
-					if(!context->subs[i]){
-						context->subs[i] = subhier;
-						break;
-					}
+			for(i=0; i<context->sub_count; i++){
+				if(!context->subs[i]){
+					context->subs[i] = subhier;
+					break;
 				}
-				if(i == context->sub_count){
-					context->sub_count++;
-					subs = mosquitto__realloc(context->subs, sizeof(struct mosquitto__subhier *)*context->sub_count);
-					if(!subs){
-						mosquitto__free(leaf);
-						return MOSQ_ERR_NOMEM;
-					}
-					context->subs = subs;
-					context->subs[context->sub_count-1] = subhier;
-				}
-			}else{
-				context->sub_count = 1;
-				context->subs = mosquitto__malloc(sizeof(struct mosquitto__subhier *)*context->sub_count);
-				if(!context->subs){
+			}
+			if(i == context->sub_count){
+				subs = mosquitto__realloc(context->subs, sizeof(struct mosquitto__subhier *)*(context->sub_count + 1));
+				if(!subs){
 					mosquitto__free(leaf);
 					return MOSQ_ERR_NOMEM;
 				}
-				context->subs[0] = subhier;
+				context->subs = subs;
+				context->sub_count++;
+				context->subs[context->sub_count-1] = subhier;
 			}
 			if(last_leaf){
 				last_leaf->next = leaf;
@@ -329,6 +320,7 @@ static int sub__add_recurse(struct mosquitto_db *db, struct mosquitto *context, 
 	/* Not found */
 	branch = mosquitto__calloc(1, sizeof(struct mosquitto__subhier));
 	if(!branch) return MOSQ_ERR_NOMEM;
+	branch->parent = subhier;
 	branch->topic_len = tokens->topic_len;
 	if(UHPA_ALLOC_TOPIC(branch) == 0){
 		mosquitto__free(branch);
@@ -464,6 +456,7 @@ int sub__add(struct mosquitto_db *db, struct mosquitto *context, const char *sub
 			log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
+		child->parent = root;
 		child->topic_len = tokens->topic_len;
 		if(UHPA_ALLOC_TOPIC(child) == 0){
 			sub__topic_tokens_free(tokens);
@@ -555,12 +548,56 @@ int sub__messages_queue(struct mosquitto_db *db, const char *source_id, const ch
 	return rc;
 }
 
+
+/* Remove a subhier element, and return its parent if that needs freeing as well. */
+static struct mosquitto__subhier *tmp_remove_subs(struct mosquitto__subhier *sub)
+{
+	struct mosquitto__subhier *parent;
+	struct mosquitto__subhier *hier;
+	struct mosquitto__subhier *last = NULL;
+
+	if(!sub || !sub->parent){
+		return NULL;
+	}
+	if(sub->children || sub->subs || sub->next){
+		return NULL;
+	}
+
+	parent = sub->parent;
+	hier = sub->parent->children;
+	while(hier){
+		if(hier == sub){
+			if(last){
+				last->next = sub->next;
+			}else{
+				parent->children = NULL;
+			}
+			UHPA_FREE_TOPIC(sub);
+			mosquitto__free(sub);
+			break;
+		}
+		last = hier;
+		hier = hier->next;
+	}
+	if(parent->subs == NULL
+			&& parent->children == NULL
+			&& parent->retained == NULL
+			&& parent->parent){
+
+		return parent;
+	}else{
+		return NULL;
+	}
+}
+
+
 /* Remove all subscriptions for a client.
  */
 int sub__clean_session(struct mosquitto_db *db, struct mosquitto *context)
 {
 	int i;
 	struct mosquitto__subleaf *leaf;
+	struct mosquitto__subhier *hier;
 
 	for(i=0; i<context->sub_count; i++){
 		if(context->subs[i] == NULL){
@@ -584,6 +621,17 @@ int sub__clean_session(struct mosquitto_db *db, struct mosquitto *context)
 				break;
 			}
 			leaf = leaf->next;
+		}
+		if(context->subs[i]->subs == NULL
+				&& context->subs[i]->children == NULL
+				&& context->subs[i]->retained == NULL
+				&& context->subs[i]->parent){
+
+			hier = context->subs[i];
+			context->subs[i] = NULL;
+			do{
+				hier = tmp_remove_subs(hier);
+			}while(hier);
 		}
 	}
 	mosquitto__free(context->subs);

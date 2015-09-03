@@ -24,3 +24,6 @@
 #define uthash_malloc(sz) mosquitto__malloc(sz)
 #define uthash_free(ptr,sz) mosquitto__free(ptr)
 
+#ifndef EPROTO
+#  define EPROTO ECONNABORTED
+#endif

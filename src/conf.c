@@ -479,6 +479,7 @@ int config__read(struct mosquitto__config *config, bool reload)
 	int rc = MOSQ_ERR_SUCCESS;
 	struct config_recurse cr;
 	int lineno;
+	int len;
 #ifdef WITH_BRIDGE
 	int i;
 #endif
@@ -512,9 +513,10 @@ int config__read(struct mosquitto__config *config, bool reload)
 			mosquitto__free(config->persistence_filepath);
 		}
 		if(config->persistence_location && strlen(config->persistence_location)){
-			config->persistence_filepath = mosquitto__malloc(strlen(config->persistence_location) + strlen(config->persistence_file) + 1);
+			len = strlen(config->persistence_location) + strlen(config->persistence_file) + 1;
+			config->persistence_filepath = mosquitto__malloc(len);
 			if(!config->persistence_filepath) return MOSQ_ERR_NOMEM;
-			sprintf(config->persistence_filepath, "%s%s", config->persistence_location, config->persistence_file);
+			snprintf(config->persistence_filepath, len, "%s%s", config->persistence_location, config->persistence_file);
 		}else{
 			config->persistence_filepath = mosquitto__strdup(config->persistence_file);
 			if(!config->persistence_filepath) return MOSQ_ERR_NOMEM;
@@ -671,11 +673,14 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 					if(!key){
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 						return MOSQ_ERR_NOMEM;
-					}else if(strlen(key) == 0){
+					}else if(STREMPTY(key)){
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid auth_opt_ config option.");
 						return MOSQ_ERR_INVAL;
 					}
 					token += 9+strlen(key)+1;
+					while(token[0] == ' ' || token[0] == '\t'){
+						token++;
+					}
 					if(token[0]){
 						cur_auth_plugin->option_count++;
 						cur_auth_plugin->options = mosquitto__realloc(cur_auth_plugin->options, cur_auth_plugin->option_count*sizeof(struct mosquitto_auth_opt));
@@ -1338,7 +1343,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 							}
 							/* Get remaining string. */
 							token = &token[strlen(token)+1];
-							while(token[0] == ' '){
+							while(token[0] == ' ' || token[0] == '\t'){
 								token++;
 							}
 							if(token[0]){
@@ -1463,8 +1468,8 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty max_queued_messages value in configuration.");
 					}
 				}else if(!strcmp(token, "message_size_limit")){
-					if(conf__parse_int(&token, "message_size_limit", &config->message_size_limit, saveptr)) return MOSQ_ERR_INVAL;
-					if(config->message_size_limit < 0 || config->message_size_limit > MQTT_MAX_PAYLOAD){
+					if(conf__parse_int(&token, "message_size_limit", (int *)&config->message_size_limit, saveptr)) return MOSQ_ERR_INVAL;
+					if(config->message_size_limit > MQTT_MAX_PAYLOAD){
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid message_size_limit value (%d).", config->message_size_limit);
 						return MOSQ_ERR_INVAL;
 					}
@@ -1908,9 +1913,6 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 				}else if(!strcmp(token, "use_username_as_clientid")){
 					if(reload) continue; // Listeners not valid for reloading.
 					if(conf__parse_bool(&token, "use_username_as_clientid", &cur_listener->use_username_as_clientid, saveptr)) return MOSQ_ERR_INVAL;
-				}else if(!strcmp(token, "user")){
-					if(reload) continue; // Drop privileges user not valid for reloading.
-					if(conf__parse_string(&token, "user", &config->user, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "username") || !strcmp(token, "remote_username")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
@@ -2073,7 +2075,7 @@ static int conf__parse_string(char **token, const char *name, char **value, char
 			return MOSQ_ERR_INVAL;
 		}
 		/* Deal with multiple spaces at the beginning of the string. */
-		while((*token)[0] == ' '){
+		while((*token)[0] == ' ' || (*token)[0] == '\t'){
 			(*token)++;
 		}
 		*value = mosquitto__strdup(*token);

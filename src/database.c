@@ -64,6 +64,7 @@ int db__open(struct mosquitto__config *config, struct mosquitto_db *db)
 		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}
+	child->parent = NULL;
 	child->next = NULL;
 	child->topic_len = strlen("");
 	if(UHPA_ALLOC_TOPIC(child) == 0){
@@ -83,6 +84,7 @@ int db__open(struct mosquitto__config *config, struct mosquitto_db *db)
 		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}
+	child->parent = NULL;
 	child->next = NULL;
 	child->topic_len = strlen("$SYS");
 	if(UHPA_ALLOC_TOPIC(child) == 0){
@@ -206,6 +208,9 @@ void db__msg_store_deref(struct mosquitto_db *db, struct mosquitto_msg_store **s
 
 static void db__message_remove(struct mosquitto_db *db, struct mosquitto *context, struct mosquitto_client_msg **msg, struct mosquitto_client_msg *last)
 {
+	int i;
+	struct mosquitto_client_msg *tail;
+
 	if(!context || !msg || !(*msg)){
 		return;
 	}
@@ -233,6 +238,29 @@ static void db__message_remove(struct mosquitto_db *db, struct mosquitto *contex
 		*msg = last->next;
 	}else{
 		*msg = context->msgs;
+	}
+	tail = context->msgs;
+	i = 0;
+	while(tail && tail->state == mosq_ms_queued && i<max_inflight){
+		if(tail->direction == mosq_md_out){
+			switch(tail->qos){
+				case 0:
+					tail->state = mosq_ms_publish_qos0;
+					break;
+				case 1:
+					tail->state = mosq_ms_publish_qos1;
+					break;
+				case 2:
+					tail->state = mosq_ms_publish_qos2;
+					break;
+			}
+		}else{
+			if(tail->qos == 2){
+				tail->state = mosq_ms_send_pubrec;
+			}
+		}
+
+		tail = tail->next;
 	}
 }
 
@@ -436,7 +464,7 @@ int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint1
 #endif
 
 #ifdef WITH_WEBSOCKETS
-	if(context->wsi){
+	if(context->wsi && rc == 0){
 		return db__message_write(db, context);
 	}else{
 		return rc;

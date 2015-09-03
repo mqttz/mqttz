@@ -110,12 +110,11 @@ int bridge__connect(struct mosquitto_db *db, struct mosquitto *context)
 	char *notification_topic;
 	int notification_topic_len;
 	uint8_t notification_payload;
-	int lr, ll;
 
 	if(!context || !context->bridge) return MOSQ_ERR_INVAL;
 
 	context->state = mosq_cs_new;
-	context->sock = -1;
+	context->sock = INVALID_SOCKET;
 	context->last_msg_in = mosquitto_time();
 	context->last_msg_out = mosquitto_time();
 	context->keepalive = context->bridge->keepalive;
@@ -145,29 +144,29 @@ int bridge__connect(struct mosquitto_db *db, struct mosquitto *context)
 
 	if(context->bridge->notifications){
 		if(context->bridge->notification_topic){
-			notification_payload = '1';
-			db__messages_easy_queue(db, context, context->bridge->notification_topic, 1, 1, &notification_payload, 1);
+			if(!context->bridge->initial_notification_done){
+				notification_payload = '0';
+				db__messages_easy_queue(db, context, context->bridge->notification_topic, 1, 1, &notification_payload, 1);
+				context->bridge->initial_notification_done = true;
+			}
 			notification_payload = '0';
 			rc = will__set(context, context->bridge->notification_topic, 1, &notification_payload, 1, true);
 			if(rc != MOSQ_ERR_SUCCESS){
 				return rc;
 			}
 		}else{
-			ll = strlen(context->bridge->local_clientid);
-			lr = strlen(context->bridge->remote_clientid);
-			if(ll > lr){
-				notification_topic_len = ll+strlen("$SYS/broker/connection//state");
-			}else{
-				notification_topic_len = lr+strlen("$SYS/broker/connection//state");
-			}
+			notification_topic_len = strlen(context->bridge->remote_clientid)+strlen("$SYS/broker/connection//state");
 			notification_topic = mosquitto__malloc(sizeof(char)*(notification_topic_len+1));
 			if(!notification_topic) return MOSQ_ERR_NOMEM;
 
-			snprintf(notification_topic, notification_topic_len+1, "$SYS/broker/connection/%s/state", context->bridge->local_clientid);
-			notification_payload = '1';
-			db__messages_easy_queue(db, context, notification_topic, 1, 1, &notification_payload, 1);
-
 			snprintf(notification_topic, notification_topic_len+1, "$SYS/broker/connection/%s/state", context->bridge->remote_clientid);
+
+			if(!context->bridge->initial_notification_done){
+				notification_payload = '0';
+				db__messages_easy_queue(db, context, notification_topic, 1, 1, &notification_payload, 1);
+				context->bridge->initial_notification_done = true;
+			}
+
 			notification_payload = '0';
 			rc = will__set(context, notification_topic, 1, &notification_payload, 1, true);
 			mosquitto__free(notification_topic);

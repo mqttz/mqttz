@@ -22,7 +22,7 @@ Contributors:
 void message__cleanup_all(struct mosquitto *mosq);
 void message__cleanup(struct mosquitto_message_all **message);
 int message__delete(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_direction dir);
-void message__queue(struct mosquitto *mosq, struct mosquitto_message_all *message, enum mosquitto_msg_direction dir);
+int message__queue(struct mosquitto *mosq, struct mosquitto_message_all *message, enum mosquitto_msg_direction dir);
 void message__reconnect_reset(struct mosquitto *mosq);
 int message__remove(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_direction dir, struct mosquitto_message_all **message);
 void message__retry_check(struct mosquitto *mosq);

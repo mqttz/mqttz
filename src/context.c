@@ -26,7 +26,7 @@ Contributors:
 
 #include "uthash.h"
 
-struct mosquitto *context__init(struct mosquitto_db *db, int sock)
+struct mosquitto *context__init(struct mosquitto_db *db, mosq_sock_t sock)
 {
 	struct mosquitto *context;
 	char address[1024];
@@ -189,8 +189,10 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 void context__disconnect(struct mosquitto_db *db, struct mosquitto *ctxt)
 {
 	if(ctxt->state != mosq_cs_disconnecting && ctxt->will){
-		/* Unexpected disconnect, queue the client will. */
-		db__messages_easy_queue(db, ctxt, ctxt->will->topic, ctxt->will->qos, ctxt->will->payloadlen, ctxt->will->payload, ctxt->will->retain);
+		if(mosquitto_acl_check(db, ctxt, ctxt->will->topic, MOSQ_ACL_WRITE) == MOSQ_ERR_SUCCESS){
+			/* Unexpected disconnect, queue the client will. */
+			db__messages_easy_queue(db, ctxt, ctxt->will->topic, ctxt->will->qos, ctxt->will->payloadlen, ctxt->will->payload, ctxt->will->retain);
+		}
 	}
 	if(ctxt->will){
 		mosquitto__free(ctxt->will->topic);
