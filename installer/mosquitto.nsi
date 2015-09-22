@@ -10,7 +10,7 @@
 
 Name "mosquitto"
 !define VERSION 1.4.90
-OutFile "mosquitto-${VERSION}-install-win32.exe"
+OutFile "mosquitto-${VERSION}-install-windows-x86.exe"
 
 InstallDir "$PROGRAMFILES\mosquitto"
 
