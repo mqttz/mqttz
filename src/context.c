@@ -116,20 +116,25 @@ void mqtt3_context_cleanup(struct mosquitto_db *db, struct mosquitto *context, b
 			_mosquitto_free(context->bridge->local_clientid);
 			context->bridge->local_clientid = NULL;
 		}
-		if(context->bridge->remote_username){
-			context->bridge->remote_username = NULL;
-		}
-		if(context->bridge->remote_password){
-			context->bridge->remote_password = NULL;
-		}
 		if(context->bridge->local_username){
+			_mosquitto_free(context->bridge->local_username);
 			context->bridge->local_username = NULL;
 		}
 		if(context->bridge->local_password){
+			_mosquitto_free(context->bridge->local_password);
 			context->bridge->local_password = NULL;
 		}
-		if(context->bridge->local_clientid){
-			context->bridge->local_clientid = NULL;
+		if(context->bridge->remote_clientid){
+			_mosquitto_free(context->bridge->remote_clientid);
+			context->bridge->remote_clientid = NULL;
+		}
+		if(context->bridge->remote_username){
+			_mosquitto_free(context->bridge->remote_username);
+			context->bridge->remote_username = NULL;
+		}
+		if(context->bridge->remote_password){
+			_mosquitto_free(context->bridge->remote_password);
+			context->bridge->remote_password = NULL;
 		}
 	}
 #endif
