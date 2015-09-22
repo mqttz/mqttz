@@ -42,9 +42,11 @@ void *mosquitto__calloc(size_t nmemb, size_t size)
 	void *mem = calloc(nmemb, size);
 
 #ifdef REAL_WITH_MEMORY_TRACKING
-	memcount += malloc_usable_size(mem);
-	if(memcount > max_memcount){
-		max_memcount = memcount;
+	if(mem){
+		memcount += malloc_usable_size(mem);
+		if(memcount > max_memcount){
+			max_memcount = memcount;
+		}
 	}
 #endif
 
@@ -67,9 +69,11 @@ void *mosquitto__malloc(size_t size)
 	void *mem = malloc(size);
 
 #ifdef REAL_WITH_MEMORY_TRACKING
-	memcount += malloc_usable_size(mem);
-	if(memcount > max_memcount){
-		max_memcount = memcount;
+	if(mem){
+		memcount += malloc_usable_size(mem);
+		if(memcount > max_memcount){
+			max_memcount = memcount;
+		}
 	}
 #endif
 
@@ -99,9 +103,11 @@ void *mosquitto__realloc(void *ptr, size_t size)
 	mem = realloc(ptr, size);
 
 #ifdef REAL_WITH_MEMORY_TRACKING
-	memcount += malloc_usable_size(mem);
-	if(memcount > max_memcount){
-		max_memcount = memcount;
+	if(mem){
+		memcount += malloc_usable_size(mem);
+		if(memcount > max_memcount){
+			max_memcount = memcount;
+		}
 	}
 #endif
 
@@ -113,9 +119,11 @@ char *mosquitto__strdup(const char *s)
 	char *str = strdup(s);
 
 #ifdef REAL_WITH_MEMORY_TRACKING
-	memcount += malloc_usable_size(str);
-	if(memcount > max_memcount){
-		max_memcount = memcount;
+	if(str){
+		memcount += malloc_usable_size(str);
+		if(memcount > max_memcount){
+			max_memcount = memcount;
+		}
 	}
 #endif
 

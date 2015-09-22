@@ -598,9 +598,7 @@ int db__message_store(struct mosquitto_db *db, const char *source, uint16_t sour
 
 	return MOSQ_ERR_SUCCESS;
 error:
-	if(topic){
-		mosquitto__free(topic);
-	}
+	mosquitto__free(topic);
 	if(temp){
 		mosquitto__free(temp->source_id);
 		mosquitto__free(temp->topic);

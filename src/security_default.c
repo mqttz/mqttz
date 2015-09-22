@@ -439,9 +439,7 @@ static void free__acl(struct mosquitto__acl *acl)
 	if(acl->next){
 		free__acl(acl->next);
 	}
-	if(acl->topic){
-		mosquitto__free(acl->topic);
-	}
+	mosquitto__free(acl->topic);
 	mosquitto__free(acl);
 }
 
@@ -467,9 +465,7 @@ static int acl__cleanup(struct mosquitto_db *db, bool reload)
 		user_tail = db->acl_list->next;
 
 		free__acl(db->acl_list->acl);
-		if(db->acl_list->username){
-			mosquitto__free(db->acl_list->username);
-		}
+		mosquitto__free(db->acl_list->username);
 		mosquitto__free(db->acl_list);
 		
 		db->acl_list = user_tail;

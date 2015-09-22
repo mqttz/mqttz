@@ -98,14 +98,12 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 
 	if(!context) return;
 
-	if(context->username){
-		mosquitto__free(context->username);
-		context->username = NULL;
-	}
-	if(context->password){
-		mosquitto__free(context->password);
-		context->password = NULL;
-	}
+	mosquitto__free(context->username);
+	context->username = NULL;
+
+	mosquitto__free(context->password);
+	context->password = NULL;
+
 #ifdef WITH_BRIDGE
 	if(context->bridge){
 		for(i=0; i<db->bridge_count; i++){
@@ -137,10 +135,9 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 		sub__clean_session(db, context);
 		db__messages_delete(db, context);
 	}
-	if(context->address){
-		mosquitto__free(context->address);
-		context->address = NULL;
-	}
+
+	mosquitto__free(context->address);
+	context->address = NULL;
 
 	if(context->id){
 		assert(db); /* db can only be NULL here if the client hasn't sent a

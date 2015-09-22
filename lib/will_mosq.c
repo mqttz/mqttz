@@ -39,16 +39,9 @@ int will__set(struct mosquitto *mosq, const char *topic, int payloadlen, const v
 	if(mosquitto_pub_topic_check(topic)) return MOSQ_ERR_INVAL;
 
 	if(mosq->will){
-		if(mosq->will->topic){
-			mosquitto__free(mosq->will->topic);
-			mosq->will->topic = NULL;
-		}
-		if(mosq->will->payload){
-			mosquitto__free(mosq->will->payload);
-			mosq->will->payload = NULL;
-		}
+		mosquitto__free(mosq->will->topic);
+		mosquitto__free(mosq->will->payload);
 		mosquitto__free(mosq->will);
-		mosq->will = NULL;
 	}
 
 	mosq->will = mosquitto__calloc(1, sizeof(struct mosquitto_message));
@@ -81,9 +74,10 @@ cleanup:
 	if(mosq->will){
 		mosquitto__free(mosq->will->topic);
 		mosquitto__free(mosq->will->payload);
+
+		mosquitto__free(mosq->will);
+		mosq->will = NULL;
 	}
-	mosquitto__free(mosq->will);
-	mosq->will = NULL;
 
 	return rc;
 }
@@ -92,14 +86,12 @@ int will__clear(struct mosquitto *mosq)
 {
 	if(!mosq->will) return MOSQ_ERR_SUCCESS;
 
-	if(mosq->will->topic){
-		mosquitto__free(mosq->will->topic);
-		mosq->will->topic = NULL;
-	}
-	if(mosq->will->payload){
-		mosquitto__free(mosq->will->payload);
-		mosq->will->payload = NULL;
-	}
+	mosquitto__free(mosq->will->topic);
+	mosq->will->topic = NULL;
+
+	mosquitto__free(mosq->will->payload);
+	mosq->will->payload = NULL;
+
 	mosquitto__free(mosq->will);
 	mosq->will = NULL;
 

@@ -233,14 +233,11 @@ int mosquitto_username_pw_set(struct mosquitto *mosq, const char *username, cons
 {
 	if(!mosq) return MOSQ_ERR_INVAL;
 
-	if(mosq->username){
-		mosquitto__free(mosq->username);
-		mosq->username = NULL;
-	}
-	if(mosq->password){
-		mosquitto__free(mosq->password);
-		mosq->password = NULL;
-	}
+	mosquitto__free(mosq->username);
+	mosq->username = NULL;
+
+	mosquitto__free(mosq->password);
+	mosq->password = NULL;
 
 	if(username){
 		mosq->username = mosquitto__strdup(username);
@@ -319,30 +316,23 @@ void mosquitto__destroy(struct mosquitto *mosq)
 	mosquitto__free(mosq->tls_psk_identity);
 #endif
 
-	if(mosq->address){
-		mosquitto__free(mosq->address);
-		mosq->address = NULL;
-	}
-	if(mosq->id){
-		mosquitto__free(mosq->id);
-		mosq->id = NULL;
-	}
-	if(mosq->username){
-		mosquitto__free(mosq->username);
-		mosq->username = NULL;
-	}
-	if(mosq->password){
-		mosquitto__free(mosq->password);
-		mosq->password = NULL;
-	}
-	if(mosq->host){
-		mosquitto__free(mosq->host);
-		mosq->host = NULL;
-	}
-	if(mosq->bind_address){
-		mosquitto__free(mosq->bind_address);
-		mosq->bind_address = NULL;
-	}
+	mosquitto__free(mosq->address);
+	mosq->address = NULL;
+
+	mosquitto__free(mosq->id);
+	mosq->id = NULL;
+
+	mosquitto__free(mosq->username);
+	mosq->username = NULL;
+
+	mosquitto__free(mosq->password);
+	mosq->password = NULL;
+
+	mosquitto__free(mosq->host);
+	mosq->host = NULL;
+
+	mosquitto__free(mosq->bind_address);
+	mosq->bind_address = NULL;
 
 	/* Out packet cleanup */
 	if(mosq->out_packet && !mosq->current_out_packet){
@@ -636,6 +626,8 @@ int mosquitto_tls_set(struct mosquitto *mosq, const char *cafile, const char *ca
 
 	if(!mosq || (!cafile && !capath) || (certfile && !keyfile) || (!certfile && keyfile)) return MOSQ_ERR_INVAL;
 
+	mosquitto__free(mosq->tls_cafile);
+	mosq->tls_cafile = NULL;
 	if(cafile){
 		fptr = mosquitto__fopen(cafile, "rt");
 		if(fptr){
@@ -648,71 +640,58 @@ int mosquitto_tls_set(struct mosquitto *mosq, const char *cafile, const char *ca
 		if(!mosq->tls_cafile){
 			return MOSQ_ERR_NOMEM;
 		}
-	}else if(mosq->tls_cafile){
-		mosquitto__free(mosq->tls_cafile);
-		mosq->tls_cafile = NULL;
 	}
 
+	mosquitto__free(mosq->tls_capath);
+	mosq->tls_capath = NULL;
 	if(capath){
 		mosq->tls_capath = mosquitto__strdup(capath);
 		if(!mosq->tls_capath){
 			return MOSQ_ERR_NOMEM;
 		}
-	}else if(mosq->tls_capath){
-		mosquitto__free(mosq->tls_capath);
-		mosq->tls_capath = NULL;
 	}
 
+	mosquitto__free(mosq->tls_certfile);
+	mosq->tls_certfile = NULL;
 	if(certfile){
 		fptr = mosquitto__fopen(certfile, "rt");
 		if(fptr){
 			fclose(fptr);
 		}else{
-			if(mosq->tls_cafile){
-				mosquitto__free(mosq->tls_cafile);
-				mosq->tls_cafile = NULL;
-			}
-			if(mosq->tls_capath){
-				mosquitto__free(mosq->tls_capath);
-				mosq->tls_capath = NULL;
-			}
+			mosquitto__free(mosq->tls_cafile);
+			mosq->tls_cafile = NULL;
+
+			mosquitto__free(mosq->tls_capath);
+			mosq->tls_capath = NULL;
 			return MOSQ_ERR_INVAL;
 		}
 		mosq->tls_certfile = mosquitto__strdup(certfile);
 		if(!mosq->tls_certfile){
 			return MOSQ_ERR_NOMEM;
 		}
-	}else{
-		mosquitto__free(mosq->tls_certfile);
-		mosq->tls_certfile = NULL;
 	}
 
+	mosquitto__free(mosq->tls_keyfile);
+	mosq->tls_keyfile = NULL;
 	if(keyfile){
 		fptr = mosquitto__fopen(keyfile, "rt");
 		if(fptr){
 			fclose(fptr);
 		}else{
-			if(mosq->tls_cafile){
-				mosquitto__free(mosq->tls_cafile);
-				mosq->tls_cafile = NULL;
-			}
-			if(mosq->tls_capath){
-				mosquitto__free(mosq->tls_capath);
-				mosq->tls_capath = NULL;
-			}
-			if(mosq->tls_certfile){
-				mosquitto__free(mosq->tls_certfile);
-				mosq->tls_certfile = NULL;
-			}
+			mosquitto__free(mosq->tls_cafile);
+			mosq->tls_cafile = NULL;
+
+			mosquitto__free(mosq->tls_capath);
+			mosq->tls_capath = NULL;
+
+			mosquitto__free(mosq->tls_certfile);
+			mosq->tls_certfile = NULL;
 			return MOSQ_ERR_INVAL;
 		}
 		mosq->tls_keyfile = mosquitto__strdup(keyfile);
 		if(!mosq->tls_keyfile){
 			return MOSQ_ERR_NOMEM;
 		}
-	}else{
-		mosquitto__free(mosq->tls_keyfile);
-		mosq->tls_keyfile = NULL;
 	}
 
 	mosq->tls_pw_callback = pw_callback;

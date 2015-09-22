@@ -386,9 +386,7 @@ int main(int argc, char *argv[])
 		if(int_db.config->listeners[i].ws_context){
 			libwebsocket_context_destroy(int_db.config->listeners[i].ws_context);
 		}
-		if(int_db.config->listeners[i].ws_protocol){
-			mosquitto__free(int_db.config->listeners[i].ws_protocol);
-		}
+		mosquitto__free(int_db.config->listeners[i].ws_protocol);
 	}
 #endif
 
@@ -410,9 +408,7 @@ int main(int argc, char *argv[])
 			context__cleanup(&int_db, int_db.bridges[i], true);
 		}
 	}
-	if(int_db.bridges){
-		mosquitto__free(int_db.bridges);
-	}
+	mosquitto__free(int_db.bridges);
 #endif
 	context__free_disused(&int_db);
 

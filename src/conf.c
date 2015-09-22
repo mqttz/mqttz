@@ -124,10 +124,9 @@ static void config__init_reload(struct mosquitto__config *config)
 		fclose(config->log_fptr);
 		config->log_fptr = NULL;
 	}
-	if(config->log_file){
-		mosquitto__free(config->log_file);
-		config->log_file = NULL;
-	}
+	mosquitto__free(config->log_file);
+	config->log_file = NULL;
+
 #if defined(WIN32) || defined(__CYGWIN__)
 	if(service_handle){
 		/* This is running as a Windows service. Default to no logging. Using
@@ -163,10 +162,9 @@ static void config__init_reload(struct mosquitto__config *config)
 	if(config->auth_plugins){
 		for(i=0; i<config->auth_plugin_count; i++){
 			plug = &config->auth_plugins[i];
-			if(plug->path){
-				mosquitto__free(plug->path);
-				plug->path = NULL;
-			}
+			mosquitto__free(plug->path);
+			plug->path = NULL;
+
 			if(plug->options){
 				for(j=0; j<plug->option_count; j++){
 					mosquitto__free(plug->options[j].key);
@@ -302,10 +300,8 @@ void config__cleanup(struct mosquitto__config *config)
 	if(config->auth_plugins){
 		for(i=0; i<config->auth_plugin_count; i++){
 			plug = &config->auth_plugins[i];
-			if(plug->path){
-				mosquitto__free(plug->path);
-				plug->path = NULL;
-			}
+			mosquitto__free(plug->path);
+			plug->path = NULL;
 			if(plug->options){
 				for(j=0; j<plug->option_count; j++){
 					mosquitto__free(plug->options[j].key);
@@ -509,9 +505,7 @@ int config__read(struct mosquitto__config *config, bool reload)
 			config->persistence_file = mosquitto__strdup("mosquitto.db");
 			if(!config->persistence_file) return MOSQ_ERR_NOMEM;
 		}
-		if(config->persistence_filepath){
-			mosquitto__free(config->persistence_filepath);
-		}
+		mosquitto__free(config->persistence_filepath);
 		if(config->persistence_location && strlen(config->persistence_location)){
 			len = strlen(config->persistence_location) + strlen(config->persistence_file) + 1;
 			config->persistence_filepath = mosquitto__malloc(len);
@@ -606,10 +600,8 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 			if(token){
 				if(!strcmp(token, "acl_file")){
 					if(reload){
-						if(config->acl_file){
-							mosquitto__free(config->acl_file);
-							config->acl_file = NULL;
-						}
+						mosquitto__free(config->acl_file);
+						config->acl_file = NULL;
 					}
 					if(conf__parse_string(&token, "acl_file", &config->acl_file, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "address") || !strcmp(token, "addresses")){
@@ -1059,10 +1051,8 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 #endif
 				}else if(!strcmp(token, "clientid_prefixes")){
 					if(reload){
-						if(config->clientid_prefixes){
-							mosquitto__free(config->clientid_prefixes);
-							config->clientid_prefixes = NULL;
-						}
+						mosquitto__free(config->clientid_prefixes);
+						config->clientid_prefixes = NULL;
 					}
 					if(conf__parse_string(&token, "clientid_prefixes", &config->clientid_prefixes, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "connection")){
@@ -1535,10 +1525,8 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 #endif
 				}else if(!strcmp(token, "password_file")){
 					if(reload){
-						if(config->password_file){
-							mosquitto__free(config->password_file);
-							config->password_file = NULL;
-						}
+						mosquitto__free(config->password_file);
+						config->password_file = NULL;
 					}
 					if(conf__parse_string(&token, "password_file", &config->password_file, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "persistence") || !strcmp(token, "retained_persistence")){
@@ -1620,10 +1608,8 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 				}else if(!strcmp(token, "psk_file")){
 #ifdef REAL_WITH_TLS_PSK
 					if(reload){
-						if(config->psk_file){
-							mosquitto__free(config->psk_file);
-							config->psk_file = NULL;
-						}
+						mosquitto__free(config->psk_file);
+						config->psk_file = NULL;
 					}
 					if(conf__parse_string(&token, "psk_file", &config->psk_file, saveptr)) return MOSQ_ERR_INVAL;
 #else

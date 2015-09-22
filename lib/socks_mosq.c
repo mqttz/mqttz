@@ -49,9 +49,8 @@ int mosquitto_socks5_set(struct mosquitto *mosq, const char *host, int port, con
 	if(!host || strlen(host) > 256) return MOSQ_ERR_INVAL;
 	if(port < 1 || port > 65535) return MOSQ_ERR_INVAL;
 
-	if(mosq->socks5_host){
-		mosquitto__free(mosq->socks5_host);
-	}
+	mosquitto__free(mosq->socks5_host);
+	mosq->socks5_host = NULL;
 
 	mosq->socks5_host = mosquitto__strdup(host);
 	if(!mosq->socks5_host){
@@ -60,12 +59,11 @@ int mosquitto_socks5_set(struct mosquitto *mosq, const char *host, int port, con
 
 	mosq->socks5_port = port;
 
-	if(mosq->socks5_username){
-		mosquitto__free(mosq->socks5_username);
-	}
-	if(mosq->socks5_password){
-		mosquitto__free(mosq->socks5_password);
-	}
+	mosquitto__free(mosq->socks5_username);
+	mosq->socks5_username = NULL;
+
+	mosquitto__free(mosq->socks5_password);
+	mosq->socks5_password = NULL;
 
 	if(username){
 		mosq->socks5_username = mosquitto__strdup(username);
@@ -75,10 +73,8 @@ int mosquitto_socks5_set(struct mosquitto *mosq, const char *host, int port, con
 
 		if(password){
 			mosq->socks5_password = mosquitto__strdup(password);
-			if(!mosq->socks5_password){
-				mosquitto__free(mosq->socks5_username);
-				return MOSQ_ERR_NOMEM;
-			}
+			mosquitto__free(mosq->socks5_username);
+			return MOSQ_ERR_NOMEM;
 		}
 	}
 
