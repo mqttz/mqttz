@@ -278,7 +278,7 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 			ulen = 0;
 			len = tlen + acl_root->ccount*(clen-2);
 		}
-		local_acl = malloc(len+1);
+		local_acl = mosquitto__malloc(len+1);
 		if(!local_acl) return 1; // FIXME
 		s = local_acl;
 		for(i=0; i<tlen; i++){

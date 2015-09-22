@@ -1367,10 +1367,8 @@ int mosquitto_sub_topic_tokenise(const char *subtopic, char ***topics, int *coun
 				tlen = stop-start + 1;
 				(*topics)[hier] = mosquitto__calloc(tlen, sizeof(char));
 				if(!(*topics)[hier]){
-					for(i=0; i<hier_count; i++){
-						if((*topics)[hier]){
-							mosquitto__free((*topics)[hier]);
-						}
+					for(j=0; j<hier; j++){
+						mosquitto__free((*topics)[j]);
 					}
 					mosquitto__free((*topics));
 					return MOSQ_ERR_NOMEM;

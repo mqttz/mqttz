@@ -113,25 +113,23 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 				db->bridges[i] = NULL;
 			}
 		}
-		if(context->bridge->local_clientid){
-			mosquitto__free(context->bridge->local_clientid);
-			context->bridge->local_clientid = NULL;
-		}
-		if(context->bridge->remote_username){
-			context->bridge->remote_username = NULL;
-		}
-		if(context->bridge->remote_password){
-			context->bridge->remote_password = NULL;
-		}
-		if(context->bridge->local_username){
-			context->bridge->local_username = NULL;
-		}
-		if(context->bridge->local_password){
-			context->bridge->local_password = NULL;
-		}
-		if(context->bridge->local_clientid){
-			context->bridge->local_clientid = NULL;
-		}
+		mosquitto__free(context->bridge->local_clientid);
+		context->bridge->local_clientid = NULL;
+
+		mosquitto__free(context->bridge->local_username);
+		context->bridge->local_username = NULL;
+
+		mosquitto__free(context->bridge->local_password);
+		context->bridge->local_password = NULL;
+
+		mosquitto__free(context->bridge->remote_clientid);
+		context->bridge->remote_clientid = NULL;
+
+		mosquitto__free(context->bridge->remote_username);
+		context->bridge->remote_username = NULL;
+
+		mosquitto__free(context->bridge->remote_password);
+		context->bridge->remote_password = NULL;
 	}
 #endif
 	net__socket_close(db, context);
