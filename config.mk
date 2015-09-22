@@ -62,7 +62,7 @@ WITH_SYS_TREE:=yes
 WITH_SYSTEMD:=no
 
 # Build with SRV lookup support.
-WITH_SRV:=yes
+WITH_SRV:=no
 
 # Build using libuuid for clientid generation (Linux only - please report if
 # supported on your platform).

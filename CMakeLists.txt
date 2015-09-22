@@ -77,7 +77,7 @@ if (${WITH_SOCKS} STREQUAL ON)
 	add_definitions("-DWITH_SOCKS")
 endif (${WITH_SOCKS} STREQUAL ON)
 
-option(WITH_SRV "Include SRV lookup support?" ON)
+option(WITH_SRV "Include SRV lookup support?" OFF)
 
 # ========================================
 # Include projects
