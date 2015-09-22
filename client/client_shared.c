@@ -527,6 +527,10 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 					}
 					cfg->topic_count++;
 					cfg->topics = realloc(cfg->topics, cfg->topic_count*sizeof(char *));
+					if(!cfg->topics){
+						fprintf(stderr, "Error: Out of memory.\n");
+						return 1;
+					}
 					cfg->topics[cfg->topic_count-1] = strdup(argv[i+1]);
 				}
 				i++;
@@ -545,6 +549,10 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				}
 				cfg->filter_out_count++;
 				cfg->filter_outs = realloc(cfg->filter_outs, cfg->filter_out_count*sizeof(char *));
+				if(!cfg->filter_outs){
+					fprintf(stderr, "Error: Out of memory.\n");
+					return 1;
+				}
 				cfg->filter_outs[cfg->filter_out_count-1] = strdup(argv[i+1]);
 			}
 			i++;
@@ -854,6 +862,10 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 				}
 				len = i-start;
 				host = malloc(len + 1);
+				if(!host){
+					fprintf(stderr, "Error: Out of memory.\n");
+					goto cleanup;
+				}
 				memcpy(host, &(str[start]), len);
 				host[len] = '\0';
 				start = i+1;
@@ -863,6 +875,10 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 				 * socks5h://username:password@host[:port] */
 				len = i-start;
 				username_or_host = malloc(len + 1);
+				if(!username_or_host){
+					fprintf(stderr, "Error: Out of memory.\n");
+					goto cleanup;
+				}
 				memcpy(username_or_host, &(str[start]), len);
 				username_or_host[len] = '\0';
 				start = i+1;
@@ -879,6 +895,10 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 
 				len = i-start;
 				password = malloc(len + 1);
+				if(!password){
+					fprintf(stderr, "Error: Out of memory.\n");
+					goto cleanup;
+				}
 				memcpy(password, &(str[start]), len);
 				password[len] = '\0';
 				start = i+1;
@@ -891,6 +911,10 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 				}
 				len = i-start;
 				username = malloc(len + 1);
+				if(!username){
+					fprintf(stderr, "Error: Out of memory.\n");
+					goto cleanup;
+				}
 				memcpy(username, &(str[start]), len);
 				username[len] = '\0';
 				start = i+1;
@@ -905,6 +929,10 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 			/* Have already seen a @ , so this must be of form
 			 * socks5h://username[:password]@host:port */
 			port = malloc(len + 1);
+			if(!port){
+				fprintf(stderr, "Error: Out of memory.\n");
+				goto cleanup;
+			}
 			memcpy(port, &(str[start]), len);
 			port[len] = '\0';
 		}else if(username_or_host){
@@ -913,10 +941,18 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 			host = username_or_host;
 			username_or_host = NULL;
 			port = malloc(len + 1);
+			if(!port){
+				fprintf(stderr, "Error: Out of memory.\n");
+				goto cleanup;
+			}
 			memcpy(port, &(str[start]), len);
 			port[len] = '\0';
 		}else{
 			host = malloc(len + 1);
+			if(!host){
+				fprintf(stderr, "Error: Out of memory.\n");
+				goto cleanup;
+			}
 			memcpy(host, &(str[start]), len);
 			host[len] = '\0';
 		}

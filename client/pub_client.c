@@ -295,6 +295,7 @@ int main(int argc, char *argv[])
 	int rc;
 	int rc2;
 
+	memset(&cfg, 0, sizeof(struct mosq_config));
 	rc = client_config_load(&cfg, CLIENT_PUB, argc, argv);
 	if(rc){
 		client_config_cleanup(&cfg);

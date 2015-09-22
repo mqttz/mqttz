@@ -56,6 +56,7 @@ void __stdcall service_main(DWORD dwArgc, LPTSTR *lpszArgv)
 
 	service_handle = RegisterServiceCtrlHandler("mosquitto", service_handler);
 	if(service_handle){
+		memset(conf_path, 0, MAX_PATH + 20);
 		rc = GetEnvironmentVariable("MOSQUITTO_DIR", conf_path, MAX_PATH);
 		if(!rc || rc == MAX_PATH){
 			service_status.dwCurrentState = SERVICE_STOPPED;
@@ -91,7 +92,11 @@ void service_install(void)
 	char exe_path[MAX_PATH + 5];
 	SERVICE_DESCRIPTION svc_desc;
 
-	GetModuleFileName(NULL, exe_path, MAX_PATH);
+	memset(exe_path, 0, MAX_PATH+5);
+	if(GetModuleFileName(NULL, exe_path, MAX_PATH) == MAX_PATH){
+		fprintf(stderr, "Error: Path too long.\n");
+		return;
+	}
 	strcat(exe_path, " run");
 
 	sc_manager = OpenSCManager(NULL, NULL, SC_MANAGER_CREATE_SERVICE);

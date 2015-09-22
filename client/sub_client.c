@@ -230,6 +230,7 @@ int main(int argc, char *argv[])
 	struct mosquitto *mosq = NULL;
 	int rc;
 	
+	memset(&cfg, 0, sizeof(struct mosq_config));
 	rc = client_config_load(&cfg, CLIENT_SUB, argc, argv);
 	if(rc){
 		client_config_cleanup(&cfg);

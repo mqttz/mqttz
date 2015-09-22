@@ -66,7 +66,7 @@ int mosquitto_lib_version(int *major, int *minor, int *revision)
 int mosquitto_lib_init(void)
 {
 #ifdef WIN32
-	srand(GetTickCount());
+	srand(GetTickCount64());
 #else
 	struct timeval tv;
 
@@ -74,9 +74,7 @@ int mosquitto_lib_init(void)
 	srand(tv.tv_sec*1000 + tv.tv_usec/1000);
 #endif
 
-	net__init();
-
-	return MOSQ_ERR_SUCCESS;
+	return net__init();
 }
 
 int mosquitto_lib_cleanup(void)

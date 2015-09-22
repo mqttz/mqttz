@@ -444,7 +444,7 @@ int main(int argc, char *argv[])
 }
 
 #ifdef WIN32
-int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	char **argv;
 	int argc = 1;

@@ -211,7 +211,7 @@ int gets_quiet(char *s, int len)
 {
 #ifdef WIN32
 	HANDLE h;
-	DWORD con_orig, con_quiet;
+	DWORD con_orig, con_quiet = 0;
 	DWORD read_len = 0;
 
 	memset(s, 0, len);
@@ -418,6 +418,10 @@ int main(int argc, char *argv[])
 		}
 
 		backup_file = malloc(strlen(password_file)+5);
+		if(!backup_file){
+			fprintf(stderr, "Error: Out of memory.\n");
+			return 1;
+		}
 		snprintf(backup_file, strlen(password_file)+5, "%s.tmp", password_file);
 
 		if(create_backup(backup_file, fptr)){

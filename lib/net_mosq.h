@@ -49,7 +49,7 @@ struct mosquitto_db;
 #define MOSQ_MSB(A) (uint8_t)((A & 0xFF00) >> 8)
 #define MOSQ_LSB(A) (uint8_t)(A & 0x00FF)
 
-void net__init(void);
+int net__init(void);
 void net__cleanup(void);
 
 int net__socket_connect(struct mosquitto *mosq, const char *host, uint16_t port, const char *bind_address, bool blocking);

@@ -79,11 +79,13 @@ Contributors:
 int tls_ex_index_mosq = -1;
 #endif
 
-void net__init(void)
+int net__init(void)
 {
 #ifdef WIN32
 	WSADATA wsaData;
-	WSAStartup(MAKEWORD(2,2), &wsaData);
+	if(WSAStartup(MAKEWORD(2,2), &wsaData) != 0){
+		return MOSQ_ERR_UNKNOWN;
+	}
 #endif
 
 #ifdef WITH_SRV
@@ -98,6 +100,7 @@ void net__init(void)
 		tls_ex_index_mosq = SSL_get_ex_new_index(0, "client context", NULL, NULL, NULL);
 	}
 #endif
+	return MOSQ_ERR_SUCCESS;
 }
 
 void net__cleanup(void)
