@@ -46,16 +46,16 @@ int mosquitto_auth_security_cleanup(void *user_data, struct mosquitto_auth_opt *
 
 int mosquitto_auth_acl_check(void *user_data, const char *clientid, const char *username, const char *topic, int access)
 {
-	return MOSQ_ERR_DEFER;
+	return MOSQ_ERR_PLUGIN_DEFER;
 }
 
 int mosquitto_auth_unpwd_check(void *user_data, const char *username, const char *password)
 {
-	return MOSQ_ERR_DEFER;
+	return MOSQ_ERR_PLUGIN_DEFER;
 }
 
 int mosquitto_auth_psk_key_get(void *user_data, const char *hint, const char *identity, char *key, int max_key_len)
 {
-	return MOSQ_ERR_DEFER;
+	return MOSQ_ERR_PLUGIN_DEFER;
 }
 
