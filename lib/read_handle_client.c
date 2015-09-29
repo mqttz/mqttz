@@ -31,11 +31,11 @@ int handle__connack(struct mosquitto *mosq)
 	int rc;
 
 	assert(mosq);
-	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received CONNACK", mosq->id);
 	rc = packet__read_byte(&mosq->in_packet, &byte); // Reserved byte, not used
 	if(rc) return rc;
 	rc = packet__read_byte(&mosq->in_packet, &result);
 	if(rc) return rc;
+	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received CONNACK (%d)", mosq->id, result);
 	pthread_mutex_lock(&mosq->callback_mutex);
 	if(mosq->on_connect){
 		mosq->in_callback = true;
