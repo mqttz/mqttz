@@ -44,14 +44,15 @@ struct mosquitto_auth_opt {
  *
  * For each check, the following flow happens:
  *
- * * First plugin does the check, if it returns anything other than
+ * * The default password file and/or acl file checks are made. If either one
+ *   of these is not defined, then they are considered to be deferred. If either
+ *   one accepts the check, no further checks are made. If an error occurs, the
+ *   check is denied
+ * * The first plugin does the check, if it returns anything other than
  *   MOSQ_ERR_PLUGIN_DEFER, then the check returns immediately. If the plugin
  *   returns MOSQ_ERR_PLUGIN_DEFER then the next plugin runs its check.
- * * If the final plugin returns MOSQ_ERR_PLUGIN_DEFER, then the default
- *   password file and/or acl file check will be made if they are specified in
- *   the config file.
- * * If plugins are defined and the password file and/or acl file are not
- *   specified, then the request will be denied.
+ * * If the final plugin returns MOSQ_ERR_PLUGIN_DEFER, then access will be
+ *   denied.
  */
 
 /* =========================================================================

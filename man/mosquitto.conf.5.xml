@@ -208,9 +208,7 @@
 					<para>If <option>password_file</option>, or
 						<option>acl_file</option> are used in the config file
 						alongsize <option>auth_plugin</option>, the plugin
-						checks will run first. If a plugin is used but neither
-						of the default password or acl options are used, access
-						will be denied.</para>
+						checks will run after the build in checks.</para>
 					<para>Not currently reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>

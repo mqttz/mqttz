@@ -249,13 +249,27 @@ int mosquitto_acl_check(struct mosquitto_db *db, struct mosquitto *context, cons
 	{
 		username = context->username;
 	}
+
+	rc = mosquitto_acl_check_default(db, context, topic, access);
+	if(rc != MOSQ_ERR_PLUGIN_DEFER){
+		return rc;
+	}
+	/* Default check has accepted or errored and then returned, or deferred.
+	 * If no plugins exist we should accept at this point so set rc to success.
+	 */
+	rc = MOSQ_ERR_SUCCESS;
 	for(i=0; i<db->auth_plugin_count; i++){
 		rc = db->auth_plugins[i].acl_check(db->auth_plugins[i].user_data, context->id, username, topic, access);
 		if(rc != MOSQ_ERR_PLUGIN_DEFER){
 			return rc;
 		}
 	}
-	return mosquitto_acl_check_default(db, context, topic, access);
+	/* If all plugins deferred, this is a denial. If rc == MOSQ_ERR_SUCCESS
+	 * here, then no plugins were configured. */
+	if(rc == MOSQ_ERR_PLUGIN_DEFER){
+		rc = MOSQ_ERR_ACL_DENIED;
+	}
+	return rc;
 }
 
 int mosquitto_unpwd_check(struct mosquitto_db *db, const char *username, const char *password)
@@ -263,13 +277,26 @@ int mosquitto_unpwd_check(struct mosquitto_db *db, const char *username, const c
 	int rc;
 	int i;
 
+	rc = mosquitto_unpwd_check_default(db, username, password);
+	if(rc != MOSQ_ERR_PLUGIN_DEFER){
+		return rc;
+	}
+	/* Default check has accepted or errored and then returned, or deferred.
+	 * If no plugins exist we should accept at this point so set rc to success.
+	 */
+	rc = MOSQ_ERR_SUCCESS;
 	for(i=0; i<db->auth_plugin_count; i++){
 		rc = db->auth_plugins[i].unpwd_check(db->auth_plugins[i].user_data, username, password);
 		if(rc != MOSQ_ERR_PLUGIN_DEFER){
 			return rc;
 		}
 	}
-	return mosquitto_unpwd_check_default(db, username, password);
+	/* If all plugins deferred, this is a denial. If rc == MOSQ_ERR_SUCCESS
+	 * here, then no plugins were configured. */
+	if(rc == MOSQ_ERR_PLUGIN_DEFER){
+		rc = MOSQ_ERR_AUTH;
+	}
+	return rc;
 }
 
 int mosquitto_psk_key_get(struct mosquitto_db *db, const char *hint, const char *identity, char *key, int max_key_len)
