@@ -521,7 +521,7 @@
 						disconnected. These messages are included in the limit
 						imposed by max_queued_messages.  Defaults to
 						<replaceable>false</replaceable>.</para>
-					<para>Note that the MQTT v3.1 spec states that only QoS 1
+					<para>Note that the MQTT v3.1.1 spec states that only QoS 1
 						and 2 messages should be saved in this situation so
 						this is a non-standard option.</para>
 					<para>Reloaded on reload signal.</para>

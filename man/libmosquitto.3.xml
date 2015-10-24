@@ -11,7 +11,7 @@
 
 	<refnamediv>
 		<refname>libmosquitto</refname>
-		<refpurpose>MQTT version 3.1 client library</refpurpose>
+		<refpurpose>MQTT version 3.1.1 client library</refpurpose>
 	</refnamediv>
 
 	<refsect1>

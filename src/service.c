@@ -107,7 +107,7 @@ void service_install(void)
 				exe_path, NULL, NULL, NULL, NULL, NULL);
 
 		if(svc_handle){
-			svc_desc.lpDescription = "MQTT v3.1 broker";
+			svc_desc.lpDescription = "MQTT v3.1.1 broker";
 			ChangeServiceConfig2(svc_handle, SERVICE_CONFIG_DESCRIPTION, &svc_desc);
 			CloseServiceHandle(svc_handle);
 		}
