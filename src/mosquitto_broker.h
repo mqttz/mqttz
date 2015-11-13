@@ -165,6 +165,7 @@ struct mosquitto__config {
 	char *config_file;
 	char *acl_file;
 	bool allow_anonymous;
+	bool allow_direct_messages;
 	bool allow_duplicate_messages;
 	bool allow_zero_length_clientid;
 	char *auto_id_prefix;
@@ -174,6 +175,7 @@ struct mosquitto__config {
 	char *clientid_prefixes;
 	bool connection_messages;
 	bool daemon;
+	int direct_message_qos;
 	struct mosquitto__listener default_listener;
 	struct mosquitto__listener *listeners;
 	int listener_count;

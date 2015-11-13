@@ -111,6 +111,7 @@ static void config__init_reload(struct mosquitto__config *config)
 	mosquitto__free(config->acl_file);
 	config->acl_file = NULL;
 	config->allow_anonymous = true;
+	config->allow_direct_messages = false;
 	config->allow_duplicate_messages = false;
 	config->allow_zero_length_clientid = true;
 	config->auto_id_prefix = NULL;
@@ -120,6 +121,7 @@ static void config__init_reload(struct mosquitto__config *config)
 	mosquitto__free(config->clientid_prefixes);
 	config->connection_messages = true;
 	config->clientid_prefixes = NULL;
+	config->direct_message_qos = 0;
 	if(config->log_fptr){
 		fclose(config->log_fptr);
 		config->log_fptr = NULL;
@@ -647,6 +649,8 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 #endif
 				}else if(!strcmp(token, "allow_anonymous")){
 					if(conf__parse_bool(&token, "allow_anonymous", &config->allow_anonymous, saveptr)) return MOSQ_ERR_INVAL;
+				}else if(!strcmp(token, "allow_direct_messages")){
+					if(conf__parse_bool(&token, "allow_direct_messages", &config->allow_direct_messages, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "allow_duplicate_messages")){
 					if(conf__parse_bool(&token, "allow_duplicate_messages", &config->allow_duplicate_messages, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "allow_zero_length_clientid")){
@@ -1098,6 +1102,25 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 #else
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
 #endif
+				}else if(!strcmp(token, "direct_message_qos")){
+					token = strtok_r(NULL, " ", &saveptr);
+					if(token){
+						if(!strcmp(token, "0")){
+							direct_message_qos = 0;
+						}else if(!strcmp(token, "1")){
+							direct_message_qos = 1;
+						}else if(!strcmp(token, "2")){
+							direct_message_qos = 2;
+						}else if(!strcmp(token, "msg")){
+							direct_messag_qos = -1;
+						}else{
+							log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid direct_message_qos value (%s).", token);
+							return MOSQ_ERR_INVAL;
+						}
+					}else{
+						log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty direct_message_qos value in configuration.");
+						return MOSQ_ERR_INVAL;
+					}
 				}else if(!strcmp(token, "http_dir")){
 #ifdef WITH_WEBSOCKETS
 					if(reload) continue; // Listeners not valid for reloading.

@@ -25,6 +25,8 @@ Broker:
 - Minimum supported libwebsockets version is now 1.3.
 - Support for Windows XP has been dropped.
 - Miscellaneous fixes on Windows.
+- Add support for sending direct messages to clients through
+  $CLIENT/direct/<client id>, using the allow_direct_messages option.
 
 Client library:
 - Outgoing messages with QoS>1 are no longer retried after a timeout period.
