@@ -164,23 +164,6 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>allow_direct_messages</option> [ true | false ]</term>
-				<listitem>
-					<para>If this option is enabled, messages published to
-						<replaceable>$CLIENTS/direct/&lt;client
-							id&gt;</replaceable> will be delivered to the
-						client with <replaceable>&lt;client
-							id&gt;</replaceable> directly. It is not possible
-						to subscribe to any topics under $CLIENTS manually.
-						This is a non-spec option and should be used with care.
-						Clients that are not expecting these messages may not
-						be able to cope with them. See also
-						<option>direct_message_qos</option>. Defaults to
-						<replaceable>false</replaceable>.</para>
-					<para>Reloaded on reload signal.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
 				<term><option>allow_duplicate_messages</option> [ true | false ]</term>
 				<listitem>
 					<para>If a client is subscribed to multiple subscriptions
@@ -278,26 +261,6 @@
 						will include entries when clients connect and
 						disconnect. If set to <replaceable>false</replaceable>,
 						these entries will not appear.</para>
-					<para>Reloaded on reload signal.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>direct_message_qos</option> [ 0 | 1 | 2 | msg ]</term>
-				<listitem>
-					<para>As clients do not subscribe to direct messages
-						manually, they have no opportunity to set the QoS. This
-						option allows a global QoS to be set for direct
-						messages. Choose either <replaceable>0</replaceable>,
-						<replaceable>1</replaceable>,
-						<replaceable>2</replaceable>, or
-						<replaceable>msg</replaceable> - where
-						<replaceable>msg</replaceable> indicates that the QoS
-						of the incoming message should be used. Note that
-						<option>upgrade_outgoing_qos</option> also affects this
-						setting. The option
-						<option>allow_direct_messages</option> must be
-						<replaceable>true</replaceable> for this option to have
-						any effect.</para>
 					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>

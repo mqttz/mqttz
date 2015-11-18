@@ -678,18 +678,8 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 				sub = sub_mount;
 
 			}
-
-			if(!strncmp(sub, "$CLIENT/", 7)){
-				/* Access denied, never allow subs here. */
-				if(context->protocol == mosq_p_mqtt311){
-					qos = 0x80;
-				}else{
-					mosquitto__free(sub);
-					return MOSQ_ERR_PROTOCOL;
-				}
-			}
-
 			log__printf(NULL, MOSQ_LOG_DEBUG, "\t%s (QoS %d)", sub, qos);
+
 #if 0
 			/* FIXME
 			 * This section has been disabled temporarily. mosquitto_acl_check
