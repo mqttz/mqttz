@@ -108,6 +108,9 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 		for(i=0; i<cfg->topic_count; i++){
 			mosquitto_subscribe(mosq, NULL, cfg->topics[i], cfg->qos);
 		}
+		for(i=0; i<cfg->unsub_topic_count; i++){
+			mosquitto_unsubscribe(mosq, NULL, cfg->unsub_topics[i]);
+		}
 	}else{
 		if(result && !cfg->quiet){
 			fprintf(stderr, "%s\n", mosquitto_connack_string(result));
@@ -142,7 +145,7 @@ void print_usage(void)
 	mosquitto_lib_version(&major, &minor, &revision);
 	printf("mosquitto_sub is a simple mqtt client that will subscribe to a single topic and print all messages it receives.\n");
 	printf("mosquitto_sub version %s running on libmosquitto %d.%d.%d.\n\n", VERSION, major, minor, revision);
-	printf("Usage: mosquitto_sub [-c] [-h host] [-k keepalive] [-p port] [-q qos] [-R] -t topic ...\n");
+	printf("Usage: mosquitto_sub [-c] [-h host] [-k keepalive] [-p port] [-q qos] [-R] {-t topic ... | -U topic ...}\n");
 	printf("                     [-C msg_count] [-T filter_out]\n");
 #ifdef WITH_SRV
 	printf("                     [-A bind_address] [-S]\n");
@@ -185,6 +188,7 @@ void print_usage(void)
 	printf(" -t : mqtt topic to subscribe to. May be repeated multiple times.\n");
 	printf(" -T : topic string to filter out of results. May be repeated.\n");
 	printf(" -u : provide a username (requires MQTT 3.1 broker)\n");
+	printf(" -U : unsubscribe from a topic. May be repeated.\n");
 	printf(" -v : print published messages verbosely.\n");
 	printf(" -V : specify the version of the MQTT protocol to use when connecting.\n");
 	printf("      Can be mqttv31 or mqttv311. Defaults to mqttv31.\n");

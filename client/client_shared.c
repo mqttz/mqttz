@@ -83,6 +83,12 @@ void client_config_cleanup(struct mosq_config *cfg)
 		}
 		free(cfg->filter_outs);
 	}
+	if(cfg->unsub_topics){
+		for(i=0; i<cfg->unsub_topic_count; i++){
+			free(cfg->unsub_topics[i]);
+		}
+		free(cfg->unsub_topics);
+	}
 #ifdef WITH_SOCKS
 	free(cfg->socks5_host);
 	free(cfg->socks5_username);
@@ -554,6 +560,27 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 					return 1;
 				}
 				cfg->filter_outs[cfg->filter_out_count-1] = strdup(argv[i+1]);
+			}
+			i++;
+		}else if(!strcmp(argv[i], "-U") || !strcmp(argv[i], "--unsubscribe")){
+			if(pub_or_sub == CLIENT_PUB){
+				goto unknown_option;
+			}
+			if(i==argc-1){
+				fprintf(stderr, "Error: -U argument given but no unsubscribe topic specified.\n\n");
+				return 1;
+			}else{
+				if(mosquitto_sub_topic_check(argv[i+1]) == MOSQ_ERR_INVAL){
+					fprintf(stderr, "Error: Invalid unsubscribe topic '%s', are all '+' and '#' wildcards correct?\n", argv[i+1]);
+					return 1;
+				}
+				cfg->unsub_topic_count++;
+				cfg->unsub_topics = realloc(cfg->unsub_topics, cfg->unsub_topic_count*sizeof(char *));
+				if(!cfg->unsub_topics){
+					fprintf(stderr, "Error: Out of memory.\n");
+					return 1;
+				}
+				cfg->unsub_topics[cfg->unsub_topic_count-1] = strdup(argv[i+1]);
 			}
 			i++;
 #ifdef WITH_TLS

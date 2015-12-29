@@ -77,6 +77,8 @@ struct mosq_config {
 	bool no_retain; /* sub */
 	char **filter_outs; /* sub */
 	int filter_out_count; /* sub */
+	char **unsub_topics; /* sub */
+	int unsub_topic_count; /* sub */
 	bool verbose; /* sub */
 	bool eol; /* sub */
 	bool hex_output; /* sub */

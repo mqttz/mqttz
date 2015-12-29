@@ -63,7 +63,10 @@
 			<arg><option>--proxy</option> <replaceable>socks-url</replaceable></arg>
 			<arg><option>-V</option> <replaceable>protocol-version</replaceable></arg>
 			<arg choice='opt' rep='repeat'><option>-T</option> <replaceable>filter-out</replaceable></arg>
-			<arg choice='plain' rep='repeat'><option>-t</option> <replaceable>message-topic</replaceable></arg>
+			<group choice='req'>
+				<arg choice='plain' rep='repeat'><option>-U</option> <replaceable>unsub-topic</replaceable></arg>
+				<arg choice='plain' rep='repeat'><option>-t</option> <replaceable>message-topic</replaceable></arg>
+			</group>
 		</cmdsynopsis>
 		<cmdsynopsis>
 			<command>mosquitto_sub</command>
@@ -76,8 +79,14 @@
 	<refsect1>
 		<title>Description</title>
 		<para><command>mosquitto_sub</command> is a simple MQTT version 3.1.1
-			client that will subscribe to a topic and print the messages that
+			client that will subscribe to topics and print the messages that
 			it receives.</para>
+		<para>In addition to subscribing to topics,
+			<command>mosquitto_sub</command> can filter out received messages
+			so they are not printed (see the <option>-T</option> option) or
+			unsubscribe from topics (see the <option>-U</option> option).
+			Unsubscribing from topics is useful for clients connecting with
+			clean session set to false. </para>
 	</refsect1>
 
 	<refsect1>
@@ -404,6 +413,40 @@
 					<para>Provide a username to be used for authenticating with
 						the broker. See also the <option>--pw</option>
 						argument.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-U</option></term>
+				<term><option>--unsubscribe</option></term>
+				<listitem>
+					<para>A topic that will be unsubscribed from. This may be
+						used on its own or in conjunction with the
+						<option>--topic</option> option and only makes sense
+						when used in conjunction with
+						<option>--clean-session</option>.</para>
+					<para>If used with <option>--topic</option> then
+						subscriptions will be processed before
+						unsubscriptions.</para>
+					<para>Note that it is only possible to unsubscribe from
+						subscriptions that have previously been made. It is not
+						possible to punch holes in wildcard subscriptions. For
+						example, subscribing to <option>sensors/#</option> and
+						then unsubscribing from
+						<option>sensors/+/temperature</option> as shown below
+						will still result in messages matching the
+						<option>sensors/+/temperature</option> being delivered
+						to the client.</para>
+					<itemizedlist mark="circle">
+						<listitem><para>mosquitto_sub <literal>-t</literal> sensors/# <literal>-U</literal> sensors/+/temperature <literal>-v</literal></para></listitem>
+					</itemizedlist>
+
+					<para>Note also that because retained messages are
+						published by the broker on receipt of a SUBSCRIBE
+						command, subscribing and unsubscribing to the same
+						topic may result in messages being received at the
+						client.</para>
+
+					<para>This option may be repeated to unsubscribe from multiple topics.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
