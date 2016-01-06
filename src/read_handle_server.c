@@ -34,7 +34,7 @@ Contributors:
 #endif
 
 #ifdef WITH_WEBSOCKETS
-#include <libwebsockets.h>
+#  include <libwebsockets.h>
 #endif
 
 static char *client_id_gen(struct mosquitto_db *db)

@@ -559,18 +559,20 @@ static struct mosquitto__subhier *tmp_remove_subs(struct mosquitto__subhier *sub
 	if(!sub || !sub->parent){
 		return NULL;
 	}
-	if(sub->children || sub->subs || sub->next){
+
+	if(sub->children || sub->subs){
 		return NULL;
 	}
 
 	parent = sub->parent;
 	hier = sub->parent->children;
+
 	while(hier){
 		if(hier == sub){
 			if(last){
-				last->next = sub->next;
+				last->next = hier->next;
 			}else{
-				parent->children = NULL;
+				parent->children = hier->next;
 			}
 			UHPA_FREE_TOPIC(sub);
 			mosquitto__free(sub);

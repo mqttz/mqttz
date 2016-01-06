@@ -669,10 +669,6 @@ int net__socketpair(mosq_sock_t *pairR, mosq_sock_t *pairW)
 			continue;
 		}
 
-		if(net__socket_nonblock(listensock)){
-			continue;
-		}
-
 		if(family[i] == AF_INET){
 			sa->sin_family = family[i];
 			sa->sin_addr.s_addr = htonl(INADDR_LOOPBACK);
@@ -689,6 +685,7 @@ int net__socketpair(mosq_sock_t *pairR, mosq_sock_t *pairW)
 			continue;
 		}
 		if(net__socket_nonblock(spR)){
+			COMPAT_CLOSE(spR);
 			COMPAT_CLOSE(listensock);
 			continue;
 		}
@@ -716,6 +713,7 @@ int net__socketpair(mosq_sock_t *pairR, mosq_sock_t *pairW)
 
 		if(net__socket_nonblock(spW)){
 			COMPAT_CLOSE(spR);
+			COMPAT_CLOSE(spW);
 			COMPAT_CLOSE(listensock);
 			continue;
 		}

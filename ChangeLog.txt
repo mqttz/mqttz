@@ -36,6 +36,41 @@ Client:
 - Add -U to mosquitto_sub for unsubscribing from topics.
 
 
+1.4.7 - 20151221
+================
+
+Broker:
+- Fix support for libwebsockets 1.22.
+
+
+1.4.6 - 20151220
+================
+
+Broker:
+- Add support for libwebsockets 1.6.
+
+Client library:
+- Fix _mosquitto_socketpair() on Windows, reducing the chance of delays when
+  publishing. Closes #483979.
+
+Clients:
+- Fix "mosquitto_pub -l" stripping the final character on a line. Closes
+  #483981.
+
+
+1.4.5 - 20151108
+================
+
+Broker:
+- Fix possible memory leak if bridge using SSL attempts to connect to a
+  host that is not up.
+- Free unused topic tree elements (fix in 1.4.3 was incomplete). Closes
+  #468987.
+
+Clients:
+- "mosquitto_pub -l" now no longer limited to 1024 byte lines. Closes #478917.
+
+
 1.4.4 - 20150916
 ================
 

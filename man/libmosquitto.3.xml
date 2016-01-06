@@ -439,8 +439,8 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	while(!mosquitto_loop(mosq, -1, 1)){
-	}
+	mosquitto_loop_forever(mosq, -1, 1);
+
 	mosquitto_destroy(mosq);
 	mosquitto_lib_cleanup();
 	return 0;
@@ -452,11 +452,11 @@ int main(int argc, char *argv[])
 		<simplelist type="inline">
 			<member>
 				<citerefentry>
-					<refentrytitle><link xlink:href="mosquitto-8.php">mosquitto</link></refentrytitle>
+					<refentrytitle><link xlink:href="mosquitto-8.html">mosquitto</link></refentrytitle>
 					<manvolnum>8</manvolnum>
 				</citerefentry>
 				<citerefentry>
-					<refentrytitle><link xlink:href="mqtt-7.php">mqtt</link></refentrytitle>
+					<refentrytitle><link xlink:href="mqtt-7.html">mqtt</link></refentrytitle>
 					<manvolnum>7</manvolnum>
 				</citerefentry>
 			</member>
