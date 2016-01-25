@@ -78,3 +78,9 @@ MOSQ_1.4 {
 		mosquitto_sub_topic_check;
 		mosquitto_socks5_set;
 } MOSQ_1.3;
+
+MOSQ_1.5 {
+	global:
+		mosquitto_subscribe_simple;
+		mosquitto_subscribe_multiple;
+} MOSQ_1.4;

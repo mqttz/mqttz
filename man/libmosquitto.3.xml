@@ -368,6 +368,27 @@
 					<paramdef>bool *<parameter>result</parameter></paramdef>
 			</funcprototype></funcsynopsis>
 		</refsect2>
+
+		<refsect2>
+			<title>Helper functions</title>
+
+			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_subscribe_simple</function></funcdef>
+					<paramdef>struct mosquitto_message **<parameter>message</parameter></paramdef>
+					<paramdef>int <parameter>msg_count</parameter></paramdef>
+					<paramdef>const char *<parameter>topic</parameter></paramdef>
+					<paramdef>const char *<parameter>qos</parameter></paramdef>
+					<paramdef>bool <parameter>retained</parameter></paramdef>
+					<paramdef>const char *<parameter>host</parameter></paramdef>
+					<paramdef>int <parameter>port</parameter></paramdef>
+					<paramdef>const char *<parameter>client_id</parameter></paramdef>
+					<paramdef>int <parameter>keepalive</parameter></paramdef>
+					<paramdef>bool <parameter>clean_session</parameter></paramdef>
+					<paramdef>const char *<parameter>username</parameter></paramdef>
+					<paramdef>const char *<parameter>password</parameter></paramdef>
+					<paramdef>const struct libmosquitto_will *<parameter>will</parameter></paramdef>
+					<paramdef>const struct libmosquitto_tls *<parameter>tls</parameter></paramdef>
+			</funcprototype></funcsynopsis>
+		</refsect2>
 	</refsect1>
 
 	<refsect1>

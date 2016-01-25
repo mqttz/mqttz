@@ -30,6 +30,9 @@ Client library:
 - Outgoing messages with QoS>1 are no longer retried after a timeout period.
   Messages will be retried when a client reconnects. 
 - DNS-SRV support is now disabled by default.
+- Add mosquitto_subscribe_single() and mosquitto_subscribe_multiple(). These
+  are two helper functions to make retrieving messages from a broker very
+  straightforward.
 
 Client:
 - Add -x to mosquitto_sub for printing the payload in hexadecimal format.

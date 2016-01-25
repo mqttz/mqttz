@@ -66,7 +66,7 @@ int mosquitto_message_copy(struct mosquitto_message *dst, const struct mosquitto
 	dst->qos = src->qos;
 	dst->retain = src->retain;
 	if(src->payloadlen){
-		dst->payload = mosquitto__malloc(src->payloadlen);
+		dst->payload = mosquitto__calloc(src->payloadlen+1, sizeof(uint8_t));
 		if(!dst->payload){
 			mosquitto__free(dst->topic);
 			return MOSQ_ERR_NOMEM;
@@ -104,6 +104,14 @@ void mosquitto_message_free(struct mosquitto_message **message)
 	mosquitto__free(msg->topic);
 	mosquitto__free(msg->payload);
 	mosquitto__free(msg);
+}
+
+void mosquitto_message_free_contents(struct mosquitto_message *message)
+{
+	if(!message) return;
+
+	mosquitto__free(message->topic);
+	mosquitto__free(message->payload);
 }
 
 int message__queue(struct mosquitto *mosq, struct mosquitto_message_all *message, enum mosquitto_msg_direction dir)

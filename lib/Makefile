@@ -3,6 +3,7 @@ include ../config.mk
 .PHONY : really clean install
 
 MOSQ_OBJS=mosquitto.o \
+		  helpers.o \
 		  logging_mosq.o \
 		  memory_mosq.o \
 		  messages_mosq.o \
@@ -49,6 +50,9 @@ libmosquitto.so.${SOVERSION} : ${MOSQ_OBJS}
 libmosquitto.a : ${MOSQ_OBJS}
 	${CROSS_COMPILE}$(AR) cr $@ $^
 mosquitto.o : mosquitto.c mosquitto.h
+	${CROSS_COMPILE}$(CC) $(LIB_CFLAGS) -c $< -o $@
+
+helpers.o : helpers.c
 	${CROSS_COMPILE}$(CC) $(LIB_CFLAGS) -c $< -o $@
 
 logging_mosq.o : logging_mosq.c logging_mosq.h
