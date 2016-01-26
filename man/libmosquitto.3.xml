@@ -375,7 +375,7 @@
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_subscribe_simple</function></funcdef>
 					<paramdef>struct mosquitto_message **<parameter>message</parameter></paramdef>
 					<paramdef>int <parameter>msg_count</parameter></paramdef>
-					<paramdef>bool <parameter>retained</parameter></paramdef>
+					<paramdef>bool <parameter>want_retained</parameter></paramdef>
 					<paramdef>const char *<parameter>topic</parameter></paramdef>
 					<paramdef>int<parameter>qos</parameter></paramdef>
 					<paramdef>const char *<parameter>host</parameter></paramdef>

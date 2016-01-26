@@ -32,7 +32,7 @@ struct userdata__simple {
 	struct mosquitto_message *messages;
 	int max_msg_count;
 	int message_count;
-	bool retained;
+	bool want_retained;
 };
 
 
@@ -64,8 +64,8 @@ static int on_message_simple(struct mosquitto *mosq, void *obj, const struct mos
 		return 0;
 	}
 
-	/* Don't process stale retained messages if 'retained' was false */
-	if(!userdata->retained && message->retain){
+	/* Don't process stale retained messages if 'want_retained' was false */
+	if(!userdata->want_retained && message->retain){
 		return 0;
 	}
 
@@ -86,7 +86,7 @@ static int on_message_simple(struct mosquitto *mosq, void *obj, const struct mos
 libmosq_EXPORT int mosquitto_subscribe_simple(
 		struct mosquitto_message **messages,
 		int msg_count,
-		bool retained,
+		bool want_retained,
 		const char *topic,
 		int qos,
 		const char *host,
@@ -115,7 +115,7 @@ libmosq_EXPORT int mosquitto_subscribe_simple(
 	}
 	userdata.message_count = 0;
 	userdata.max_msg_count = msg_count;
-	userdata.retained = retained;
+	userdata.want_retained = want_retained;
 
 	rc = mosquitto_subscribe_callback(
 			on_message_simple, &userdata,

@@ -1575,11 +1575,11 @@ struct libmosquitto_tls {
  *              messages will be returned here. On error, this will be set to
  *              NULL.
  *   msg_count - the number of messages to retrieve.
- *   retained - if set to true, stale retained messages will be treated as
+ *   want_retained - if set to true, stale retained messages will be treated as
+ *                   normal messages with regards to msg_count. If set to
+ *                   false, they will be ignored.
  *   topic - the subscription topic to use (wildcards are allowed).
  *   qos - the qos to use for the subscription.
- *              normal messages with regards to msg_count. If set to false,
- *              they will be ignored.
  *   host - the broker to connect to.
  *   port - the network port the broker is listening on.
  *   client_id - the client id to use, or NULL if a random client id should be
@@ -1601,7 +1601,7 @@ struct libmosquitto_tls {
 libmosq_EXPORT int mosquitto_subscribe_simple(
 		struct mosquitto_message **messages,
 		int msg_count,
-		bool retained,
+		bool want_retained,
 		const char *topic,
 		int qos,
 		const char *host,
