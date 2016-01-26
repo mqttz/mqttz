@@ -20,53 +20,67 @@ Contributors:
 #include "mosquitto.h"
 #include "mosquitto_internal.h"
 
-struct subscribe__userdata {
+struct userdata__callback {
 	const char *topic;
+	int (*callback)(struct mosquitto *, void *, const struct mosquitto_message *);
+	void *userdata;
+	int qos;
+	int rc;
+};
+
+struct userdata__simple {
 	struct mosquitto_message *messages;
 	int max_msg_count;
 	int message_count;
-	int qos;
-	int rc;
 	bool retained;
 };
 
 
-void on_connect(struct mosquitto *mosq, void *obj, int rc)
+static void on_connect(struct mosquitto *mosq, void *obj, int rc)
 {
-	struct subscribe__userdata *userdata = obj;
+	struct userdata__callback *userdata = obj;
 
 	mosquitto_subscribe(mosq, NULL, userdata->topic, userdata->qos);
 }
 
 
-void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
+static void on_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
 {
-	struct subscribe__userdata *userdata = obj;
+	int rc;
+	struct userdata__callback *userdata = obj;
+
+	rc = userdata->callback(mosq, userdata->userdata, message);
+	if(rc){
+		mosquitto_disconnect(mosq);
+	}
+}
+
+static int on_message_simple(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
+{
+	struct userdata__simple *userdata = obj;
 	int rc;
 
 	if(userdata->max_msg_count == 0){
-		return;
+		return 0;
 	}
 
 	/* Don't process stale retained messages if 'retained' was false */
 	if(!userdata->retained && message->retain){
-		return;
+		return 0;
 	}
 
 	userdata->max_msg_count--;
 
 	rc = mosquitto_message_copy(&userdata->messages[userdata->message_count], message);
 	if(rc){
-		userdata->rc = rc;
-		mosquitto_disconnect(mosq);
-		return;
+		return rc;
 	}
 	userdata->message_count++;
 	if(userdata->max_msg_count == 0){
 		mosquitto_disconnect(mosq);
 	}
+	return 0;
 }
-
 
 
 libmosq_EXPORT int mosquitto_subscribe_simple(
@@ -85,8 +99,7 @@ libmosq_EXPORT int mosquitto_subscribe_simple(
 		const struct libmosquitto_will *will,
 		const struct libmosquitto_tls *tls)
 {
-	struct mosquitto *mosq;
-	struct subscribe__userdata userdata;
+	struct userdata__simple userdata;
 	int rc;
 	int i;
 
@@ -96,74 +109,22 @@ libmosq_EXPORT int mosquitto_subscribe_simple(
 
 	*messages = NULL;
 
-	userdata.topic = topic;
-	userdata.qos = qos;
-	userdata.max_msg_count = msg_count;
-	userdata.retained = retained;
 	userdata.messages = calloc(sizeof(struct mosquitto_message), msg_count);
-	userdata.rc = 0;
 	if(!userdata.messages){
 		return MOSQ_ERR_NOMEM;
 	}
 	userdata.message_count = 0;
+	userdata.max_msg_count = msg_count;
+	userdata.retained = retained;
 
-	mosq = mosquitto_new(client_id, clean_session, &userdata);
-	if(!mosq){
-		free(userdata.messages);
-		userdata.messages = NULL;
-		return MOSQ_ERR_NOMEM;
-	}
+	rc = mosquitto_subscribe_callback(on_message_simple,
+			topic, qos,
+			&userdata,
+			host, port,
+			client_id, keepalive, clean_session,
+			username, password,
+			will, tls);
 
-	if(will){
-		rc = mosquitto_will_set(mosq, will->topic, will->payloadlen, will->payload, will->qos, will->retain);
-		if(rc){
-			free(userdata.messages);
-			userdata.messages = NULL;
-			mosquitto_destroy(mosq);
-			return rc;
-		}
-	}
-	if(username){
-		rc = mosquitto_username_pw_set(mosq, username, password);
-		if(rc){
-			free(userdata.messages);
-			userdata.messages = NULL;
-			mosquitto_destroy(mosq);
-			return rc;
-		}
-	}
-	if(tls){
-		rc = mosquitto_tls_set(mosq, tls->cafile, tls->capath, tls->certfile, tls->keyfile, tls->pw_callback);
-		if(rc){
-			free(userdata.messages);
-			userdata.messages = NULL;
-			mosquitto_destroy(mosq);
-			return rc;
-		}
-		rc = mosquitto_tls_opts_set(mosq, tls->cert_reqs, tls->tls_version, tls->ciphers);
-		if(rc){
-			free(userdata.messages);
-			userdata.messages = NULL;
-			mosquitto_destroy(mosq);
-			return rc;
-		}
-	}
-
-	mosquitto_connect_callback_set(mosq, on_connect);
-	mosquitto_message_callback_set(mosq, on_message);
-
-	rc = mosquitto_connect(mosq, host, port, keepalive);
-	if(rc){
-		free(userdata.messages);
-		userdata.messages = NULL;
-		mosquitto_destroy(mosq);
-		return rc;
-	}
-	rc = mosquitto_loop_forever(mosq, -1, 1);
-	mosquitto_destroy(mosq);
-	if(userdata.rc){
-		rc = userdata.rc;
-	}
 	if(!rc && userdata.max_msg_count == 0){
 		*messages = userdata.messages;
 		return MOSQ_ERR_SUCCESS;
@@ -175,5 +136,87 @@ libmosq_EXPORT int mosquitto_subscribe_simple(
 		userdata.messages = NULL;
 		return rc;
 	}
+}
+
+libmosq_EXPORT int mosquitto_subscribe_callback(
+		int (*callback)(struct mosquitto *, void *, const struct mosquitto_message *),
+		const char *topic,
+		int qos,
+		void *userdata,
+		const char *host,
+		int port,
+		const char *client_id,
+		int keepalive,
+		bool clean_session,
+		const char *username,
+		const char *password,
+		const struct libmosquitto_will *will,
+		const struct libmosquitto_tls *tls)
+{
+	struct mosquitto *mosq;
+	struct userdata__callback cb_userdata;
+	int rc;
+
+	if(!callback || !topic){
+		return MOSQ_ERR_INVAL;
+	}
+
+	cb_userdata.topic = topic;
+	cb_userdata.qos = qos;
+	cb_userdata.rc = 0;
+	cb_userdata.userdata = userdata;
+	cb_userdata.callback = callback;
+
+	mosq = mosquitto_new(client_id, clean_session, &cb_userdata);
+	if(!mosq){
+		return MOSQ_ERR_NOMEM;
+	}
+
+	if(will){
+		rc = mosquitto_will_set(mosq, will->topic, will->payloadlen, will->payload, will->qos, will->retain);
+		if(rc){
+			mosquitto_destroy(mosq);
+			return rc;
+		}
+	}
+	if(username){
+		rc = mosquitto_username_pw_set(mosq, username, password);
+		if(rc){
+			mosquitto_destroy(mosq);
+			return rc;
+		}
+	}
+	if(tls){
+		rc = mosquitto_tls_set(mosq, tls->cafile, tls->capath, tls->certfile, tls->keyfile, tls->pw_callback);
+		if(rc){
+			mosquitto_destroy(mosq);
+			return rc;
+		}
+		rc = mosquitto_tls_opts_set(mosq, tls->cert_reqs, tls->tls_version, tls->ciphers);
+		if(rc){
+			mosquitto_destroy(mosq);
+			return rc;
+		}
+	}
+
+	mosquitto_connect_callback_set(mosq, on_connect);
+	mosquitto_message_callback_set(mosq, on_message_callback);
+
+	rc = mosquitto_connect(mosq, host, port, keepalive);
+	if(rc){
+		mosquitto_destroy(mosq);
+		return rc;
+	}
+	rc = mosquitto_loop_forever(mosq, -1, 1);
+	mosquitto_destroy(mosq);
+	if(cb_userdata.rc){
+		rc = cb_userdata.rc;
+	}
+	//if(!rc && cb_userdata.max_msg_count == 0){
+		//return MOSQ_ERR_SUCCESS;
+	//}else{
+		//return rc;
+	//}
+	return MOSQ_ERR_SUCCESS;
 }
 

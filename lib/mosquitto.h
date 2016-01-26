@@ -1613,6 +1613,58 @@ libmosq_EXPORT int mosquitto_subscribe_simple(
 		const char *password,
 		const struct libmosquitto_will *will,
 		const struct libmosquitto_tls *tls);
+
+
+/*
+ * Function: mosquitto_subscribe_callback
+ *
+ * Helper function to make subscribing to a topic and processing some messages
+ * very straightforward.
+ *
+ * This connects to a broker, subscribes to a topic, then passes received
+ * messages to a user provided callback. If the callback returns a 1, it then
+ * disconnects cleanly and returns. 
+ *
+ * Parameters:
+ *   callback - a callback function in the following form:
+ *              int callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
+ *              Note that this is the same as the normal on_message callback,
+ *              except that it returns an int.
+ *   topic - the subscription topic to use (wildcards are allowed).
+ *   qos - the qos to use for the subscription.
+ *   userdata - user provided pointer that will be passed to the callback.
+ *   host - the broker to connect to.
+ *   port - the network port the broker is listening on.
+ *   client_id - the client id to use, or NULL if a random client id should be
+ *               generated.
+ *   keepalive - the MQTT keepalive value.
+ *   clean_session - the MQTT clean session flag.
+ *   username - the username string, or NULL for no username authentication.
+ *   password - the password string, or NULL for an empty password.
+ *   will - a libmosquitto_will struct containing will information, or NULL for
+ *          no will.
+ *   tls - a libmosquitto_tls struct containing TLS related parameters, or NULL
+ *         for no use of TLS.
+ *
+ *
+ * Returns:
+ *   MOSQ_ERR_SUCCESS - on success
+ *   >0 - on error.
+ */
+libmosq_EXPORT int mosquitto_subscribe_callback(
+		int (*callback)(struct mosquitto *, void *, const struct mosquitto_message *),
+		const char *topic,
+		int qos,
+		void *userdata,
+		const char *host,
+		int port,
+		const char *client_id,
+		int keepalive,
+		bool clean_session,
+		const char *username,
+		const char *password,
+		const struct libmosquitto_will *will,
+		const struct libmosquitto_tls *tls);
 #ifdef __cplusplus
 }
 #endif
