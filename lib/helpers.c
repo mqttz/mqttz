@@ -20,17 +20,13 @@ Contributors:
 #include "mosquitto.h"
 #include "mosquitto_internal.h"
 
-#if 0
-	struct mosquitto_message *msg;
-	msg = mosquitto_subscribe_single("#", 0, 1, true, NULL, 1883, NULL, 60, NULL, NULL, NULL);
-#endif
-
 struct subscribe__userdata {
 	const char *topic;
 	struct mosquitto_message *messages;
 	int max_msg_count;
 	int message_count;
 	int qos;
+	int rc;
 	bool retained;
 };
 
@@ -60,17 +56,17 @@ void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto_messag
 	userdata->max_msg_count--;
 
 	rc = mosquitto_message_copy(&userdata->messages[userdata->message_count], message);
+	if(rc){
+		userdata->rc = rc;
+		mosquitto_disconnect(mosq);
+		return;
+	}
 	userdata->message_count++;
 	if(userdata->max_msg_count == 0){
 		mosquitto_disconnect(mosq);
 	}
 }
 
-
-void on_log(struct mosquitto *mosq, void *obj, int level, const char *str)
-{
-	printf("LOG %s\n", str);
-}
 
 
 libmosq_EXPORT int mosquitto_subscribe_simple(
@@ -92,6 +88,7 @@ libmosq_EXPORT int mosquitto_subscribe_simple(
 	struct mosquitto *mosq;
 	struct subscribe__userdata userdata;
 	int rc;
+	int i;
 
 	if(!topic || msg_count < 1 || !messages){
 		return MOSQ_ERR_INVAL;
@@ -104,6 +101,7 @@ libmosq_EXPORT int mosquitto_subscribe_simple(
 	userdata.max_msg_count = msg_count;
 	userdata.retained = retained;
 	userdata.messages = calloc(sizeof(struct mosquitto_message), msg_count);
+	userdata.rc = 0;
 	if(!userdata.messages){
 		return MOSQ_ERR_NOMEM;
 	}
@@ -151,7 +149,6 @@ libmosq_EXPORT int mosquitto_subscribe_simple(
 		}
 	}
 
-	mosquitto_log_callback_set(mosq, on_log);
 	mosquitto_connect_callback_set(mosq, on_connect);
 	mosquitto_message_callback_set(mosq, on_message);
 
@@ -163,14 +160,17 @@ libmosq_EXPORT int mosquitto_subscribe_simple(
 		return rc;
 	}
 	rc = mosquitto_loop_forever(mosq, -1, 1);
-	printf("lp:%d\n", rc);
 	mosquitto_destroy(mosq);
+	if(userdata.rc){
+		rc = userdata.rc;
+	}
 	if(!rc && userdata.max_msg_count == 0){
-		printf("*messages: %p\n", userdata.messages);
 		*messages = userdata.messages;
 		return MOSQ_ERR_SUCCESS;
 	}else{
-		// FIXME - free messages
+		for(i=0; i<msg_count; i++){
+			mosquitto_message_free_contents(&userdata.messages[i]);
+		}
 		free(userdata.messages);
 		userdata.messages = NULL;
 		return rc;

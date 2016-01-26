@@ -82,5 +82,5 @@ MOSQ_1.4 {
 MOSQ_1.5 {
 	global:
 		mosquitto_subscribe_simple;
-		mosquitto_subscribe_multiple;
+		mosquitto_message_free_contents;
 } MOSQ_1.4;
