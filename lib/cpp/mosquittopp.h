@@ -44,9 +44,9 @@ mosqpp_EXPORT int topic_matches_sub(const char *sub, const char *topic, bool *re
 mosqpp_EXPORT int subscribe_simple(
 		struct mosquitto_message **messages,
 		int msg_count,
+		bool retained,
 		const char *topic,
 		int qos=0,
-		bool retained=true,
 		const char *host="localhost",
 		int port=1883,
 		const char *client_id=NULL,
@@ -59,9 +59,9 @@ mosqpp_EXPORT int subscribe_simple(
 
 mosqpp_EXPORT int subscribe_callback(
 		int (*callback)(struct mosquitto *, void *, const struct mosquitto_message *),
+		void *userdata,
 		const char *topic,
 		int qos=0,
-		void *userdata=NULL,
 		bool retained=true,
 		const char *host="localhost",
 		int port=1883,

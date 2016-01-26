@@ -109,9 +109,9 @@ int topic_matches_sub(const char *sub, const char *topic, bool *result)
 int subscribe_simple(
 		struct mosquitto_message **messages,
 		int msg_count,
+		bool retained,
 		const char *topic,
 		int qos,
-		bool retained,
 		const char *host,
 		int port,
 		const char *client_id,
@@ -122,7 +122,9 @@ int subscribe_simple(
 		const struct libmosquitto_will *will,
 		const struct libmosquitto_tls *tls)
 {
-	return mosquitto_subscribe_simple(messages, msg_count, topic, qos, retained,
+	return mosquitto_subscribe_simple(
+			messages, msg_count, retained,
+			topic, qos,
 			host, port, client_id, keepalive, clean_session,
 			username, password,
 			will, tls);
@@ -130,10 +132,9 @@ int subscribe_simple(
 
 mosqpp_EXPORT int subscribe_callback(
 		int (*callback)(struct mosquitto *, void *, const struct mosquitto_message *),
+		void *userdata,
 		const char *topic,
 		int qos,
-		void *userdata,
-		bool retained,
 		const char *host,
 		int port,
 		const char *client_id,
@@ -144,7 +145,9 @@ mosqpp_EXPORT int subscribe_callback(
 		const struct libmosquitto_will *will,
 		const struct libmosquitto_tls *tls)
 {
-	return mosquitto_subscribe_callback(callback, topic, qos, userdata, retained,
+	return mosquitto_subscribe_callback(
+			callback, userdata,
+			topic, qos,
 			host, port, client_id, keepalive, clean_session,
 			username, password,
 			will, tls);

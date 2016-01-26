@@ -16,8 +16,8 @@ int main(int argc, char *argv[])
 	mosquitto_lib_init();
 
 	rc = mosquitto_subscribe_callback(
-			on_message,
-			"irc/#", 0, NULL,
+			on_message, NULL,
+			"irc/#", 0,
 			"test.mosquitto.org", 1883,
 			NULL, 60, true,
 			NULL, NULL,

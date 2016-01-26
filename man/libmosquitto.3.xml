@@ -375,9 +375,9 @@
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_subscribe_simple</function></funcdef>
 					<paramdef>struct mosquitto_message **<parameter>message</parameter></paramdef>
 					<paramdef>int <parameter>msg_count</parameter></paramdef>
+					<paramdef>bool <parameter>retained</parameter></paramdef>
 					<paramdef>const char *<parameter>topic</parameter></paramdef>
 					<paramdef>int<parameter>qos</parameter></paramdef>
-					<paramdef>bool <parameter>retained</parameter></paramdef>
 					<paramdef>const char *<parameter>host</parameter></paramdef>
 					<paramdef>int <parameter>port</parameter></paramdef>
 					<paramdef>const char *<parameter>client_id</parameter></paramdef>
@@ -391,9 +391,9 @@
 
 			<funcsynopsis><funcprototype><funcdef>int <function>mosquitto_subscribe_callback</function></funcdef>
 					<paramdef>int <parameter>(*callback)(struct mosquitto *, void *, const struct mosquitto_message *)</parameter></paramdef>
+					<paramdef>void *<parameter>userdata</parameter></paramdef>
 					<paramdef>const char *<parameter>topic</parameter></paramdef>
 					<paramdef>int <parameter>qos</parameter></paramdef>
-					<paramdef>void *<parameter>userdata</parameter></paramdef>
 					<paramdef>const char *<parameter>host</parameter></paramdef>
 					<paramdef>int <parameter>port</parameter></paramdef>
 					<paramdef>const char *<parameter>client_id</parameter></paramdef>

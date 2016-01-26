@@ -31,8 +31,11 @@ Client library:
   Messages will be retried when a client reconnects. 
 - DNS-SRV support is now disabled by default.
 - Add mosquitto_subscribe_simple() This is a helper function to make
-  retrieving messages from a broker very straightforward. Examples of its user
+  retrieving messages from a broker very straightforward. Examples of its use
   are in examples/subscribe_simple.
+- Add mosquitto_subscribe_callback() This is a helper function to make
+  processing messages from a broker very straightforward. An example of its use
+  is in examples/subscribe_simple.
 
 Client:
 - Add -x to mosquitto_sub for printing the payload in hexadecimal format.

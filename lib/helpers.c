@@ -86,9 +86,9 @@ static int on_message_simple(struct mosquitto *mosq, void *obj, const struct mos
 libmosq_EXPORT int mosquitto_subscribe_simple(
 		struct mosquitto_message **messages,
 		int msg_count,
+		bool retained,
 		const char *topic,
 		int qos,
-		bool retained,
 		const char *host,
 		int port,
 		const char *client_id,
@@ -117,9 +117,9 @@ libmosq_EXPORT int mosquitto_subscribe_simple(
 	userdata.max_msg_count = msg_count;
 	userdata.retained = retained;
 
-	rc = mosquitto_subscribe_callback(on_message_simple,
+	rc = mosquitto_subscribe_callback(
+			on_message_simple, &userdata,
 			topic, qos,
-			&userdata,
 			host, port,
 			client_id, keepalive, clean_session,
 			username, password,
@@ -138,11 +138,12 @@ libmosq_EXPORT int mosquitto_subscribe_simple(
 	}
 }
 
+
 libmosq_EXPORT int mosquitto_subscribe_callback(
 		int (*callback)(struct mosquitto *, void *, const struct mosquitto_message *),
+		void *userdata,
 		const char *topic,
 		int qos,
-		void *userdata,
 		const char *host,
 		int port,
 		const char *client_id,

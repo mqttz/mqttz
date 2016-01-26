@@ -1575,9 +1575,9 @@ struct libmosquitto_tls {
  *              messages will be returned here. On error, this will be set to
  *              NULL.
  *   msg_count - the number of messages to retrieve.
+ *   retained - if set to true, stale retained messages will be treated as
  *   topic - the subscription topic to use (wildcards are allowed).
  *   qos - the qos to use for the subscription.
- *   retained - if set to true, stale retained messages will be treated as
  *              normal messages with regards to msg_count. If set to false,
  *              they will be ignored.
  *   host - the broker to connect to.
@@ -1601,9 +1601,9 @@ struct libmosquitto_tls {
 libmosq_EXPORT int mosquitto_subscribe_simple(
 		struct mosquitto_message **messages,
 		int msg_count,
+		bool retained,
 		const char *topic,
 		int qos,
-		bool retained,
 		const char *host,
 		int port,
 		const char *client_id,
@@ -1630,9 +1630,9 @@ libmosq_EXPORT int mosquitto_subscribe_simple(
  *              int callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
  *              Note that this is the same as the normal on_message callback,
  *              except that it returns an int.
+ *   userdata - user provided pointer that will be passed to the callback.
  *   topic - the subscription topic to use (wildcards are allowed).
  *   qos - the qos to use for the subscription.
- *   userdata - user provided pointer that will be passed to the callback.
  *   host - the broker to connect to.
  *   port - the network port the broker is listening on.
  *   client_id - the client id to use, or NULL if a random client id should be
@@ -1653,9 +1653,9 @@ libmosq_EXPORT int mosquitto_subscribe_simple(
  */
 libmosq_EXPORT int mosquitto_subscribe_callback(
 		int (*callback)(struct mosquitto *, void *, const struct mosquitto_message *),
+		void *userdata,
 		const char *topic,
 		int qos,
-		void *userdata,
 		const char *host,
 		int port,
 		const char *client_id,

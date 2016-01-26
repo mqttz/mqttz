@@ -10,8 +10,8 @@ int main(int argc, char *argv[])
 	mosquitto_lib_init();
 
 	rc = mosquitto_subscribe_simple(
-			&msg, 1,
-			"irc/#", 0, true,
+			&msg, 1, true,
+			"irc/#", 0,
 			"test.mosquitto.org", 1883,
 			NULL, 60, true,
 			NULL, NULL,
