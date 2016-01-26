@@ -376,7 +376,7 @@
 					<paramdef>struct mosquitto_message **<parameter>message</parameter></paramdef>
 					<paramdef>int <parameter>msg_count</parameter></paramdef>
 					<paramdef>const char *<parameter>topic</parameter></paramdef>
-					<paramdef>const char *<parameter>qos</parameter></paramdef>
+					<paramdef>int<parameter>qos</parameter></paramdef>
 					<paramdef>bool <parameter>retained</parameter></paramdef>
 					<paramdef>const char *<parameter>host</parameter></paramdef>
 					<paramdef>int <parameter>port</parameter></paramdef>

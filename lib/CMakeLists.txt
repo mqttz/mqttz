@@ -25,6 +25,7 @@ include_directories(${mosquitto_SOURCE_DIR} ${mosquitto_SOURCE_DIR}/lib
 link_directories(${mosquitto_SOURCE_DIR}/lib)
 
 add_library(libmosquitto SHARED
+	helpers.c
 	logging_mosq.c logging_mosq.h
 	memory_mosq.c memory_mosq.h
 	messages_mosq.c messages_mosq.h
