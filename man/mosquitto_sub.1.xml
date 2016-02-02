@@ -27,7 +27,10 @@
 			<arg><option>-k</option> <replaceable>keepalive time</replaceable></arg>
 			<arg><option>-p</option> <replaceable>port number</replaceable></arg>
 			<arg><option>-q</option> <replaceable>message QoS</replaceable></arg>
-			<arg><option>-R</option></arg>
+			<group choice='opt'>
+				<arg choice='plain'><option>-R</option></arg>
+				<arg choice='plain'><option>--retained-only</option></arg>
+			</group>
 			<arg><option>-S</option></arg>
 			<arg><option>-N</option></arg>
 			<arg><option>--quiet</option></arg>
@@ -352,6 +355,17 @@
 						subscribing to a wildcard topic there may be a large
 						number of retained messages. This argument suppresses
 						their display.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>--retained-only</option></term>
+				<listitem>
+					<para>If this argument is given, only messages that are
+						received that have the retain bit set will be printed.
+						Messages with retain set are "stale", in that it is not
+						known when they were originally published. With this
+						argument in use, the receipt of the first non-stale
+						message will cause the client to exit.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

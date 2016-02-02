@@ -501,6 +501,11 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				goto unknown_option;
 			}
 			cfg->retain = 1;
+		}else if(!strcmp(argv[i], "--retained-only")){
+			if(pub_or_sub == CLIENT_PUB){
+				goto unknown_option;
+			}
+			cfg->retained_only = true;
 		}else if(!strcmp(argv[i], "-s") || !strcmp(argv[i], "--stdin-file")){
 			if(pub_or_sub == CLIENT_SUB){
 				goto unknown_option;
