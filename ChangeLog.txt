@@ -25,6 +25,7 @@ Broker:
 - Minimum supported libwebsockets version is now 1.3.
 - Support for Windows XP has been dropped.
 - Miscellaneous fixes on Windows.
+- Bridge connections now default to using MQTT v3.1.1.
 
 Client library:
 - Outgoing messages with QoS>1 are no longer retried after a timeout period.
@@ -36,12 +37,14 @@ Client library:
 - Add mosquitto_subscribe_callback() This is a helper function to make
   processing messages from a broker very straightforward. An example of its use
   is in examples/subscribe_simple.
+- Connections now default to using MQTT v3.1.1.
 
 Client:
 - Add -x to mosquitto_sub for printing the payload in hexadecimal format.
 - Add -U to mosquitto_sub for unsubscribing from topics.
 - Add --retained-only to mosquitto_sub to exit after receiving all retained
   messages.
+- Connections now default to using MQTT v3.1.1.
 
 
 1.4.7 - 20151221

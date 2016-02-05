@@ -479,8 +479,8 @@
 				<listitem>
 					<para>Specify which version of the MQTT protocol should be
 						used when connecting to the rmeote broker. Can be
-						<option>mqttv31</option> or <option>mqttv311</option>.
-						Defaults to <option>mqttv31</option>.</para>
+						<option>mqttv311</option> or <option>mqttv31</option>.
+						Defaults to <option>mqttv311</option>.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
