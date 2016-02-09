@@ -75,6 +75,7 @@ struct mosq_config {
 	char **topics; /* sub */
 	int topic_count; /* sub */
 	bool no_retain; /* sub */
+	bool retained_only; /* sub */
 	char **filter_outs; /* sub */
 	int filter_out_count; /* sub */
 	char **unsub_topics; /* sub */

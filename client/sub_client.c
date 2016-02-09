@@ -57,6 +57,12 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 	assert(obj);
 	cfg = (struct mosq_config *)obj;
 
+	if(cfg->retained_only && !message->retain && process_messages){
+		process_messages = false;
+		mosquitto_disconnect(mosq);
+		return;
+	}
+
 	if(message->retain && cfg->no_retain) return;
 	if(cfg->filter_outs){
 		for(i=0; i<cfg->filter_out_count; i++){
@@ -146,7 +152,7 @@ void print_usage(void)
 	printf("mosquitto_sub is a simple mqtt client that will subscribe to a single topic and print all messages it receives.\n");
 	printf("mosquitto_sub version %s running on libmosquitto %d.%d.%d.\n\n", VERSION, major, minor, revision);
 	printf("Usage: mosquitto_sub [-c] [-h host] [-k keepalive] [-p port] [-q qos] [-R] {-t topic ... | -U topic ...}\n");
-	printf("                     [-C msg_count] [-T filter_out]\n");
+	printf("                     [-C msg_count] [--retained-only] [-T filter_out]\n");
 #ifdef WITH_SRV
 	printf("                     [-A bind_address] [-S]\n");
 #else
@@ -195,6 +201,8 @@ void print_usage(void)
 	printf(" -x : print published message payloads as hexadecimal data.\n");
 	printf(" --help : display this message.\n");
 	printf(" --quiet : don't print error messages.\n");
+	printf(" --retained-only : only handle messages with the retained flag set, and exit when the\n");
+	printf("                   first non-retained message is received.\n");
 	printf(" --will-payload : payload for the client Will, which is sent by the broker in case of\n");
 	printf("                  unexpected disconnection. If not given and will-topic is set, a zero\n");
 	printf("                  length message will be sent.\n");
@@ -244,6 +252,11 @@ int main(int argc, char *argv[])
 		}else{
 			fprintf(stderr, "\nUse 'mosquitto_sub --help' to see usage.\n");
 		}
+		return 1;
+	}
+
+	if(cfg.no_retain && cfg.retained_only){
+		fprintf(stderr, "\nError: Combining '-R' and '--retained-only' makes no sense.\n");
 		return 1;
 	}
 

@@ -580,9 +580,9 @@ void service_run(void);
  * ============================================================ */
 #ifdef WITH_WEBSOCKETS
 #  if defined(LWS_LIBRARY_VERSION_NUMBER)
-struct lws_context *mosq_websockets_init(struct _mqtt3_listener *listener, int log_level);
+struct lws_context *mosq_websockets_init(struct mosquitto__listener *listener, int log_level);
 #  else
-struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listener, int log_level);
+struct libwebsocket_context *mosq_websockets_init(struct mosquitto__listener *listener, int log_level);
 #  endif
 #endif
 void do_disconnect(struct mosquitto_db *db, struct mosquitto *context);
