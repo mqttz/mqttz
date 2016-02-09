@@ -184,10 +184,10 @@ void message__reconnect_reset(struct mosquitto *mosq)
 		mosq->out_queue_len++;
 		message->timestamp = 0;
 
-		if(message->msg.qos > 0){
-			mosq->inflight_messages++;
-		}
 		if(mosq->max_inflight_messages == 0 || mosq->inflight_messages < mosq->max_inflight_messages){
+			if(message->msg.qos > 0){
+				mosq->inflight_messages++;
+			}
 			if(message->msg.qos == 1){
 				message->state = mosq_ms_publish_qos1;
 			}else if(message->msg.qos == 2){
