@@ -352,7 +352,9 @@ int net__socket_connect(struct mosquitto *mosq, const char *host, uint16_t port,
 #ifdef WITH_TLS
 	if(mosq->tls_cafile || mosq->tls_capath || mosq->tls_psk){
 #if OPENSSL_VERSION_NUMBER >= 0x10001000L
-		if(!mosq->tls_version || !strcmp(mosq->tls_version, "tlsv1.2")){
+		if(!mosq->tls_version){
+			mosq->ssl_ctx = SSL_CTX_new(SSLv23_client_method());
+		}else if(!strcmp(mosq->tls_version, "tlsv1.2")){
 			mosq->ssl_ctx = SSL_CTX_new(TLSv1_2_client_method());
 		}else if(!strcmp(mosq->tls_version, "tlsv1.1")){
 			mosq->ssl_ctx = SSL_CTX_new(TLSv1_1_client_method());
