@@ -152,7 +152,7 @@ void print_usage(void)
 	printf("mosquitto_sub is a simple mqtt client that will subscribe to a single topic and print all messages it receives.\n");
 	printf("mosquitto_sub version %s running on libmosquitto %d.%d.%d.\n\n", VERSION, major, minor, revision);
 	printf("Usage: mosquitto_sub [-c] [-h host] [-k keepalive] [-p port] [-q qos] [-R] {-t topic ... | -U topic ...}\n");
-	printf("                     [-C msg_count] [--retained-only] [-T filter_out]\n");
+	printf("                     [-L URL] [-C msg_count] [--retained-only] [-T filter_out]\n");
 #ifdef WITH_SRV
 	printf("                     [-A bind_address] [-S]\n");
 #else
@@ -184,7 +184,7 @@ void print_usage(void)
 	printf("      broker is using the clientid_prefixes option.\n");
 	printf(" -k : keep alive in seconds for this client. Defaults to 60.\n");
 	printf(" -N : do not add an end of line character when printing the payload.\n");
-	printf(" -p : network port to connect to. Defaults to 1883.\n");
+	printf(" -p : network port to connect to. Defaults to 1883 for plain MQTT and 8883 for MQTT over TLS.\n");
 	printf(" -P : provide a password (requires MQTT 3.1 broker)\n");
 	printf(" -q : quality of service level to use for the subscription. Defaults to 0.\n");
 	printf(" -R : do not print stale messages (those with retain set).\n");
@@ -193,6 +193,8 @@ void print_usage(void)
 #endif
 	printf(" -t : mqtt topic to subscribe to. May be repeated multiple times.\n");
 	printf(" -T : topic string to filter out of results. May be repeated.\n");
+	printf(" -L : specify user, password, hostname, port and topic as a URL in the form:\n");
+	printf("      mqtt(s)://[username[:password]@]host[:port]/topic\n");
 	printf(" -u : provide a username (requires MQTT 3.1 broker)\n");
 	printf(" -U : unsubscribe from a topic. May be repeated.\n");
 	printf(" -v : print published messages verbosely.\n");

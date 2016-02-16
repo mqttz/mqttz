@@ -240,6 +240,30 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 	return MOSQ_ERR_SUCCESS;
 }
 
+int cfg_add_topic(struct mosq_config *cfg, int pub_or_sub, char *topic)
+{
+	if(pub_or_sub == CLIENT_PUB){
+		if(mosquitto_pub_topic_check(topic) == MOSQ_ERR_INVAL){
+			fprintf(stderr, "Error: Invalid publish topic '%s', does it contain '+' or '#'?\n", topic);
+			return 1;
+		}
+		cfg->topic = strdup(topic);
+	} else {
+		if(mosquitto_sub_topic_check(topic) == MOSQ_ERR_INVAL){
+			fprintf(stderr, "Error: Invalid subscription topic '%s', are all '+' and '#' wildcards correct?\n", topic);
+			return 1;
+		}
+		cfg->topic_count++;
+		cfg->topics = realloc(cfg->topics, cfg->topic_count*sizeof(char *));
+		if(!cfg->topics){
+			fprintf(stderr, "Error: Out of memory.\n");
+			return 1;
+		}
+		cfg->topics[cfg->topic_count-1] = strdup(topic);
+	}
+	return 0;
+}
+
 /* Process a tokenised single line from a file or set of real argc/argv */
 int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, char *argv[])
 {
@@ -525,25 +549,8 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				fprintf(stderr, "Error: -t argument given but no topic specified.\n\n");
 				return 1;
 			}else{
-				if(pub_or_sub == CLIENT_PUB){
-					if(mosquitto_pub_topic_check(argv[i+1]) == MOSQ_ERR_INVAL){
-						fprintf(stderr, "Error: Invalid publish topic '%s', does it contain '+' or '#'?\n", argv[i+1]);
-						return 1;
-					}
-					cfg->topic = strdup(argv[i+1]);
-				}else{
-					if(mosquitto_sub_topic_check(argv[i+1]) == MOSQ_ERR_INVAL){
-						fprintf(stderr, "Error: Invalid subscription topic '%s', are all '+' and '#' wildcards correct?\n", argv[i+1]);
-						return 1;
-					}
-					cfg->topic_count++;
-					cfg->topics = realloc(cfg->topics, cfg->topic_count*sizeof(char *));
-					if(!cfg->topics){
-						fprintf(stderr, "Error: Out of memory.\n");
-						return 1;
-					}
-					cfg->topics[cfg->topic_count-1] = strdup(argv[i+1]);
-				}
+				if(cfg_add_topic(cfg, pub_or_sub, argv[i + 1]))
+					return 1;
 				i++;
 			}
 		}else if(!strcmp(argv[i], "-T") || !strcmp(argv[i], "--filter-out")){
@@ -674,6 +681,50 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				goto unknown_option;
 			}
 			cfg->hex_output = true;
+		}else if(!strcmp(argv[i], "-L") || !strcmp(argv[i], "--url")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: -x argument given but no URL specified.\n\n");
+				return 1;
+			} else {
+				char *url = argv[i+1];
+				char *topic;
+				char *tmp;
+
+				if(!strncasecmp(url, "mqtt://", 7)) {
+					url += 7;
+				} else if(!strncasecmp(url, "mqtts://", 8)) {
+					url += 8;
+					cfg->port = 8883;
+				} else {
+					fprintf(stderr, "Error: unsupported URL scheme.\n\n");
+					return 1;
+				}
+				topic = strchr(url, '/');
+				*topic++ = 0;
+
+				if(cfg_add_topic(cfg, pub_or_sub, topic))
+					return 1;
+
+				tmp = strchr(url, '@');
+				if(tmp) {
+					char *colon = strchr(url, ':');
+					*tmp++ = 0;
+					if(colon) {
+						*colon = 0;
+						cfg->password = colon + 1;
+					}
+					cfg->username = url;
+					url = tmp;
+				}
+				cfg->host = url;
+
+				tmp = strchr(url, ':');
+				if(tmp) {
+					*tmp++ = 0;
+					cfg->port = atoi(tmp);
+				}
+			}
+			i++;
 		}else{
 			goto unknown_option;
 		}
