@@ -17,16 +17,28 @@
 	<refsynopsisdiv>
 		<cmdsynopsis>
 			<command>mosquitto_sub</command>
+			<group choice='req'>
+				<arg choice='plain'>
+					<arg><option>-h</option> <replaceable>hostname</replaceable></arg>
+					<arg><option>-p</option> <replaceable>port number</replaceable></arg>
+					<arg>
+						<arg><option>-u</option> <replaceable>username</replaceable></arg>
+						<arg><option>-P</option> <replaceable>password</replaceable></arg>
+					</arg>
+					<arg choice='plain' rep='repeat'><option>-t</option> <replaceable>message-topic</replaceable></arg>
+				</arg>
+				<arg choice='plain'>
+					<arg choice='plain'><option>-L</option> <replaceable>URL</replaceable></arg>
+					<arg choice='opt' rep='repeat'><option>-t</option> <replaceable>message-topic</replaceable></arg>
+				</arg>
+			</group>
 			<arg><option>-A</option> <replaceable>bind_address</replaceable></arg>
 			<arg><option>-c</option></arg>
 			<arg><option>-C</option> <replaceable>msg count</replaceable></arg>
 			<arg><option>-d</option></arg>
-			<arg><option>-h</option> <replaceable>hostname</replaceable></arg>
 			<arg><option>-i</option> <replaceable>client_id</replaceable></arg>
 			<arg><option>-I</option> <replaceable>client id prefix</replaceable></arg>
 			<arg><option>-k</option> <replaceable>keepalive time</replaceable></arg>
-			<arg><option>-L</option> <replaceable>URL</replaceable></arg>
-			<arg><option>-p</option> <replaceable>port number</replaceable></arg>
 			<arg><option>-q</option> <replaceable>message QoS</replaceable></arg>
 			<group choice='opt'>
 				<arg choice='plain'><option>-R</option></arg>
@@ -37,10 +49,6 @@
 			<arg><option>--quiet</option></arg>
 			<arg><option>-v</option></arg>
 			<arg><option>-x</option></arg>
-			<arg>
-				<arg><option>-u</option> <replaceable>username</replaceable></arg>
-				<arg><option>-P</option> <replaceable>password</replaceable></arg>
-			</arg>
 			<arg>
 				<option>--will-topic</option> <replaceable>topic</replaceable>
 				<arg><option>--will-payload</option> <replaceable>payload</replaceable></arg>
@@ -67,10 +75,7 @@
 			<arg><option>--proxy</option> <replaceable>socks-url</replaceable></arg>
 			<arg><option>-V</option> <replaceable>protocol-version</replaceable></arg>
 			<arg choice='opt' rep='repeat'><option>-T</option> <replaceable>filter-out</replaceable></arg>
-			<group choice='req'>
-				<arg choice='plain' rep='repeat'><option>-U</option> <replaceable>unsub-topic</replaceable></arg>
-				<arg choice='plain' rep='repeat'><option>-t</option> <replaceable>message-topic</replaceable></arg>
-			</group>
+			<arg choice='opt' rep='repeat'><option>-U</option> <replaceable>unsub-topic</replaceable></arg>
 		</cmdsynopsis>
 		<cmdsynopsis>
 			<command>mosquitto_sub</command>
@@ -259,6 +264,15 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>-L</option></term>
+				<term><option>--url</option></term>
+				<listitem>
+					<para>Specify specify user, password, hostname, port and topic at once as a URL.
+					The URL must be in the form:
+					mqtt(s)://[username[:password]@]host[:port]/topic</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>-N</option></term>
 				<listitem>
 					<para>Do not append an end of line character to the payload
@@ -419,15 +433,6 @@
 						openssl is too old, only <option>tlsv1</option> will be
 						available. Must match the protocol version used by the
 						broker.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>-L</option></term>
-				<term><option>--url</option></term>
-				<listitem>
-					<para>Specify specify user, password, hostname, port and topic at once as a URL.
-					The URL must be in the form:
-					mqtt(s)://[username[:password]@]host[:port]/topic</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

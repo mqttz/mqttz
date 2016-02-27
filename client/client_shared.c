@@ -417,6 +417,50 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 			}
 			i++;
 #endif
+		}else if(!strcmp(argv[i], "-L") || !strcmp(argv[i], "--url")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: -L argument given but no URL specified.\n\n");
+				return 1;
+			} else {
+				char *url = argv[i+1];
+				char *topic;
+				char *tmp;
+
+				if(!strncasecmp(url, "mqtt://", 7)) {
+					url += 7;
+				} else if(!strncasecmp(url, "mqtts://", 8)) {
+					url += 8;
+					cfg->port = 8883;
+				} else {
+					fprintf(stderr, "Error: unsupported URL scheme.\n\n");
+					return 1;
+				}
+				topic = strchr(url, '/');
+				*topic++ = 0;
+
+				if(cfg_add_topic(cfg, pub_or_sub, topic))
+					return 1;
+
+				tmp = strchr(url, '@');
+				if(tmp) {
+					char *colon = strchr(url, ':');
+					*tmp++ = 0;
+					if(colon) {
+						*colon = 0;
+						cfg->password = colon + 1;
+					}
+					cfg->username = url;
+					url = tmp;
+				}
+				cfg->host = url;
+
+				tmp = strchr(url, ':');
+				if(tmp) {
+					*tmp++ = 0;
+					cfg->port = atoi(tmp);
+				}
+			}
+			i++;
 		}else if(!strcmp(argv[i], "-l") || !strcmp(argv[i], "--stdin-line")){
 			if(pub_or_sub == CLIENT_SUB){
 				goto unknown_option;
@@ -681,50 +725,6 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				goto unknown_option;
 			}
 			cfg->hex_output = true;
-		}else if(!strcmp(argv[i], "-L") || !strcmp(argv[i], "--url")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: -x argument given but no URL specified.\n\n");
-				return 1;
-			} else {
-				char *url = argv[i+1];
-				char *topic;
-				char *tmp;
-
-				if(!strncasecmp(url, "mqtt://", 7)) {
-					url += 7;
-				} else if(!strncasecmp(url, "mqtts://", 8)) {
-					url += 8;
-					cfg->port = 8883;
-				} else {
-					fprintf(stderr, "Error: unsupported URL scheme.\n\n");
-					return 1;
-				}
-				topic = strchr(url, '/');
-				*topic++ = 0;
-
-				if(cfg_add_topic(cfg, pub_or_sub, topic))
-					return 1;
-
-				tmp = strchr(url, '@');
-				if(tmp) {
-					char *colon = strchr(url, ':');
-					*tmp++ = 0;
-					if(colon) {
-						*colon = 0;
-						cfg->password = colon + 1;
-					}
-					cfg->username = url;
-					url = tmp;
-				}
-				cfg->host = url;
-
-				tmp = strchr(url, ':');
-				if(tmp) {
-					*tmp++ = 0;
-					cfg->port = atoi(tmp);
-				}
-			}
-			i++;
 		}else{
 			goto unknown_option;
 		}

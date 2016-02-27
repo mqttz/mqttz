@@ -17,15 +17,24 @@
 	<refsynopsisdiv>
 		<cmdsynopsis>
 			<command>mosquitto_pub</command>
+			<group choice='req'>
+				<arg choice='plain'>
+					<arg><option>-h</option> <replaceable>hostname</replaceable></arg>
+					<arg><option>-p</option> <replaceable>port number</replaceable></arg>
+					<arg>
+						<arg><option>-u</option> <replaceable>username</replaceable></arg>
+						<arg><option>-P</option> <replaceable>password</replaceable></arg>
+					</arg>
+					<arg choice='plain' rep='repeat'><option>-t</option> <replaceable>message-topic</replaceable></arg>
+				</arg>
+				<arg choice='plain'><option>-L</option> <replaceable>URL</replaceable></arg>
+			</group>
 			<arg><option>-A</option> <replaceable>bind_address</replaceable></arg>
 			<arg><option>-d</option></arg>
-			<arg><option>-h</option> <replaceable>hostname</replaceable></arg>
 			<arg><option>-i</option> <replaceable>client_id</replaceable></arg>
 			<arg><option>-I</option> <replaceable>client id prefix</replaceable></arg>
 			<arg><option>-k</option> <replaceable>keepalive time</replaceable></arg>
-			<arg><option>-p</option> <replaceable>port number</replaceable></arg>
 			<arg><option>-q</option> <replaceable>message QoS</replaceable></arg>
-			<arg><option>-L</option> <replaceable>URL</replaceable></arg>
 			<arg><option>--quiet</option></arg>
 			<arg><option>-r</option></arg>
 			<arg><option>-S</option></arg>
@@ -36,10 +45,6 @@
 				<arg choice='plain'><option>-n</option></arg>
 				<arg choice='plain'><option>-s</option></arg>
 			</group>
-			<arg>
-				<arg><option>-u</option> <replaceable>username</replaceable></arg>
-				<arg><option>-P</option> <replaceable>password</replaceable></arg>
-			</arg>
 			<arg>
 				<option>--will-topic</option> <replaceable>topic</replaceable>
 				<arg><option>--will-payload</option> <replaceable>payload</replaceable></arg>
@@ -68,7 +73,6 @@
 			<arg><option>--proxy</option> <replaceable>socks-url</replaceable></arg>
 			<arg><option>-V</option> <replaceable>protocol-version</replaceable></arg>
 
-			<arg choice='plain'><option>-t</option> <replaceable>message-topic</replaceable></arg>
 		</cmdsynopsis>
 		<cmdsynopsis>
 			<command>mosquitto_pub</command>
@@ -231,6 +235,15 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>-L</option></term>
+				<term><option>--url</option></term>
+				<listitem>
+					<para>Specify specify user, password, hostname, port and topic at once as a URL.
+					The URL must be in the form:
+					mqtt(s)://[username[:password]@]host[:port]/topic</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>-l</option></term>
 				<term><option>--stdin-line</option></term>
 				<listitem>
@@ -367,15 +380,6 @@
 						openssl is too old, only <option>tlsv1</option> will be
 						available. Must match the protocol version used by the
 						broker.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>-L</option></term>
-				<term><option>--url</option></term>
-				<listitem>
-					<para>Specify specify user, password, hostname, port and topic at once as a URL.
-					The URL must be in the form:
-					mqtt(s)://[username[:password]@]host[:port]/topic</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
