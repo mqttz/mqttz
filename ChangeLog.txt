@@ -1,4 +1,12 @@
-1.4.8 - 20150214
+1.4.9 - 20160xxx
+================
+
+Client library:
+- Fix the case where a message received just before the keepalive timer
+  expired would cause the client to miss the keepalive timer.
+
+
+1.4.8 - 20160214
 ================
 
 Broker:

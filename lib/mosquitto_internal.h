@@ -155,7 +155,7 @@ struct mosquitto {
 	uint16_t last_mid;
 	enum mosquitto_client_state state;
 	time_t last_msg_in;
-	time_t last_msg_out;
+	time_t next_msg_out;
 	time_t ping_t;
 	struct _mosquitto_packet in_packet;
 	struct _mosquitto_packet *current_out_packet;
