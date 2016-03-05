@@ -5,6 +5,8 @@ Broker:
 - Ensure websockets clients that previously connected with clean session set
   to false have their queued messages delivered immediately on reconnecting.
   Closes #476314.
+- Reconnecting client with clean session set to false doesn't start with mid=1
+  again.
 
 Client library:
 - Fix the case where a message received just before the keepalive timer
