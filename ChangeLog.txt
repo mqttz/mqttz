@@ -1,6 +1,11 @@
 1.4.9 - 20160xxx
 ================
 
+Broker:
+- Ensure websockets clients that previously connected with clean session set
+  to false have their queued messages delivered immediately on reconnecting.
+  Closes #476314.
+
 Client library:
 - Fix the case where a message received just before the keepalive timer
   expired would cause the client to miss the keepalive timer.
