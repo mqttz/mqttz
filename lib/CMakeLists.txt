@@ -25,6 +25,14 @@ include_directories(${mosquitto_SOURCE_DIR} ${mosquitto_SOURCE_DIR}/lib
 link_directories(${mosquitto_SOURCE_DIR}/lib)
 
 add_library(libmosquitto SHARED
+	handle_connack.c
+	handle_ping.c
+	handle_pubackcomp.c
+	handle_publish.c
+	handle_pubrec.c
+	handle_pubrel.c
+	handle_suback.c
+	handle_unsuback.c
 	helpers.c
 	logging_mosq.c logging_mosq.h
 	memory_mosq.c memory_mosq.h
@@ -35,9 +43,12 @@ add_library(libmosquitto SHARED
 	net_mosq.c net_mosq.h
 	packet_mosq.c packet_mosq.h
 	read_handle.c read_handle.h
-	read_handle_client.c
-	read_handle_shared.c
-	send_client_mosq.c
+	send_connect.c
+	send_disconnect.c
+	send_mosq.c
+	send_publish.c
+	send_subscribe.c
+	send_unsubscribe.c
 	send_mosq.c send_mosq.h
 	socks_mosq.c
 	srv_mosq.c

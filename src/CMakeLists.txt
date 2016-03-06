@@ -6,6 +6,17 @@ set (MOSQ_SRCS
 	conf.c
 	context.c
 	database.c
+	handle_connack.c
+	handle_connect.c
+	../lib/handle_ping.c
+	../lib/handle_pubackcomp.c
+	handle_publish.c
+	../lib/handle_pubrec.c
+	../lib/handle_pubrel.c
+	../lib/handle_suback.c
+	handle_subscribe.c
+	../lib/handle_unsuback.c
+	handle_unsubscribe.c
 	lib_load.h
 	logging.c
 	loop.c
@@ -16,19 +27,25 @@ set (MOSQ_SRCS
 	../lib/net_mosq.c ../lib/net_mosq.h
 	../lib/packet_mosq.c ../lib/packet_mosq.h
 	persist.c persist.h
-	read_handle.c read_handle_client.c read_handle_server.c
-	../lib/read_handle_shared.c ../lib/read_handle.h
+	read_handle.c
+	../lib/read_handle.h
 	subs.c
 	security.c security_default.c
-	../lib/send_client_mosq.c ../lib/send_mosq.h
 	../lib/send_mosq.c ../lib/send_mosq.h
-	send_server.c
+	send_connack.c
+	../lib/send_connect.c
+	../lib/send_disconnect.c
+	../lib/send_publish.c
+	send_suback.c
+	../lib/send_subscribe.c
+	../lib/send_unsubscribe.c
 	sys_tree.c sys_tree.h
 	../lib/time_mosq.c
 	../lib/tls_mosq.c
 	../lib/util_mosq.c ../lib/util_mosq.h
 	websockets.c
 	../lib/will_mosq.c ../lib/will_mosq.h)
+
 
 option(INC_BRIDGE_SUPPORT
 	"Include bridge support for connecting to other brokers?" ON)
