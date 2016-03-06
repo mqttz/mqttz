@@ -267,7 +267,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				_mosquitto_packet_cleanup(packet);
 				_mosquitto_free(packet);
 
-				mosq->last_msg_out = mosquitto_time();
+				mosq->next_msg_out = mosquitto_time() + mosq->keepalive;
 
 				if(mosq->current_out_packet){
 					libwebsocket_callback_on_writable(mosq->ws_context, mosq->wsi);
