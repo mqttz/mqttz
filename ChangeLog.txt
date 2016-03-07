@@ -8,6 +8,7 @@ Broker:
 - Reconnecting client with clean session set to false doesn't start with mid=1
   again.
 - Will topic isn't truncated by one byte when using a mount_point any more.
+- Network errors are printed correctly on Windows.
 
 Client library:
 - Fix the case where a message received just before the keepalive timer
