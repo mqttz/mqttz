@@ -93,3 +93,8 @@ add_subdirectory(man)
 # ========================================
 
 install(FILES mosquitto.conf aclfile.example pskfile.example pwfile.example DESTINATION ${SYSCONFDIR})
+
+# ========================================
+# Testing
+# ========================================
+add_custom_target(Tests COMMAND make -C test test)
