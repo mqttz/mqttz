@@ -278,7 +278,7 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 			ulen = 0;
 			len = tlen + acl_root->ccount*(clen-2);
 		}
-		local_acl = malloc(len+1);
+		local_acl = _mosquitto_malloc(len+1);
 		if(!local_acl) return 1; // FIXME
 		s = local_acl;
 		for(i=0; i<tlen; i++){
@@ -803,7 +803,7 @@ int _base64_decode(char *in, unsigned char **decoded, unsigned int *decoded_len)
 		BIO_free_all(b64);
 		return 1;
 	}
-	*decoded = calloc(strlen(in), 1);
+	*decoded = _mosquitto_calloc(strlen(in), 1);
 	*decoded_len =  BIO_read(b64, *decoded, strlen(in));
 	BIO_free_all(b64);
 
