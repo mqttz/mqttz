@@ -4,6 +4,14 @@ include ../config.mk
 
 all : mosquitto_pub mosquitto_sub
 
+static : static_pub static_sub
+
+static_pub : pub_client.o client_shared.o ../lib/libmosquitto.a
+	${CROSS_COMPILE}${CC} $^ -o mosquitto_pub ${CLIENT_LDFLAGS} -lssl -lcrypto -lpthread
+
+static_sub : sub_client.o client_shared.o ../lib/libmosquitto.a
+	${CROSS_COMPILE}${CC} $^ -o mosquitto_sub ${CLIENT_LDFLAGS} -lssl -lcrypto -lpthread
+
 mosquitto_pub : pub_client.o client_shared.o
 	${CROSS_COMPILE}${CC} $^ -o $@ ${CLIENT_LDFLAGS}
 
