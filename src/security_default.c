@@ -799,7 +799,7 @@ int base64__decode(char *in, unsigned char **decoded, unsigned int *decoded_len)
 		BIO_free_all(b64);
 		return 1;
 	}
-	*decoded = calloc(strlen(in), 1);
+	*decoded = mosquitto__calloc(strlen(in), 1);
 	*decoded_len =  BIO_read(b64, *decoded, strlen(in));
 	BIO_free_all(b64);
 
