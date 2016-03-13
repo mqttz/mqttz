@@ -18,6 +18,10 @@ Client library:
 Clients:
 - Handle some unchecked malloc() calls. Closes #1.
 
+Build:
+- Fix string quoting in CMakeLists.txt. Closes #4.
+
+
 1.4.8 - 20160214
 ================
 
