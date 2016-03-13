@@ -8,8 +8,8 @@ if (${WITH_SRV} STREQUAL ON)
 	add_definitions("-DWITH_SRV")
 endif (${WITH_SRV} STREQUAL ON)
 
-add_executable(mosquitto_pub pub_client.c "${shared_src}")
-add_executable(mosquitto_sub sub_client.c "${shared_src}")
+add_executable(mosquitto_pub pub_client.c ${shared_src})
+add_executable(mosquitto_sub sub_client.c ${shared_src})
 
 target_link_libraries(mosquitto_pub libmosquitto)
 target_link_libraries(mosquitto_sub libmosquitto)
