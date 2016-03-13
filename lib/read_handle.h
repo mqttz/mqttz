@@ -13,8 +13,8 @@ and the Eclipse Distribution License is available at
 Contributors:
    Roger Light - initial implementation and documentation.
 */
-#ifndef _READ_HANDLE_H_
-#define _READ_HANDLE_H_
+#ifndef READ_HANDLE_H
+#define READ_HANDLE_H
 
 #include "mosquitto.h"
 struct mosquitto_db;

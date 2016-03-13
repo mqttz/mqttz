@@ -14,8 +14,8 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
-#ifndef _CLIENT_CONFIG_H
-#define _CLIENT_CONFIG_H
+#ifndef CLIENT_CONFIG_H
+#define CLIENT_CONFIG_H
 
 #include <stdio.h>
 

@@ -14,8 +14,8 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
-#ifndef _MOSQUITTO_INTERNAL_H_
-#define _MOSQUITTO_INTERNAL_H_
+#ifndef MOSQUITTO_INTERNAL_H
+#define MOSQUITTO_INTERNAL_H
 
 #include "config.h"
 

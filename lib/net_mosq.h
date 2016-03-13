@@ -13,8 +13,8 @@ and the Eclipse Distribution License is available at
 Contributors:
    Roger Light - initial implementation and documentation.
 */
-#ifndef _NET_MOSQ_H_
-#define _NET_MOSQ_H_
+#ifndef NET_MOSQ_H
+#define NET_MOSQ_H
 
 #ifndef WIN32
 #include <unistd.h>

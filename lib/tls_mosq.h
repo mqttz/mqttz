@@ -14,8 +14,8 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
-#ifndef _TLS_MOSQ_H_
-#define _TLS_MOSQ_H_
+#ifndef TLS_MOSQ_H
+#define TLS_MOSQ_H
 
 #ifdef WITH_TLS
 #  define SSL_DATA_PENDING(A) ((A)->ssl && SSL_pending((A)->ssl))

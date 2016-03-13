@@ -14,8 +14,8 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
-#ifndef _MEMORY_MOSQ_H_
-#define _MEMORY_MOSQ_H_
+#ifndef MEMORY_MOSQ_H
+#define MEMORY_MOSQ_H
 
 #include <stdio.h>
 #include <sys/types.h>

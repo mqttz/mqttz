@@ -13,8 +13,8 @@ and the Eclipse Distribution License is available at
 Contributors:
    Roger Light - initial implementation and documentation.
 */
-#ifndef _MESSAGES_MOSQ_H_
-#define _MESSAGES_MOSQ_H_
+#ifndef MESSAGES_MOSQ_H
+#define MESSAGES_MOSQ_H
 
 #include "mosquitto_internal.h"
 #include "mosquitto.h"

@@ -14,8 +14,8 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
-#ifndef _WILL_MOSQ_H_
-#define _WILL_MOSQ_H_
+#ifndef WILL_MOSQ_H
+#define WILL_MOSQ_H
 
 #include "mosquitto.h"
 #include "mosquitto_internal.h"
