@@ -26,6 +26,7 @@ Broker:
 - Support for Windows XP has been dropped.
 - Miscellaneous fixes on Windows.
 - Bridge connections now default to using MQTT v3.1.1.
+- mosquitto_db_dump tool can now output some stats on clients.
 
 Client library:
 - Outgoing messages with QoS>1 are no longer retried after a timeout period.
