@@ -14,6 +14,7 @@ Broker:
 Client library:
 - Fix the case where a message received just before the keepalive timer
   expired would cause the client to miss the keepalive timer.
+- Return value of pthread_create is now checked.
 
 Clients:
 - Handle some unchecked malloc() calls. Closes #1.
