@@ -21,6 +21,7 @@ Clients:
 
 Build:
 - Fix string quoting in CMakeLists.txt. Closes #4.
+- Fix building on Visual Studio 2015. Closes #136.
 
 
 1.4.8 - 20160214
