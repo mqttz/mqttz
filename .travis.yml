@@ -31,7 +31,6 @@ addons:
     project:
       name: "eclipse/mosquitto"
       description: "Build submitted via Travis CI"
-      version: 
     notification_email: roger@atchoo.org
     build_command_prepend: ./travis-configure.sh
     build_command: "make binary -j 4"

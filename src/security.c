@@ -188,6 +188,8 @@ int mosquitto_security_module_cleanup(struct mosquitto_db *db)
 		db->auth_plugins[i].unpwd_check = NULL;
 		db->auth_plugins[i].psk_key_get = NULL;
 	}
+	mosquitto__free(db->auth_plugins);
+	db->auth_plugins = NULL;
 
 	return MOSQ_ERR_SUCCESS;
 }

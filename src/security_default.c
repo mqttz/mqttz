@@ -131,6 +131,8 @@ int add__acl(struct mosquitto_db *db, const char *user, const char *topic, int a
 	acl = mosquitto__malloc(sizeof(struct mosquitto__acl));
 	if(!acl){
 		mosquitto__free(local_topic);
+		mosquitto__free(acl_user->username);
+		mosquitto__free(acl_user);
 		return MOSQ_ERR_NOMEM;
 	}
 	acl->access = access;

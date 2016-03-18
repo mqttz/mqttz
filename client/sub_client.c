@@ -38,7 +38,7 @@ static void write_payload(const unsigned char *payload, int payloadlen, bool hex
 	int i;
 
 	if(!hex){
-		fwrite(payload, 1, payloadlen, stdout);
+		(void)fwrite(payload, 1, payloadlen, stdout);
 	}else{
 		for(i=0; i<payloadlen; i++){
 			fprintf(stdout, "%x", payload[i]);

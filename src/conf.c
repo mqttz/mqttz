@@ -1126,6 +1126,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 						token = strtok_r(NULL, " ", &saveptr);
 						if(!token){
 							log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty include_dir value in configuration.");
+							return 1;
 						}
 #ifdef WIN32
 						snprintf(dirpath, MAX_PATH, "%s\\*.conf", token);

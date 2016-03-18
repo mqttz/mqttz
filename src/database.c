@@ -527,6 +527,7 @@ int db__messages_easy_queue(struct mosquitto_db *db, struct mosquitto *context, 
 	if(!topic_heap) return MOSQ_ERR_INVAL;
 
 	if(UHPA_ALLOC(payload_uhpa, payloadlen) == 0){
+		mosquitto__free(topic_heap);
 		return MOSQ_ERR_NOMEM;
 	}
 	memcpy(UHPA_ACCESS(payload_uhpa, payloadlen), payload, payloadlen);
@@ -552,6 +553,7 @@ int db__message_store(struct mosquitto_db *db, const char *source, uint16_t sour
 
 	temp = mosquitto__malloc(sizeof(struct mosquitto_msg_store));
 	if(!temp){
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		rc = MOSQ_ERR_NOMEM;
 		goto error;
 	}

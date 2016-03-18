@@ -128,7 +128,6 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 						protocol_version, context->address);
 			}
 			send__connack(context, 0, CONNACK_REFUSED_PROTOCOL_VERSION);
-			mosquitto__free(protocol_name);
 			rc = MOSQ_ERR_PROTOCOL;
 			goto handle_connect_error;
 		}
@@ -140,13 +139,11 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 						protocol_version, context->address);
 			}
 			send__connack(context, 0, CONNACK_REFUSED_PROTOCOL_VERSION);
-			mosquitto__free(protocol_name);
 			rc = MOSQ_ERR_PROTOCOL;
 			goto handle_connect_error;
 		}
 		if((context->in_packet.command&0x0F) != 0x00){
 			/* Reserved flags not set to 0, must disconnect. */
-			mosquitto__free(protocol_name);
 			rc = MOSQ_ERR_PROTOCOL;
 			goto handle_connect_error;
 		}
@@ -156,11 +153,11 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			log__printf(NULL, MOSQ_LOG_INFO, "Invalid protocol \"%s\" in CONNECT from %s.",
 					protocol_name, context->address);
 		}
-		mosquitto__free(protocol_name);
 		rc = MOSQ_ERR_PROTOCOL;
 		goto handle_connect_error;
 	}
 	mosquitto__free(protocol_name);
+	protocol_name = NULL;
 
 	if(packet__read_byte(&context->in_packet, &connect_flags)){
 		rc = 1;
@@ -577,6 +574,7 @@ handle_connect_error:
 	mosquitto__free(will_payload);
 	mosquitto__free(will_topic);
 	mosquitto__free(will_struct);
+	mosquitto__free(protocol_name);
 #ifdef WITH_TLS
 	if(client_cert) X509_free(client_cert);
 #endif
