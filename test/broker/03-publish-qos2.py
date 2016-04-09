@@ -3,8 +3,6 @@
 # Test whether a PUBLISH to a topic with QoS 2 results in the correct packet flow.
 
 import subprocess
-import socket
-import time
 
 import inspect, os, sys
 # From http://stackoverflow.com/questions/279237/python-import-a-module-from-a-folder

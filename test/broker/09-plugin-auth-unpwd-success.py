@@ -3,8 +3,6 @@
 # Test whether a connection is successful with correct username and password
 # when using a simple auth_plugin.
 
-import subprocess
-import socket
 import time
 
 import inspect, os, sys

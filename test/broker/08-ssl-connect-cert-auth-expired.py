@@ -3,7 +3,6 @@
 # Test whether a valid CONNECT results in the correct CONNACK packet using an
 # SSL connection with client certificates required.
 
-import subprocess
 import socket
 import ssl
 import sys
@@ -13,7 +12,7 @@ if sys.version < '2.7':
     print("WARNING: SSL not supported on Python 2.6")
     exit(0)
 
-import inspect, os, sys
+import inspect, os
 # From http://stackoverflow.com/questions/279237/python-import-a-module-from-a-folder
 cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"..")))
 if cmd_subfolder not in sys.path:

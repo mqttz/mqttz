@@ -4,10 +4,6 @@
 # flow. This test introduces delays into the flow in order to force the broker
 # to send duplicate PUBREC and PUBCOMP messages.
 
-import subprocess
-import socket
-import time
-
 import inspect, os, sys
 # From http://stackoverflow.com/questions/279237/python-import-a-module-from-a-folder
 cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"..")))

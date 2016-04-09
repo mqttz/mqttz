@@ -2,9 +2,7 @@
 
 # Test whether a client subscribed to a topic receives its own message sent to that topic.
 
-import subprocess
 import socket
-import time
 
 import inspect, os, sys
 # From http://stackoverflow.com/questions/279237/python-import-a-module-from-a-folder

@@ -2,7 +2,6 @@
 
 import inspect
 import os
-import subprocess
 import socket
 import ssl
 import sys

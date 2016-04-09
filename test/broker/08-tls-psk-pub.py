@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 
 import subprocess
-import socket
 import ssl
 import sys
-import time
 
 if sys.version < '2.7':
     print("WARNING: SSL not supported on Python 2.6")
@@ -15,7 +13,7 @@ if ssl.OPENSSL_VERSION_NUMBER < 0x10000000:
     exit(0)
 
 
-import inspect, os, sys
+import inspect, os
 # From http://stackoverflow.com/questions/279237/python-import-a-module-from-a-folder
 cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"..")))
 if cmd_subfolder not in sys.path:
@@ -53,7 +51,6 @@ try:
         pub = subprocess.Popen(['./c/08-tls-psk-pub.test'], env=env)
         if pub.wait():
             raise ValueError
-            exit(1)
 
         if mosq_test.expect_packet(sock, "publish", publish_packet):
             rc = 0

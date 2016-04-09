@@ -3,8 +3,6 @@
 # Test whether a SUBSCRIBE to a topic with QoS 1 results in the correct SUBACK packet.
 
 import subprocess
-import socket
-import time
 
 import inspect, os, sys
 # From http://stackoverflow.com/questions/279237/python-import-a-module-from-a-folder

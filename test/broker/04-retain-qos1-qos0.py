@@ -4,9 +4,7 @@
 # Subscription is made with QoS 0 so the retained message should also have QoS
 # 0.
 
-import subprocess
 import socket
-import time
 
 import inspect, os, sys
 # From http://stackoverflow.com/questions/279237/python-import-a-module-from-a-folder

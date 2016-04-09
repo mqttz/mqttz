@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 
 # Test whether a client can connect without an SSL certificate if one is required.
-# 
 
 import errno
-import subprocess
 import socket
 import ssl
 import sys

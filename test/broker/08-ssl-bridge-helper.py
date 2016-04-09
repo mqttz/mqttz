@@ -1,9 +1,5 @@
 #!/usr/bin/env python
 
-import subprocess
-import socket
-import time
-
 import inspect, os, sys
 # From http://stackoverflow.com/questions/279237/python-import-a-module-from-a-folder
 cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"..")))
@@ -25,5 +21,5 @@ sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=1889, co
 sock.send(publish_packet)
 sock.send(disconnect_packet)
 sock.close()
-    
+
 exit(0)
