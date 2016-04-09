@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import struct
-import subprocess
 
 import inspect, os, sys
 # From http://stackoverflow.com/questions/279237/python-import-a-module-from-a-folder

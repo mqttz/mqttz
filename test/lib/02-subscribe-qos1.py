@@ -60,7 +60,7 @@ try:
 
         if mosq_test.expect_packet(conn, "subscribe", subscribe_packet):
             conn.send(suback_packet)
-        
+
             if mosq_test.expect_packet(conn, "disconnect", disconnect_packet):
                 rc = 0
 

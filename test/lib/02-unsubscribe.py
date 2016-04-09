@@ -50,7 +50,7 @@ try:
 
         if mosq_test.expect_packet(conn, "unsubscribe", unsubscribe_packet):
             conn.send(unsuback_packet)
- 
+
             if mosq_test.expect_packet(conn, "disconnect", disconnect_packet):
                 rc = 0
 

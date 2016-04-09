@@ -63,7 +63,7 @@ try:
 
             if mosq_test.expect_packet(conn, "disconnect", disconnect_packet):
                 rc = 0
-        
+
     conn.close()
 finally:
     client.terminate()
