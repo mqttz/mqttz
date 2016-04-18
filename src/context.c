@@ -70,8 +70,10 @@ struct mosquitto *context__init(struct mosquitto_db *db, mosq_sock_t sock)
 		}
 	}
 	context->bridge = NULL;
-	context->msgs = NULL;
-	context->last_msg = NULL;
+	context->inflight_msgs = NULL;
+	context->last_inflight_msg = NULL;
+	context->queued_msgs = NULL;
+	context->last_queued_msg = NULL;
 	context->msg_count = 0;
 	context->msg_count12 = 0;
 #ifdef WITH_TLS
@@ -166,15 +168,24 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 		context->will = NULL;
 	}
 	if(do_free || context->clean_session){
-		msg = context->msgs;
+		msg = context->inflight_msgs;
 		while(msg){
 			next = msg->next;
 			db__msg_store_deref(db, &msg->store);
 			mosquitto__free(msg);
 			msg = next;
 		}
-		context->msgs = NULL;
-		context->last_msg = NULL;
+		context->inflight_msgs = NULL;
+		context->last_inflight_msg = NULL;
+		msg = context->queued_msgs;
+		while(msg){
+			next = msg->next;
+			db__msg_store_deref(db, &msg->store);
+			mosquitto__free(msg);
+			msg = next;
+		}
+		context->queued_msgs = NULL;
+		context->last_queued_msg = NULL;
 	}
 	if(do_free){
 		mosquitto__free(context);

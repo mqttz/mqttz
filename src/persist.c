@@ -71,13 +71,14 @@ static int persist__client_messages_write(struct mosquitto_db *db, FILE *db_fptr
 	dbid_t i64temp;
 	uint16_t i16temp, slen;
 	uint8_t i8temp;
+	bool process_queued_message = false;
 	struct mosquitto_client_msg *cmsg;
 
 	assert(db);
 	assert(db_fptr);
 	assert(context);
 
-	cmsg = context->msgs;
+	cmsg = context->inflight_msgs;
 	while(cmsg){
 		slen = strlen(context->id);
 
@@ -115,6 +116,10 @@ static int persist__client_messages_write(struct mosquitto_db *db, FILE *db_fptr
 		write_e(db_fptr, &i8temp, sizeof(uint8_t));
 
 		cmsg = cmsg->next;
+		if (cmsg == NULL && !process_queued_message){
+			cmsg = context->queued_msgs;
+			process_queued_message = true;
+		}
 	}
 
 	return MOSQ_ERR_SUCCESS;
@@ -408,6 +413,7 @@ error:
 static int persist__client_msg_restore(struct mosquitto_db *db, const char *client_id, uint16_t mid, uint8_t qos, uint8_t retain, uint8_t direction, uint8_t state, uint8_t dup, uint64_t store_id)
 {
 	struct mosquitto_client_msg *cmsg;
+	struct mosquitto_client_msg **msgs, **last_msg;
 	struct mosquitto_msg_store_load *load;
 	struct mosquitto *context;
 
@@ -442,12 +448,20 @@ static int persist__client_msg_restore(struct mosquitto_db *db, const char *clie
 		log__printf(NULL, MOSQ_LOG_ERR, "Error restoring persistent database, message store corrupt.");
 		return 1;
 	}
-	if(context->msgs){
-		context->last_msg->next = cmsg;
+
+	if (state == mosq_ms_queued){
+		msgs = &(context->queued_msgs);
+		last_msg = &(context->last_queued_msg);
 	}else{
-		context->msgs = cmsg;
+		msgs = &(context->inflight_msgs);
+		last_msg = &(context->last_inflight_msg);
 	}
-	context->last_msg = cmsg;
+	if(*msgs){
+		(*last_msg)->next = cmsg;
+	}else{
+		*msgs = cmsg;
+	}
+	*last_msg = cmsg;
 
 	return MOSQ_ERR_SUCCESS;
 }

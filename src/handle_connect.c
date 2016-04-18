@@ -85,9 +85,11 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	uint8_t will, will_retain, will_qos, clean_session;
 	uint8_t username_flag, password_flag;
 	char *username = NULL, *password = NULL;
+	bool process_queued_msgs = false;
 	int rc;
 	struct mosquitto__acl_user *acl_tail;
 	struct mosquitto_client_msg *msg_tail, *msg_prev;
+	struct mosquitto_client_msg **msgs;
 	struct mosquitto *found_context;
 	int slen;
 	struct mosquitto__subleaf *leaf;
@@ -442,9 +444,11 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		context->clean_session = clean_session;
 
 		if(context->clean_session == false && found_context->clean_session == false){
-			if(found_context->msgs){
-				context->msgs = found_context->msgs;
-				found_context->msgs = NULL;
+			if(found_context->inflight_msgs || found_context->queued_msgs){
+				context->inflight_msgs = found_context->inflight_msgs;
+				context->queued_msgs = found_context->queued_msgs;
+				found_context->inflight_msgs = NULL;
+				found_context->queued_msgs = NULL;
 				db__message_reconnect_reset(db, context);
 			}
 			context->subs = found_context->subs;
@@ -532,7 +536,8 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 
 	/* Remove any queued messages that are no longer allowed through ACL,
 	 * assuming a possible change of username. */
-	msg_tail = context->msgs;
+	msgs = &(context->inflight_msgs);
+	msg_tail = *msgs;
 	msg_prev = NULL;
 	while(msg_tail){
 		if(msg_tail->direction == mosq_md_out){
@@ -543,10 +548,11 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 					mosquitto__free(msg_tail);
 					msg_tail = msg_prev->next;
 				}else{
-					context->msgs = context->msgs->next;
+					*msgs = (*msgs)->next;
 					mosquitto__free(msg_tail);
-					msg_tail = context->msgs;
+					msg_tail = (*msgs);
 				}
+				// XXX: why it does not update last_msg if msg_tail was the last message ?
 			}else{
 				msg_prev = msg_tail;
 				msg_tail = msg_tail->next;
@@ -554,6 +560,12 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		}else{
 			msg_prev = msg_tail;
 			msg_tail = msg_tail->next;
+		}
+		if (msg_tail == NULL && !process_queued_msgs){
+			msgs = &(context->queued_msgs);
+			msg_tail = *msgs;
+			msg_prev = NULL;
+			process_queued_msgs = true;
 		}
 	}
 
