@@ -72,6 +72,39 @@ static char *client_id_gen(struct mosquitto_db *db)
 	return client_id;
 }
 
+/* Remove any queued messages that are no longer allowed through ACL,
+ * assuming a possible change of username. */
+void connection_check_acl(struct mosquitto_db *db, struct mosquitto *context, struct mosquitto_client_msg **msgs)
+{
+	struct mosquitto_client_msg *msg_tail, *msg_prev;
+
+	msg_tail = *msgs;
+	msg_prev = NULL;
+	while(msg_tail){
+		if(msg_tail->direction == mosq_md_out){
+			if(mosquitto_acl_check(db, context, msg_tail->store->topic, MOSQ_ACL_READ) != MOSQ_ERR_SUCCESS){
+				db__msg_store_deref(db, &msg_tail->store);
+				if(msg_prev){
+					msg_prev->next = msg_tail->next;
+					mosquitto__free(msg_tail);
+					msg_tail = msg_prev->next;
+				}else{
+					*msgs = (*msgs)->next;
+					mosquitto__free(msg_tail);
+					msg_tail = (*msgs);
+				}
+				// XXX: why it does not update last_msg if msg_tail was the last message ?
+			}else{
+				msg_prev = msg_tail;
+				msg_tail = msg_tail->next;
+			}
+		}else{
+			msg_prev = msg_tail;
+			msg_tail = msg_tail->next;
+		}
+	}
+}
+
 int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 {
 	char *protocol_name = NULL;
@@ -85,11 +118,8 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	uint8_t will, will_retain, will_qos, clean_session;
 	uint8_t username_flag, password_flag;
 	char *username = NULL, *password = NULL;
-	bool process_queued_msgs = false;
 	int rc;
 	struct mosquitto__acl_user *acl_tail;
-	struct mosquitto_client_msg *msg_tail, *msg_prev;
-	struct mosquitto_client_msg **msgs;
 	struct mosquitto *found_context;
 	int slen;
 	struct mosquitto__subleaf *leaf;
@@ -534,40 +564,8 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		context->is_bridge = true;
 	}
 
-	/* Remove any queued messages that are no longer allowed through ACL,
-	 * assuming a possible change of username. */
-	msgs = &(context->inflight_msgs);
-	msg_tail = *msgs;
-	msg_prev = NULL;
-	while(msg_tail){
-		if(msg_tail->direction == mosq_md_out){
-			if(mosquitto_acl_check(db, context, msg_tail->store->topic, MOSQ_ACL_READ) != MOSQ_ERR_SUCCESS){
-				db__msg_store_deref(db, &msg_tail->store);
-				if(msg_prev){
-					msg_prev->next = msg_tail->next;
-					mosquitto__free(msg_tail);
-					msg_tail = msg_prev->next;
-				}else{
-					*msgs = (*msgs)->next;
-					mosquitto__free(msg_tail);
-					msg_tail = (*msgs);
-				}
-				// XXX: why it does not update last_msg if msg_tail was the last message ?
-			}else{
-				msg_prev = msg_tail;
-				msg_tail = msg_tail->next;
-			}
-		}else{
-			msg_prev = msg_tail;
-			msg_tail = msg_tail->next;
-		}
-		if (msg_tail == NULL && !process_queued_msgs){
-			msgs = &(context->queued_msgs);
-			msg_tail = *msgs;
-			msg_prev = NULL;
-			process_queued_msgs = true;
-		}
-	}
+	connection_check_acl(db, context, &context->inflight_msgs);
+	connection_check_acl(db, context, &context->queued_msgs);
 
 	HASH_ADD_KEYPTR(hh_id, db->contexts_by_id, context->id, strlen(context->id), context);
 

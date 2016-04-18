@@ -208,9 +208,6 @@ void db__msg_store_deref(struct mosquitto_db *db, struct mosquitto_msg_store **s
 
 static void db__message_remove(struct mosquitto_db *db, struct mosquitto *context, struct mosquitto_client_msg **msg, struct mosquitto_client_msg *last)
 {
-	int i;
-	struct mosquitto_client_msg *tail;
-
 	if(!context || !msg || !(*msg)){
 		return;
 	}
@@ -265,7 +262,6 @@ int db__message_delete(struct mosquitto_db *db, struct mosquitto *context, uint1
 {
 	struct mosquitto_client_msg *tail, *last = NULL;
 	int msg_index = 0;
-	bool deleted = false;
 
 	if(!context) return MOSQ_ERR_INVAL;
 
@@ -275,7 +271,6 @@ int db__message_delete(struct mosquitto_db *db, struct mosquitto *context, uint1
 		if(tail->mid == mid && tail->direction == dir){
 			msg_index--;
 			db__message_remove(db, context, &tail, last);
-			deleted = true;
 		}else{
 			last = tail;
 			tail = tail->next;
@@ -933,7 +928,7 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 			if(tail->qos == 2){
 				tail->state = mosq_ms_send_pubrec;
 				db__message_dequeue_first(context);
-				rc = send__pubrec(context, mid);
+				rc = send__pubrec(context, tail->mid);
 				if(!rc){
 					tail->state = mosq_ms_wait_for_pubrel;
 				}else{

@@ -65,20 +65,19 @@ static struct mosquitto *persist__find_or_add_context(struct mosquitto_db *db, c
 	return context;
 }
 
-static int persist__client_messages_write(struct mosquitto_db *db, FILE *db_fptr, struct mosquitto *context)
+static int persist__client_messages_write(struct mosquitto_db *db, FILE *db_fptr, struct mosquitto *context, struct mosquitto_client_msg *queue)
 {
 	uint32_t length;
 	dbid_t i64temp;
 	uint16_t i16temp, slen;
 	uint8_t i8temp;
-	bool process_queued_message = false;
 	struct mosquitto_client_msg *cmsg;
 
 	assert(db);
 	assert(db_fptr);
 	assert(context);
 
-	cmsg = context->inflight_msgs;
+	cmsg = queue;
 	while(cmsg){
 		slen = strlen(context->id);
 
@@ -116,10 +115,6 @@ static int persist__client_messages_write(struct mosquitto_db *db, FILE *db_fptr
 		write_e(db_fptr, &i8temp, sizeof(uint8_t));
 
 		cmsg = cmsg->next;
-		if (cmsg == NULL && !process_queued_message){
-			cmsg = context->queued_msgs;
-			process_queued_message = true;
-		}
 	}
 
 	return MOSQ_ERR_SUCCESS;
@@ -238,7 +233,8 @@ static int persist__client_write(struct mosquitto_db *db, FILE *db_fptr)
 			}
 			write_e(db_fptr, &disconnect_t, sizeof(time_t));
 
-			if(persist__client_messages_write(db, db_fptr, context)) return 1;
+			if(persist__client_messages_write(db, db_fptr, context, context->inflight_msgs)) return 1;
+			if(persist__client_messages_write(db, db_fptr, context, context->queued_msgs)) return 1;
 		}
 	}
 
