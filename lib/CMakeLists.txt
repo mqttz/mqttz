@@ -24,17 +24,7 @@ include_directories(${mosquitto_SOURCE_DIR} ${mosquitto_SOURCE_DIR}/lib
 			${OPENSSL_INCLUDE_DIR} ${PTHREAD_INCLUDE_DIR})
 link_directories(${mosquitto_SOURCE_DIR}/lib)
 
-add_library(libmosquitto SHARED
-	handle_connack.c
-	handle_ping.c
-	handle_pubackcomp.c
-	handle_publish.c
-	handle_pubrec.c
-	handle_pubrel.c
-	handle_suback.c
-	handle_unsuback.c
-	helpers.c
-	logging_mosq.c logging_mosq.h
+set(C_SRC logging_mosq.c logging_mosq.h
 	memory_mosq.c memory_mosq.h
 	messages_mosq.c messages_mosq.h
 	mosquitto.c mosquitto.h
@@ -58,27 +48,10 @@ add_library(libmosquitto SHARED
 	util_mosq.c util_mosq.h
 	will_mosq.c will_mosq.h)
 
+add_library(libmosquitto SHARED ${C_SRC} )
+
 #target for building static version of library
-add_library(libmosquitto_static STATIC
-	logging_mosq.c logging_mosq.h
-	memory_mosq.c memory_mosq.h
-	messages_mosq.c messages_mosq.h
-	mosquitto.c mosquitto.h
-	mosquitto_internal.h
-	mqtt3_protocol.h
-	net_mosq.c net_mosq.h
-	read_handle.c read_handle.h
-	read_handle_client.c
-	read_handle_shared.c
-	send_client_mosq.c
-	send_mosq.c send_mosq.h
-	socks_mosq.c
-	srv_mosq.c
-	thread_mosq.c
-	time_mosq.c
-	tls_mosq.c
-	util_mosq.c util_mosq.h
-	will_mosq.c will_mosq.h)
+add_library(libmosquitto_static STATIC ${C_SRC})
 
 set (LIBRARIES ${OPENSSL_LIBRARIES} ${PTHREAD_LIBRARIES})
 
