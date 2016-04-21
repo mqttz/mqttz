@@ -89,7 +89,7 @@ set_target_properties(libmosquitto_static PROPERTIES
 	VERSION ${VERSION}
 )
 
-target_compile_definitions(libmosquitto_static PUBLIC "STATIC_LIB")
+target_compile_definitions(libmosquitto_static PUBLIC "LIBMOSQUITTO_STATIC")
 
 install(TARGETS libmosquitto libmosquitto_static RUNTIME DESTINATION ${BINDIR} LIBRARY DESTINATION ${LIBDIR} ARCHIVE DESTINATION ${LIBDIR})
 install(FILES mosquitto.h DESTINATION ${INCLUDEDIR})
