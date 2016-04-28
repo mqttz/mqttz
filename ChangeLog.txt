@@ -10,6 +10,8 @@ Broker:
 - Will topic isn't truncated by one byte when using a mount_point any more.
 - Network errors are printed correctly on Windows.
 - Fix incorrect $SYS heap memory reporting when using ACLs.
+- Bridge config parameters couldn't contain a space, this has been fixed.
+  Closes #150.
 
 Client library:
 - Fix the case where a message received just before the keepalive timer
