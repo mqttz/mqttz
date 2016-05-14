@@ -12,6 +12,7 @@ Broker:
 - Fix incorrect $SYS heap memory reporting when using ACLs.
 - Bridge config parameters couldn't contain a space, this has been fixed.
   Closes #150.
+- Fix saving of persistence messages that start with a '/'. Closes #151.
 - Fix reconnecting for bridges that use TLS on Windows. Closes #154.
 
 Client library:

@@ -248,7 +248,7 @@ error:
 	return 1;
 }
 
-static int _db_subs_retain_write(struct mosquitto_db *db, FILE *db_fptr, struct _mosquitto_subhier *node, const char *topic)
+static int _db_subs_retain_write(struct mosquitto_db *db, FILE *db_fptr, struct _mosquitto_subhier *node, const char *topic, int level)
 {
 	struct _mosquitto_subhier *subhier;
 	struct _mosquitto_subleaf *sub;
@@ -261,7 +261,7 @@ static int _db_subs_retain_write(struct mosquitto_db *db, FILE *db_fptr, struct 
 	slen = strlen(topic) + strlen(node->topic) + 2;
 	thistopic = _mosquitto_malloc(sizeof(char)*slen);
 	if(!thistopic) return MOSQ_ERR_NOMEM;
-	if(strlen(topic)){
+	if(level > 1 || strlen(topic)){
 		snprintf(thistopic, slen, "%s/%s", topic, node->topic);
 	}else{
 		snprintf(thistopic, slen, "%s", node->topic);
@@ -306,7 +306,7 @@ static int _db_subs_retain_write(struct mosquitto_db *db, FILE *db_fptr, struct 
 
 	subhier = node->children;
 	while(subhier){
-		_db_subs_retain_write(db, db_fptr, subhier, thistopic);
+		_db_subs_retain_write(db, db_fptr, subhier, thistopic, level+1);
 		subhier = subhier->next;
 	}
 	_mosquitto_free(thistopic);
@@ -322,7 +322,7 @@ static int mqtt3_db_subs_retain_write(struct mosquitto_db *db, FILE *db_fptr)
 
 	subhier = db->subs.children;
 	while(subhier){
-		_db_subs_retain_write(db, db_fptr, subhier, "");
+		_db_subs_retain_write(db, db_fptr, subhier->children, "", 0);
 		subhier = subhier->next;
 	}
 	
