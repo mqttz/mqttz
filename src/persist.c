@@ -140,6 +140,11 @@ static int mqtt3_db_message_store_write(struct mosquitto_db *db, FILE *db_fptr)
 	stored = db->msg_store;
 	while(stored){
 		if(!strncmp(stored->topic, "$SYS", 4)){
+			if(stored->ref_count == 1 && stored->dest_id_count == 0){
+				/* $SYS messages that are only retained shouldn't be persisted. */
+				stored = stored->next;
+				continue;
+			}
 			/* Don't save $SYS messages as retained otherwise they can give
 			 * misleading information when reloaded. They should still be saved
 			 * because a disconnected durable client may have them in their
