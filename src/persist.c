@@ -65,7 +65,7 @@ static struct mosquitto *persist__find_or_add_context(struct mosquitto_db *db, c
 	return context;
 }
 
-static int persist__client_messages_write(struct mosquitto_db *db, FILE *db_fptr, struct mosquitto *context)
+static int persist__client_messages_write(struct mosquitto_db *db, FILE *db_fptr, struct mosquitto *context, struct mosquitto_client_msg *queue)
 {
 	uint32_t length;
 	dbid_t i64temp;
@@ -77,7 +77,7 @@ static int persist__client_messages_write(struct mosquitto_db *db, FILE *db_fptr
 	assert(db_fptr);
 	assert(context);
 
-	cmsg = context->msgs;
+	cmsg = queue;
 	while(cmsg){
 		slen = strlen(context->id);
 
@@ -233,7 +233,8 @@ static int persist__client_write(struct mosquitto_db *db, FILE *db_fptr)
 			}
 			write_e(db_fptr, &disconnect_t, sizeof(time_t));
 
-			if(persist__client_messages_write(db, db_fptr, context)) return 1;
+			if(persist__client_messages_write(db, db_fptr, context, context->inflight_msgs)) return 1;
+			if(persist__client_messages_write(db, db_fptr, context, context->queued_msgs)) return 1;
 		}
 	}
 
@@ -408,6 +409,7 @@ error:
 static int persist__client_msg_restore(struct mosquitto_db *db, const char *client_id, uint16_t mid, uint8_t qos, uint8_t retain, uint8_t direction, uint8_t state, uint8_t dup, uint64_t store_id)
 {
 	struct mosquitto_client_msg *cmsg;
+	struct mosquitto_client_msg **msgs, **last_msg;
 	struct mosquitto_msg_store_load *load;
 	struct mosquitto *context;
 
@@ -442,12 +444,20 @@ static int persist__client_msg_restore(struct mosquitto_db *db, const char *clie
 		log__printf(NULL, MOSQ_LOG_ERR, "Error restoring persistent database, message store corrupt.");
 		return 1;
 	}
-	if(context->msgs){
-		context->last_msg->next = cmsg;
+
+	if (state == mosq_ms_queued){
+		msgs = &(context->queued_msgs);
+		last_msg = &(context->last_queued_msg);
 	}else{
-		context->msgs = cmsg;
+		msgs = &(context->inflight_msgs);
+		last_msg = &(context->last_inflight_msg);
 	}
-	context->last_msg = cmsg;
+	if(*msgs){
+		(*last_msg)->next = cmsg;
+	}else{
+		*msgs = cmsg;
+	}
+	*last_msg = cmsg;
 
 	return MOSQ_ERR_SUCCESS;
 }

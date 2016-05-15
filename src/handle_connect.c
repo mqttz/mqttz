@@ -72,6 +72,39 @@ static char *client_id_gen(struct mosquitto_db *db)
 	return client_id;
 }
 
+/* Remove any queued messages that are no longer allowed through ACL,
+ * assuming a possible change of username. */
+void connection_check_acl(struct mosquitto_db *db, struct mosquitto *context, struct mosquitto_client_msg **msgs)
+{
+	struct mosquitto_client_msg *msg_tail, *msg_prev;
+
+	msg_tail = *msgs;
+	msg_prev = NULL;
+	while(msg_tail){
+		if(msg_tail->direction == mosq_md_out){
+			if(mosquitto_acl_check(db, context, msg_tail->store->topic, MOSQ_ACL_READ) != MOSQ_ERR_SUCCESS){
+				db__msg_store_deref(db, &msg_tail->store);
+				if(msg_prev){
+					msg_prev->next = msg_tail->next;
+					mosquitto__free(msg_tail);
+					msg_tail = msg_prev->next;
+				}else{
+					*msgs = (*msgs)->next;
+					mosquitto__free(msg_tail);
+					msg_tail = (*msgs);
+				}
+				// XXX: why it does not update last_msg if msg_tail was the last message ?
+			}else{
+				msg_prev = msg_tail;
+				msg_tail = msg_tail->next;
+			}
+		}else{
+			msg_prev = msg_tail;
+			msg_tail = msg_tail->next;
+		}
+	}
+}
+
 int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 {
 	char *protocol_name = NULL;
@@ -87,7 +120,6 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	char *username = NULL, *password = NULL;
 	int rc;
 	struct mosquitto__acl_user *acl_tail;
-	struct mosquitto_client_msg *msg_tail, *msg_prev;
 	struct mosquitto *found_context;
 	int slen;
 	struct mosquitto__subleaf *leaf;
@@ -442,9 +474,11 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		context->clean_session = clean_session;
 
 		if(context->clean_session == false && found_context->clean_session == false){
-			if(found_context->msgs){
-				context->msgs = found_context->msgs;
-				found_context->msgs = NULL;
+			if(found_context->inflight_msgs || found_context->queued_msgs){
+				context->inflight_msgs = found_context->inflight_msgs;
+				context->queued_msgs = found_context->queued_msgs;
+				found_context->inflight_msgs = NULL;
+				found_context->queued_msgs = NULL;
 				db__message_reconnect_reset(db, context);
 			}
 			context->subs = found_context->subs;
@@ -530,32 +564,8 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		context->is_bridge = true;
 	}
 
-	/* Remove any queued messages that are no longer allowed through ACL,
-	 * assuming a possible change of username. */
-	msg_tail = context->msgs;
-	msg_prev = NULL;
-	while(msg_tail){
-		if(msg_tail->direction == mosq_md_out){
-			if(mosquitto_acl_check(db, context, msg_tail->store->topic, MOSQ_ACL_READ) != MOSQ_ERR_SUCCESS){
-				db__msg_store_deref(db, &msg_tail->store);
-				if(msg_prev){
-					msg_prev->next = msg_tail->next;
-					mosquitto__free(msg_tail);
-					msg_tail = msg_prev->next;
-				}else{
-					context->msgs = context->msgs->next;
-					mosquitto__free(msg_tail);
-					msg_tail = context->msgs;
-				}
-			}else{
-				msg_prev = msg_tail;
-				msg_tail = msg_tail->next;
-			}
-		}else{
-			msg_prev = msg_tail;
-			msg_tail = msg_tail->next;
-		}
-	}
+	connection_check_acl(db, context, &context->inflight_msgs);
+	connection_check_acl(db, context, &context->queued_msgs);
 
 	HASH_ADD_KEYPTR(hh_id, db->contexts_by_id, context->id, strlen(context->id), context);
 

@@ -195,8 +195,10 @@ struct mosquitto {
 	bool is_dropping;
 	bool is_bridge;
 	struct mosquitto__bridge *bridge;
-	struct mosquitto_client_msg *msgs;
-	struct mosquitto_client_msg *last_msg;
+	struct mosquitto_client_msg *inflight_msgs;
+	struct mosquitto_client_msg *last_inflight_msg;
+	struct mosquitto_client_msg *queued_msgs;
+	struct mosquitto_client_msg *last_queued_msg;
 	int msg_count;
 	int msg_count12;
 	struct mosquitto__acl_user *acl_list;
