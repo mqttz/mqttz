@@ -46,6 +46,7 @@ Client:
 - Add --retained-only to mosquitto_sub to exit after receiving all retained
   messages.
 - Connections now default to using MQTT v3.1.1.
+- Default to using port 8883 when using TLS.
 
 
 1.4.7 - 20151221

@@ -37,7 +37,7 @@ static int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int 
 void init_config(struct mosq_config *cfg)
 {
 	memset(cfg, 0, sizeof(*cfg));
-	cfg->port = 1883;
+	cfg->port = -1;
 	cfg->max_inflight = 20;
 	cfg->keepalive = 60;
 	cfg->clean_session = true;
@@ -428,6 +428,7 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 
 				if(!strncasecmp(url, "mqtt://", 7)) {
 					url += 7;
+					cfg->port = 1883;
 				} else if(!strncasecmp(url, "mqtts://", 8)) {
 					url += 8;
 					cfg->port = 8883;
@@ -831,15 +832,32 @@ int client_connect(struct mosquitto *mosq, struct mosq_config *cfg)
 {
 	char err[1024];
 	int rc;
+	int port;
+
+#ifdef WITH_TLS
+	if(cfg->port < 0){
+		if(cfg->cafile || cfg->capath
+#ifdef WITH_TLS_PSK
+				|| cfg->psk
+#endif
+				){
+			port = 8883;
+		}else{
+			port = 1883;
+		}
+	}else{
+		port = cfg->port;
+	}
+#endif
 
 #ifdef WITH_SRV
 	if(cfg->use_srv){
 		rc = mosquitto_connect_srv(mosq, cfg->host, cfg->keepalive, cfg->bind_address);
 	}else{
-		rc = mosquitto_connect_bind(mosq, cfg->host, cfg->port, cfg->keepalive, cfg->bind_address);
+		rc = mosquitto_connect_bind(mosq, cfg->host, port, cfg->keepalive, cfg->bind_address);
 	}
 #else
-	rc = mosquitto_connect_bind(mosq, cfg->host, cfg->port, cfg->keepalive, cfg->bind_address);
+	rc = mosquitto_connect_bind(mosq, cfg->host, port, cfg->keepalive, cfg->bind_address);
 #endif
 	if(rc>0){
 		if(!cfg->quiet){

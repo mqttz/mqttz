@@ -238,9 +238,12 @@
 				<term><option>-L</option></term>
 				<term><option>--url</option></term>
 				<listitem>
-					<para>Specify specify user, password, hostname, port and topic at once as a URL.
-					The URL must be in the form:
-					mqtt(s)://[username[:password]@]host[:port]/topic</para>
+					<para>Specify specify user, password, hostname, port and
+						topic at once as a URL.  The URL must be in the form:
+						mqtt(s)://[username[:password]@]host[:port]/topic</para>
+					<para>If the scheme is mqtt:// then the port defaults to
+						1883. If the scheme is mqtts:// then the port defaults
+						to 8883.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -268,7 +271,9 @@
 				<term><option>-p</option></term>
 				<term><option>--port</option></term>
 				<listitem>
-					<para>Connect to the port specified instead of the default 1883 for plain MQTT and 8883 for MQTT over TLS.</para>
+					<para>Connect to the port specified. If not given, the
+						default of 1883 for plain MQTT or 8883 for MQTT over
+						TLS will be used.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
