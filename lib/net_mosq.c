@@ -187,7 +187,7 @@ int _mosquitto_packet_queue(struct mosquitto *mosq, struct _mosquitto_packet *pa
 #endif
 	}
 
-	if(mosq->in_callback == false && mosq->threaded == false){
+	if(mosq->in_callback == false && mosq->threaded == mosq_ts_none){
 		return _mosquitto_packet_write(mosq);
 	}else{
 		return MOSQ_ERR_SUCCESS;

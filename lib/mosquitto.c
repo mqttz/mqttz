@@ -197,7 +197,7 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 	mosq->reconnect_delay = 1;
 	mosq->reconnect_delay_max = 1;
 	mosq->reconnect_exponential_backoff = false;
-	mosq->threaded = false;
+	mosq->threaded = mosq_ts_none;
 #ifdef WITH_TLS
 	mosq->ssl = NULL;
 	mosq->tls_cert_reqs = SSL_VERIFY_PEER;
@@ -278,10 +278,10 @@ void _mosquitto_destroy(struct mosquitto *mosq)
 	if(!mosq) return;
 
 #ifdef WITH_THREADING
-	if(mosq->threaded && !pthread_equal(mosq->thread_id, pthread_self())){
+	if(mosq->threaded == mosq_ts_self && !pthread_equal(mosq->thread_id, pthread_self())){
 		pthread_cancel(mosq->thread_id);
 		pthread_join(mosq->thread_id, NULL);
-		mosq->threaded = false;
+		mosq->threaded = mosq_ts_none;
 	}
 
 	if(mosq->id){
