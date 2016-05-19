@@ -480,7 +480,7 @@ int mqtt3_db_message_update(struct mosquitto *context, uint16_t mid, enum mosqui
 		}
 		tail = tail->next;
 	}
-	return 1;
+	return MOSQ_ERR_NOT_FOUND;
 }
 
 int mqtt3_db_messages_delete(struct mosquitto_db *db, struct mosquitto *context)
