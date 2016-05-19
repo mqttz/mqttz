@@ -14,6 +14,8 @@ Broker:
   Closes #150.
 - Fix saving of persistence messages that start with a '/'. Closes #151.
 - Fix reconnecting for bridges that use TLS on Windows. Closes #154.
+- Broker and bridges can now cope with unknown incoming PUBACK, PUBREC,
+  PUBREL, PUBCOMP without disconnecting. Closes #57.
 
 Client library:
 - Fix the case where a message received just before the keepalive timer
@@ -21,6 +23,8 @@ Client library:
 - Return value of pthread_create is now checked.
 - _mosquitto_destroy should not cancel threads that weren't created by
   libmosquitto. Closes #166.
+- Clients can now cope with unknown incoming PUBACK, PUBREC, PUBREL, PUBCOMP
+  without disconnecting. Closes #57.
 
 Clients:
 - Handle some unchecked malloc() calls. Closes #1.

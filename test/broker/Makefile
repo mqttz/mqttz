@@ -68,6 +68,8 @@ endif
 	./06-bridge-br2b-disconnect-qos2.py
 	./06-bridge-b2br-disconnect-qos1.py
 	./06-bridge-b2br-disconnect-qos2.py
+	./06-bridge-fail-persist-resend-qos1.py
+	./06-bridge-fail-persist-resend-qos2.py
 
 07 :
 	./07-will-qos0.py
