@@ -18,6 +18,8 @@ Broker:
   PUBREL, PUBCOMP without disconnecting. Closes #57.
 - Fix websockets listeners not being able to bind to an IP address. Closes
   #170.
+- mosquitto_passwd utility now correctly deals with unknown command line
+  arguments in all cases. Closes #169.
 
 Client library:
 - Fix the case where a message received just before the keepalive timer
