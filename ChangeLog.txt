@@ -16,6 +16,8 @@ Broker:
 - Fix reconnecting for bridges that use TLS on Windows. Closes #154.
 - Broker and bridges can now cope with unknown incoming PUBACK, PUBREC,
   PUBREL, PUBCOMP without disconnecting. Closes #57.
+- Fix websockets listeners not being able to bind to an IP address. Closes
+  #170.
 
 Client library:
 - Fix the case where a message received just before the keepalive timer

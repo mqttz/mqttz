@@ -584,6 +584,7 @@ struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listen
 	}
 
 	memset(&info, 0, sizeof(info));
+	info.iface = listener->host;
 	info.port = listener->port;
 	info.protocols = p;
 	info.gid = -1;
