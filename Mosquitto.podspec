@@ -1,5 +1,5 @@
 Pod::Spec.new do |s|
-  s.name             = "Eclipse Mosquitto"
+  s.name             = "Mosquitto"
   s.version          = "1.4.8"
   s.summary          = "Eclipse Mosquitto is an open source implementation of a server for version 3.1 and 3.1.1 of the MQTT protocol."
   s.description      = "Eclipse Mosquitto is an open source implementation of a server for version 3.1 and 3.1.1 of the MQTT protocol."
