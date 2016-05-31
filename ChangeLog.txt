@@ -21,6 +21,8 @@ Broker:
 - mosquitto_passwd utility now correctly deals with unknown command line
   arguments in all cases. Closes #169.
 - Fix publishing of $SYS/broker/clients/maximum
+- Fix order of #includes in lib/send_mosq.c to ensure struct mosquitto doesn't
+  differ between source files when websockets is being used. Closes #180.
 
 Client library:
 - Fix the case where a message received just before the keepalive timer
