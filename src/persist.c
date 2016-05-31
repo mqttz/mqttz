@@ -129,7 +129,7 @@ static int mqtt3_db_message_store_write(struct mosquitto_db *db, FILE *db_fptr)
 	uint32_t length;
 	dbid_t i64temp;
 	uint32_t i32temp;
-	uint16_t i16temp, slen;
+	uint16_t i16temp, slen, tlen;
 	uint8_t i8temp;
 	struct mosquitto_msg_store *stored;
 	bool force_no_retain;
@@ -139,7 +139,7 @@ static int mqtt3_db_message_store_write(struct mosquitto_db *db, FILE *db_fptr)
 
 	stored = db->msg_store;
 	while(stored){
-		if(!strncmp(stored->topic, "$SYS", 4)){
+		if(stored->topic && !strncmp(stored->topic, "$SYS", 4)){
 			if(stored->ref_count == 1 && stored->dest_id_count == 0){
 				/* $SYS messages that are only retained shouldn't be persisted. */
 				stored = stored->next;
@@ -153,9 +153,14 @@ static int mqtt3_db_message_store_write(struct mosquitto_db *db, FILE *db_fptr)
 		}else{
 			force_no_retain = false;
 		}
+		if(stored->topic){
+			tlen = strlen(stored->topic);
+		}else{
+			tlen = 0;
+		}
 		length = htonl(sizeof(dbid_t) + 2+strlen(stored->source_id) +
 				sizeof(uint16_t) + sizeof(uint16_t) +
-				2+strlen(stored->topic) + sizeof(uint32_t) +
+				2+tlen + sizeof(uint32_t) +
 				stored->payloadlen + sizeof(uint8_t) + sizeof(uint8_t));
 
 		i16temp = htons(DB_CHUNK_MSG_STORE);
@@ -178,10 +183,11 @@ static int mqtt3_db_message_store_write(struct mosquitto_db *db, FILE *db_fptr)
 		i16temp = htons(stored->mid);
 		write_e(db_fptr, &i16temp, sizeof(uint16_t));
 
-		slen = strlen(stored->topic);
-		i16temp = htons(slen);
+		i16temp = htons(tlen);
 		write_e(db_fptr, &i16temp, sizeof(uint16_t));
-		write_e(db_fptr, stored->topic, slen);
+		if(tlen){
+			write_e(db_fptr, stored->topic, tlen);
+		}
 
 		i8temp = (uint8_t )stored->qos;
 		write_e(db_fptr, &i8temp, sizeof(uint8_t));
@@ -322,7 +328,9 @@ static int mqtt3_db_subs_retain_write(struct mosquitto_db *db, FILE *db_fptr)
 
 	subhier = db->subs.children;
 	while(subhier){
-		_db_subs_retain_write(db, db_fptr, subhier->children, "", 0);
+		if(subhier->children){
+			_db_subs_retain_write(db, db_fptr, subhier->children, "", 0);
+		}
 		subhier = subhier->next;
 	}
 	
@@ -612,11 +620,7 @@ static int _db_msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 		read_e(db_fptr, topic, slen);
 		topic[slen] = '\0';
 	}else{
-		_mosquitto_free(load);
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid msg_store chunk when restoring persistent database.");
-		fclose(db_fptr);
-		if(source_id) _mosquitto_free(source_id);
-		return 1;
+		topic = NULL;
 	}
 	read_e(db_fptr, &qos, sizeof(uint8_t));
 	read_e(db_fptr, &retain, sizeof(uint8_t));

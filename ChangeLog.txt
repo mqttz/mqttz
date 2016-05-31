@@ -23,6 +23,8 @@ Broker:
 - Fix publishing of $SYS/broker/clients/maximum
 - Fix order of #includes in lib/send_mosq.c to ensure struct mosquitto doesn't
   differ between source files when websockets is being used. Closes #180.
+- Fix possible rare crash when writing out persistence file and a client has
+  incomplete messages inflight that it has been denied the right to publish.
 
 Client library:
 - Fix the case where a message received just before the keepalive timer
