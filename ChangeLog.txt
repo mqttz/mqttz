@@ -20,6 +20,7 @@ Broker:
   #170.
 - mosquitto_passwd utility now correctly deals with unknown command line
   arguments in all cases. Closes #169.
+- Fix publishing of $SYS/broker/clients/maximum
 
 Client library:
 - Fix the case where a message received just before the keepalive timer
