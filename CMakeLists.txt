@@ -11,7 +11,7 @@ project(mosquitto)
 cmake_minimum_required(VERSION 2.8)
 # Only for version 3 and up. cmake_policy(SET CMP0042 NEW)
 
-set (VERSION 1.4.8)
+set (VERSION 1.4.9)
 
 if (WIN32)
 	execute_process(COMMAND cmd /c echo %DATE% %TIME% OUTPUT_VARIABLE TIMESTAMP
@@ -37,18 +37,18 @@ if (WIN32)
 else (WIN32)
 	set (BINDIR bin)
 	set (SBINDIR sbin)
-	if (${CMAKE_INSTALL_PREFIX} STREQUAL /usr)
+	if ("${CMAKE_INSTALL_PREFIX}" STREQUAL /usr)
 		set (SYSCONFDIR /etc/mosquitto)
-	else (${CMAKE_INSTALL_PREFIX} STREQUAL /usr)
+	else ("${CMAKE_INSTALL_PREFIX}" STREQUAL /usr)
 		set (SYSCONFDIR etc/mosquitto)
-	endif (${CMAKE_INSTALL_PREFIX} STREQUAL /usr)
+	endif ("${CMAKE_INSTALL_PREFIX}" STREQUAL /usr)
 	
 	set (LIBDIR lib${LIB_SUFFIX})
 	set (CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIBDIR}")
 	set (INCLUDEDIR include)
 	set (DATAROOTDIR share)
-	set (MANDIR ${DATAROOTDIR}/man)
-	set (SHAREDIR ${DATAROOTDIR}/mosquitto)
+	set (MANDIR "${DATAROOTDIR}/man")
+	set (SHAREDIR "${DATAROOTDIR}/mosquitto")
 endif (WIN32)
 
 option(WITH_TLS
@@ -92,4 +92,4 @@ add_subdirectory(man)
 # Install config file
 # ========================================
 
-install(FILES mosquitto.conf aclfile.example pskfile.example pwfile.example DESTINATION ${SYSCONFDIR})
+install(FILES mosquitto.conf aclfile.example pskfile.example pwfile.example DESTINATION "${SYSCONFDIR}")

@@ -710,21 +710,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						return MOSQ_ERR_INVAL;
 					}
 #endif
-					token = strtok_r(NULL, " ", &saveptr);
-					if(token){
-						if(cur_bridge->tls_cafile){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate bridge_cafile value in bridge configuration.");
-							return MOSQ_ERR_INVAL;
-						}
-						cur_bridge->tls_cafile = _mosquitto_strdup(token);
-						if(!cur_bridge->tls_cafile){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
-						}
-					}else{
-						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty bridge_cafile value in configuration.");
-						return MOSQ_ERR_INVAL;
-					}
+					if(_conf_parse_string(&token, "bridge_cafile", &cur_bridge->tls_cafile, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or TLS support not available.");
 #endif
@@ -741,21 +727,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						return MOSQ_ERR_INVAL;
 					}
 #endif
-					token = strtok_r(NULL, " ", &saveptr);
-					if(token){
-						if(cur_bridge->tls_capath){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate bridge_capath value in bridge configuration.");
-							return MOSQ_ERR_INVAL;
-						}
-						cur_bridge->tls_capath = _mosquitto_strdup(token);
-						if(!cur_bridge->tls_capath){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
-						}
-					}else{
-						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty bridge_capath value in configuration.");
-						return MOSQ_ERR_INVAL;
-					}
+					if(_conf_parse_string(&token, "bridge_capath", &cur_bridge->tls_capath, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or TLS support not available.");
 #endif
@@ -772,21 +744,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						return MOSQ_ERR_INVAL;
 					}
 #endif
-					token = strtok_r(NULL, " ", &saveptr);
-					if(token){
-						if(cur_bridge->tls_certfile){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate bridge_certfile value in bridge configuration.");
-							return MOSQ_ERR_INVAL;
-						}
-						cur_bridge->tls_certfile = _mosquitto_strdup(token);
-						if(!cur_bridge->tls_certfile){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
-						}
-					}else{
-						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty bridge_certfile value in configuration.");
-						return MOSQ_ERR_INVAL;
-					}
+					if(_conf_parse_string(&token, "bridge_certfile", &cur_bridge->tls_certfile, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or TLS support not available.");
 #endif
@@ -801,21 +759,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and identity encryption in a single bridge.");
 						return MOSQ_ERR_INVAL;
 					}
-					token = strtok_r(NULL, " ", &saveptr);
-					if(token){
-						if(cur_bridge->tls_psk_identity){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate bridge_identity value in bridge configuration.");
-							return MOSQ_ERR_INVAL;
-						}
-						cur_bridge->tls_psk_identity = _mosquitto_strdup(token);
-						if(!cur_bridge->tls_psk_identity){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
-						}
-					}else{
-						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty bridge_identity value in configuration.");
-						return MOSQ_ERR_INVAL;
-					}
+					if(_conf_parse_string(&token, "bridge_identity", &cur_bridge->tls_psk_identity, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or TLS-PSK support not available.");
 #endif
@@ -846,21 +790,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						return MOSQ_ERR_INVAL;
 					}
 #endif
-					token = strtok_r(NULL, " ", &saveptr);
-					if(token){
-						if(cur_bridge->tls_keyfile){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate bridge_keyfile value in bridge configuration.");
-							return MOSQ_ERR_INVAL;
-						}
-						cur_bridge->tls_keyfile = _mosquitto_strdup(token);
-						if(!cur_bridge->tls_keyfile){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
-						}
-					}else{
-						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty bridge_keyfile value in configuration.");
-						return MOSQ_ERR_INVAL;
-					}
+					if(_conf_parse_string(&token, "bridge_keyfile", &cur_bridge->tls_keyfile, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or TLS support not available.");
 #endif
@@ -871,7 +801,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 						return MOSQ_ERR_INVAL;
 					}
-					token = strtok_r(NULL, " ", &saveptr);
+					token = strtok_r(NULL, "", &saveptr);
 					if(token){
 						if(!strcmp(token, "mqttv31")){
 							cur_bridge->protocol_version = mosq_p_mqtt31;
@@ -899,21 +829,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single bridge.");
 						return MOSQ_ERR_INVAL;
 					}
-					token = strtok_r(NULL, " ", &saveptr);
-					if(token){
-						if(cur_bridge->tls_psk){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate bridge_psk value in bridge configuration.");
-							return MOSQ_ERR_INVAL;
-						}
-						cur_bridge->tls_psk = _mosquitto_strdup(token);
-						if(!cur_bridge->tls_psk){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
-						}
-					}else{
-						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty bridge_psk value in configuration.");
-						return MOSQ_ERR_INVAL;
-					}
+					if(_conf_parse_string(&token, "bridge_psk", &cur_bridge->tls_psk, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or TLS-PSK support not available.");
 #endif
@@ -924,21 +840,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 						return MOSQ_ERR_INVAL;
 					}
-					token = strtok_r(NULL, " ", &saveptr);
-					if(token){
-						if(cur_bridge->tls_version){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate bridge_tls_version value in bridge configuration.");
-							return MOSQ_ERR_INVAL;
-						}
-						cur_bridge->tls_version = _mosquitto_strdup(token);
-						if(!cur_bridge->tls_version){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
-						}
-					}else{
-						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty bridge_tls_version value in configuration.");
-						return MOSQ_ERR_INVAL;
-					}
+					if(_conf_parse_string(&token, "bridge_tls_version", &cur_bridge->tls_version, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or TLS support not available.");
 #endif
@@ -985,21 +887,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 						return MOSQ_ERR_INVAL;
 					}
-					token = strtok_r(NULL, " ", &saveptr);
-					if(token){
-						if(cur_bridge->remote_clientid){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate clientid value in bridge configuration.");
-							return MOSQ_ERR_INVAL;
-						}
-						cur_bridge->remote_clientid = _mosquitto_strdup(token);
-						if(!cur_bridge->remote_clientid){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
-						}
-					}else{
-						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty clientid value in configuration.");
-						return MOSQ_ERR_INVAL;
-					}
+					if(_conf_parse_string(&token, "bridge remote clientid", &cur_bridge->remote_clientid, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
@@ -1090,7 +978,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 				}else if(!strcmp(token, "include_dir")){
 					if(level == 0){
 						/* Only process include_dir from the main config file. */
-						token = strtok_r(NULL, " ", &saveptr);
+						token = strtok_r(NULL, "", &saveptr);
 						if(!token){
 							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty include_dir value in configuration.");
 						}
@@ -1196,7 +1084,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						memset(cur_listener, 0, sizeof(struct _mqtt3_listener));
 						cur_listener->protocol = mp_mqtt;
 						cur_listener->port = tmp_int;
-						token = strtok_r(NULL, " ", &saveptr);
+						token = strtok_r(NULL, "", &saveptr);
 						if(token){
 							cur_listener->host = _mosquitto_strdup(token);
 						}else{
@@ -1213,20 +1101,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 						return MOSQ_ERR_INVAL;
 					}
-					token = strtok_r(NULL, " ", &saveptr);
-					if(token){
-						if(cur_bridge->local_clientid){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate local_clientid value in bridge configuration.");
-							return MOSQ_ERR_INVAL;
-						}
-						cur_bridge->local_clientid = _mosquitto_strdup(token);
-						if(!cur_bridge->local_clientid){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
-						}
-					}else{
-						cur_bridge->local_clientid = NULL;
-					}
+					if(_conf_parse_string(&token, "bridge local clientd", &cur_bridge->local_clientid, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
@@ -1237,20 +1112,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 						return MOSQ_ERR_INVAL;
 					}
-					token = strtok_r(NULL, " ", &saveptr);
-					if(token){
-						if(cur_bridge->local_password){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate local_password value in bridge configuration.");
-							return MOSQ_ERR_INVAL;
-						}
-						cur_bridge->local_password = _mosquitto_strdup(token);
-						if(!cur_bridge->local_password){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
-						}
-					}else{
-						cur_bridge->local_password = NULL;
-					}
+					if(_conf_parse_string(&token, "bridge local_password", &cur_bridge->local_password, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
@@ -1261,20 +1123,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 						return MOSQ_ERR_INVAL;
 					}
-					token = strtok_r(NULL, " ", &saveptr);
-					if(token){
-						if(cur_bridge->local_username){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate local_username value in bridge configuration.");
-							return MOSQ_ERR_INVAL;
-						}
-						cur_bridge->local_username = _mosquitto_strdup(token);
-						if(!cur_bridge->local_username){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
-						}
-					}else{
-						cur_bridge->local_username = NULL;
-					}
+					if(_conf_parse_string(&token, "bridge local_username", &cur_bridge->local_username, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
@@ -1472,21 +1321,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 						return MOSQ_ERR_INVAL;
 					}
-					token = strtok_r(NULL, " ", &saveptr);
-					if(token){
-						if(cur_bridge->remote_password){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate password value in bridge configuration.");
-							return MOSQ_ERR_INVAL;
-						}
-						cur_bridge->remote_password = _mosquitto_strdup(token);
-						if(!cur_bridge->remote_password){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
-						}
-					}else{
-						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty password value in configuration.");
-						return MOSQ_ERR_INVAL;
-					}
+					if(_conf_parse_string(&token, "bridge remote_password", &cur_bridge->remote_password, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif

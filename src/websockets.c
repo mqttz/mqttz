@@ -218,6 +218,8 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				return -1;
 			}
 
+			mqtt3_db_message_write(db, mosq);
+
 			if(mosq->out_packet && !mosq->current_out_packet){
 				mosq->current_out_packet = mosq->out_packet;
 				mosq->out_packet = mosq->out_packet->next;
@@ -265,7 +267,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				_mosquitto_packet_cleanup(packet);
 				_mosquitto_free(packet);
 
-				mosq->last_msg_out = mosquitto_time();
+				mosq->next_msg_out = mosquitto_time() + mosq->keepalive;
 
 				if(mosq->current_out_packet){
 					libwebsocket_callback_on_writable(mosq->ws_context, mosq->wsi);
@@ -582,6 +584,7 @@ struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listen
 	}
 
 	memset(&info, 0, sizeof(info));
+	info.iface = listener->host;
 	info.port = listener->port;
 	info.protocols = p;
 	info.gid = -1;

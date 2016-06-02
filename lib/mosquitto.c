@@ -174,7 +174,7 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 	mosq->out_packet = NULL;
 	mosq->current_out_packet = NULL;
 	mosq->last_msg_in = mosquitto_time();
-	mosq->last_msg_out = mosquitto_time();
+	mosq->next_msg_out = mosquitto_time() + mosq->keepalive;
 	mosq->ping_t = 0;
 	mosq->last_mid = 0;
 	mosq->state = mosq_cs_new;
@@ -197,7 +197,7 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 	mosq->reconnect_delay = 1;
 	mosq->reconnect_delay_max = 1;
 	mosq->reconnect_exponential_backoff = false;
-	mosq->threaded = false;
+	mosq->threaded = mosq_ts_none;
 #ifdef WITH_TLS
 	mosq->ssl = NULL;
 	mosq->tls_cert_reqs = SSL_VERIFY_PEER;
@@ -278,10 +278,10 @@ void _mosquitto_destroy(struct mosquitto *mosq)
 	if(!mosq) return;
 
 #ifdef WITH_THREADING
-	if(mosq->threaded && !pthread_equal(mosq->thread_id, pthread_self())){
+	if(mosq->threaded == mosq_ts_self && !pthread_equal(mosq->thread_id, pthread_self())){
 		pthread_cancel(mosq->thread_id);
 		pthread_join(mosq->thread_id, NULL);
-		mosq->threaded = false;
+		mosq->threaded = mosq_ts_none;
 	}
 
 	if(mosq->id){
@@ -489,7 +489,7 @@ static int _mosquitto_reconnect(struct mosquitto *mosq, bool blocking)
 
 	pthread_mutex_lock(&mosq->msgtime_mutex);
 	mosq->last_msg_in = mosquitto_time();
-	mosq->last_msg_out = mosquitto_time();
+	mosq->next_msg_out = mosq->last_msg_in + mosq->keepalive;
 	pthread_mutex_unlock(&mosq->msgtime_mutex);
 
 	mosq->ping_t = 0;
@@ -841,6 +841,7 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 	int rc;
 	char pairbuf;
 	int maxfd = 0;
+	time_t now;
 
 	if(!mosq || max_packets < 1) return MOSQ_ERR_INVAL;
 #ifndef WIN32
@@ -902,21 +903,21 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 		}
 	}
 
-	if(timeout >= 0){
-		local_timeout.tv_sec = timeout/1000;
-#ifdef HAVE_PSELECT
-		local_timeout.tv_nsec = (timeout-local_timeout.tv_sec*1000)*1e6;
-#else
-		local_timeout.tv_usec = (timeout-local_timeout.tv_sec*1000)*1000;
-#endif
-	}else{
-		local_timeout.tv_sec = 1;
-#ifdef HAVE_PSELECT
-		local_timeout.tv_nsec = 0;
-#else
-		local_timeout.tv_usec = 0;
-#endif
+	if(timeout < 0){
+		timeout = 1000;
 	}
+
+	now = mosquitto_time();
+	if(mosq->next_msg_out && now + timeout/1000 > mosq->next_msg_out){
+		timeout = (mosq->next_msg_out - now)*1000;
+	}
+
+	local_timeout.tv_sec = timeout/1000;
+#ifdef HAVE_PSELECT
+	local_timeout.tv_nsec = (timeout-local_timeout.tv_sec*1000)*1e6;
+#else
+	local_timeout.tv_usec = (timeout-local_timeout.tv_sec*1000)*1000;
+#endif
 
 #ifdef HAVE_PSELECT
 	fdcount = pselect(maxfd+1, &readfds, &writefds, NULL, &local_timeout, NULL);

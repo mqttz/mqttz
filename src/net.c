@@ -63,6 +63,26 @@ static int tls_ex_index_listener = -1;
 extern unsigned int g_socket_connections;
 #endif
 
+
+static void net__print_error(int log, const char *format_str)
+{
+#ifdef WIN32
+	char *buf;
+
+	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+			NULL, WSAGetLastError(), LANG_NEUTRAL, &buf, 0, NULL);
+
+	_mosquitto_log_printf(NULL, log, format_str, buf);
+	LocalFree(buf);
+#else
+	char buf[256];
+
+	strerror_r(errno, buf, 256);
+	_mosquitto_log_printf(NULL, log, format_str, buf);
+#endif
+}
+
+
 int mqtt3_socket_accept(struct mosquitto_db *db, mosq_sock_t listensock)
 {
 	int i;
@@ -335,7 +355,6 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 	X509_STORE *store;
 	X509_LOOKUP *lookup;
 #endif
-	char buf[256];
 
 	if(!listener) return MOSQ_ERR_INVAL;
 
@@ -361,8 +380,7 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 
 		sock = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
 		if(sock == INVALID_SOCKET){
-			strerror_r(errno, buf, 256);
-			_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: %s", buf);
+			net__print_error(MOSQ_LOG_WARNING, "Warning: %s");
 			continue;
 		}
 		listener->sock_count++;
@@ -385,21 +403,13 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 		}
 
 		if(bind(sock, rp->ai_addr, rp->ai_addrlen) == -1){
-#ifdef WIN32
-			errno = WSAGetLastError();
-#endif
-			strerror_r(errno, buf, 256);
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s", buf);
+			net__print_error(MOSQ_LOG_ERR, "Error: %s");
 			COMPAT_CLOSE(sock);
 			return 1;
 		}
 
 		if(listen(sock, 100) == -1){
-#ifdef WIN32
-			errno = WSAGetLastError();
-#endif
-			strerror_r(errno, buf, 256);
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s", buf);
+			net__print_error(MOSQ_LOG_ERR, "Error: %s");
 			COMPAT_CLOSE(sock);
 			return 1;
 		}

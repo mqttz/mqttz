@@ -10,7 +10,7 @@ def start_broker(filename, cmd=None, port=1888):
     if cmd is None:
         cmd = ['../../src/mosquitto', '-v', '-c', filename.replace('.py', '.conf')]
     if os.environ.get('MOSQ_USE_VALGRIND') is not None:
-        cmd = ['valgrind', '-q', '--log-file='+filename+'.vglog'] + cmd
+        cmd = ['valgrind', '--trace-children=yes', '-v', '--log-file='+filename+'.vglog'] + cmd
         delay = 1
 
     broker = subprocess.Popen(cmd, stderr=subprocess.PIPE)
@@ -211,7 +211,7 @@ def to_string(packet):
         (mid, packet) = struct.unpack(pack_format, packet)
         pack_format = "!" + "B"*len(packet)
         granted_qos = struct.unpack(pack_format, packet)
-        
+
         s = "SUBACK, rl="+str(rl)+", mid="+str(mid)+", granted_qos="+str(granted_qos[0])
         for i in range(1, len(granted_qos)-1):
             s = s+", "+str(granted_qos[i])

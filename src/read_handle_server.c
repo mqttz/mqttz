@@ -243,7 +243,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 		}
 
 		if(context->listener && context->listener->mount_point){
-			slen = strlen(context->listener->mount_point) + strlen(will_topic);
+			slen = strlen(context->listener->mount_point) + strlen(will_topic) + 1;
 			will_topic_mount = _mosquitto_malloc(slen+1);
 			if(!will_topic_mount){
 				rc = MOSQ_ERR_NOMEM;
@@ -456,6 +456,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 			found_context->subs = NULL;
 			context->sub_count = found_context->sub_count;
 			found_context->sub_count = 0;
+			context->last_mid = found_context->last_mid;
 
 			for(i=0; i<context->sub_count; i++){
 				if(context->subs[i]){

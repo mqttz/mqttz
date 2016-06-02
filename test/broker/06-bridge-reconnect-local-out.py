@@ -3,9 +3,7 @@
 # Test whether a bridge topics work correctly after reconnection.
 # Important point here is that persistence is enabled.
 
-import os
 import subprocess
-import socket
 import time
 
 import inspect, os, sys

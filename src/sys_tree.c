@@ -44,7 +44,7 @@ static void _sys_update_clients(struct mosquitto_db *db, char *buf)
 {
 	static unsigned int client_count = -1;
 	static int clients_expired = -1;
-	static unsigned int client_max = -1;
+	static unsigned int client_max = 0;
 	static unsigned int disconnected_count = -1;
 	static unsigned int connected_count = -1;
 

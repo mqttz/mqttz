@@ -9,7 +9,6 @@
 
 import inspect
 import os
-import subprocess
 import socket
 import sys
 import time

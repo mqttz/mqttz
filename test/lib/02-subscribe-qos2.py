@@ -14,10 +14,8 @@
 
 import inspect
 import os
-import subprocess
 import socket
 import sys
-import time
 
 # From http://stackoverflow.com/questions/279237/python-import-a-module-from-a-folder
 cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"..")))
@@ -62,10 +60,10 @@ try:
 
         if mosq_test.expect_packet(conn, "subscribe", subscribe_packet):
             conn.send(suback_packet)
-        
+
             if mosq_test.expect_packet(conn, "disconnect", disconnect_packet):
                 rc = 0
-        
+
     conn.close()
 finally:
     client.terminate()

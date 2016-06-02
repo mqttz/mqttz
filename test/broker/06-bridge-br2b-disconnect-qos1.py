@@ -2,10 +2,8 @@
 
 # Does a bridge resend a QoS=1 message correctly after a disconnect?
 
-import os
 import subprocess
 import socket
-import time
 
 import inspect, os, sys
 # From http://stackoverflow.com/questions/279237/python-import-a-module-from-a-folder

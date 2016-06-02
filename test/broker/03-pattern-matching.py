@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import subprocess
-import socket
 import time
 
 import inspect, os, sys

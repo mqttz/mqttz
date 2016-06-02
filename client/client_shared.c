@@ -115,6 +115,10 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 	if(env){
 		len = strlen(env) + strlen("/mosquitto_pub") + 1;
 		loc = malloc(len);
+		if(!loc){
+			fprintf(stderr, "Error: Out of memory.\n");
+			return 1;
+		}
 		if(pub_or_sub == CLIENT_PUB){
 			snprintf(loc, len, "%s/mosquitto_pub", env);
 		}else{
@@ -126,6 +130,10 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 		if(env){
 			len = strlen(env) + strlen("/.config/mosquitto_pub") + 1;
 			loc = malloc(len);
+			if(!loc){
+				fprintf(stderr, "Error: Out of memory.\n");
+				return 1;
+			}
 			if(pub_or_sub == CLIENT_PUB){
 				snprintf(loc, len, "%s/.config/mosquitto_pub", env);
 			}else{
@@ -142,6 +150,10 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 	if(rc > 0 && rc < 1024){
 		len = strlen(env) + strlen("\\mosquitto_pub.conf") + 1;
 		loc = malloc(len);
+		if(!loc){
+			fprintf(stderr, "Error: Out of memory.\n");
+			return 1;
+		}
 		if(pub_or_sub == CLIENT_PUB){
 			snprintf(loc, len, "%s\\mosquitto_pub.conf", env);
 		}else{

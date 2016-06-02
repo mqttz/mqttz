@@ -16,6 +16,13 @@ void do_check(const char *sub, const char *topic, bool bad_res)
 
 int main(int argc, char *argv[])
 {
+	do_check("foo/#", "foo/", false);
+	do_check("foo#", "foo", true);
+	do_check("fo#o/", "foo", true);
+	do_check("foo#", "fooa", true);
+	do_check("foo+", "foo", true);
+	do_check("foo+", "fooa", true);
+
 	do_check("test/6/#", "test/3", true);
 	do_check("foo/bar", "foo/bar", false);
 	do_check("foo/+", "foo/bar", false);
