@@ -1,36 +1,7 @@
 include ../config.mk
+include objects.mk
 
 .PHONY : really clean install
-
-MOSQ_OBJS=mosquitto.o \
-		  handle_connack.o \
-		  handle_ping.o \
-		  handle_pubackcomp.o \
-		  handle_publish.o \
-		  handle_pubrec.o \
-		  handle_pubrel.o \
-		  handle_suback.o \
-		  handle_unsuback.o \
-		  helpers.o \
-		  logging_mosq.o \
-		  memory_mosq.o \
-		  messages_mosq.o \
-		  net_mosq.o \
-		  packet_mosq.o \
-		  read_handle.o \
-		  send_connect.o \
-		  send_disconnect.o \
-		  send_mosq.o \
-		  send_publish.o \
-		  send_subscribe.o \
-		  send_unsubscribe.o \
-		  socks_mosq.o \
-		  srv_mosq.o \
-		  thread_mosq.o \
-		  time_mosq.o \
-		  tls_mosq.o \
-		  util_mosq.o \
-		  will_mosq.o
 
 all : libmosquitto.so.${SOVERSION} libmosquitto.a
 	$(MAKE) -C cpp
@@ -57,10 +28,10 @@ clean :
 	-rm -f *.o libmosquitto.so.${SOVERSION} libmosquitto.so libmosquitto.a
 	$(MAKE) -C cpp clean
 
-libmosquitto.so.${SOVERSION} : ${MOSQ_OBJS}
+libmosquitto.so.${SOVERSION} : ${MOSQ_C_OBJS}
 	${CROSS_COMPILE}$(CC) -shared $(LIB_LDFLAGS) $^ -o $@ ${LIB_LIBS}
 
-libmosquitto.a : ${MOSQ_OBJS}
+libmosquitto.a : ${MOSQ_C_OBJS}
 	${CROSS_COMPILE}$(AR) cr $@ $^
 
 mosquitto.o : mosquitto.c mosquitto.h
