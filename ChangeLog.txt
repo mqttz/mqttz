@@ -34,6 +34,8 @@ Client library:
   libmosquitto. Closes #166.
 - Clients can now cope with unknown incoming PUBACK, PUBREC, PUBREL, PUBCOMP
   without disconnecting. Closes #57.
+- Fix mosquitto_topic_matches_sub() reporting matches on some invalid
+   subscriptions.
 
 Clients:
 - Handle some unchecked malloc() calls. Closes #1.
