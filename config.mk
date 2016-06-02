@@ -80,6 +80,9 @@ WITH_DOCS:=yes
 # Build with client support for SOCK5 proxy.
 WITH_SOCKS:=yes
 
+# Build static libraries
+WITH_STATIC_LIBRARIES:=yes
+
 # =============================================================================
 # End of user configuration
 # =============================================================================

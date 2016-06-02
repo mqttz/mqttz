@@ -3,15 +3,23 @@ include objects.mk
 
 .PHONY : really clean install
 
-all : libmosquitto.so.${SOVERSION} libmosquitto.a
+ALL_DEPS=libmosquitto.so.${SOVERSION}
+
+ifeq ($(WITH_STATIC_LIBRARIES),yes)
+	ALL_DEPS+=libmosquitto.a
+endif
+
+all : ${ALL_DEPS}
 	$(MAKE) -C cpp
 
 install : all
 	$(INSTALL) -d ${DESTDIR}$(prefix)/lib${LIB_SUFFIX}/
 	$(INSTALL) -s --strip-program=${CROSS_COMPILE}${STRIP} libmosquitto.so.${SOVERSION} ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.so.${SOVERSION}
 	ln -sf libmosquitto.so.${SOVERSION} ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.so
+ifeq ($(WITH_STATIC_LIBRARIES),yes)
 	$(INSTALL) libmosquitto.a ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.a
 	${CROSS_COMPILE}${STRIP} -g --strip-unneeded ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.a
+endif
 	$(INSTALL) -d ${DESTDIR}${prefix}/include/
 	$(INSTALL) mosquitto.h ${DESTDIR}${prefix}/include/mosquitto.h
 	$(MAKE) -C cpp install

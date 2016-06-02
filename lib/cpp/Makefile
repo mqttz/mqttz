@@ -7,14 +7,22 @@ endif
 
 .PHONY : clean install
 
-all : libmosquittopp.so.${SOVERSION} libmosquittopp.a
+ALL_DEPS=libmosquittopp.so.${SOVERSION}
+
+ifeq ($(WITH_STATIC_LIBRARIES),yes)
+    ALL_DEPS+=libmosquittopp.a
+endif
+
+all : ${ALL_DEPS}
 
 install : all
 	$(INSTALL) -d ${DESTDIR}$(prefix)/lib${LIB_SUFFIX}/
 	$(INSTALL) -s --strip-program=${CROSS_COMPILE}${STRIP} libmosquittopp.so.${SOVERSION} ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquittopp.so.${SOVERSION}
 	ln -sf libmosquittopp.so.${SOVERSION} ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquittopp.so
+ifeq ($(WITH_STATIC_LIBRARIES),yes)
 	$(INSTALL) libmosquittopp.a ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquittopp.a
 	${CROSS_COMPILE}${STRIP} -g --strip-unneeded ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquittopp.a
+endif
 	$(INSTALL) -d ${DESTDIR}${prefix}/include/
 	$(INSTALL) mosquittopp.h ${DESTDIR}${prefix}/include/mosquittopp.h
 	
