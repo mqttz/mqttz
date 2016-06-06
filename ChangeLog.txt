@@ -5,6 +5,9 @@ Broker:
 - Fix TLS operation with websockets listeners and libwebsockts 2.x. Closes
   #186.
 
+Build:
+- Don't attempt to install docs when WITH_DOCS=no. Closes #184.
+
 
 1.4.9 - 20160603
 ================
