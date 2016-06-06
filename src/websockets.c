@@ -603,6 +603,9 @@ struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listen
 #ifndef LWS_IS_OLD
 	info.options |= LWS_SERVER_OPTION_DISABLE_IPV6;
 #endif
+#if LWS_LIBRARY_VERSION_MAJOR>1
+	info.options |= LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT
+#endif
 
 	user = _mosquitto_calloc(1, sizeof(struct libws_mqtt_hack));
 	if(!user){
