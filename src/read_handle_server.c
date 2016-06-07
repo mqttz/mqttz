@@ -550,6 +550,9 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 					msg_tail = msg_prev->next;
 				}else{
 					context->msgs = context->msgs->next;
+					if(context->last_msg == msg_tail){
+						context->last_msg = NULL;
+					}
 					_mosquitto_free(msg_tail);
 					msg_tail = context->msgs;
 				}

@@ -224,6 +224,7 @@ void mqtt3_config_cleanup(struct mqtt3_config *config)
 	if(config->persistence_file) _mosquitto_free(config->persistence_file);
 	if(config->persistence_filepath) _mosquitto_free(config->persistence_filepath);
 	if(config->psk_file) _mosquitto_free(config->psk_file);
+	if(config->pid_file) _mosquitto_free(config->pid_file);
 	if(config->listeners){
 		for(i=0; i<config->listener_count; i++){
 			if(config->listeners[i].host) _mosquitto_free(config->listeners[i].host);
