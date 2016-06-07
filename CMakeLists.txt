@@ -101,4 +101,4 @@ install(FILES mosquitto.conf aclfile.example pskfile.example pwfile.example DEST
 # ========================================
 # Testing
 # ========================================
-add_custom_target(Tests COMMAND make -C test test)
+add_custom_target(Tests COMMAND make -C ${mosquitto_SOURCE_DIR}/test test)
