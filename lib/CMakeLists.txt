@@ -1,3 +1,5 @@
+option(WITH_STATIC_LIBRARIES "Build the static libraries?" ON)
+option(WITH_PIC "Build the static library with PIC(Position Independent Code) enabled archives?" OFF)
 add_subdirectory(cpp)
 
 option(WITH_THREADING "Include client library threading support?" ON)
@@ -24,7 +26,17 @@ include_directories(${mosquitto_SOURCE_DIR} ${mosquitto_SOURCE_DIR}/lib
 			${OPENSSL_INCLUDE_DIR} ${PTHREAD_INCLUDE_DIR})
 link_directories(${mosquitto_SOURCE_DIR}/lib)
 
-set(C_SRC logging_mosq.c logging_mosq.h
+set(C_SRC
+	handle_connack.c
+	handle_ping.c
+	handle_pubackcomp.c
+	handle_publish.c
+	handle_pubrec.c
+	handle_pubrel.c
+	handle_suback.c
+	handle_unsuback.c
+	helpers.c
+	logging_mosq.c logging_mosq.h
 	memory_mosq.c memory_mosq.h
 	messages_mosq.c messages_mosq.h
 	mosquitto.c mosquitto.h
@@ -48,11 +60,6 @@ set(C_SRC logging_mosq.c logging_mosq.h
 	util_mosq.c util_mosq.h
 	will_mosq.c will_mosq.h)
 
-add_library(libmosquitto SHARED ${C_SRC} )
-
-#target for building static version of library
-add_library(libmosquitto_static STATIC ${C_SRC})
-
 set (LIBRARIES ${OPENSSL_LIBRARIES} ${PTHREAD_LIBRARIES})
 
 if (UNIX AND NOT APPLE)
@@ -74,9 +81,14 @@ if (${WITH_SRV} STREQUAL ON)
 	endif (ARES_HEADER)
 endif (${WITH_SRV} STREQUAL ON)
 
-target_link_libraries(libmosquitto ${LIBRARIES})
+add_library(libmosquitto_obj OBJECT ${C_SRC})
+set_target_properties(libmosquitto_obj PROPERTIES
+	POSITION_INDEPENDENT_CODE 1
+)
 
-target_link_libraries(libmosquitto_static ${LIBRARIES})
+add_library(libmosquitto SHARED $<TARGET_OBJECTS:libmosquitto_obj>)
+
+target_link_libraries(libmosquitto ${LIBRARIES})
 
 set_target_properties(libmosquitto PROPERTIES
 	OUTPUT_NAME mosquitto
@@ -84,14 +96,26 @@ set_target_properties(libmosquitto PROPERTIES
 	SOVERSION 1
 )
 
-set_target_properties(libmosquitto_static PROPERTIES
-	OUTPUT_NAME mosquitto
-	VERSION ${VERSION}
-)
+install(TARGETS libmosquitto RUNTIME DESTINATION ${BINDIR} LIBRARY DESTINATION ${LIBDIR})
 
-target_compile_definitions(libmosquitto_static PUBLIC "LIBMOSQUITTO_STATIC")
+if (${WITH_STATIC_LIBRARIES} STREQUAL ON)
+	if (${WITH_PIC} STREQUAL OFF)
+		add_library(libmosquitto_static STATIC ${C_SRC})
+	else (${WITH_PIC} STREQUAL OFF)
+		add_library(libmosquitto_static STATIC $<TARGET_OBJECTS:libmosquitto_obj>)
+	endif (${WITH_PIC} STREQUAL OFF)
 
-install(TARGETS libmosquitto libmosquitto_static RUNTIME DESTINATION ${BINDIR} LIBRARY DESTINATION ${LIBDIR} ARCHIVE DESTINATION ${LIBDIR})
+	target_link_libraries(libmosquitto_static ${LIBRARIES})
+
+	set_target_properties(libmosquitto_static PROPERTIES
+		OUTPUT_NAME mosquitto
+		VERSION ${VERSION}
+	)
+
+	target_compile_definitions(libmosquitto_static PUBLIC "LIBMOSQUITTO_STATIC")
+	install(TARGETS libmosquitto_static RUNTIME DESTINATION ${BINDIR} ARCHIVE DESTINATION ${LIBDIR})
+endif (${WITH_STATIC_LIBRARIES} STREQUAL ON)
+
 install(FILES mosquitto.h DESTINATION ${INCLUDEDIR})
 
 if (UNIX AND NOT APPLE)
