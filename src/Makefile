@@ -188,10 +188,12 @@ mosquitto_passwd.o : mosquitto_passwd.c
 
 install : all
 	$(INSTALL) -d ${DESTDIR}$(prefix)/sbin
-	$(INSTALL) -s --strip-program=${CROSS_COMPILE}${STRIP} mosquitto ${DESTDIR}${prefix}/sbin/mosquitto
+	$(INSTALL) ${STRIP_OPTS} mosquitto ${DESTDIR}${prefix}/sbin/mosquitto
+	$(INSTALL) -d ${DESTDIR}$(prefix)/include
 	$(INSTALL) mosquitto_plugin.h ${DESTDIR}${prefix}/include/mosquitto_plugin.h
 ifeq ($(WITH_TLS),yes)
-	$(INSTALL) -s --strip-program=${CROSS_COMPILE}${STRIP} mosquitto_passwd ${DESTDIR}${prefix}/bin/mosquitto_passwd
+	$(INSTALL) -d ${DESTDIR}$(prefix)/bin
+	$(INSTALL) ${STRIP_OPTS} mosquitto_passwd ${DESTDIR}${prefix}/bin/mosquitto_passwd
 endif
 
 uninstall :

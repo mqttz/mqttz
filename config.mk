@@ -80,6 +80,9 @@ WITH_DOCS:=yes
 # Build with client support for SOCK5 proxy.
 WITH_SOCKS:=yes
 
+# Strip executables and shared libraries on install.
+WITH_STRIP:=no
+
 # =============================================================================
 # End of user configuration
 # =============================================================================
@@ -88,7 +91,6 @@ WITH_SOCKS:=yes
 # Also bump lib/mosquitto.h, CMakeLists.txt,
 # installer/mosquitto.nsi, installer/mosquitto64.nsi
 VERSION=1.4.90
-TIMESTAMP:=$(shell date "+%F %T%z")
 
 # Client library SO version. Bump if incompatible API/ABI changes are made.
 SOVERSION=1
@@ -97,6 +99,7 @@ SOVERSION=1
 XSLTPROC=xsltproc
 # For html generation
 DB_HTML_XSL=man/html.xsl
+TIMESTAMP:=$(shell date "+%F %T%z")
 
 #MANCOUNTRIES=en_GB
 
@@ -254,3 +257,7 @@ prefix=/usr/local
 mandir=${prefix}/share/man
 localedir=${prefix}/share/locale
 STRIP?=strip
+
+ifeq ($(WITH_STRIP),yes)
+	STRIP_OPTS:=-s --strip-program=${CROSS_COMPILE}${STRIP}
+endif

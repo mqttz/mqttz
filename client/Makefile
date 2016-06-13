@@ -32,8 +32,8 @@ client_shared.o : client_shared.c client_shared.h
 
 install : all
 	$(INSTALL) -d ${DESTDIR}$(prefix)/bin
-	$(INSTALL) -s --strip-program=${CROSS_COMPILE}${STRIP} mosquitto_pub ${DESTDIR}${prefix}/bin/mosquitto_pub
-	$(INSTALL) -s --strip-program=${CROSS_COMPILE}${STRIP} mosquitto_sub ${DESTDIR}${prefix}/bin/mosquitto_sub
+	$(INSTALL) ${STRIP_OPTS} mosquitto_pub ${DESTDIR}${prefix}/bin/mosquitto_pub
+	$(INSTALL) ${STRIP_OPTS} mosquitto_sub ${DESTDIR}${prefix}/bin/mosquitto_sub
 
 uninstall :
 	-rm -f ${DESTDIR}${prefix}/bin/mosquitto_pub
