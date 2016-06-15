@@ -83,6 +83,9 @@ WITH_SOCKS:=yes
 # Strip executables and shared libraries on install.
 WITH_STRIP:=no
 
+# Build static libraries
+WITH_STATIC_LIBRARIES:=no
+
 # =============================================================================
 # End of user configuration
 # =============================================================================

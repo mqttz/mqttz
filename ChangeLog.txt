@@ -51,6 +51,8 @@ Client:
 Build:
 - Add WITH_STRIP option (defaulting to "no") that when set to "yes" will strip
   executables and shared libraries when installing.
+- Add WITH_STATIC_LIBRARIES (defaulting to "no") that when set to "yes" will
+  buld and install static versions of the client libraries.
 
 1.4.7 - 20151221
 ================
