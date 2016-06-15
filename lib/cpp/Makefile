@@ -1,5 +1,4 @@
 include ../../config.mk
-include ../objects.mk
 
 ifneq ($(UNAME),SunOS)
 	LIB_LDFLAGS:=$(LDFLAGS) -Wl,-soname,libmosquittopp.so.${SOVERSION}
@@ -38,7 +37,7 @@ clean :
 libmosquittopp.so.${SOVERSION} : mosquittopp.o
 	${CROSS_COMPILE}$(CXX) -shared $(LIB_LDFLAGS) $< -o $@ ../libmosquitto.so.${SOVERSION}
 
-libmosquittopp.a : mosquittopp.o ${MOSQ_C_OBJS}
+libmosquittopp.a : mosquittopp.o
 	${CROSS_COMPILE}$(AR) cr $@ $^
 
 mosquittopp.o : mosquittopp.cpp mosquittopp.h
