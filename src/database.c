@@ -604,7 +604,6 @@ int db__message_reconnect_reset(struct mosquitto_db *db, struct mosquitto *conte
 {
 	struct mosquitto_client_msg *msg;
 	struct mosquitto_client_msg *prev = NULL;
-	int count;
 
 	msg = context->inflight_msgs;
 	context->msg_count = 0;
@@ -653,17 +652,15 @@ int db__message_reconnect_reset(struct mosquitto_db *db, struct mosquitto *conte
 	 * will be sent out of order.
 	 */
 	if(context->queued_msgs){
-		count = context->msg_count;
 		msg = context->queued_msgs;
 		while(msg){
 			context->last_queued_msg = msg;
 
-			count++;
 			context->msg_count++;
 			if(msg->qos > 0){
 				context->msg_count12++;
 			}
-			if (max_inflight == 0 || count <= max_inflight){
+			if (max_inflight == 0 || context->msg_count <= max_inflight){
 				switch(msg->qos){
 					case 0:
 						msg->state = mosq_ms_publish_qos0;
