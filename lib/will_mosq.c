@@ -37,6 +37,7 @@ int will__set(struct mosquitto *mosq, const char *topic, int payloadlen, const v
 	if(payloadlen > 0 && !payload) return MOSQ_ERR_INVAL;
 
 	if(mosquitto_pub_topic_check(topic)) return MOSQ_ERR_INVAL;
+	if(mosquitto_validate_utf8(topic, strlen(topic))) return MOSQ_ERR_MALFORMED_UTF8;
 
 	if(mosq->will){
 		mosquitto__free(mosq->will->topic);

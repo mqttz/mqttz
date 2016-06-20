@@ -57,6 +57,7 @@ set(C_SRC
 	thread_mosq.c
 	time_mosq.c
 	tls_mosq.c
+	utf8_mosq.c
 	util_mosq.c util_mosq.h
 	will_mosq.c will_mosq.h)
 

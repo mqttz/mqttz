@@ -41,6 +41,7 @@ mosqpp_EXPORT int lib_version(int *major, int *minor, int *revision);
 mosqpp_EXPORT int lib_init();
 mosqpp_EXPORT int lib_cleanup();
 mosqpp_EXPORT int topic_matches_sub(const char *sub, const char *topic, bool *result);
+mosqpp_EXPORT int validate_utf8(const char *str, int len);
 mosqpp_EXPORT int subscribe_simple(
 		struct mosquitto_message **messages,
 		int msg_count,

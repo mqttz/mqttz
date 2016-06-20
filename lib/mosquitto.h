@@ -81,7 +81,8 @@ enum mosq_err_t {
 	MOSQ_ERR_ERRNO = 14,
 	MOSQ_ERR_EAI = 15,
 	MOSQ_ERR_PROXY = 16,
-	MOSQ_ERR_PLUGIN_DEFER = 17
+	MOSQ_ERR_PLUGIN_DEFER = 17,
+	MOSQ_ERR_MALFORMED_UTF8 = 18
 };
 
 /* Error values */
@@ -280,9 +281,10 @@ libmosq_EXPORT int mosquitto_reinitialise(struct mosquitto *mosq, const char *id
  *
  * Returns:
  * 	MOSQ_ERR_SUCCESS -      on success.
- * 	MOSQ_ERR_INVAL -        if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -        if an out of memory condition occurred.
- * 	MOSQ_ERR_PAYLOAD_SIZE - if payloadlen is too large.
+ * 	MOSQ_ERR_INVAL -          if the input parameters were invalid.
+ * 	MOSQ_ERR_NOMEM -          if an out of memory condition occurred.
+ * 	MOSQ_ERR_PAYLOAD_SIZE -   if payloadlen is too large.
+ * 	MOSQ_ERR_MALFORMED_UTF8 - if the topic is not valid UTF-8.
  */
 libmosq_EXPORT int mosquitto_will_set(struct mosquitto *mosq, const char *topic, int payloadlen, const void *payload, int qos, bool retain);
 
@@ -587,13 +589,14 @@ libmosq_EXPORT int mosquitto_disconnect(struct mosquitto *mosq);
  * 	retain -     set to true to make the message retained.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS -      on success.
- * 	MOSQ_ERR_INVAL -        if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -        if an out of memory condition occurred.
- * 	MOSQ_ERR_NO_CONN -      if the client isn't connected to a broker.
- *	MOSQ_ERR_PROTOCOL -     if there is a protocol error communicating with the
- *                          broker.
- * 	MOSQ_ERR_PAYLOAD_SIZE - if payloadlen is too large.
+ * 	MOSQ_ERR_SUCCESS -        on success.
+ * 	MOSQ_ERR_INVAL -          if the input parameters were invalid.
+ * 	MOSQ_ERR_NOMEM -          if an out of memory condition occurred.
+ * 	MOSQ_ERR_NO_CONN -        if the client isn't connected to a broker.
+ *	MOSQ_ERR_PROTOCOL -       if there is a protocol error communicating with the
+ *                            broker.
+ * 	MOSQ_ERR_PAYLOAD_SIZE -   if payloadlen is too large.
+ * 	MOSQ_ERR_MALFORMED_UTF8 - if the topic is not valid UTF-8
  *
  * See Also: 
  *	<mosquitto_max_inflight_messages_set>
@@ -615,10 +618,11 @@ libmosq_EXPORT int mosquitto_publish(struct mosquitto *mosq, int *mid, const cha
  *	qos -  the requested Quality of Service for this subscription.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
- * 	MOSQ_ERR_NO_CONN - if the client isn't connected to a broker.
+ *	MOSQ_ERR_SUCCESS -        on success.
+ * 	MOSQ_ERR_INVAL -          if the input parameters were invalid.
+ * 	MOSQ_ERR_NOMEM -          if an out of memory condition occurred.
+ * 	MOSQ_ERR_NO_CONN -        if the client isn't connected to a broker.
+ * 	MOSQ_ERR_MALFORMED_UTF8 - if the topic is not valid UTF-8
  */
 libmosq_EXPORT int mosquitto_subscribe(struct mosquitto *mosq, int *mid, const char *sub, int qos);
 
@@ -636,10 +640,11 @@ libmosq_EXPORT int mosquitto_subscribe(struct mosquitto *mosq, int *mid, const c
  *	sub -  the unsubscription pattern.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
- * 	MOSQ_ERR_NO_CONN - if the client isn't connected to a broker.
+ *	MOSQ_ERR_SUCCESS -        on success.
+ * 	MOSQ_ERR_INVAL -          if the input parameters were invalid.
+ * 	MOSQ_ERR_NOMEM -          if an out of memory condition occurred.
+ * 	MOSQ_ERR_NO_CONN -        if the client isn't connected to a broker.
+ * 	MOSQ_ERR_MALFORMED_UTF8 - if the topic is not valid UTF-8
  */
 libmosq_EXPORT int mosquitto_unsubscribe(struct mosquitto *mosq, int *mid, const char *sub);
 
@@ -1424,8 +1429,9 @@ libmosq_EXPORT const char *mosquitto_connack_string(int connack_code);
  *	count -    an int pointer to store the number of items in the topics array.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success
- * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
+ *	MOSQ_ERR_SUCCESS -        on success
+ * 	MOSQ_ERR_NOMEM -          if an out of memory condition occurred.
+ * 	MOSQ_ERR_MALFORMED_UTF8 - if the topic is not valid UTF-8
  *
  * Example:
  *
@@ -1501,8 +1507,9 @@ libmosq_EXPORT int mosquitto_topic_matches_sub(const char *sub, const char *topi
  *   topic - the topic to check
  *
  * Returns:
- *   MOSQ_ERR_SUCCESS - for a valid topic
- *   MOSQ_ERR_INVAL - if the topic contains a + or a #, or if it is too long.
+ *   MOSQ_ERR_SUCCESS -        for a valid topic
+ *   MOSQ_ERR_INVAL -          if the topic contains a + or a #, or if it is too long.
+ * 	 MOSQ_ERR_MALFORMED_UTF8 - if sub or topic is not valid UTF-8
  *
  * See Also:
  *   <mosquitto_sub_topic_check>
@@ -1527,9 +1534,10 @@ libmosq_EXPORT int mosquitto_pub_topic_check(const char *topic);
  *   topic - the topic to check
  *
  * Returns:
- *   MOSQ_ERR_SUCCESS - for a valid topic
- *   MOSQ_ERR_INVAL - if the topic contains a + or a # that is in an invalid
- *                    position, or if it is too long.
+ *   MOSQ_ERR_SUCCESS -        for a valid topic
+ *   MOSQ_ERR_INVAL -          if the topic contains a + or a # that is in an
+ *                             invalid position, or if it is too long.
+ * 	 MOSQ_ERR_MALFORMED_UTF8 - if topic is not valid UTF-8
  *
  * See Also:
  *   <mosquitto_sub_topic_check>
@@ -1665,6 +1673,25 @@ libmosq_EXPORT int mosquitto_subscribe_callback(
 		const char *password,
 		const struct libmosquitto_will *will,
 		const struct libmosquitto_tls *tls);
+
+
+/*
+ * Function: mosquitto_validate_utf8
+ *
+ * Helper function to validate whether a UTF-8 string is valid, according to
+ * the UTF-8 spec and the MQTT additions.
+ *
+ * Parameters:
+ *   str - a string to check
+ *   len - the length of the string in bytes
+ *
+ * Returns:
+ *   MOSQ_ERR_SUCCESS -        on success
+ *   MOSQ_ERR_INVAL -          if str is NULL or len<0 or len>65536
+ *   MOSQ_ERR_MALFORMED_UTF8 - if str is not valid UTF-8
+ */
+libmosq_EXPORT int mosquitto_validate_utf8(const char *str, int len);
+
 #ifdef __cplusplus
 }
 #endif

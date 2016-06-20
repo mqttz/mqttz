@@ -240,8 +240,12 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 	return MOSQ_ERR_SUCCESS;
 }
 
-int cfg_add_topic(struct mosq_config *cfg, int pub_or_sub, char *topic)
+int cfg_add_topic(struct mosq_config *cfg, int pub_or_sub, char *topic, const char *arg)
 {
+	if(mosquitto_validate_utf8(topic, strlen(topic))){
+		fprintf(stderr, "Error: Malformed UTF-8 in %s argument.\n\n", arg);
+		return 1;
+	}
 	if(pub_or_sub == CLIENT_PUB){
 		if(mosquitto_pub_topic_check(topic) == MOSQ_ERR_INVAL){
 			fprintf(stderr, "Error: Invalid publish topic '%s', does it contain '+' or '#'?\n", topic);
@@ -439,7 +443,7 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				topic = strchr(url, '/');
 				*topic++ = 0;
 
-				if(cfg_add_topic(cfg, pub_or_sub, topic))
+				if(cfg_add_topic(cfg, pub_or_sub, topic, "-L topic"))
 					return 1;
 
 				tmp = strchr(url, '@');
@@ -594,7 +598,7 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				fprintf(stderr, "Error: -t argument given but no topic specified.\n\n");
 				return 1;
 			}else{
-				if(cfg_add_topic(cfg, pub_or_sub, argv[i + 1]))
+				if(cfg_add_topic(cfg, pub_or_sub, argv[i + 1], "-t"))
 					return 1;
 				i++;
 			}
@@ -606,6 +610,10 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				fprintf(stderr, "Error: -T argument given but no topic filter specified.\n\n");
 				return 1;
 			}else{
+				if(mosquitto_validate_utf8(argv[i+1], strlen(argv[i+1]))){
+					fprintf(stderr, "Error: Malformed UTF-8 in -T argument.\n\n");
+					return 1;
+				}
 				if(mosquitto_sub_topic_check(argv[i+1]) == MOSQ_ERR_INVAL){
 					fprintf(stderr, "Error: Invalid filter topic '%s', are all '+' and '#' wildcards correct?\n", argv[i+1]);
 					return 1;
@@ -627,6 +635,10 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				fprintf(stderr, "Error: -U argument given but no unsubscribe topic specified.\n\n");
 				return 1;
 			}else{
+				if(mosquitto_validate_utf8(argv[i+1], strlen(argv[i+1]))){
+					fprintf(stderr, "Error: Malformed UTF-8 in -U argument.\n\n");
+					return 1;
+				}
 				if(mosquitto_sub_topic_check(argv[i+1]) == MOSQ_ERR_INVAL){
 					fprintf(stderr, "Error: Invalid unsubscribe topic '%s', are all '+' and '#' wildcards correct?\n", argv[i+1]);
 					return 1;
@@ -694,6 +706,10 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				fprintf(stderr, "Error: --will-topic argument given but no will topic specified.\n\n");
 				return 1;
 			}else{
+				if(mosquitto_validate_utf8(argv[i+1], strlen(argv[i+1]))){
+					fprintf(stderr, "Error: Malformed UTF-8 in --will-topic argument.\n\n");
+					return 1;
+				}
 				if(mosquitto_pub_topic_check(argv[i+1]) == MOSQ_ERR_INVAL){
 					fprintf(stderr, "Error: Invalid will topic '%s', does it contain '+' or '#'?\n", argv[i+1]);
 					return 1;

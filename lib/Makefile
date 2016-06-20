@@ -29,6 +29,7 @@ MOSQ_OBJS=mosquitto.o \
 		  thread_mosq.o \
 		  time_mosq.o \
 		  tls_mosq.o \
+		  utf8_mosq.o \
 		  util_mosq.o \
 		  will_mosq.o
 
@@ -150,6 +151,9 @@ time_mosq.o : time_mosq.c
 	${CROSS_COMPILE}$(CC) $(LIB_CFLAGS) -c $< -o $@
 
 tls_mosq.o : tls_mosq.c
+	${CROSS_COMPILE}$(CC) $(LIB_CFLAGS) -c $< -o $@
+
+utf8_mosq.o : utf8_mosq.c
 	${CROSS_COMPILE}$(CC) $(LIB_CFLAGS) -c $< -o $@
 
 util_mosq.o : util_mosq.c util_mosq.h

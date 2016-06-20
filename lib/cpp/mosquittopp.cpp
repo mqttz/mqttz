@@ -106,6 +106,11 @@ int topic_matches_sub(const char *sub, const char *topic, bool *result)
 	return mosquitto_topic_matches_sub(sub, topic, result);
 }
 
+int validate_utf8(const char *str, int len)
+{
+	return mosquitto_validate_utf8(str, len);
+}
+
 int subscribe_simple(
 		struct mosquitto_message **messages,
 		int msg_count,

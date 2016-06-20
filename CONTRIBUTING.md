@@ -89,4 +89,4 @@ Create a new bug:
 Be sure to search for existing bugs before you create another one. Remember
 that contributions are always welcome!
 
-- [Create new Paho bug](https://github.com/eclipse/mosquitto/issues)
+- [Create new Mosquitto bug](https://github.com/eclipse/mosquitto/issues)

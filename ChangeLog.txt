@@ -39,6 +39,10 @@ Client library:
   processing messages from a broker very straightforward. An example of its use
   is in examples/subscribe_simple.
 - Connections now default to using MQTT v3.1.1.
+- Add mosquitto_validate_utf8() to check whether a string is valid UTF-8
+  according to the UTF-8 spec and to the additional restrictions imposed by
+  the MQTT spec.
+- Topic inputs are checked for UTF-8 validity.
 
 Client:
 - Add -x to mosquitto_sub for printing the payload in hexadecimal format.

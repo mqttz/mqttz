@@ -549,6 +549,7 @@ int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int p
 
 	if(!mosq || !topic || qos<0 || qos>2) return MOSQ_ERR_INVAL;
 	if(STREMPTY(topic)) return MOSQ_ERR_INVAL;
+	if(!mosquitto_validate_utf8(topic, strlen(topic))) return MOSQ_ERR_MALFORMED_UTF8;
 	if(payloadlen < 0 || payloadlen > MQTT_MAX_PAYLOAD) return MOSQ_ERR_PAYLOAD_SIZE;
 
 	if(mosquitto_pub_topic_check(topic) != MOSQ_ERR_SUCCESS){
@@ -614,6 +615,7 @@ int mosquitto_subscribe(struct mosquitto *mosq, int *mid, const char *sub, int q
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
 
 	if(mosquitto_sub_topic_check(sub)) return MOSQ_ERR_INVAL;
+	if(mosquitto_validate_utf8(sub, strlen(sub))) return MOSQ_ERR_MALFORMED_UTF8;
 
 	return send__subscribe(mosq, mid, sub, qos);
 }
@@ -624,6 +626,7 @@ int mosquitto_unsubscribe(struct mosquitto *mosq, int *mid, const char *sub)
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
 
 	if(mosquitto_sub_topic_check(sub)) return MOSQ_ERR_INVAL;
+	if(mosquitto_validate_utf8(sub, strlen(sub))) return MOSQ_ERR_MALFORMED_UTF8;
 
 	return send__unsubscribe(mosq, mid, sub);
 }
@@ -1293,6 +1296,8 @@ const char *mosquitto_strerror(int mosq_errno)
 			return "Lookup error.";
 		case MOSQ_ERR_PROXY:
 			return "Proxy error.";
+		case MOSQ_ERR_MALFORMED_UTF8:
+			return "Malformed UTF-8";
 		default:
 			return "Unknown error.";
 	}
