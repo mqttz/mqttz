@@ -480,7 +480,7 @@ int main(int argc, char *argv[])
 					break;
 
 				default:
-					fprintf(stderr, "Warning: Unsupported chunk \"%d\" in persistent database file. Ignoring.", chunk);
+					fprintf(stderr, "Warning: Unsupported chunk \"%d\" in persistent database file. Ignoring.\n", chunk);
 					fseek(fd, length, SEEK_CUR);
 					break;
 			}
