@@ -16,7 +16,7 @@ import mosq_test
 
 rc = 1
 keepalive = 60
-connect_packet = mosq_test.gen_connect("bridge-u-test", keepalive=keepalive, proto_ver=3)
+connect_packet = mosq_test.gen_connect("bridge-u-test", keepalive=keepalive)
 connack_packet = mosq_test.gen_connack(rc=0)
 
 mid = 180
