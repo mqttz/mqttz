@@ -18,6 +18,7 @@ Contributors:
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -142,7 +143,7 @@ static int db__client_msg_chunk_restore(struct mosquitto_db *db, FILE *db_fd, ui
 
 	read_e(db_fd, &i64temp, sizeof(dbid_t));
 	store_id = i64temp;
-	if(do_print) printf("\tStore ID: %ld\n", (long )store_id);
+	if(do_print) printf("\tStore ID: %" PRIu64 "\n", store_id);
 
 	read_e(db_fd, &i16temp, sizeof(uint16_t));
 	mid = ntohs(i16temp);
@@ -197,7 +198,7 @@ static int db__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fd, uin
 
 	read_e(db_fd, &i64temp, sizeof(dbid_t));
 	store_id = i64temp;
-	if(do_print) printf("\tStore ID: %ld\n", (long)store_id);
+	if(do_print) printf("\tStore ID: %" PRIu64 "\n", store_id);
 
 	read_e(db_fd, &i16temp, sizeof(uint16_t));
 	slen = ntohs(i16temp);
@@ -317,7 +318,7 @@ static int db__retain_chunk_restore(struct mosquitto_db *db, FILE *db_fd)
 		return 1;
 	}
 	store_id = i64temp;
-	if(do_print) printf("\tStore ID: %ld\n", (long int)store_id);
+	if(do_print) printf("\tStore ID: %" PRIu64 "\n", store_id);
 	return 0;
 }
 
