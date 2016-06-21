@@ -50,7 +50,9 @@ struct config_recurse {
 	int log_dest_set;
 	int log_type;
 	int log_type_set;
+	unsigned long max_inflight_bytes;
 	int max_inflight_messages;
+	unsigned long max_queued_bytes;
 	int max_queued_messages;
 };
 
@@ -485,7 +487,9 @@ int config__read(struct mosquitto__config *config, bool reload)
 	cr.log_dest_set = 0;
 	cr.log_type = MOSQ_LOG_NONE;
 	cr.log_type_set = 0;
+	cr.max_inflight_bytes = 0;
 	cr.max_inflight_messages = 20;
+	cr.max_queued_bytes = 0;
 	cr.max_queued_messages = 100;
 
 	if(!config->config_file) return 0;
@@ -525,7 +529,7 @@ int config__read(struct mosquitto__config *config, bool reload)
 		config->user = "mosquitto";
 	}
 
-	db__limits_set(cr.max_inflight_messages, cr.max_queued_messages);
+	db__limits_set(cr.max_inflight_messages, cr.max_inflight_bytes, cr.max_queued_messages, cr.max_queued_bytes);
 
 #ifdef WITH_BRIDGE
 	for(i=0; i<config->bridge_count; i++){
@@ -1292,6 +1296,13 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 					}else{
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty max_connections value in configuration.");
 					}
+				}else if(!strcmp(token, "max_inflight_bytes")){
+					token = strtok_r(NULL, " ", &saveptr);
+					if(token){
+						cr->max_inflight_bytes = atol(token);
+					}else{
+						log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty max_inflight_bytes value in configuration.");
+					}
 				}else if(!strcmp(token, "max_inflight_messages")){
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
@@ -1299,6 +1310,13 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 						if(cr->max_inflight_messages < 0) cr->max_inflight_messages = 0;
 					}else{
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty max_inflight_messages value in configuration.");
+					}
+				}else if(!strcmp(token, "max_queued_bytes")){
+					token = strtok_r(NULL, " ", &saveptr);
+					if(token){
+						cr->max_queued_bytes = atol(token); /* 63 bits is ok right? */
+					}else{
+						log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty max_queued_bytes value in configuration.");
 					}
 				}else if(!strcmp(token, "max_queued_messages")){
 					token = strtok_r(NULL, " ", &saveptr);

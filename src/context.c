@@ -74,6 +74,8 @@ struct mosquitto *context__init(struct mosquitto_db *db, mosq_sock_t sock)
 	context->last_inflight_msg = NULL;
 	context->queued_msgs = NULL;
 	context->last_queued_msg = NULL;
+	context->msg_bytes = 0;
+	context->msg_bytes12 = 0;
 	context->msg_count = 0;
 	context->msg_count12 = 0;
 #ifdef WITH_TLS

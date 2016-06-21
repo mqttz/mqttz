@@ -31,6 +31,8 @@ Broker:
   topics.
 - new $SYS/broker/store/messages/count (deprecates $SYS/broker/messages/stored)
 - new $SYS/broker/store/messages/bytes
+- max_queued_bytes feature to limit queues by real size rather than
+  than just message count. Closes Eclipse #452919 or Github #100
 
 Client library:
 - Outgoing messages with QoS>1 are no longer retried after a timeout period.

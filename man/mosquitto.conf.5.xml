@@ -359,6 +359,16 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>max_inflight_bytes</option> <replaceable>count</replaceable></term>
+				<listitem>
+					<para>QoS 1 and 2 messages will be allowed in flight until this byte
+                                            limit is reached.  Defaults to 0. (No limit)
+                                            See also the <option>max_inflight_messages</option> option.
+                                        </para>
+					<para>Reloaded on reload signal.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>max_inflight_messages</option> <replaceable>count</replaceable></term>
 				<listitem>
 					<para>The maximum number of QoS 1 or 2 messages that can be
@@ -372,13 +382,28 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>max_queued_bytes</option> <replaceable>count</replaceable></term>
+				<listitem>
+					<para>QoS 1 and 2 messages above those currently in-flight will be
+						queued (per client) until this limit is exceeded.
+						Defaults to 0. (No maximum) See also the
+						<option>max_queued_messages</option> option.
+						If both max_queued_messages and max_queued_bytes are specified,
+						packets will  be queued until the first limit is reached.
+					</para>
+					<para>Reloaded on reload signal.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>max_queued_messages</option> <replaceable>count</replaceable></term>
 				<listitem>
 					<para>The maximum number of QoS 1 or 2 messages to hold in the
 						queue (per client) above those messages that are currently
 						in flight. Defaults to 100. Set to 0 for no maximum (not
 						recommended). See also the
-						<option>queue_qos0_messages</option> option.</para>
+						<option>queue_qos0_messages</option> and
+						<option>max_queued_bytes</option> options.
+                                        </para>
 					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>

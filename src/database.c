@@ -26,7 +26,68 @@ Contributors:
 #include "time_mosq.h"
 
 static int max_inflight = 20;
+static unsigned long max_inflight_bytes = 0;
 static int max_queued = 100;
+static unsigned long max_queued_bytes = 0;
+
+/**
+ * Is this context ready to take more in flight messages right now?
+ * @param context the client context of interest
+ * @param qos qos for the packet of interest
+ * @return true if more in flight are allowed.
+ */
+static bool db__ready_for_flight(struct mosquitto *context, int qos)
+{
+	if(qos == 0 || (max_inflight == 0 && max_inflight_bytes == 0)){
+		return true;
+	}
+
+	bool valid_bytes = context->msg_bytes12 < max_inflight_bytes;
+	bool valid_count = context->msg_count12 < max_inflight;
+
+	if(max_inflight == 0){
+		return valid_bytes;
+	}
+	if(max_inflight_bytes == 0){
+		return valid_count;
+	}
+
+	return valid_bytes && valid_count;
+}
+
+
+/**
+ * For a given client context, are more messages allowed to be queued?
+ * @param context client of interest
+ * @return true if queuing is allowed, false if should be dropped
+ */
+static bool db__ready_for_queue(struct mosquitto *context)
+{
+	if(max_queued == 0 && max_queued_bytes == 0){
+		return true;
+	}
+
+	unsigned long adjust_bytes = max_inflight_bytes;
+	int adjust_count = max_inflight;
+	/* nothing in flight for offline clients */
+	if(context->sock == INVALID_SOCKET){
+		adjust_bytes = 0;
+		adjust_count = 0;
+	}
+
+	bool valid_bytes = context->msg_bytes12 - adjust_bytes < max_queued_bytes;
+	bool valid_count = context->msg_count12 - adjust_count < max_queued;
+
+	if(max_queued_bytes == 0){
+		return valid_count;
+	}
+	if(max_queued == 0){
+		return valid_bytes;
+	}
+
+	return valid_bytes && valid_count;
+}
+
 
 int db__open(struct mosquitto__config *config, struct mosquitto_db *db)
 {
@@ -169,6 +230,12 @@ static void db__message_remove(struct mosquitto_db *db, struct mosquitto *contex
 	}
 
 	if((*msg)->store){
+		context->msg_count--;
+		context->msg_bytes -= (*msg)->store->payloadlen;
+		if((*msg)->qos > 0){
+			context->msg_count12--;
+			context->msg_bytes12 -= (*msg)->store->payloadlen;
+		}
 		db__msg_store_deref(db, &(*msg)->store);
 	}
 	if(last){
@@ -181,10 +248,6 @@ static void db__message_remove(struct mosquitto_db *db, struct mosquitto *contex
 		if(!context->inflight_msgs){
 			context->last_inflight_msg = NULL;
 		}
-	}
-	context->msg_count--;
-	if((*msg)->qos > 0){
-		context->msg_count12--;
 	}
 	mosquitto__free(*msg);
 	if(last){
@@ -305,7 +368,7 @@ int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint1
 	}
 
 	if(context->sock != INVALID_SOCKET){
-		if(qos == 0 || max_inflight == 0 || context->msg_count12 < max_inflight){
+		if(db__ready_for_flight(context, qos)){
 			if(dir == mosq_md_out){
 				switch(qos){
 					case 0:
@@ -325,7 +388,7 @@ int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint1
 					return 1;
 				}
 			}
-		}else if(max_queued == 0 || context->msg_count12-max_inflight < max_queued){
+		}else if(db__ready_for_queue(context)){
 			state = mosq_ms_queued;
 			rc = 2;
 		}else{
@@ -340,7 +403,9 @@ int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint1
 			return 2;
 		}
 	}else{
-		if(max_queued > 0 && context->msg_count12 >= max_queued){
+		if (db__ready_for_queue(context, qos)){
+			state = mosq_ms_queued;
+		}else{
 			G_MSGS_DROPPED_INC();
 			if(context->is_dropping == false){
 				context->is_dropping = true;
@@ -349,8 +414,6 @@ int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint1
 						context->id);
 			}
 			return 2;
-		}else{
-			state = mosq_ms_queued;
 		}
 	}
 	assert(state != mosq_ms_invalid);
@@ -389,8 +452,10 @@ int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint1
 		*last_msg = msg;
 	}
 	context->msg_count++;
+	context->msg_bytes += msg->store->payloadlen;
 	if(qos > 0){
 		context->msg_count12++;
+		context->msg_bytes12 += msg->store->payloadlen;
 	}
 
 	if(db->config->allow_duplicate_messages == false && dir == mosq_md_out && retain == false){
@@ -474,6 +539,8 @@ int db__messages_delete(struct mosquitto_db *db, struct mosquitto *context)
 	}
 	context->queued_msgs = NULL;
 	context->last_queued_msg = NULL;
+	context->msg_bytes = 0;
+	context->msg_bytes12 = 0;
 	context->msg_count = 0;
 	context->msg_count12 = 0;
 
@@ -606,14 +673,18 @@ int db__message_reconnect_reset(struct mosquitto_db *db, struct mosquitto *conte
 	struct mosquitto_client_msg *prev = NULL;
 
 	msg = context->inflight_msgs;
+	context->msg_bytes = 0;
+	context->msg_bytes12 = 0;
 	context->msg_count = 0;
 	context->msg_count12 = 0;
 	while(msg){
 		context->last_inflight_msg = msg;
 
 		context->msg_count++;
+		context->msg_bytes += msg->store->payloadlen;
 		if(msg->qos > 0){
 			context->msg_count12++;
+			context->msg_bytes12 += msg->store->payloadlen;
 		}
 
 		if(msg->direction == mosq_md_out){
@@ -657,10 +728,12 @@ int db__message_reconnect_reset(struct mosquitto_db *db, struct mosquitto *conte
 			context->last_queued_msg = msg;
 
 			context->msg_count++;
+			context->msg_bytes += msg->store->payloadlen;
 			if(msg->qos > 0){
 				context->msg_count12++;
+				context->msg_bytes12 += msg->store->payloadlen;
 			}
-			if (max_inflight == 0 || context->msg_count <= max_inflight){
+			if (db__ready_for_flight(context, msg->qos)) {
 				switch(msg->qos){
 					case 0:
 						msg->state = mosq_ms_publish_qos0;
@@ -895,10 +968,12 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 	return MOSQ_ERR_SUCCESS;
 }
 
-void db__limits_set(int inflight, int queued)
+void db__limits_set(int inflight, unsigned long inflight_bytes, int queued, unsigned long queued_bytes)
 {
 	max_inflight = inflight;
+	max_inflight_bytes = inflight_bytes;
 	max_queued = queued;
+	max_queued_bytes = queued_bytes;
 }
 
 void db__vacuum(void)
