@@ -374,9 +374,9 @@
 			<varlistentry>
 				<term><option>max_queued_messages</option> <replaceable>count</replaceable></term>
 				<listitem>
-					<para>The maximum number of QoS 1 or 2 messages to hold in
-						the queue above those messages that are currently in
-						flight. Defaults to 100. Set to 0 for no maximum (not
+					<para>The maximum number of QoS 1 or 2 messages to hold in the
+						queue (per client) above those messages that are currently
+						in flight. Defaults to 100. Set to 0 for no maximum (not
 						recommended). See also the
 						<option>queue_qos0_messages</option> option.</para>
 					<para>Reloaded on reload signal.</para>
