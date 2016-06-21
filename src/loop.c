@@ -55,7 +55,6 @@ extern bool flag_db_backup;
 extern bool flag_tree_print;
 extern int run;
 
-static void loop_handle_errors(struct mosquitto_db *db, struct pollfd *pollfds);
 static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pollfds);
 
 #ifdef WITH_WEBSOCKETS
@@ -119,6 +118,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 #ifndef WIN32
 	sigemptyset(&sigblock);
 	sigaddset(&sigblock, SIGINT);
+	sigaddset(&sigblock, SIGTERM);
 #endif
 
 	if(db->config->persistent_client_expiration > 0){
@@ -312,7 +312,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 		fdcount = WSAPoll(pollfds, pollfd_index, 100);
 #endif
 		if(fdcount == -1){
-			loop_handle_errors(db, pollfds);
+			log__printf(NULL, MOSQ_LOG_ERR, "Error in poll: %s.", strerror(errno));
 		}else{
 			loop_handle_reads_writes(db, pollfds);
 
@@ -427,23 +427,6 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 }
 
-/* Error ocurred, probably an fd has been closed. 
- * Loop through and check them all.
- */
-static void loop_handle_errors(struct mosquitto_db *db, struct pollfd *pollfds)
-{
-	struct mosquitto *context, *ctxt_tmp;
-
-	HASH_ITER(hh_sock, db->contexts_by_sock, context, ctxt_tmp){
-		if(context->pollfd_index < 0){
-			continue;
-		}
-
-		if(pollfds[context->pollfd_index].revents & (POLLERR | POLLNVAL)){
-			do_disconnect(db, context);
-		}
-	}
-}
 
 static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pollfds)
 {
@@ -457,6 +440,10 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 		}
 
 		assert(pollfds[context->pollfd_index].fd == context->sock);
+		if(pollfds[context->pollfd_index].revents & (POLLERR | POLLNVAL | POLLHUP)){
+			do_disconnect(db, context);
+			continue;
+		}
 #ifdef WITH_TLS
 		if(pollfds[context->pollfd_index].revents & POLLOUT ||
 				context->want_write ||

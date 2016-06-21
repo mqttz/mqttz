@@ -1,12 +1,8 @@
 #!/usr/bin/env python
 
 import gnomeapplet
-import gobject
 import gtk
 import mosquitto
-import os
-import platform
-import pygtk
 import sys
 
 class CurrentCostMQTT(gnomeapplet.Applet):
@@ -30,7 +26,7 @@ class CurrentCostMQTT(gnomeapplet.Applet):
 
     def show_menu(self, widget, event):
         print "menu"
-        
+
     def __init__(self, applet, iid):
         self.applet = applet
         self.label = gtk.Label("0W")
@@ -63,7 +59,7 @@ if len(sys.argv) == 2:
         main_window.show_all()
         gtk.main()
         sys.exit()
- 
+
 if __name__ == '__main__':
     gnomeapplet.bonobo_factory("OAFIID:CurrentCostMQTT_Factory", gnomeapplet.Applet.__gtype__, "MQTT", "0", CurrentCostMQTT_factory)
 

@@ -468,12 +468,12 @@ int sub__add(struct mosquitto_db *db, struct mosquitto *context, const char *sub
 		child->subs = NULL;
 		child->children = NULL;
 		child->retained = NULL;
-		if(db->subs.children){
-			child->next = db->subs.children;
+		if(root->children){
+			child->next = root->children;
 		}else{
 			child->next = NULL;
 		}
-		db->subs.children = child;
+		root->children = child;
 
 		rc = sub__add_recurse(db, context, qos, child, tokens);
 	}

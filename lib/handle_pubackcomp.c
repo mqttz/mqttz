@@ -51,7 +51,12 @@ int handle__pubackcomp(struct mosquitto *mosq, const char *type)
 
 	if(mid){
 		rc = db__message_delete(db, mosq, mid, mosq_md_out);
-		if(rc) return rc;
+		if(rc == MOSQ_ERR_NOT_FOUND){
+			log__printf(mosq, MOSQ_LOG_WARNING, "Warning: Received %s from %s for an unknown packet identifier %d.", type, mosq->id, mid);
+			return MOSQ_ERR_SUCCESS;
+		}else{
+			return rc;
+		}
 	}
 #else
 	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received %s (Mid: %d)", mosq->id, type, mid);

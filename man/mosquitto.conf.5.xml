@@ -629,17 +629,23 @@
 					</listitem>
 				</varlistentry>
 				<varlistentry>
-					<term><option>listener</option> <replaceable>port</replaceable></term>
+					<term><option>listener</option> <replaceable>port</replaceable> <replaceable><optional>bind address/host</optional></replaceable></term>
 					<listitem>
 						<para>Listen for incoming network connection on the
 							specified port. A second optional argument allows
 							the listener to be bound to a specific ip
 							address/hostname. If this variable is used and
-							neither <option>bind_address</option> nor
-							<option>port</option> are used then the default
-							listener will not be started. This option may be
-							specified multiple times. See also the
-							<option>mount_point</option> option.</para>
+							neither the global <option>bind_address</option>
+							nor <option>port</option> options are used then the
+							default listener will not be started.</para>
+						<para>The <option>bind address/host</option> option
+							allows this listener to be bound to a specific IP
+							address by passing an IP address or hostname. For
+							websockets listeners, it is only possible to pass
+							an IP address here.</para>
+						<para>This option may be specified multiple times. See
+							also the <option>mount_point</option>
+							option.</para>
 						<para>Not reloaded on reload signal.</para>
 					</listitem>
 				</varlistentry>

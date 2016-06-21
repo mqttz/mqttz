@@ -37,18 +37,18 @@ if (WIN32)
 else (WIN32)
 	set (BINDIR bin)
 	set (SBINDIR sbin)
-	if (${CMAKE_INSTALL_PREFIX} STREQUAL /usr)
+	if ("${CMAKE_INSTALL_PREFIX}" STREQUAL /usr)
 		set (SYSCONFDIR /etc/mosquitto)
-	else (${CMAKE_INSTALL_PREFIX} STREQUAL /usr)
+	else ("${CMAKE_INSTALL_PREFIX}" STREQUAL /usr)
 		set (SYSCONFDIR etc/mosquitto)
-	endif (${CMAKE_INSTALL_PREFIX} STREQUAL /usr)
+	endif ("${CMAKE_INSTALL_PREFIX}" STREQUAL /usr)
 	
 	set (LIBDIR lib${LIB_SUFFIX})
 	set (CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIBDIR}")
 	set (INCLUDEDIR include)
 	set (DATAROOTDIR share)
-	set (MANDIR ${DATAROOTDIR}/man)
-	set (SHAREDIR ${DATAROOTDIR}/mosquitto)
+	set (MANDIR "${DATAROOTDIR}/man")
+	set (SHAREDIR "${DATAROOTDIR}/mosquitto")
 endif (WIN32)
 
 option(WITH_TLS
@@ -96,7 +96,7 @@ endif (${DOCUMENTATION} STREQUAL ON)
 # Install config file
 # ========================================
 
-install(FILES mosquitto.conf aclfile.example pskfile.example pwfile.example DESTINATION ${SYSCONFDIR})
+install(FILES mosquitto.conf aclfile.example pskfile.example pwfile.example DESTINATION "${SYSCONFDIR}")
 
 # ========================================
 # Testing

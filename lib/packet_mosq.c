@@ -334,7 +334,7 @@ int packet__write(struct mosquitto *mosq)
 			mosquitto__free(packet);
 
 			pthread_mutex_lock(&mosq->msgtime_mutex);
-			mosq->last_msg_out = mosquitto_time();
+			mosq->next_msg_out = mosquitto_time() + mosq->keepalive;
 			pthread_mutex_unlock(&mosq->msgtime_mutex);
 			/* End of duplicate, possibly unnecessary code */
 
@@ -365,7 +365,7 @@ int packet__write(struct mosquitto *mosq)
 		mosquitto__free(packet);
 
 		pthread_mutex_lock(&mosq->msgtime_mutex);
-		mosq->last_msg_out = mosquitto_time();
+		mosq->next_msg_out = mosquitto_time() + mosq->keepalive;
 		pthread_mutex_unlock(&mosq->msgtime_mutex);
 	}
 	pthread_mutex_unlock(&mosq->current_out_packet_mutex);

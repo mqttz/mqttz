@@ -50,7 +50,11 @@ int handle__pubrec(struct mosquitto *mosq)
 
 	rc = message__out_update(mosq, mid, mosq_ms_wait_for_pubcomp);
 #endif
-	if(rc) return rc;
+	if(rc == MOSQ_ERR_NOT_FOUND){
+		log__printf(mosq, MOSQ_LOG_WARNING, "Warning: Received PUBREC from %s for an unknown packet identifier %d.", mosq->id, mid);
+	}else if(rc != MOSQ_ERR_SUCCESS){
+		return rc;
+	}
 	rc = send__pubrel(mosq, mid);
 	if(rc) return rc;
 

@@ -490,7 +490,7 @@ int db__message_update(struct mosquitto *context, uint16_t mid, enum mosquitto_m
 		}
 		tail = tail->next;
 	}
-	return 1;
+	return MOSQ_ERR_NOT_FOUND;
 }
 
 int db__messages_delete(struct mosquitto_db *db, struct mosquitto *context)

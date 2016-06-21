@@ -200,6 +200,8 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				return -1;
 			}
 
+			mqtt3_db_message_write(db, mosq);
+
 			if(mosq->out_packet && !mosq->current_out_packet){
 				mosq->current_out_packet = mosq->out_packet;
 				mosq->out_packet = mosq->out_packet->next;
@@ -243,7 +245,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				packet__cleanup(packet);
 				mosquitto__free(packet);
 
-				mosq->last_msg_out = mosquitto_time();
+				mosq->next_msg_out = mosquitto_time() + mosq->keepalive;
 
 				if(mosq->current_out_packet){
 					libwebsocket_callback_on_writable(mosq->ws_context, mosq->wsi);
@@ -553,6 +555,7 @@ struct libwebsocket_context *mosq_websockets_init(struct mosquitto__listener *li
 	}
 
 	memset(&info, 0, sizeof(info));
+	info.iface = listener->host;
 	info.port = listener->port;
 	info.protocols = p;
 	info.gid = -1;
@@ -571,6 +574,7 @@ struct libwebsocket_context *mosq_websockets_init(struct mosquitto__listener *li
 	user = mosquitto__calloc(1, sizeof(struct libws_mqtt_hack));
 	if(!user){
 		mosquitto__free(p);
+		log__printf(NULL, MOSQ_LOG_ERR, "Out of memory.");
 		return NULL;
 	}
 
@@ -583,6 +587,7 @@ struct libwebsocket_context *mosq_websockets_init(struct mosquitto__listener *li
 		if(!user->http_dir){
 			mosquitto__free(user);
 			mosquitto__free(p);
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open http dir \"%s\".", user->http_dir);
 			return NULL;
 		}
 	}

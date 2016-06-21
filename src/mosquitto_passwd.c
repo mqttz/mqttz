@@ -369,6 +369,7 @@ int main(int argc, char *argv[])
 			batch_mode = true;
 		}else{
 			fprintf(stderr, "Error: Unknown option '%s'\n", argv[1]);
+			return 1;
 		}
 		password_file_tmp = argv[2];
 		username = argv[3];

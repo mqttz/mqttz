@@ -3,8 +3,6 @@
 # Test whether a clean session client has a QoS 1 message queued for it.
 
 import subprocess
-import socket
-import time
 
 import inspect, os, sys
 # From http://stackoverflow.com/questions/279237/python-import-a-module-from-a-folder

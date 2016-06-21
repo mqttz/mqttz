@@ -112,6 +112,12 @@ enum mosquitto__protocol {
 	mosq_p_mqtts = 3
 };
 
+enum mosquitto__threaded_state {
+	mosq_ts_none,		/* No threads in use */
+	mosq_ts_self,		/* Threads started by libmosquitto */
+	mosq_ts_external	/* Threads started by external code */
+};
+
 enum mosquitto__transport {
 	mosq_t_invalid = 0,
 	mosq_t_tcp = 1,
@@ -155,7 +161,7 @@ struct mosquitto {
 	uint16_t last_mid;
 	enum mosquitto_client_state state;
 	time_t last_msg_in;
-	time_t last_msg_out;
+	time_t next_msg_out;
 	time_t ping_t;
 	struct mosquitto__packet in_packet;
 	struct mosquitto__packet *current_out_packet;
@@ -245,7 +251,7 @@ struct mosquitto {
 	unsigned int reconnect_delay;
 	unsigned int reconnect_delay_max;
 	bool reconnect_exponential_backoff;
-	bool threaded;
+	char threaded;
 	struct mosquitto__packet *out_packet_last;
 	int inflight_messages;
 	int max_inflight_messages;

@@ -80,6 +80,9 @@ all : 01 02 03 04 08 09
 09-util-topic-tokenise.test : 09-util-topic-tokenise.cpp
 	$(CXX) $< -o $@ $(CFLAGS) $(LIBS)
 
+09-util-utf8-validate.test : 09-util-utf8-validate.cpp
+	$(CXX) $< -o $@ $(CFLAGS) $(LIBS)
+
 01 : 01-con-discon-success.test 01-will-set.test 01-unpwd-set.test 01-will-unpwd-set.test 01-no-clean-session.test 01-keepalive-pingreq.test
 
 02 : 02-subscribe-qos0.test 02-subscribe-qos1.test 02-subscribe-qos2.test 02-unsubscribe.test
@@ -90,7 +93,7 @@ all : 01 02 03 04 08 09
 
 08 : 08-ssl-connect-no-auth.test 08-ssl-connect-cert-auth.test 08-ssl-connect-cert-auth-enc.test 08-ssl-bad-cacert.test 08-ssl-fake-cacert.test
 
-09 : 09-util-topic-matching.test 09-util-topic-tokenise.test
+09 : 09-util-topic-matching.test 09-util-topic-tokenise.test 09-util-utf8-validate.test
 
 reallyclean : clean
 	-rm -f *.orig

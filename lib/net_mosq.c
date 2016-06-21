@@ -320,15 +320,20 @@ void net__print_ssl_error(struct mosquitto *mosq)
 
 int net__socket_connect_tls(struct mosquitto *mosq)
 {
-	int ret;
-
+	int ret, err;
 	ret = SSL_connect(mosq->ssl);
-	if(ret != 1){
-		ret = SSL_get_error(mosq->ssl, ret);
-		if(ret == SSL_ERROR_WANT_READ){
+	if(ret != 1) {
+		err = SSL_get_error(mosq->ssl, ret);
+#ifdef WIN32
+		if (err == SSL_ERROR_SYSCALL) {
+			mosq->want_connect = true;
+			return MOSQ_ERR_SUCCESS;
+		}
+#endif
+		if(err == SSL_ERROR_WANT_READ){
 			mosq->want_connect = true;
 			/* We always try to read anyway */
-		}else if(ret == SSL_ERROR_WANT_WRITE){
+		}else if(err == SSL_ERROR_WANT_WRITE){
 			mosq->want_write = true;
 			mosq->want_connect = true;
 		}else{
@@ -569,6 +574,7 @@ ssize_t net__write(struct mosquitto *mosq, void *buf, size_t count)
 	errno = 0;
 #ifdef WITH_TLS
 	if(mosq->ssl){
+		mosq->want_write = false;
 		ret = SSL_write(mosq->ssl, buf, count);
 		if(ret < 0){
 			err = SSL_get_error(mosq->ssl, ret);
