@@ -125,6 +125,7 @@ void db__msg_store_remove(struct mosquitto_db *db, struct mosquitto_msg_store *s
 		}
 	}
 	db->msg_store_count--;
+	db->msg_store_bytes -= store->payloadlen;
 
 	mosquitto__free(store->source_id);
 	if(store->dest_ids){
@@ -556,6 +557,7 @@ int db__message_store(struct mosquitto_db *db, const char *source, uint16_t sour
 	temp->dest_ids = NULL;
 	temp->dest_id_count = 0;
 	db->msg_store_count++;
+	db->msg_store_bytes += payloadlen;
 	(*stored) = temp;
 
 	if(!store_id){

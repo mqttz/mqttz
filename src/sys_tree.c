@@ -149,6 +149,7 @@ void sys_tree__update(struct mosquitto_db *db, int interval, time_t start_time)
 	char buf[BUFLEN];
 
 	static int msg_store_count = -1;
+	static unsigned long msg_store_bytes = -1;
 	static unsigned long msgs_received = -1;
 	static unsigned long msgs_sent = -1;
 	static unsigned long publish_dropped = -1;
@@ -271,6 +272,13 @@ void sys_tree__update(struct mosquitto_db *db, int interval, time_t start_time)
 			msg_store_count = db->msg_store_count;
 			snprintf(buf, BUFLEN, "%d", msg_store_count);
 			db__messages_easy_queue(db, NULL, "$SYS/broker/messages/stored", SYS_TREE_QOS, strlen(buf), buf, 1);
+			db__messages_easy_queue(db, NULL, "$SYS/broker/store/messages/count", SYS_TREE_QOS, strlen(buf), buf, 1);
+		}
+
+		if (db->msg_store_bytes != msg_store_bytes){
+			msg_store_bytes = db->msg_store_bytes;
+			snprintf(buf, BUFLEN, "%lu", msg_store_bytes);
+			db__messages_easy_queue(db, NULL, "$SYS/broker/store/messages/bytes", SYS_TREE_QOS, strlen(buf), buf, 1);
 		}
 
 		if(db->subscription_count != subscription_count){

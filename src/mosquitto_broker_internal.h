@@ -358,6 +358,7 @@ struct mosquitto_db{
 #ifdef WITH_BRIDGE
 	int bridge_count;
 #endif
+	unsigned long msg_store_bytes;
 	int msg_store_count;
 	struct mosquitto__config *config;
 	int persistence_changes;
