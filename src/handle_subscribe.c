@@ -67,17 +67,26 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 
 		if(sub){
 			if(STREMPTY(sub)){
-				log__printf(NULL, MOSQ_LOG_INFO, "Empty subscription string from %s, disconnecting.",
-					context->address);
+				log__printf(NULL, MOSQ_LOG_INFO,
+						"Empty subscription string from %s, disconnecting.",
+						context->address);
 				mosquitto__free(sub);
 				mosquitto__free(payload);
 				return 1;
 			}
 			if(mosquitto_sub_topic_check(sub)){
-				log__printf(NULL, MOSQ_LOG_INFO, "Invalid subscription string from %s, disconnecting.",
-					context->address);
+				log__printf(NULL, MOSQ_LOG_INFO,
+						"Invalid subscription string from %s, disconnecting.",
+						context->address);
 				mosquitto__free(sub);
 				mosquitto__free(payload);
+				return 1;
+			}
+			if(mosquitto_validate_utf8(sub, strlen(sub))){
+				log__printf(NULL, MOSQ_LOG_INFO,
+						"Malformed UTF-8 in subscription string from %s, disconnecting.",
+						context->id);
+				mosquitto__free(sub);
 				return 1;
 			}
 
@@ -87,8 +96,9 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 				return 1;
 			}
 			if(qos > 2){
-				log__printf(NULL, MOSQ_LOG_INFO, "Invalid QoS in subscription command from %s, disconnecting.",
-					context->address);
+				log__printf(NULL, MOSQ_LOG_INFO,
+						"Invalid QoS in subscription command from %s, disconnecting.",
+						context->address);
 				mosquitto__free(sub);
 				mosquitto__free(payload);
 				return 1;

@@ -43,6 +43,7 @@ set (MOSQ_SRCS
 	../lib/time_mosq.c
 	../lib/tls_mosq.c
 	../lib/util_mosq.c ../lib/util_mosq.h
+	../lib/utf8_mosq.c
 	websockets.c
 	../lib/will_mosq.c ../lib/will_mosq.h)
 

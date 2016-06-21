@@ -27,6 +27,8 @@ Broker:
 - Miscellaneous fixes on Windows.
 - Bridge connections now default to using MQTT v3.1.1.
 - mosquitto_db_dump tool can now output some stats on clients.
+- perform utf-8 validation on incoming will, subscription and unsubscription
+  topics.
 
 Client library:
 - Outgoing messages with QoS>1 are no longer retried after a timeout period.

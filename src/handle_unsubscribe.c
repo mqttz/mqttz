@@ -54,14 +54,23 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 
 		if(sub){
 			if(STREMPTY(sub)){
-				log__printf(NULL, MOSQ_LOG_INFO, "Empty unsubscription string from %s, disconnecting.",
-					context->id);
+				log__printf(NULL, MOSQ_LOG_INFO,
+						"Empty unsubscription string from %s, disconnecting.",
+						context->id);
 				mosquitto__free(sub);
 				return 1;
 			}
 			if(mosquitto_sub_topic_check(sub)){
-				log__printf(NULL, MOSQ_LOG_INFO, "Invalid unsubscription string from %s, disconnecting.",
-					context->id);
+				log__printf(NULL, MOSQ_LOG_INFO,
+						"Invalid unsubscription string from %s, disconnecting.",
+						context->id);
+				mosquitto__free(sub);
+				return 1;
+			}
+			if(mosquitto_validate_utf8(sub, strlen(sub))){
+				log__printf(NULL, MOSQ_LOG_INFO,
+						"Malformed UTF-8 in unsubscription string from %s, disconnecting.",
+						context->id);
 				mosquitto__free(sub);
 				return 1;
 			}
