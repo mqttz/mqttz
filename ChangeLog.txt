@@ -7,6 +7,8 @@ Broker:
 - Don't disconnect client on HUP before reading the pending data. Closes #7.
 - Fix some $SYS messages being incorrectly persisted. Closes #191.
 - Support OpenSSL 1.1.0.
+- Call fsync after persisting data to ensure it is correctly written. Closes
+  #189.
 
 Client library:
 - Support OpenSSL 1.1.0.
