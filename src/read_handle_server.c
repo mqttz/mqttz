@@ -364,7 +364,7 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 				goto handle_connect_error;
 			}
 			name_entry = X509_NAME_get_entry(name, i);
-			context->username = _mosquitto_strdup((char *)ASN1_STRING_data(name_entry->value));
+			context->username = _mosquitto_strdup((char *)ASN1_STRING_data(X509_NAME_ENTRY_get_data(name_entry)));
 			if(!context->username){
 				rc = 1;
 				goto handle_connect_error;

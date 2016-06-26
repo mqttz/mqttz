@@ -6,6 +6,10 @@ Broker:
   #186.
 - Don't disconnect client on HUP before reading the pending data. Closes #7.
 - Fix some $SYS messages being incorrectly persisted. Closes #191.
+- Support OpenSSL 1.1.0.
+
+Client library:
+- Support OpenSSL 1.1.0.
 
 Build:
 - Don't attempt to install docs when WITH_DOCS=no. Closes #184.
