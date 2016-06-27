@@ -402,9 +402,9 @@ int mqtt3_db_backup(struct mosquitto_db *db, bool shutdown)
 	fsync(fileno(db_fptr));
 
 	if(db->config->persistence_location){
-		dir_fd = open(db->config->persistence_location, O_DIRECTORY);
+		dir_fd = open(db->config->persistence_location, O_RDONLY);
 	}else{
-		dir_fd = open(".", O_DIRECTORY);
+		dir_fd = open(".", O_RDONLY);
 	}
 	if(dir_fd > 0){
 		fsync(dir_fd);
