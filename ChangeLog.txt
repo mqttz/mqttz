@@ -12,6 +12,7 @@ Broker:
 
 Client library:
 - Support OpenSSL 1.1.0.
+- Fixed the C++ library not allowing SOCKS support to be used. Closes #198.
 
 Build:
 - Don't attempt to install docs when WITH_DOCS=no. Closes #184.
