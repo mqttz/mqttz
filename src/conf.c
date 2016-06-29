@@ -475,7 +475,7 @@ int config__read(struct mosquitto__config *config, bool reload)
 {
 	int rc = MOSQ_ERR_SUCCESS;
 	struct config_recurse cr;
-	int lineno;
+	int lineno = 0;
 	int len;
 #ifdef WITH_BRIDGE
 	int i;
