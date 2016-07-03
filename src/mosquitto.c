@@ -71,6 +71,9 @@ int deny_severity = LOG_INFO;
 void handle_sigint(int signal);
 void handle_sigusr1(int signal);
 void handle_sigusr2(int signal);
+#ifdef SIGHUP
+void handle_sighup(int signal);
+#endif
 
 struct mosquitto_db *mosquitto__get_db(void)
 {
@@ -157,27 +160,6 @@ int restore_privileges(void)
 	return MOSQ_ERR_SUCCESS;
 }
 
-#ifdef SIGHUP
-/* Signal handler for SIGHUP - flag a config reload. */
-void handle_sighup(int signal)
-{
-	flag_reload = true;
-}
-#endif
-
-/* Signal handler for SIGINT and SIGTERM - just stop gracefully. */
-void handle_sigint(int signal)
-{
-	run = 0;
-}
-
-/* Signal handler for SIGUSR1 - backup the db. */
-void handle_sigusr1(int signal)
-{
-#ifdef WITH_PERSISTENCE
-	flag_db_backup = true;
-#endif
-}
 
 void mosquitto__daemonise(void)
 {
@@ -208,64 +190,6 @@ void mosquitto__daemonise(void)
 #endif
 }
 
-/* Signal handler for SIGUSR2 - vacuum the db. */
-void handle_sigusr2(int signal)
-{
-	flag_tree_print = true;
-}
-
-/*
-*
-* Signalling mosquitto process on Win32.
-*
-*  On Windows we we can use named events to pass signals to the mosquitto process.
-*  List of events :
-*
-*    mosqPID_shutdown
-*    mosqPID_reload
-*    mosqPID_backup
-*    mosqPID_vacuum
-*
-* (where PID is the PID of the mosquitto process).
-*/
-#ifdef WIN32
-DWORD WINAPI SigThreadProc(void* data) {
-	TCHAR evt_name[MAX_PATH];
-	static HANDLE evt[4];
-	int pid = GetCurrentProcessId();
-	sprintf_s(evt_name, MAX_PATH, "mosq%d_shutdown", pid);
-	evt[0] = CreateEvent(NULL, TRUE, FALSE, evt_name);
-	sprintf_s(evt_name, MAX_PATH, "mosq%d_reload", pid);
-	evt[1] = CreateEvent(NULL, FALSE, FALSE, evt_name);
-	sprintf_s(evt_name, MAX_PATH, "mosq%d_backup", pid);
-	evt[2] = CreateEvent(NULL, FALSE, FALSE, evt_name);
-	sprintf_s(evt_name, MAX_PATH, "mosq%d_vacuum", pid);
-	evt[3] = CreateEvent(NULL, FALSE, FALSE, evt_name);
-	while (true) {
-		int wr = WaitForMultipleObjects(sizeof(evt) / sizeof(HANDLE), evt, FALSE, INFINITE);
-		switch (wr) {
-		case WAIT_OBJECT_0 + 0:
-			handle_sigint(SIGINT);
-			break;
-		case WAIT_OBJECT_0 + 1:
-			flag_reload = true;
-			continue;
-		case WAIT_OBJECT_0 + 2:
-			handle_sigusr1(0);
-			continue;
-		case WAIT_OBJECT_0 + 3:
-			handle_sigusr2(0);
-			continue;
-		}
-		break;
-	}
-	CloseHandle(evt[0]);
-	CloseHandle(evt[1]);
-	CloseHandle(evt[2]);
-	CloseHandle(evt[3]);
-	return 0;
-}
-#endif
 
 int main(int argc, char *argv[])
 {

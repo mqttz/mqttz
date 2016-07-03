@@ -37,6 +37,7 @@ set (MOSQ_SRCS
 	../lib/send_disconnect.c
 	../lib/send_publish.c
 	send_suback.c
+	signals.c
 	../lib/send_subscribe.c
 	../lib/send_unsubscribe.c
 	sys_tree.c sys_tree.h
