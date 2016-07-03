@@ -90,7 +90,7 @@ void handle_sigusr1(int signal)
 #endif
 }
 
-/* Signal handler for SIGUSR2 - vacuum the db. */
+/* Signal handler for SIGUSR2 - print subscription / retained tree. */
 void handle_sigusr2(int signal)
 {
 	flag_tree_print = true;
@@ -106,7 +106,6 @@ void handle_sigusr2(int signal)
  *    mosqPID_shutdown
  *    mosqPID_reload
  *    mosqPID_backup
- *    mosqPID_vacuum
  *
  * (where PID is the PID of the mosquitto process).
  */
@@ -123,8 +122,6 @@ DWORD WINAPI SigThreadProc(void* data)
 	evt[1] = CreateEvent(NULL, FALSE, FALSE, evt_name);
 	sprintf_s(evt_name, MAX_PATH, "mosq%d_backup", pid);
 	evt[2] = CreateEvent(NULL, FALSE, FALSE, evt_name);
-	sprintf_s(evt_name, MAX_PATH, "mosq%d_vacuum", pid);
-	evt[3] = CreateEvent(NULL, FALSE, FALSE, evt_name);
 
 	while (true) {
 		int wr = WaitForMultipleObjects(sizeof(evt) / sizeof(HANDLE), evt, FALSE, INFINITE);
@@ -138,16 +135,11 @@ DWORD WINAPI SigThreadProc(void* data)
 		case WAIT_OBJECT_0 + 2:
 			handle_sigusr1(0);
 			continue;
-		case WAIT_OBJECT_0 + 3:
-			handle_sigusr2(0);
-			continue;
-		}
 		break;
 	}
 	CloseHandle(evt[0]);
 	CloseHandle(evt[1]);
 	CloseHandle(evt[2]);
-	CloseHandle(evt[3]);
 	return 0;
 }
 #endif
