@@ -27,10 +27,11 @@ OBJS=	mosquitto.o \
 		logging.o \
 		loop.o \
 		memory_mosq.o \
-		persist.o \
 		net.o \
 		net_mosq.o \
 		packet_mosq.o \
+		persist.o \
+		plugin.o \
 		read_handle.o \
 		security.o \
 		security_default.o \
@@ -123,6 +124,9 @@ persist.o : persist.c persist.h mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 	
 packet_mosq.o : ../lib/packet_mosq.c ../lib/packet_mosq.h
+	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
+
+plugin.o : plugin.c mosquitto_plugin.h mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
 read_handle.o : read_handle.c mosquitto_broker_internal.h

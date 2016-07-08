@@ -1,3 +1,4 @@
 {
 	mosquitto_log_printf;
+	mosquitto_client_username;
 };

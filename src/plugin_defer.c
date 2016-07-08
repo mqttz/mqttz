@@ -16,6 +16,9 @@ Contributors:
 
 /* This is a skeleton authentication and access control plugin that simply defers all checks. */
 
+#include <stdio.h>
+
+#include "mosquitto_broker.h"
 #include "mosquitto_plugin.h"
 #include "mosquitto.h"
 
@@ -46,6 +49,7 @@ int mosquitto_auth_security_cleanup(void *user_data, struct mosquitto_auth_opt *
 
 int mosquitto_auth_acl_check(void *user_data, int access, const struct mosquitto *client, struct mosquitto_acl_msg *msg)
 {
+	printf("mosquitto_acl_check(u:%s)\n", mosquitto_client_username(client));
 	return MOSQ_ERR_PLUGIN_DEFER;
 }
 

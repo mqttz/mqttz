@@ -17,6 +17,8 @@ Contributors:
 #ifndef MOSQUITTO_BROKER_H
 #define MOSQUITTO_BROKER_H
 
+struct mosquitto;
+
 struct mosquitto_opt {
 	char *key;
 	char *value;
@@ -53,5 +55,21 @@ struct mosquitto_opt {
  *	fmt, ... - printf style format and arguments.
  */
 void mosquitto_log_printf(int level, const char *fmt, ...);
+
+
+/* =========================================================================
+ *
+ * Client Functions
+ *
+ * Use these functions to access client information.
+ *
+ * ========================================================================= */
+
+/*
+ * Function: mosquitto_client_username
+ *
+ * Retrieve the username associated with a client.
+ */
+const char *mosquitto_client_username(const struct mosquitto *client);
 
 #endif

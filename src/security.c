@@ -235,22 +235,12 @@ int mosquitto_security_cleanup(struct mosquitto_db *db, bool reload)
 
 int mosquitto_acl_check(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int access)
 {
-	char *username;
 	int rc;
 	int i;
 	struct mosquitto_acl_msg msg;
 
 	if(!context->id){
 		return MOSQ_ERR_ACL_DENIED;
-	}
-
-#ifdef WITH_BRIDGE
-	if(context->bridge){
-		username = context->bridge->local_username;
-	}else
-#endif
-	{
-		username = context->username;
 	}
 
 	rc = mosquitto_acl_check_default(db, context, topic, access);

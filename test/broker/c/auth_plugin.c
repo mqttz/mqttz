@@ -1,6 +1,7 @@
 #include <string.h>
 #include <string.h>
 #include <mosquitto.h>
+#include <mosquitto_broker.h>
 #include <mosquitto_plugin.h>
 
 int mosquitto_auth_plugin_version(void)
@@ -28,9 +29,11 @@ int mosquitto_auth_security_cleanup(void *user_data, struct mosquitto_auth_opt *
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto_auth_acl_check(void *user_data, const char *clientid, const char *username, const char *topic, int access)
+int mosquitto_auth_acl_check(void *user_data, int access, const struct mosquitto *client, struct mosquitto_acl_msg *msg)
 {
-	if(!strcmp(username, "readonly") && access == MOSQ_ACL_READ){
+	const char *username = mosquitto_client_username(client);
+
+	if(username && !strcmp(username, "readonly") && access == MOSQ_ACL_READ){
 		return MOSQ_ERR_SUCCESS;
 	}else{
 		return MOSQ_ERR_ACL_DENIED;
