@@ -27,6 +27,8 @@ Contributors:
 
 #define BUFLEN 100
 
+#define SYS_TREE_QOS 2
+
 uint64_t g_bytes_received = 0;
 uint64_t g_bytes_sent = 0;
 uint64_t g_pub_bytes_received = 0;
@@ -50,9 +52,9 @@ void sys_tree__init(struct mosquitto_db *db)
 
 	/* Set static $SYS messages */
 	snprintf(buf, 64, "mosquitto version %s", VERSION);
-	db__messages_easy_queue(db, NULL, "$SYS/broker/version", 2, strlen(buf), buf, 1);
+	db__messages_easy_queue(db, NULL, "$SYS/broker/version", SYS_TREE_QOS, strlen(buf), buf, 1);
 	snprintf(buf, 64, "%s", TIMESTAMP);
-	db__messages_easy_queue(db, NULL, "$SYS/broker/timestamp", 2, strlen(buf), buf, 1);
+	db__messages_easy_queue(db, NULL, "$SYS/broker/timestamp", SYS_TREE_QOS, strlen(buf), buf, 1);
 }
 
 static void sys_tree__update_clients(struct mosquitto_db *db, char *buf)
@@ -71,31 +73,31 @@ static void sys_tree__update_clients(struct mosquitto_db *db, char *buf)
 	if(client_count != count_total){
 		client_count = count_total;
 		snprintf(buf, BUFLEN, "%d", client_count);
-		db__messages_easy_queue(db, NULL, "$SYS/broker/clients/total", 2, strlen(buf), buf, 1);
+		db__messages_easy_queue(db, NULL, "$SYS/broker/clients/total", SYS_TREE_QOS, strlen(buf), buf, 1);
 
 		if(client_count > client_max){
 			client_max = client_count;
 			snprintf(buf, BUFLEN, "%d", client_max);
-			db__messages_easy_queue(db, NULL, "$SYS/broker/clients/maximum", 2, strlen(buf), buf, 1);
+			db__messages_easy_queue(db, NULL, "$SYS/broker/clients/maximum", SYS_TREE_QOS, strlen(buf), buf, 1);
 		}
 	}
 
 	if(disconnected_count != count_total-count_by_sock){
 		disconnected_count = count_total-count_by_sock;
 		snprintf(buf, BUFLEN, "%d", disconnected_count);
-		db__messages_easy_queue(db, NULL, "$SYS/broker/clients/inactive", 2, strlen(buf), buf, 1);
-		db__messages_easy_queue(db, NULL, "$SYS/broker/clients/disconnected", 2, strlen(buf), buf, 1);
+		db__messages_easy_queue(db, NULL, "$SYS/broker/clients/inactive", SYS_TREE_QOS, strlen(buf), buf, 1);
+		db__messages_easy_queue(db, NULL, "$SYS/broker/clients/disconnected", SYS_TREE_QOS, strlen(buf), buf, 1);
 	}
 	if(connected_count != count_by_sock){
 		connected_count = count_by_sock;
 		snprintf(buf, BUFLEN, "%d", connected_count);
-		db__messages_easy_queue(db, NULL, "$SYS/broker/clients/active", 2, strlen(buf), buf, 1);
-		db__messages_easy_queue(db, NULL, "$SYS/broker/clients/connected", 2, strlen(buf), buf, 1);
+		db__messages_easy_queue(db, NULL, "$SYS/broker/clients/active", SYS_TREE_QOS, strlen(buf), buf, 1);
+		db__messages_easy_queue(db, NULL, "$SYS/broker/clients/connected", SYS_TREE_QOS, strlen(buf), buf, 1);
 	}
 	if(g_clients_expired != clients_expired){
 		clients_expired = g_clients_expired;
 		snprintf(buf, BUFLEN, "%d", clients_expired);
-		db__messages_easy_queue(db, NULL, "$SYS/broker/clients/expired", 2, strlen(buf), buf, 1);
+		db__messages_easy_queue(db, NULL, "$SYS/broker/clients/expired", SYS_TREE_QOS, strlen(buf), buf, 1);
 	}
 }
 
@@ -110,13 +112,13 @@ static void sys_tree__update_memory(struct mosquitto_db *db, char *buf)
 	if(current_heap != value_ul){
 		current_heap = value_ul;
 		snprintf(buf, BUFLEN, "%lu", current_heap);
-		db__messages_easy_queue(db, NULL, "$SYS/broker/heap/current", 2, strlen(buf), buf, 1);
+		db__messages_easy_queue(db, NULL, "$SYS/broker/heap/current", SYS_TREE_QOS, strlen(buf), buf, 1);
 	}
 	value_ul =mosquitto__max_memory_used();
 	if(max_heap != value_ul){
 		max_heap = value_ul;
 		snprintf(buf, BUFLEN, "%lu", max_heap);
-		db__messages_easy_queue(db, NULL, "$SYS/broker/heap/maximum", 2, strlen(buf), buf, 1);
+		db__messages_easy_queue(db, NULL, "$SYS/broker/heap/maximum", SYS_TREE_QOS, strlen(buf), buf, 1);
 	}
 }
 #endif
@@ -128,7 +130,7 @@ static void calc_load(struct mosquitto_db *db, char *buf, const char *topic, dou
 	new_value = interval + exponent*((*current) - interval);
 	if(fabs(new_value - (*current)) >= 0.01){
 		snprintf(buf, BUFLEN, "%.2f", new_value);
-		db__messages_easy_queue(db, NULL, topic, 2, strlen(buf), buf, 1);
+		db__messages_easy_queue(db, NULL, topic, SYS_TREE_QOS, strlen(buf), buf, 1);
 	}
 	(*current) = new_value;
 }
@@ -204,7 +206,7 @@ void sys_tree__update(struct mosquitto_db *db, int interval, time_t start_time)
 	if(interval && now - interval > last_update){
 		uptime = now - start_time;
 		snprintf(buf, BUFLEN, "%d seconds", (int)uptime);
-		db__messages_easy_queue(db, NULL, "$SYS/broker/uptime", 2, strlen(buf), buf, 1);
+		db__messages_easy_queue(db, NULL, "$SYS/broker/uptime", SYS_TREE_QOS, strlen(buf), buf, 1);
 
 		sys_tree__update_clients(db, buf);
 		if(last_update > 0){
@@ -268,19 +270,19 @@ void sys_tree__update(struct mosquitto_db *db, int interval, time_t start_time)
 		if(db->msg_store_count != msg_store_count){
 			msg_store_count = db->msg_store_count;
 			snprintf(buf, BUFLEN, "%d", msg_store_count);
-			db__messages_easy_queue(db, NULL, "$SYS/broker/messages/stored", 2, strlen(buf), buf, 1);
+			db__messages_easy_queue(db, NULL, "$SYS/broker/messages/stored", SYS_TREE_QOS, strlen(buf), buf, 1);
 		}
 
 		if(db->subscription_count != subscription_count){
 			subscription_count = db->subscription_count;
 			snprintf(buf, BUFLEN, "%d", subscription_count);
-			db__messages_easy_queue(db, NULL, "$SYS/broker/subscriptions/count", 2, strlen(buf), buf, 1);
+			db__messages_easy_queue(db, NULL, "$SYS/broker/subscriptions/count", SYS_TREE_QOS, strlen(buf), buf, 1);
 		}
 
 		if(db->retained_count != retained_count){
 			retained_count = db->retained_count;
 			snprintf(buf, BUFLEN, "%d", retained_count);
-			db__messages_easy_queue(db, NULL, "$SYS/broker/retained messages/count", 2, strlen(buf), buf, 1);
+			db__messages_easy_queue(db, NULL, "$SYS/broker/retained messages/count", SYS_TREE_QOS, strlen(buf), buf, 1);
 		}
 
 #ifdef REAL_WITH_MEMORY_TRACKING
@@ -290,55 +292,55 @@ void sys_tree__update(struct mosquitto_db *db, int interval, time_t start_time)
 		if(msgs_received != g_msgs_received){
 			msgs_received = g_msgs_received;
 			snprintf(buf, BUFLEN, "%lu", msgs_received);
-			db__messages_easy_queue(db, NULL, "$SYS/broker/messages/received", 2, strlen(buf), buf, 1);
+			db__messages_easy_queue(db, NULL, "$SYS/broker/messages/received", SYS_TREE_QOS, strlen(buf), buf, 1);
 		}
 		
 		if(msgs_sent != g_msgs_sent){
 			msgs_sent = g_msgs_sent;
 			snprintf(buf, BUFLEN, "%lu", msgs_sent);
-			db__messages_easy_queue(db, NULL, "$SYS/broker/messages/sent", 2, strlen(buf), buf, 1);
+			db__messages_easy_queue(db, NULL, "$SYS/broker/messages/sent", SYS_TREE_QOS, strlen(buf), buf, 1);
 		}
 
 		if(publish_dropped != g_msgs_dropped){
 			publish_dropped = g_msgs_dropped;
 			snprintf(buf, BUFLEN, "%lu", publish_dropped);
-			db__messages_easy_queue(db, NULL, "$SYS/broker/publish/messages/dropped", 2, strlen(buf), buf, 1);
+			db__messages_easy_queue(db, NULL, "$SYS/broker/publish/messages/dropped", SYS_TREE_QOS, strlen(buf), buf, 1);
 		}
 
 		if(pub_msgs_received != g_pub_msgs_received){
 			pub_msgs_received = g_pub_msgs_received;
 			snprintf(buf, BUFLEN, "%lu", pub_msgs_received);
-			db__messages_easy_queue(db, NULL, "$SYS/broker/publish/messages/received", 2, strlen(buf), buf, 1);
+			db__messages_easy_queue(db, NULL, "$SYS/broker/publish/messages/received", SYS_TREE_QOS, strlen(buf), buf, 1);
 		}
 		
 		if(pub_msgs_sent != g_pub_msgs_sent){
 			pub_msgs_sent = g_pub_msgs_sent;
 			snprintf(buf, BUFLEN, "%lu", pub_msgs_sent);
-			db__messages_easy_queue(db, NULL, "$SYS/broker/publish/messages/sent", 2, strlen(buf), buf, 1);
+			db__messages_easy_queue(db, NULL, "$SYS/broker/publish/messages/sent", SYS_TREE_QOS, strlen(buf), buf, 1);
 		}
 
 		if(bytes_received != g_bytes_received){
 			bytes_received = g_bytes_received;
 			snprintf(buf, BUFLEN, "%llu", bytes_received);
-			db__messages_easy_queue(db, NULL, "$SYS/broker/bytes/received", 2, strlen(buf), buf, 1);
+			db__messages_easy_queue(db, NULL, "$SYS/broker/bytes/received", SYS_TREE_QOS, strlen(buf), buf, 1);
 		}
 		
 		if(bytes_sent != g_bytes_sent){
 			bytes_sent = g_bytes_sent;
 			snprintf(buf, BUFLEN, "%llu", bytes_sent);
-			db__messages_easy_queue(db, NULL, "$SYS/broker/bytes/sent", 2, strlen(buf), buf, 1);
+			db__messages_easy_queue(db, NULL, "$SYS/broker/bytes/sent", SYS_TREE_QOS, strlen(buf), buf, 1);
 		}
 		
 		if(pub_bytes_received != g_pub_bytes_received){
 			pub_bytes_received = g_pub_bytes_received;
 			snprintf(buf, BUFLEN, "%llu", pub_bytes_received);
-			db__messages_easy_queue(db, NULL, "$SYS/broker/publish/bytes/received", 2, strlen(buf), buf, 1);
+			db__messages_easy_queue(db, NULL, "$SYS/broker/publish/bytes/received", SYS_TREE_QOS, strlen(buf), buf, 1);
 		}
 
 		if(pub_bytes_sent != g_pub_bytes_sent){
 			pub_bytes_sent = g_pub_bytes_sent;
 			snprintf(buf, BUFLEN, "%llu", pub_bytes_sent);
-			db__messages_easy_queue(db, NULL, "$SYS/broker/publish/bytes/sent", 2, strlen(buf), buf, 1);
+			db__messages_easy_queue(db, NULL, "$SYS/broker/publish/bytes/sent", SYS_TREE_QOS, strlen(buf), buf, 1);
 		}
 
 		last_update = mosquitto_time();
