@@ -198,7 +198,7 @@ mosquitto_passwd : mosquitto_passwd.o
 mosquitto_passwd.o : mosquitto_passwd.c
 	${CROSS_COMPILE}${CC} $(CFLAGS) ${CPPFLAGS} -c $< -o $@
 
-plugin_defer.so : plugin_defer.c mosquitto_plugin.h
+plugin_defer.so : plugin_defer.c mosquitto_plugin.h mosquitto_broker.h mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} -I. -I../lib -fPIC -shared $< -o $@
 
 install : all

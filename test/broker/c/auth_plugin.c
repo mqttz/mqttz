@@ -1,4 +1,4 @@
-#include <string.h>
+#include <stdio.h>
 #include <string.h>
 #include <mosquitto.h>
 #include <mosquitto_broker.h>
@@ -33,6 +33,7 @@ int mosquitto_auth_acl_check(void *user_data, int access, const struct mosquitto
 {
 	const char *username = mosquitto_client_username(client);
 
+	printf("%s\n", username);
 	if(username && !strcmp(username, "readonly") && access == MOSQ_ACL_READ){
 		return MOSQ_ERR_SUCCESS;
 	}else{
@@ -40,7 +41,7 @@ int mosquitto_auth_acl_check(void *user_data, int access, const struct mosquitto
 	}
 }
 
-int mosquitto_auth_unpwd_check(void *user_data, const char *username, const char *password)
+int mosquitto_auth_unpwd_check(void *user_data, const struct mosquitto *client, const char *username, const char *password)
 {
 	if(!strcmp(username, "test-username") && password && !strcmp(password, "cnwTICONIURW")){
 		return MOSQ_ERR_SUCCESS;

@@ -420,7 +420,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	}else{
 #endif /* WITH_TLS */
 		if(username_flag){
-			rc = mosquitto_unpwd_check(db, username, password);
+			rc = mosquitto_unpwd_check(db, context, username, password);
 			switch(rc){
 				case MOSQ_ERR_SUCCESS:
 					break;

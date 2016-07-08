@@ -30,7 +30,7 @@ typedef int (*FUNC_auth_plugin_cleanup)(void *, struct mosquitto_auth_opt *, int
 typedef int (*FUNC_auth_plugin_security_init)(void *, struct mosquitto_auth_opt *, int, bool);
 typedef int (*FUNC_auth_plugin_security_cleanup)(void *, struct mosquitto_auth_opt *, int, bool);
 typedef int (*FUNC_auth_plugin_acl_check)(void *, int, const struct mosquitto *, struct mosquitto_acl_msg *);
-typedef int (*FUNC_auth_plugin_unpwd_check)(void *, const char *, const char *);
+typedef int (*FUNC_auth_plugin_unpwd_check)(void *, const struct mosquitto *, const char *, const char *);
 typedef int (*FUNC_auth_plugin_psk_key_get)(void *, const char *, const char *, char *, int);
 
 void LIB_ERROR(void)
@@ -267,7 +267,7 @@ int mosquitto_acl_check(struct mosquitto_db *db, struct mosquitto *context, cons
 	return rc;
 }
 
-int mosquitto_unpwd_check(struct mosquitto_db *db, const char *username, const char *password)
+int mosquitto_unpwd_check(struct mosquitto_db *db, struct mosquitto *context, const char *username, const char *password)
 {
 	int rc;
 	int i;
@@ -281,7 +281,7 @@ int mosquitto_unpwd_check(struct mosquitto_db *db, const char *username, const c
 	 */
 	rc = MOSQ_ERR_SUCCESS;
 	for(i=0; i<db->auth_plugin_count; i++){
-		rc = db->auth_plugins[i].unpwd_check(db->auth_plugins[i].user_data, username, password);
+		rc = db->auth_plugins[i].unpwd_check(db->auth_plugins[i].user_data, context, username, password);
 		if(rc != MOSQ_ERR_PLUGIN_DEFER){
 			return rc;
 		}
