@@ -30,7 +30,7 @@ Contributors:
 #include "config.h"
 
 #include "mosquitto.h"
-#include "mosquitto_broker.h"
+#include "mosquitto_broker_internal.h"
 #include "mosquitto_internal.h"
 #include "net_mosq.h"
 #include "memory_mosq.h"

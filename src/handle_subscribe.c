@@ -19,12 +19,12 @@ Contributors:
 
 #include "config.h"
 
-#include "mosquitto_broker.h"
+#include "mosquitto_broker_internal.h"
 #include "memory_mosq.h"
 #include "packet_mosq.h"
 /*
 
-#include "mosquitto_broker.h"
+#include "mosquitto_broker_internal.h"
 #include "mqtt3_protocol.h"
 #include "send_mosq.h"
 #include "sys_tree.h"

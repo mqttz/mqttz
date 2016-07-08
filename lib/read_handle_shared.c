@@ -28,7 +28,7 @@ Contributors:
 #include <send_mosq.h>
 #include <util_mosq.h>
 #ifdef WITH_BROKER
-#include <mosquitto_broker.h>
+#include <mosquitto_broker_internal.h>
 #endif
 
 int _mosquitto_handle_pingreq(struct mosquitto *mosq)

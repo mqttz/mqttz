@@ -25,7 +25,7 @@ Contributors:
 #include "config.h"
 #endif
 
-#include "mosquitto_broker.h"
+#include "mosquitto_broker_internal.h"
 #include "memory_mosq.h"
 #include "util_mosq.h"
 

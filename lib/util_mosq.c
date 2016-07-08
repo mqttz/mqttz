@@ -31,7 +31,7 @@ Contributors:
 #include "util_mosq.h"
 
 #ifdef WITH_BROKER
-#include "mosquitto_broker.h"
+#include "mosquitto_broker_internal.h"
 #endif
 
 #ifdef WITH_WEBSOCKETS

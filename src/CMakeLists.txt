@@ -22,7 +22,7 @@ set (MOSQ_SRCS
 	loop.c
 	../lib/memory_mosq.c ../lib/memory_mosq.h
 	mosquitto.c
-	mosquitto_broker.h
+	mosquitto_broker_internal.h
 	net.c
 	../lib/net_mosq.c ../lib/net_mosq.h
 	../lib/packet_mosq.c ../lib/packet_mosq.h

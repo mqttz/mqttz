@@ -22,7 +22,7 @@ Contributors:
 #include "mosquitto.h"
 #include "mosquitto_internal.h"
 #ifdef WITH_BROKER
-#  include "mosquitto_broker.h"
+#  include "mosquitto_broker_internal.h"
 #endif
 
 #ifdef WITH_BROKER

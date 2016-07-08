@@ -29,7 +29,7 @@ Contributors:
 #include <sys/stat.h>
 #include <time.h>
 
-#include "mosquitto_broker.h"
+#include "mosquitto_broker_internal.h"
 #include "memory_mosq.h"
 #include "persist.h"
 #include "time_mosq.h"

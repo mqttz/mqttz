@@ -24,7 +24,7 @@ Contributors:
 #include "packet_mosq.h"
 
 #ifdef WITH_BROKER
-#  include "mosquitto_broker.h"
+#  include "mosquitto_broker_internal.h"
 #endif
 
 int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session)

@@ -30,7 +30,7 @@ Contributors:
 #include <openssl/ssl.h>
 
 #ifdef WITH_BROKER
-#  include "mosquitto_broker.h"
+#  include "mosquitto_broker_internal.h"
 #endif
 #include "mosquitto_internal.h"
 #include "tls_mosq.h"
