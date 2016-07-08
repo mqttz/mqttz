@@ -40,6 +40,7 @@ Contributors:
 #endif
 
 #include "mosquitto_internal.h"
+#include "mosquitto_broker.h"
 #include "mosquitto_plugin.h"
 #include "mosquitto.h"
 #include "tls_mosq.h"
@@ -132,12 +133,6 @@ typedef union {
 /* ========================================
  * End UHPA data types
  * ======================================== */
-
-enum mosquitto_protocol {
-	mp_mqtt,
-	mp_mqttsn,
-	mp_websockets
-};
 
 typedef uint64_t dbid_t;
 

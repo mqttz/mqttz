@@ -24,6 +24,12 @@ struct mosquitto_opt {
 	char *value;
 };
 
+enum mosquitto_protocol {
+	mp_mqtt,
+	mp_mqttsn,
+	mp_websockets
+};
+
 /* =========================================================================
  *
  * Utility Functions
@@ -64,6 +70,72 @@ void mosquitto_log_printf(int level, const char *fmt, ...);
  * Use these functions to access client information.
  *
  * ========================================================================= */
+
+/*
+ * Function: mosquitto_client_address
+ *
+ * Retrieve the username associated with a client, or NULL if the client
+ * provided no username.
+ */
+const char *mosquitto_client_address(const struct mosquitto *client);
+
+
+/*
+ * Function: mosquitto_client_clean_session
+ *
+ * Retrieve the clean session flag value for a client.
+ */
+bool mosquitto_client_clean_session(const struct mosquitto *client);
+
+
+/*
+ * Function: mosquitto_client_id
+ *
+ * Retrieve the client id associated with a client.
+ */
+const char *mosquitto_client_id(const struct mosquitto *client);
+
+
+/*
+ * Function: mosquitto_client_keepalive
+ *
+ * Retrieve the keepalive value for a client.
+ */
+int mosquitto_client_keepalive(const struct mosquitto *client);
+
+
+/*
+ * Function: mosquitto_client_certificate
+ *
+ * If TLS support is enabled, return the certificate provided by a client as an
+ * X509 pointer from openssl. If the client did not provide a certificate, then
+ * NULL will be returned. This function will only ever return a non-NULL value
+ * if the `require_certificate` option is set to true.
+ *
+ * If TLS is not supported, this function will always return NULL.
+ */
+void *mosquitto_client_certificate(const struct mosquitto *client);
+
+
+/*
+ * Function: mosquitto_client_protocol
+ *
+ * Retrieve the protocol with which the client has connected. Can be one of:
+ *
+ * mp_mqtt (MQTT over TCP)
+ * mp_mqttsn (MQTT-SN)
+ * mp_websockets (MQTT over Websockets)
+ */
+int mosquitto_client_protocol(const struct mosquitto *client);
+
+
+/*
+ * Function: mosquitto_client_sub_count
+ *
+ * Retrieve the number of subscriptions that have been made by a client.
+ */
+int mosquitto_client_sub_count(const struct mosquitto *client);
+
 
 /*
  * Function: mosquitto_client_username
