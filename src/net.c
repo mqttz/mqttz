@@ -226,7 +226,7 @@ static unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned
 	psk_key = mosquitto__calloc(1, max_psk_len*2 + 1);
 	if(!psk_key) return 0;
 
-	if(mosquitto_psk_key_get(db, psk_hint, identity, psk_key, max_psk_len*2) != MOSQ_ERR_SUCCESS){
+	if(mosquitto_psk_key_get(db, context, psk_hint, identity, psk_key, max_psk_len*2) != MOSQ_ERR_SUCCESS){
 		mosquitto__free(psk_key);
 		return 0;
 	}

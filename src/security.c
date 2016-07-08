@@ -31,7 +31,7 @@ typedef int (*FUNC_auth_plugin_security_init)(void *, struct mosquitto_auth_opt 
 typedef int (*FUNC_auth_plugin_security_cleanup)(void *, struct mosquitto_auth_opt *, int, bool);
 typedef int (*FUNC_auth_plugin_acl_check)(void *, int, const struct mosquitto *, struct mosquitto_acl_msg *);
 typedef int (*FUNC_auth_plugin_unpwd_check)(void *, const struct mosquitto *, const char *, const char *);
-typedef int (*FUNC_auth_plugin_psk_key_get)(void *, const char *, const char *, char *, int);
+typedef int (*FUNC_auth_plugin_psk_key_get)(void *, const struct mosquitto *, const char *, const char *, char *, int);
 
 void LIB_ERROR(void)
 {
@@ -294,7 +294,7 @@ int mosquitto_unpwd_check(struct mosquitto_db *db, struct mosquitto *context, co
 	return rc;
 }
 
-int mosquitto_psk_key_get(struct mosquitto_db *db, const char *hint, const char *identity, char *key, int max_key_len)
+int mosquitto_psk_key_get(struct mosquitto_db *db, struct mosquitto *context, const char *hint, const char *identity, char *key, int max_key_len)
 {
 	int rc;
 	int i;
@@ -308,7 +308,7 @@ int mosquitto_psk_key_get(struct mosquitto_db *db, const char *hint, const char 
 	 * If no plugins exist we should accept at this point so set rc to success.
 	 */
 	for(i=0; i<db->auth_plugin_count; i++){
-		rc = db->auth_plugins[i].psk_key_get(db->auth_plugins[i].user_data, hint, identity, key, max_key_len);
+		rc = db->auth_plugins[i].psk_key_get(db->auth_plugins[i].user_data, context, hint, identity, key, max_key_len);
 		if(rc != MOSQ_ERR_PLUGIN_DEFER){
 			return rc;
 		}

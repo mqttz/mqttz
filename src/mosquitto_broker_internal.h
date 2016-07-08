@@ -315,7 +315,7 @@ struct mosquitto__auth_plugin{
 	int (*security_cleanup)(void *user_data, struct mosquitto_auth_opt *auth_opts, int auth_opt_count, bool reload);
 	int (*acl_check)(void *user_data, int access, const struct mosquitto *client, struct mosquitto_acl_msg *msg);
 	int (*unpwd_check)(void *user_data, const struct mosquitto *client, const char *username, const char *password);
-	int (*psk_key_get)(void *user_data, const char *hint, const char *identity, char *key, int max_key_len);
+	int (*psk_key_get)(void *user_data, const struct mosquitto *client, const char *hint, const char *identity, char *key, int max_key_len);
 };
 
 struct mosquitto_db{
@@ -559,7 +559,7 @@ int mosquitto_security_apply(struct mosquitto_db *db);
 int mosquitto_security_cleanup(struct mosquitto_db *db, bool reload);
 int mosquitto_acl_check(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int access);
 int mosquitto_unpwd_check(struct mosquitto_db *db, struct mosquitto *context, const char *username, const char *password);
-int mosquitto_psk_key_get(struct mosquitto_db *db, const char *hint, const char *identity, char *key, int max_key_len);
+int mosquitto_psk_key_get(struct mosquitto_db *db, struct mosquitto *context, const char *hint, const char *identity, char *key, int max_key_len);
 
 int mosquitto_security_init_default(struct mosquitto_db *db, bool reload);
 int mosquitto_security_apply_default(struct mosquitto_db *db);

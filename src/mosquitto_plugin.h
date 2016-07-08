@@ -223,6 +223,6 @@ int mosquitto_auth_unpwd_check(void *user_data, const struct mosquitto *client, 
  *	Return >0 on failure.
  *	Return MOSQ_ERR_PLUGIN_DEFER if your plugin does not wish to handle this check.
  */
-int mosquitto_auth_psk_key_get(void *user_data, const char *hint, const char *identity, char *key, int max_key_len);
+int mosquitto_auth_psk_key_get(void *user_data, const struct mosquitto *client, const char *hint, const char *identity, char *key, int max_key_len);
 
 #endif

@@ -52,7 +52,7 @@ int mosquitto_auth_unpwd_check(void *user_data, const struct mosquitto *client, 
 	}
 }
 
-int mosquitto_auth_psk_key_get(void *user_data, const char *hint, const char *identity, char *key, int max_key_len)
+int mosquitto_auth_psk_key_get(void *user_data, const struct mosquitto *client, const char *hint, const char *identity, char *key, int max_key_len)
 {
 	return MOSQ_ERR_AUTH;
 }
