@@ -197,9 +197,6 @@ int main(int argc, char *argv[])
 	int listensock_count = 0;
 	int listensock_index = 0;
 	struct mosquitto__config config;
-#ifdef WITH_SYS_TREE
-	char buf[1024];
-#endif
 	int i, j;
 	FILE *pid;
 	int listener_max;
@@ -281,13 +278,7 @@ int main(int argc, char *argv[])
 	if(rc) return rc;
 
 #ifdef WITH_SYS_TREE
-	if(config.sys_interval > 0){
-		/* Set static $SYS messages */
-		snprintf(buf, 1024, "mosquitto version %s", VERSION);
-		db__messages_easy_queue(&int_db, NULL, "$SYS/broker/version", 2, strlen(buf), buf, 1);
-		snprintf(buf, 1024, "%s", TIMESTAMP);
-		db__messages_easy_queue(&int_db, NULL, "$SYS/broker/timestamp", 2, strlen(buf), buf, 1);
-	}
+	sys__init(&int_db);
 #endif
 
 	listener_max = -1;

@@ -40,6 +40,21 @@ int g_clients_expired = 0;
 unsigned int g_socket_connections = 0;
 unsigned int g_connection_count = 0;
 
+void sys__init(struct mosquitto_db *db)
+{
+	char buf[64];
+
+	if(db->config->sys_interval == 0){
+		return;
+	}
+
+	/* Set static $SYS messages */
+	snprintf(buf, 64, "mosquitto version %s", VERSION);
+	db__messages_easy_queue(db, NULL, "$SYS/broker/version", 2, strlen(buf), buf, 1);
+	snprintf(buf, 64, "%s", TIMESTAMP);
+	db__messages_easy_queue(db, NULL, "$SYS/broker/timestamp", 2, strlen(buf), buf, 1);
+}
+
 static void sys__update_clients(struct mosquitto_db *db, char *buf)
 {
 	static unsigned int client_count = -1;
