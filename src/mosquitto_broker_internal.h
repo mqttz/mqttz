@@ -313,7 +313,7 @@ struct mosquitto__auth_plugin{
 	int (*plugin_cleanup)(void *user_data, struct mosquitto_auth_opt *auth_opts, int auth_opt_count);
 	int (*security_init)(void *user_data, struct mosquitto_auth_opt *auth_opts, int auth_opt_count, bool reload);
 	int (*security_cleanup)(void *user_data, struct mosquitto_auth_opt *auth_opts, int auth_opt_count, bool reload);
-	int (*acl_check)(void *user_data, const char *clientid, const char *username, const char *topic, int access);
+	int (*acl_check)(void *user_data, int access, const struct mosquitto *client, struct mosquitto_acl_msg *msg);
 	int (*unpwd_check)(void *user_data, const char *username, const char *password);
 	int (*psk_key_get)(void *user_data, const char *hint, const char *identity, char *key, int max_key_len);
 };

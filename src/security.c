@@ -29,7 +29,7 @@ typedef int (*FUNC_auth_plugin_init)(void **, struct mosquitto_auth_opt *, int);
 typedef int (*FUNC_auth_plugin_cleanup)(void *, struct mosquitto_auth_opt *, int);
 typedef int (*FUNC_auth_plugin_security_init)(void *, struct mosquitto_auth_opt *, int, bool);
 typedef int (*FUNC_auth_plugin_security_cleanup)(void *, struct mosquitto_auth_opt *, int, bool);
-typedef int (*FUNC_auth_plugin_acl_check)(void *, const char *, const char *, const char *, int);
+typedef int (*FUNC_auth_plugin_acl_check)(void *, int, const struct mosquitto *, struct mosquitto_acl_msg *);
 typedef int (*FUNC_auth_plugin_unpwd_check)(void *, const char *, const char *);
 typedef int (*FUNC_auth_plugin_psk_key_get)(void *, const char *, const char *, char *, int);
 
@@ -238,6 +238,7 @@ int mosquitto_acl_check(struct mosquitto_db *db, struct mosquitto *context, cons
 	char *username;
 	int rc;
 	int i;
+	struct mosquitto_acl_msg msg;
 
 	if(!context->id){
 		return MOSQ_ERR_ACL_DENIED;
@@ -261,7 +262,9 @@ int mosquitto_acl_check(struct mosquitto_db *db, struct mosquitto *context, cons
 	 */
 	rc = MOSQ_ERR_SUCCESS;
 	for(i=0; i<db->auth_plugin_count; i++){
-		rc = db->auth_plugins[i].acl_check(db->auth_plugins[i].user_data, context->id, username, topic, access);
+		memset(&msg, 0, sizeof(msg));
+		msg.topic = topic;
+		rc = db->auth_plugins[i].acl_check(db->auth_plugins[i].user_data, access, context, &msg);
 		if(rc != MOSQ_ERR_PLUGIN_DEFER){
 			return rc;
 		}

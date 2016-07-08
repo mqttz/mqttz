@@ -23,9 +23,21 @@ Contributors:
 #define MOSQ_ACL_READ 0x01
 #define MOSQ_ACL_WRITE 0x02
 
+#include <stdbool.h>
+
+struct mosquitto;
+
 struct mosquitto_auth_opt {
 	char *key;
 	char *value;
+};
+
+struct mosquitto_acl_msg {
+	const char *topic;
+	const void *payload;
+	long payloadlen;
+	int qos;
+	bool retain;
 };
 
 /*
@@ -174,7 +186,7 @@ int mosquitto_auth_security_cleanup(void *user_data, struct mosquitto_auth_opt *
  *	MOSQ_ERR_UNKNOWN for an application specific error.
  *	MOSQ_ERR_PLUGIN_DEFER if your plugin does not wish to handle this check.
  */
-int mosquitto_auth_acl_check(void *user_data, const char *clientid, const char *username, const char *topic, int access);
+int mosquitto_auth_acl_check(void *user_data, int access, const struct mosquitto *client, struct mosquitto_acl_msg *msg);
 
 /*
  * Function: mosquitto_auth_unpwd_check
