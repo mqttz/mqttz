@@ -278,7 +278,7 @@ int main(int argc, char *argv[])
 	if(rc) return rc;
 
 #ifdef WITH_SYS_TREE
-	sys__init(&int_db);
+	sys_tree__init(&int_db);
 #endif
 
 	listener_max = -1;

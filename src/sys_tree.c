@@ -40,7 +40,7 @@ int g_clients_expired = 0;
 unsigned int g_socket_connections = 0;
 unsigned int g_connection_count = 0;
 
-void sys__init(struct mosquitto_db *db)
+void sys_tree__init(struct mosquitto_db *db)
 {
 	char buf[64];
 
@@ -55,7 +55,7 @@ void sys__init(struct mosquitto_db *db)
 	db__messages_easy_queue(db, NULL, "$SYS/broker/timestamp", 2, strlen(buf), buf, 1);
 }
 
-static void sys__update_clients(struct mosquitto_db *db, char *buf)
+static void sys_tree__update_clients(struct mosquitto_db *db, char *buf)
 {
 	static unsigned int client_count = -1;
 	static int clients_expired = -1;
@@ -100,7 +100,7 @@ static void sys__update_clients(struct mosquitto_db *db, char *buf)
 }
 
 #ifdef REAL_WITH_MEMORY_TRACKING
-static void sys__update_memory(struct mosquitto_db *db, char *buf)
+static void sys_tree__update_memory(struct mosquitto_db *db, char *buf)
 {
 	static unsigned long current_heap = -1;
 	static unsigned long max_heap = -1;
@@ -139,7 +139,7 @@ static void calc_load(struct mosquitto_db *db, char *buf, const char *topic, dou
  * messages are sent for the $SYS hierarchy.
  * 'start_time' is the result of time() that the broker was started at.
  */
-void sys__update(struct mosquitto_db *db, int interval, time_t start_time)
+void sys_tree__update(struct mosquitto_db *db, int interval, time_t start_time)
 {
 	static time_t last_update = 0;
 	time_t now;
@@ -206,7 +206,7 @@ void sys__update(struct mosquitto_db *db, int interval, time_t start_time)
 		snprintf(buf, BUFLEN, "%d seconds", (int)uptime);
 		db__messages_easy_queue(db, NULL, "$SYS/broker/uptime", 2, strlen(buf), buf, 1);
 
-		sys__update_clients(db, buf);
+		sys_tree__update_clients(db, buf);
 		if(last_update > 0){
 			i_mult = 60.0/(double)(now-last_update);
 
@@ -284,7 +284,7 @@ void sys__update(struct mosquitto_db *db, int interval, time_t start_time)
 		}
 
 #ifdef REAL_WITH_MEMORY_TRACKING
-		sys__update_memory(db, buf);
+		sys_tree__update_memory(db, buf);
 #endif
 
 		if(msgs_received != g_msgs_received){

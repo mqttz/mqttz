@@ -129,7 +129,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 		context__free_disused(db);
 #ifdef WITH_SYS_TREE
 		if(db->config->sys_interval > 0){
-			sys__update(db, db->config->sys_interval, start_time);
+			sys_tree__update(db, db->config->sys_interval, start_time);
 		}
 #endif
 
