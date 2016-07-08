@@ -22,7 +22,7 @@ set (MOSQ_SRCS
 	loop.c
 	../lib/memory_mosq.c ../lib/memory_mosq.h
 	mosquitto.c
-	mosquitto_broker_internal.h
+	mosquitto_broker.h mosquitto_broker_internal.h
 	net.c
 	../lib/net_mosq.c ../lib/net_mosq.h
 	../lib/packet_mosq.c ../lib/packet_mosq.h
@@ -148,7 +148,7 @@ if (UNIX)
 endif (UNIX)
 
 install(TARGETS mosquitto RUNTIME DESTINATION "${SBINDIR}" LIBRARY DESTINATION "${LIBDIR}")
-install(FILES mosquitto_plugin.h DESTINATION "${INCLUDEDIR}")
+install(FILES mosquitto_broker.h mosquitto_plugin.h DESTINATION "${INCLUDEDIR}")
 
 if (${WITH_TLS} STREQUAL ON)
 	add_executable(mosquitto_passwd mosquitto_passwd.c)
