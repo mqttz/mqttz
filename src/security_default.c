@@ -752,7 +752,7 @@ int mosquitto_psk_key_get_default(struct mosquitto_db *db, const char *hint, con
 	struct mosquitto__unpwd *u, *tmp;
 
 	if(!db || !hint || !identity || !key) return MOSQ_ERR_INVAL;
-	if(!db->psk_id) return MOSQ_ERR_AUTH;
+	if(!db->psk_id) return MOSQ_ERR_PLUGIN_DEFER;
 
 	HASH_ITER(hh, db->psk_id, u, tmp){
 		if(!strcmp(u->username, identity)){

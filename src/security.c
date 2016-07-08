@@ -256,7 +256,7 @@ int mosquitto_acl_check(struct mosquitto_db *db, struct mosquitto *context, cons
 	if(rc != MOSQ_ERR_PLUGIN_DEFER){
 		return rc;
 	}
-	/* Default check has accepted or errored and then returned, or deferred.
+	/* Default check has accepted or deferred at this point.
 	 * If no plugins exist we should accept at this point so set rc to success.
 	 */
 	rc = MOSQ_ERR_SUCCESS;
@@ -283,7 +283,7 @@ int mosquitto_unpwd_check(struct mosquitto_db *db, const char *username, const c
 	if(rc != MOSQ_ERR_PLUGIN_DEFER){
 		return rc;
 	}
-	/* Default check has accepted or errored and then returned, or deferred.
+	/* Default check has accepted or deferred at this point.
 	 * If no plugins exist we should accept at this point so set rc to success.
 	 */
 	rc = MOSQ_ERR_SUCCESS;
@@ -306,12 +306,25 @@ int mosquitto_psk_key_get(struct mosquitto_db *db, const char *hint, const char 
 	int rc;
 	int i;
 
+	rc = mosquitto_psk_key_get_default(db, hint, identity, key, max_key_len);
+	if(rc != MOSQ_ERR_PLUGIN_DEFER){
+		return rc;
+	}
+
+	/* Default check has accepted or deferred at this point.
+	 * If no plugins exist we should accept at this point so set rc to success.
+	 */
 	for(i=0; i<db->auth_plugin_count; i++){
 		rc = db->auth_plugins[i].psk_key_get(db->auth_plugins[i].user_data, hint, identity, key, max_key_len);
 		if(rc != MOSQ_ERR_PLUGIN_DEFER){
 			return rc;
 		}
 	}
-	return mosquitto_psk_key_get_default(db, hint, identity, key, max_key_len);
+	/* If all plugins deferred, this is a denial. If rc == MOSQ_ERR_SUCCESS
+	 * here, then no plugins were configured. */
+	if(rc == MOSQ_ERR_PLUGIN_DEFER){
+		rc = MOSQ_ERR_AUTH;
+	}
+	return rc;
 }
 
