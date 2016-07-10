@@ -27,6 +27,11 @@ Contributors:
 
 struct mosquitto;
 
+struct mosquitto_opt {
+	char *key;
+	char *value;
+};
+
 struct mosquitto_auth_opt {
 	char *key;
 	char *value;
@@ -96,15 +101,15 @@ int mosquitto_auth_plugin_version(void);
  *
  *	user_data :      The pointer set here will be passed to the other plugin
  *	                 functions. Use to hold connection information for example.
- *	auth_opts :      Pointer to an array of struct mosquitto_auth_opt, which
+ *	opts :           Pointer to an array of struct mosquitto_opt, which
  *	                 provides the plugin options defined in the configuration file.
- *	auth_opt_count : The number of elements in the auth_opts array.
+ *	opt_count :      The number of elements in the opts array.
  *
  * Return value:
  *	Return 0 on success
  *	Return >0 on failure.
  */
-int mosquitto_auth_plugin_init(void **user_data, struct mosquitto_auth_opt *auth_opts, int auth_opt_count);
+int mosquitto_auth_plugin_init(void **user_data, struct mosquitto_opt *opts, int opt_count);
 
 /*
  * Function: mosquitto_auth_plugin_cleanup
@@ -116,15 +121,15 @@ int mosquitto_auth_plugin_init(void **user_data, struct mosquitto_auth_opt *auth
  * Parameters:
  *
  *	user_data :      The pointer provided in <mosquitto_auth_plugin_init>.
- *	auth_opts :      Pointer to an array of struct mosquitto_auth_opt, which
+ *	opts :           Pointer to an array of struct mosquitto_opt, which
  *	                 provides the plugin options defined in the configuration file.
- *	auth_opt_count : The number of elements in the auth_opts array.
+ *	opt_count :      The number of elements in the opts array.
  *
  * Return value:
  *	Return 0 on success
  *	Return >0 on failure.
  */
-int mosquitto_auth_plugin_cleanup(void *user_data, struct mosquitto_auth_opt *auth_opts, int auth_opt_count);
+int mosquitto_auth_plugin_cleanup(void *user_data, struct mosquitto_opt *opts, int opt_count);
 
 /*
  * Function: mosquitto_auth_security_init
@@ -137,9 +142,9 @@ int mosquitto_auth_plugin_cleanup(void *user_data, struct mosquitto_auth_opt *au
  * Parameters:
  *
  *	user_data :      The pointer provided in <mosquitto_auth_plugin_init>.
- *	auth_opts :      Pointer to an array of struct mosquitto_auth_opt, which
+ *	opts :           Pointer to an array of struct mosquitto_opt, which
  *	                 provides the plugin options defined in the configuration file.
- *	auth_opt_count : The number of elements in the auth_opts array.
+ *	opt_count :      The number of elements in the opts array.
  *	reload :         If set to false, this is the first time the function has
  *	                 been called. If true, the broker has received a signal
  *	                 asking to reload its configuration.
@@ -148,7 +153,7 @@ int mosquitto_auth_plugin_cleanup(void *user_data, struct mosquitto_auth_opt *au
  *	Return 0 on success
  *	Return >0 on failure.
  */
-int mosquitto_auth_security_init(void *user_data, struct mosquitto_auth_opt *auth_opts, int auth_opt_count, bool reload);
+int mosquitto_auth_security_init(void *user_data, struct mosquitto_opt *opts, int opt_count, bool reload);
 
 /* 
  * Function: mosquitto_auth_security_cleanup
@@ -161,9 +166,9 @@ int mosquitto_auth_security_init(void *user_data, struct mosquitto_auth_opt *aut
  * Parameters:
  *
  *	user_data :      The pointer provided in <mosquitto_auth_plugin_init>.
- *	auth_opts :      Pointer to an array of struct mosquitto_auth_opt, which
+ *	opts :           Pointer to an array of struct mosquitto_opt, which
  *	                 provides the plugin options defined in the configuration file.
- *	auth_opt_count : The number of elements in the auth_opts array.
+ *	opt_count :      The number of elements in the opts array.
  *	reload :         If set to false, this is the first time the function has
  *	                 been called. If true, the broker has received a signal
  *	                 asking to reload its configuration.
@@ -172,7 +177,7 @@ int mosquitto_auth_security_init(void *user_data, struct mosquitto_auth_opt *aut
  *	Return 0 on success
  *	Return >0 on failure.
  */
-int mosquitto_auth_security_cleanup(void *user_data, struct mosquitto_auth_opt *auth_opts, int auth_opt_count, bool reload);
+int mosquitto_auth_security_cleanup(void *user_data, struct mosquitto_opt *opts, int opt_count, bool reload);
 
 /*
  * Function: mosquitto_auth_acl_check

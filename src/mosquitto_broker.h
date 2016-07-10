@@ -19,11 +19,6 @@ Contributors:
 
 struct mosquitto;
 
-struct mosquitto_opt {
-	char *key;
-	char *value;
-};
-
 enum mosquitto_protocol {
 	mp_mqtt,
 	mp_mqttsn,

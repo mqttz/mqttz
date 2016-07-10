@@ -25,13 +25,7 @@ Contributors:
 #include "lib_load.h"
 
 typedef int (*FUNC_auth_plugin_version)(void);
-typedef int (*FUNC_auth_plugin_init)(void **, struct mosquitto_auth_opt *, int);
-typedef int (*FUNC_auth_plugin_cleanup)(void *, struct mosquitto_auth_opt *, int);
-typedef int (*FUNC_auth_plugin_security_init)(void *, struct mosquitto_auth_opt *, int, bool);
-typedef int (*FUNC_auth_plugin_security_cleanup)(void *, struct mosquitto_auth_opt *, int, bool);
-typedef int (*FUNC_auth_plugin_acl_check)(void *, int, const struct mosquitto *, struct mosquitto_acl_msg *);
-typedef int (*FUNC_auth_plugin_unpwd_check)(void *, const struct mosquitto *, const char *, const char *);
-typedef int (*FUNC_auth_plugin_psk_key_get)(void *, const struct mosquitto *, const char *, const char *, char *, int);
+
 
 void LIB_ERROR(void)
 {
@@ -45,6 +39,154 @@ void LIB_ERROR(void)
 	log__printf(NULL, MOSQ_LOG_ERR, "Load error: %s", dlerror());
 #endif
 }
+
+
+int security__load_v2(struct mosquitto_db *db, struct mosquitto__auth_plugin *plugin, struct mosquitto_auth_opt *auth_options, int auth_option_count, void *lib)
+{
+	int rc;
+
+	if(!(plugin->plugin_init_v2 = (FUNC_auth_plugin_init_v2)LIB_SYM(lib, "mosquitto_auth_plugin_init"))){
+		log__printf(NULL, MOSQ_LOG_ERR,
+				"Error: Unable to load auth plugin function mosquitto_auth_plugin_init().");
+		LIB_ERROR();
+		LIB_CLOSE(lib);
+		return 1;
+	}
+	if(!(plugin->plugin_cleanup_v2 = (FUNC_auth_plugin_cleanup_v2)LIB_SYM(lib, "mosquitto_auth_plugin_cleanup"))){
+		log__printf(NULL, MOSQ_LOG_ERR,
+				"Error: Unable to load auth plugin function mosquitto_auth_plugin_cleanup().");
+		LIB_ERROR();
+		LIB_CLOSE(lib);
+		return 1;
+	}
+
+	if(!(plugin->security_init_v2 = (FUNC_auth_plugin_security_init_v2)LIB_SYM(lib, "mosquitto_auth_security_init"))){
+		log__printf(NULL, MOSQ_LOG_ERR,
+				"Error: Unable to load auth plugin function mosquitto_auth_security_init().");
+		LIB_ERROR();
+		LIB_CLOSE(lib);
+		return 1;
+	}
+
+	if(!(plugin->security_cleanup_v2 = (FUNC_auth_plugin_security_cleanup_v2)LIB_SYM(lib, "mosquitto_auth_security_cleanup"))){
+		log__printf(NULL, MOSQ_LOG_ERR,
+				"Error: Unable to load auth plugin function mosquitto_auth_security_cleanup().");
+		LIB_ERROR();
+		LIB_CLOSE(lib);
+		return 1;
+	}
+
+	if(!(plugin->acl_check_v2 = (FUNC_auth_plugin_acl_check_v2)LIB_SYM(lib, "mosquitto_auth_acl_check"))){
+		log__printf(NULL, MOSQ_LOG_ERR,
+				"Error: Unable to load auth plugin function mosquitto_auth_acl_check().");
+		LIB_ERROR();
+		LIB_CLOSE(lib);
+		return 1;
+	}
+
+	if(!(plugin->unpwd_check_v2 = (FUNC_auth_plugin_unpwd_check_v2)LIB_SYM(lib, "mosquitto_auth_unpwd_check"))){
+		log__printf(NULL, MOSQ_LOG_ERR,
+				"Error: Unable to load auth plugin function mosquitto_auth_unpwd_check().");
+		LIB_ERROR();
+		LIB_CLOSE(lib);
+		return 1;
+	}
+
+	if(!(plugin->psk_key_get_v2 = (FUNC_auth_plugin_psk_key_get_v2)LIB_SYM(lib, "mosquitto_auth_psk_key_get"))){
+		log__printf(NULL, MOSQ_LOG_ERR,
+				"Error: Unable to load auth plugin function mosquitto_auth_psk_key_get().");
+		LIB_ERROR();
+		LIB_CLOSE(lib);
+		return 1;
+	}
+
+	plugin->lib = lib;
+	plugin->user_data = NULL;
+
+	if(plugin->plugin_init_v2){
+		rc = plugin->plugin_init_v2(&plugin->user_data, auth_options, auth_option_count);
+		if(rc){
+			log__printf(NULL, MOSQ_LOG_ERR,
+					"Error: Authentication plugin returned %d when initialising.", rc);
+			return rc;
+		}
+	}
+	return 0;
+}
+
+
+int security__load_v3(struct mosquitto_db *db, struct mosquitto__auth_plugin *plugin, struct mosquitto_opt *auth_options, int auth_option_count, void *lib)
+{
+	int rc;
+
+	if(!(plugin->plugin_init_v3 = (FUNC_auth_plugin_init_v3)LIB_SYM(lib, "mosquitto_auth_plugin_init"))){
+		log__printf(NULL, MOSQ_LOG_ERR,
+				"Error: Unable to load auth plugin function mosquitto_auth_plugin_init().");
+		LIB_ERROR();
+		LIB_CLOSE(lib);
+		return 1;
+	}
+	if(!(plugin->plugin_cleanup_v3 = (FUNC_auth_plugin_cleanup_v3)LIB_SYM(lib, "mosquitto_auth_plugin_cleanup"))){
+		log__printf(NULL, MOSQ_LOG_ERR,
+				"Error: Unable to load auth plugin function mosquitto_auth_plugin_cleanup().");
+		LIB_ERROR();
+		LIB_CLOSE(lib);
+		return 1;
+	}
+
+	if(!(plugin->security_init_v3 = (FUNC_auth_plugin_security_init_v3)LIB_SYM(lib, "mosquitto_auth_security_init"))){
+		log__printf(NULL, MOSQ_LOG_ERR,
+				"Error: Unable to load auth plugin function mosquitto_auth_security_init().");
+		LIB_ERROR();
+		LIB_CLOSE(lib);
+		return 1;
+	}
+
+	if(!(plugin->security_cleanup_v3 = (FUNC_auth_plugin_security_cleanup_v3)LIB_SYM(lib, "mosquitto_auth_security_cleanup"))){
+		log__printf(NULL, MOSQ_LOG_ERR,
+				"Error: Unable to load auth plugin function mosquitto_auth_security_cleanup().");
+		LIB_ERROR();
+		LIB_CLOSE(lib);
+		return 1;
+	}
+
+	if(!(plugin->acl_check_v3 = (FUNC_auth_plugin_acl_check_v3)LIB_SYM(lib, "mosquitto_auth_acl_check"))){
+		log__printf(NULL, MOSQ_LOG_ERR,
+				"Error: Unable to load auth plugin function mosquitto_auth_acl_check().");
+		LIB_ERROR();
+		LIB_CLOSE(lib);
+		return 1;
+	}
+
+	if(!(plugin->unpwd_check_v3 = (FUNC_auth_plugin_unpwd_check_v3)LIB_SYM(lib, "mosquitto_auth_unpwd_check"))){
+		log__printf(NULL, MOSQ_LOG_ERR,
+				"Error: Unable to load auth plugin function mosquitto_auth_unpwd_check().");
+		LIB_ERROR();
+		LIB_CLOSE(lib);
+		return 1;
+	}
+
+	if(!(plugin->psk_key_get_v3 = (FUNC_auth_plugin_psk_key_get_v3)LIB_SYM(lib, "mosquitto_auth_psk_key_get"))){
+		log__printf(NULL, MOSQ_LOG_ERR,
+				"Error: Unable to load auth plugin function mosquitto_auth_psk_key_get().");
+		LIB_ERROR();
+		LIB_CLOSE(lib);
+		return 1;
+	}
+
+	plugin->lib = lib;
+	plugin->user_data = NULL;
+	if(plugin->plugin_init_v3){
+		rc = plugin->plugin_init_v3(&plugin->user_data, auth_options, auth_option_count);
+		if(rc){
+			log__printf(NULL, MOSQ_LOG_ERR,
+					"Error: Authentication plugin returned %d when initialising.", rc);
+			return rc;
+		}
+	}
+	return 0;
+}
+
 
 int mosquitto_security_module_init(struct mosquitto_db *db)
 {
@@ -85,7 +227,18 @@ int mosquitto_security_module_init(struct mosquitto_db *db)
 				return 1;
 			}
 			version = plugin_version();
-			if(version != MOSQ_AUTH_PLUGIN_VERSION){
+			db->auth_plugins[i].version = version;
+			if(version == 3){
+				rc = security__load_v3(db, &db->auth_plugins[i], db->config->auth_plugins[i].options, db->config->auth_plugins[i].option_count, lib);
+				if(rc){
+					return rc;
+				}
+			}else if(version == 2){
+				rc = security__load_v2(db, &db->auth_plugins[i], (struct mosquitto_auth_opt *)db->config->auth_plugins[i].options, db->config->auth_plugins[i].option_count, lib);
+				if(rc){
+					return rc;
+				}
+			}else{
 				log__printf(NULL, MOSQ_LOG_ERR,
 						"Error: Incorrect auth plugin version (got %d, expected %d).",
 						version, MOSQ_AUTH_PLUGIN_VERSION);
@@ -93,71 +246,6 @@ int mosquitto_security_module_init(struct mosquitto_db *db)
 
 				LIB_CLOSE(lib);
 				return 1;
-			}
-			if(!(db->auth_plugins[i].plugin_init = (FUNC_auth_plugin_init)LIB_SYM(lib, "mosquitto_auth_plugin_init"))){
-				log__printf(NULL, MOSQ_LOG_ERR,
-						"Error: Unable to load auth plugin function mosquitto_auth_plugin_init().");
-				LIB_ERROR();
-				LIB_CLOSE(lib);
-				return 1;
-			}
-			if(!(db->auth_plugins[i].plugin_cleanup = (FUNC_auth_plugin_cleanup)LIB_SYM(lib, "mosquitto_auth_plugin_cleanup"))){
-				log__printf(NULL, MOSQ_LOG_ERR,
-						"Error: Unable to load auth plugin function mosquitto_auth_plugin_cleanup().");
-				LIB_ERROR();
-				LIB_CLOSE(lib);
-				return 1;
-			}
-
-			if(!(db->auth_plugins[i].security_init = (FUNC_auth_plugin_security_init)LIB_SYM(lib, "mosquitto_auth_security_init"))){
-				log__printf(NULL, MOSQ_LOG_ERR,
-						"Error: Unable to load auth plugin function mosquitto_auth_security_init().");
-				LIB_ERROR();
-				LIB_CLOSE(lib);
-				return 1;
-			}
-
-			if(!(db->auth_plugins[i].security_cleanup = (FUNC_auth_plugin_security_cleanup)LIB_SYM(lib, "mosquitto_auth_security_cleanup"))){
-				log__printf(NULL, MOSQ_LOG_ERR,
-						"Error: Unable to load auth plugin function mosquitto_auth_security_cleanup().");
-				LIB_ERROR();
-				LIB_CLOSE(lib);
-				return 1;
-			}
-
-			if(!(db->auth_plugins[i].acl_check = (FUNC_auth_plugin_acl_check)LIB_SYM(lib, "mosquitto_auth_acl_check"))){
-				log__printf(NULL, MOSQ_LOG_ERR,
-						"Error: Unable to load auth plugin function mosquitto_auth_acl_check().");
-				LIB_ERROR();
-				LIB_CLOSE(lib);
-				return 1;
-			}
-
-			if(!(db->auth_plugins[i].unpwd_check = (FUNC_auth_plugin_unpwd_check)LIB_SYM(lib, "mosquitto_auth_unpwd_check"))){
-				log__printf(NULL, MOSQ_LOG_ERR,
-						"Error: Unable to load auth plugin function mosquitto_auth_unpwd_check().");
-				LIB_ERROR();
-				LIB_CLOSE(lib);
-				return 1;
-			}
-
-			if(!(db->auth_plugins[i].psk_key_get = (FUNC_auth_plugin_psk_key_get)LIB_SYM(lib, "mosquitto_auth_psk_key_get"))){
-				log__printf(NULL, MOSQ_LOG_ERR,
-						"Error: Unable to load auth plugin function mosquitto_auth_psk_key_get().");
-				LIB_ERROR();
-				LIB_CLOSE(lib);
-				return 1;
-			}
-
-			db->auth_plugins[i].lib = lib;
-			db->auth_plugins[i].user_data = NULL;
-			if(db->auth_plugins[i].plugin_init){
-				rc = db->auth_plugins[i].plugin_init(&db->auth_plugins[i].user_data, db->config->auth_plugins[i].options, db->config->auth_plugins[i].option_count);
-				if(rc){
-					log__printf(NULL, MOSQ_LOG_ERR,
-							"Error: Authentication plugin returned %d when initialising.", rc);
-					return rc;
-				}
 			}
 		}
 	}
@@ -172,21 +260,36 @@ int mosquitto_security_module_cleanup(struct mosquitto_db *db)
 	mosquitto_security_cleanup(db, false);
 
 	for(i=0; i<db->config->auth_plugin_count; i++){
-		if(db->auth_plugins[i].plugin_cleanup){
-			db->auth_plugins[i].plugin_cleanup(db->auth_plugins[i].user_data, db->config->auth_plugins[i].options, db->config->auth_plugins[i].option_count);
+		if(db->auth_plugins[i].version == 3){
+			if(db->auth_plugins[i].plugin_cleanup_v3){
+				db->auth_plugins[i].plugin_cleanup_v3(db->auth_plugins[i].user_data, db->config->auth_plugins[i].options, db->config->auth_plugins[i].option_count);
+			}
+		}else if(db->auth_plugins[i].version == 2){
+			if(db->auth_plugins[i].plugin_cleanup_v2){
+				db->auth_plugins[i].plugin_cleanup_v2(db->auth_plugins[i].user_data, (struct mosquitto_auth_opt *)db->config->auth_plugins[i].options, db->config->auth_plugins[i].option_count);
+			}
 		}
 
 		if(db->auth_plugins[i].lib){
 			LIB_CLOSE(db->auth_plugins[i].lib);
 		}
 		db->auth_plugins[i].lib = NULL;
-		db->auth_plugins[i].plugin_init = NULL;
-		db->auth_plugins[i].plugin_cleanup = NULL;
-		db->auth_plugins[i].security_init = NULL;
-		db->auth_plugins[i].security_cleanup = NULL;
-		db->auth_plugins[i].acl_check = NULL;
-		db->auth_plugins[i].unpwd_check = NULL;
-		db->auth_plugins[i].psk_key_get = NULL;
+
+		db->auth_plugins[i].plugin_init_v2 = NULL;
+		db->auth_plugins[i].plugin_cleanup_v2 = NULL;
+		db->auth_plugins[i].security_init_v2 = NULL;
+		db->auth_plugins[i].security_cleanup_v2 = NULL;
+		db->auth_plugins[i].acl_check_v2 = NULL;
+		db->auth_plugins[i].unpwd_check_v2 = NULL;
+		db->auth_plugins[i].psk_key_get_v2 = NULL;
+
+		db->auth_plugins[i].plugin_init_v3 = NULL;
+		db->auth_plugins[i].plugin_cleanup_v3 = NULL;
+		db->auth_plugins[i].security_init_v3 = NULL;
+		db->auth_plugins[i].security_cleanup_v3 = NULL;
+		db->auth_plugins[i].acl_check_v3 = NULL;
+		db->auth_plugins[i].unpwd_check_v3 = NULL;
+		db->auth_plugins[i].psk_key_get_v3 = NULL;
 	}
 	mosquitto__free(db->auth_plugins);
 	db->auth_plugins = NULL;
@@ -200,7 +303,13 @@ int mosquitto_security_init(struct mosquitto_db *db, bool reload)
 	int rc;
 
 	for(i=0; i<db->config->auth_plugin_count; i++){
-		rc = db->auth_plugins[i].security_init(db->auth_plugins[i].user_data, db->config->auth_plugins[i].options, db->config->auth_plugins[i].option_count, reload);
+		if(db->auth_plugins[i].version == 3){
+			rc = db->auth_plugins[i].security_init_v3(db->auth_plugins[i].user_data, db->config->auth_plugins[i].options, db->config->auth_plugins[i].option_count, reload);
+		}else if(db->auth_plugins[i].version == 2){
+			rc = db->auth_plugins[i].security_init_v2(db->auth_plugins[i].user_data, (struct mosquitto_auth_opt *)db->config->auth_plugins[i].options, db->config->auth_plugins[i].option_count, reload);
+		}else{
+			rc = MOSQ_ERR_INVAL;
+		}
 		if(rc != MOSQ_ERR_SUCCESS){
 			return rc;
 		}
@@ -225,7 +334,13 @@ int mosquitto_security_cleanup(struct mosquitto_db *db, bool reload)
 	int rc;
 
 	for(i=0; i<db->config->auth_plugin_count; i++){
-		rc = db->auth_plugins[i].security_cleanup(db->auth_plugins[i].user_data, db->config->auth_plugins[i].options, db->config->auth_plugins[i].option_count, reload);
+		if(db->auth_plugins[i].version == 3){
+			rc = db->auth_plugins[i].security_cleanup_v3(db->auth_plugins[i].user_data, db->config->auth_plugins[i].options, db->config->auth_plugins[i].option_count, reload);
+		}else if(db->auth_plugins[i].version == 2){
+			rc = db->auth_plugins[i].security_cleanup_v2(db->auth_plugins[i].user_data, (struct mosquitto_auth_opt *)db->config->auth_plugins[i].options, db->config->auth_plugins[i].option_count, reload);
+		}else{
+			rc = MOSQ_ERR_INVAL;
+		}
 		if(rc != MOSQ_ERR_SUCCESS){
 			return rc;
 		}
@@ -254,7 +369,13 @@ int mosquitto_acl_check(struct mosquitto_db *db, struct mosquitto *context, cons
 	for(i=0; i<db->auth_plugin_count; i++){
 		memset(&msg, 0, sizeof(msg));
 		msg.topic = topic;
-		rc = db->auth_plugins[i].acl_check(db->auth_plugins[i].user_data, access, context, &msg);
+		if(db->auth_plugins[i].version == 3){
+			rc = db->auth_plugins[i].acl_check_v3(db->auth_plugins[i].user_data, access, context, &msg);
+		}else if(db->auth_plugins[i].version == 2){
+			rc = db->auth_plugins[i].acl_check_v2(db->auth_plugins[i].user_data, context->id, mosquitto_client_username(context), topic, access);
+		}else{
+			rc = MOSQ_ERR_INVAL;
+		}
 		if(rc != MOSQ_ERR_PLUGIN_DEFER){
 			return rc;
 		}
@@ -281,7 +402,13 @@ int mosquitto_unpwd_check(struct mosquitto_db *db, struct mosquitto *context, co
 	 */
 	rc = MOSQ_ERR_SUCCESS;
 	for(i=0; i<db->auth_plugin_count; i++){
-		rc = db->auth_plugins[i].unpwd_check(db->auth_plugins[i].user_data, context, username, password);
+		if(db->auth_plugins[i].version == 3){
+			rc = db->auth_plugins[i].unpwd_check_v3(db->auth_plugins[i].user_data, context, username, password);
+		}else if(db->auth_plugins[i].version == 2){
+			rc = db->auth_plugins[i].unpwd_check_v2(db->auth_plugins[i].user_data, username, password);
+		}else{
+			rc = MOSQ_ERR_INVAL;
+		}
 		if(rc != MOSQ_ERR_PLUGIN_DEFER){
 			return rc;
 		}
@@ -308,7 +435,13 @@ int mosquitto_psk_key_get(struct mosquitto_db *db, struct mosquitto *context, co
 	 * If no plugins exist we should accept at this point so set rc to success.
 	 */
 	for(i=0; i<db->auth_plugin_count; i++){
-		rc = db->auth_plugins[i].psk_key_get(db->auth_plugins[i].user_data, context, hint, identity, key, max_key_len);
+		if(db->auth_plugins[i].version == 3){
+			rc = db->auth_plugins[i].psk_key_get_v3(db->auth_plugins[i].user_data, context, hint, identity, key, max_key_len);
+		}else if(db->auth_plugins[i].version == 2){
+			rc = db->auth_plugins[i].psk_key_get_v2(db->auth_plugins[i].user_data, hint, identity, key, max_key_len);
+		}else{
+			rc = MOSQ_ERR_INVAL;
+		}
 		if(rc != MOSQ_ERR_PLUGIN_DEFER){
 			return rc;
 		}
