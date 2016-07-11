@@ -17,6 +17,8 @@ Contributors:
 #ifndef MOSQUITTO_BROKER_H
 #define MOSQUITTO_BROKER_H
 
+#include <stdbool.h>
+
 struct mosquitto;
 
 enum mosquitto_protocol {
