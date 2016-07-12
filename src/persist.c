@@ -261,6 +261,7 @@ static int _db_subs_retain_write(struct mosquitto_db *db, FILE *db_fptr, struct 
 	char *thistopic;
 	uint32_t length;
 	uint16_t i16temp;
+	uint8_t i8temp;
 	dbid_t i64temp;
 	size_t slen;
 
@@ -292,7 +293,8 @@ static int _db_subs_retain_write(struct mosquitto_db *db, FILE *db_fptr, struct 
 			write_e(db_fptr, &i16temp, sizeof(uint16_t));
 			write_e(db_fptr, thistopic, slen);
 
-			write_e(db_fptr, &sub->qos, sizeof(uint8_t));
+			i8temp = (uint8_t )sub->qos;
+			write_e(db_fptr, &i8temp, sizeof(uint8_t));
 		}
 		sub = sub->next;
 	}
