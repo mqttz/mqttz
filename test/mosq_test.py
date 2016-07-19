@@ -10,7 +10,7 @@ def start_broker(filename, cmd=None, port=1888):
     if cmd is None:
         cmd = ['../../src/mosquitto', '-v', '-c', filename.replace('.py', '.conf')]
     if os.environ.get('MOSQ_USE_VALGRIND') is not None:
-        cmd = ['valgrind', '--trace-children=yes', '-v', '--log-file='+filename+'.vglog'] + cmd
+        cmd = ['valgrind', '--trace-children=yes', '--leak-check=full', '--show-leak-kinds=all', '--log-file='+filename+'.vglog'] + cmd
         delay = 1
 
     broker = subprocess.Popen(cmd, stderr=subprocess.PIPE)

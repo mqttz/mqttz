@@ -119,6 +119,8 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 	sigemptyset(&sigblock);
 	sigaddset(&sigblock, SIGINT);
 	sigaddset(&sigblock, SIGTERM);
+	sigaddset(&sigblock, SIGUSR1);
+	sigaddset(&sigblock, SIGUSR2);
 #endif
 
 	if(db->config->persistent_client_expiration > 0){
@@ -356,7 +358,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 			flag_reload = false;
 		}
 		if(flag_tree_print){
-			sub__tree_print(&db->subs, 0);
+			sub__tree_print(db->subs, 0);
 			flag_tree_print = false;
 		}
 #ifdef WITH_WEBSOCKETS

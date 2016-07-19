@@ -28,7 +28,7 @@ mid_unsub = 593
 unsubscribe_packet = mosq_test.gen_unsubscribe(mid_unsub, "retain/clear/test")
 unsuback_packet = mosq_test.gen_unsuback(mid_unsub)
 
-cmd = ['../../src/mosquitto', '-p', '1888']
+cmd = ['../../src/mosquitto', '-p', '1888', '-v']
 broker = mosq_test.start_broker(filename=os.path.basename(__file__), cmd=cmd)
 
 try:

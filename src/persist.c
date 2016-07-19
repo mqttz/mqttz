@@ -257,7 +257,7 @@ error:
 
 static int persist__subs_retain_write(struct mosquitto_db *db, FILE *db_fptr, struct mosquitto__subhier *node, const char *topic, int level)
 {
-	struct mosquitto__subhier *subhier;
+	struct mosquitto__subhier *subhier, *subhier_tmp;
 	struct mosquitto__subleaf *sub;
 	char *thistopic;
 	uint32_t length;
@@ -311,10 +311,8 @@ static int persist__subs_retain_write(struct mosquitto_db *db, FILE *db_fptr, st
 		}
 	}
 
-	subhier = node->children;
-	while(subhier){
+	HASH_ITER(hh, node->children, subhier, subhier_tmp){
 		persist__subs_retain_write(db, db_fptr, subhier, thistopic, level+1);
-		subhier = subhier->next;
 	}
 	mosquitto__free(thistopic);
 	return MOSQ_ERR_SUCCESS;
@@ -325,14 +323,12 @@ error:
 
 static int persist__subs_retain_write_all(struct mosquitto_db *db, FILE *db_fptr)
 {
-	struct mosquitto__subhier *subhier;
+	struct mosquitto__subhier *subhier, *subhier_tmp;
 
-	subhier = db->subs.children;
-	while(subhier){
+	HASH_ITER(hh, db->subs, subhier, subhier_tmp){
 		if(subhier->children){
 			persist__subs_retain_write(db, db_fptr, subhier->children, "", 0);
 		}
-		subhier = subhier->next;
 	}
 	
 	return MOSQ_ERR_SUCCESS;

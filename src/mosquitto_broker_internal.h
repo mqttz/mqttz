@@ -231,9 +231,9 @@ struct mosquitto__subleaf {
 };
 
 struct mosquitto__subhier {
+	UT_hash_handle hh;
 	struct mosquitto__subhier *parent;
 	struct mosquitto__subhier *children;
-	struct mosquitto__subhier *next;
 	struct mosquitto__subleaf *subs;
 	struct mosquitto_msg_store *retained;
 	mosquitto__topic_element_uhpa topic;
@@ -341,7 +341,7 @@ struct mosquitto__auth_plugin{
 
 struct mosquitto_db{
 	dbid_t last_db_id;
-	struct mosquitto__subhier subs;
+	struct mosquitto__subhier *subs;
 	struct mosquitto__unpwd *unpwd;
 	struct mosquitto__acl_user *acl_list;
 	struct mosquitto__acl *acl_patterns;
@@ -537,7 +537,8 @@ void sys_tree__update(struct mosquitto_db *db, int interval, time_t start_time);
 /* ============================================================
  * Subscription functions
  * ============================================================ */
-int sub__add(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int qos, struct mosquitto__subhier *root);
+int sub__add(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int qos, struct mosquitto__subhier **root);
+struct mosquitto__subhier *sub__add_hier_entry(struct mosquitto__subhier **parent, const char *topic, size_t len);
 int sub__remove(struct mosquitto_db *db, struct mosquitto *context, const char *sub, struct mosquitto__subhier *root);
 void sub__tree_print(struct mosquitto__subhier *root, int level);
 int sub__clean_session(struct mosquitto_db *db, struct mosquitto *context);

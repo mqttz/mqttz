@@ -55,18 +55,12 @@ Contributors:
 #include "memory_mosq.h"
 #include "util_mosq.h"
 
-struct mosquitto_db int_db;
-
 extern bool flag_reload;
 #ifdef WITH_PERSISTENCE
 extern bool flag_db_backup;
 #endif
 extern bool flag_tree_print;
 extern int run;
-
-void handle_sigint(int signal);
-void handle_sigusr1(int signal);
-void handle_sigusr2(int signal);
 
 #ifdef SIGHUP
 /* Signal handler for SIGHUP - flag a config reload. */

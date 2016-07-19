@@ -30,8 +30,7 @@ static int max_queued = 100;
 
 int db__open(struct mosquitto__config *config, struct mosquitto_db *db)
 {
-	int rc = 0;
-	struct mosquitto__subhier *child;
+	struct mosquitto__subhier *subhier;
 
 	if(!config || !db) return MOSQ_ERR_INVAL;
 
@@ -48,56 +47,13 @@ int db__open(struct mosquitto__config *config, struct mosquitto_db *db)
 	// Initialize the hashtable
 	db->clientid_index_hash = NULL;
 
-	db->subs.next = NULL;
-	db->subs.subs = NULL;
-	db->subs.topic_len = strlen("");
-	if(UHPA_ALLOC(db->subs.topic, db->subs.topic_len+1) == 0){
-		db->subs.topic_len = 0;
-		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-		return MOSQ_ERR_NOMEM;
-	}else{
-		strncpy(UHPA_ACCESS(db->subs.topic, db->subs.topic_len+1), "", db->subs.topic_len+1);
-	}
+	db->subs = NULL;
 
-	child = mosquitto__malloc(sizeof(struct mosquitto__subhier));
-	if(!child){
-		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-		return MOSQ_ERR_NOMEM;
-	}
-	child->parent = NULL;
-	child->next = NULL;
-	child->topic_len = strlen("");
-	if(UHPA_ALLOC_TOPIC(child) == 0){
-		child->topic_len = 0;
-		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-		return MOSQ_ERR_NOMEM;
-	}else{
-		strncpy(UHPA_ACCESS_TOPIC(child), "", child->topic_len+1);
-	}
-	child->subs = NULL;
-	child->children = NULL;
-	child->retained = NULL;
-	db->subs.children = child;
+	subhier = sub__add_hier_entry(&db->subs, " ", strlen(" "));
+	if(!subhier) return MOSQ_ERR_NOMEM;
 
-	child = mosquitto__malloc(sizeof(struct mosquitto__subhier));
-	if(!child){
-		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-		return MOSQ_ERR_NOMEM;
-	}
-	child->parent = NULL;
-	child->next = NULL;
-	child->topic_len = strlen("$SYS");
-	if(UHPA_ALLOC_TOPIC(child) == 0){
-		child->topic_len = 0;
-		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-		return MOSQ_ERR_NOMEM;
-	}else{
-		strncpy(UHPA_ACCESS_TOPIC(child), "$SYS", child->topic_len+1);
-	}
-	child->subs = NULL;
-	child->children = NULL;
-	child->retained = NULL;
-	db->subs.children->next = child;
+	subhier = sub__add_hier_entry(&db->subs, "$SYS", strlen("$SYS"));
+	if(!subhier) return MOSQ_ERR_NOMEM;
 
 	db->unpwd = NULL;
 
@@ -107,36 +63,35 @@ int db__open(struct mosquitto__config *config, struct mosquitto_db *db)
 	}
 #endif
 
-	return rc;
+	return MOSQ_ERR_SUCCESS;
 }
 
 static void subhier_clean(struct mosquitto_db *db, struct mosquitto__subhier *subhier)
 {
-	struct mosquitto__subhier *next;
+	struct mosquitto__subhier *peer, *subhier_tmp;
 	struct mosquitto__subleaf *leaf, *nextleaf;
 
-	while(subhier){
-		next = subhier->next;
-		leaf = subhier->subs;
+	HASH_ITER(hh, subhier, peer, subhier_tmp){
+		leaf = peer->subs;
 		while(leaf){
 			nextleaf = leaf->next;
 			mosquitto__free(leaf);
 			leaf = nextleaf;
 		}
-		if(subhier->retained){
-			db__msg_store_deref(db, &subhier->retained);
+		if(peer->retained){
+			db__msg_store_deref(db, &peer->retained);
 		}
-		subhier_clean(db, subhier->children);
-		UHPA_FREE_TOPIC(subhier);
+		subhier_clean(db, peer->children);
+		UHPA_FREE_TOPIC(peer);
 
-		mosquitto__free(subhier);
-		subhier = next;
+		HASH_DELETE(hh, subhier, peer);
+		mosquitto__free(peer);
 	}
 }
 
 int db__close(struct mosquitto_db *db)
 {
-	subhier_clean(db, db->subs.children);
+	subhier_clean(db, db->subs);
 	db__msg_store_clean(db);
 
 	return MOSQ_ERR_SUCCESS;

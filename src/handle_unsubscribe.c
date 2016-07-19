@@ -76,7 +76,7 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 			}
 
 			log__printf(NULL, MOSQ_LOG_DEBUG, "\t%s", sub);
-			sub__remove(db, context, sub, &db->subs);
+			sub__remove(db, context, sub, db->subs);
 			log__printf(NULL, MOSQ_LOG_UNSUBSCRIBE, "%s %s", context->id, sub);
 			mosquitto__free(sub);
 		}
