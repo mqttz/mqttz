@@ -10,6 +10,7 @@ Broker:
 - Call fsync after persisting data to ensure it is correctly written. Closes
   #189.
 - Fix persistence saving of subscription QoS on big-endian machines.
+- Fix will retained flag handling on Windows. Closes #222.
 
 Client library:
 - Support OpenSSL 1.1.0.
