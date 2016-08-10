@@ -84,6 +84,7 @@ struct mosq_config {
 	bool eol; /* sub */
 	bool hex_output; /* sub */
 	int msg_count; /* sub */
+	char *format; /* sub */
 #ifdef WITH_SOCKS
 	char *socks5_host;
 	int socks5_port;

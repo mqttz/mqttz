@@ -34,6 +34,87 @@ Contributors:
 static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url);
 static int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, char *argv[]);
 
+
+static int check_format(struct mosq_config *cfg, const char *str)
+{
+	int i;
+	int len;
+
+	len = strlen(str);
+	for(i=0; i<len; i++){
+		if(str[i] == '%'){
+			if(i == len-1){
+				// error
+				fprintf(stderr, "Error: Incomplete format specifier.\n");
+				return 1;
+			}else{
+				if(str[i+1] == '%'){
+					// Print %, ignore
+				}else if(str[i+1] == 'I'){
+					// ISO 8601 date+time
+				}else if(str[i+1] == 'l'){
+					// payload length
+				}else if(str[i+1] == 'm'){
+					// mid
+				}else if(str[i+1] == 'p'){
+					// payload
+				}else if(str[i+1] == 'q'){
+					// qos
+				}else if(str[i+1] == 'r'){
+					// retain
+				}else if(str[i+1] == 't'){
+					// topic
+				}else if(str[i+1] == 'j'){
+					// JSON output, escaped payload
+				}else if(str[i+1] == 'J'){
+					// JSON output, assuming JSON payload
+				}else if(str[i+1] == 'U'){
+					// Unix time+nanoseconds
+				}else if(str[i+1] == 'x'){
+					// payload in hex
+				}else{
+					fprintf(stderr, "Error: Invalid format specifier '%c'.\n", str[i+1]);
+					return 1;
+				}
+				i++;
+			}
+		}else if(str[i] == '@'){
+			if(i == len-1){
+				// error
+				fprintf(stderr, "Error: Incomplete format specifier.\n");
+				return 1;
+			}
+			i++;
+		}else if(str[i] == '\\'){
+			if(i == len-1){
+				// error
+				fprintf(stderr, "Error: Incomplete escape specifier.\n");
+				return 1;
+			}else{
+				switch(str[i+1]){
+					case '\\': // '\'
+					case '0':  // 0 (NULL)
+					case 'a':  // alert
+					case 'e':  // escape
+					case 'n':  // new line
+					case 'r':  // carriage return
+					case 't':  // horizontal tab
+					case 'v':  // vertical tab
+						break;
+
+					default:
+						fprintf(stderr, "Error: Invalid escape specifier '%c'.\n", str[i+1]);
+						return 1;
+				}
+				i++;
+			}
+		}
+	}
+
+	return 0;
+}
+
+
 void init_config(struct mosq_config *cfg)
 {
 	memset(cfg, 0, sizeof(*cfg));
@@ -59,6 +140,7 @@ void client_config_cleanup(struct mosq_config *cfg)
 	free(cfg->password);
 	free(cfg->will_topic);
 	free(cfg->will_payload);
+	free(cfg->format);
 #ifdef WITH_TLS
 	free(cfg->cafile);
 	free(cfg->capath);
@@ -371,6 +453,28 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 			}else{
 				cfg->pub_mode = MSGMODE_FILE;
 				cfg->file_input = strdup(argv[i+1]);
+				if(!cfg->file_input){
+					fprintf(stderr, "Error: Out of memory.\n");
+					return 1;
+				}
+			}
+			i++;
+		}else if(!strcmp(argv[i], "-F")){
+			if(pub_or_sub == CLIENT_PUB){
+				goto unknown_option;
+			}
+			if(i==argc-1){
+				fprintf(stderr, "Error: -F argument given but no format specified.\n\n");
+				return 1;
+			}else{
+				cfg->format = strdup(argv[i+1]);
+				if(!cfg->format){
+					fprintf(stderr, "Error: Out of memory.\n");
+					return 1;
+				}
+				if(check_format(cfg, cfg->format)){
+					return 1;
+				}
 			}
 			i++;
 		}else if(!strcmp(argv[i], "--help")){

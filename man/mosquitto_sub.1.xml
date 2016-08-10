@@ -39,16 +39,20 @@
 			<arg><option>-i</option> <replaceable>client_id</replaceable></arg>
 			<arg><option>-I</option> <replaceable>client id prefix</replaceable></arg>
 			<arg><option>-k</option> <replaceable>keepalive time</replaceable></arg>
+			<arg><option>-N</option></arg>
 			<arg><option>-q</option> <replaceable>message QoS</replaceable></arg>
 			<group choice='opt'>
 				<arg choice='plain'><option>-R</option></arg>
 				<arg choice='plain'><option>--retained-only</option></arg>
 			</group>
 			<arg><option>-S</option></arg>
-			<arg><option>-N</option></arg>
-			<arg><option>--quiet</option></arg>
+			<arg choice='opt' rep='repeat'><option>-T</option> <replaceable>filter-out</replaceable></arg>
+			<arg choice='opt' rep='repeat'><option>-U</option> <replaceable>unsub-topic</replaceable></arg>
 			<arg><option>-v</option></arg>
+			<arg><option>-V</option> <replaceable>protocol-version</replaceable></arg>
 			<arg><option>-x</option></arg>
+			<arg><option>--proxy</option> <replaceable>socks-url</replaceable></arg>
+			<arg><option>--quiet</option></arg>
 			<arg>
 				<option>--will-topic</option> <replaceable>topic</replaceable>
 				<arg><option>--will-payload</option> <replaceable>payload</replaceable></arg>
@@ -72,10 +76,6 @@
 					<arg><option>--tls-version</option> <replaceable>version</replaceable></arg>
 				</arg>
 			</group>
-			<arg><option>--proxy</option> <replaceable>socks-url</replaceable></arg>
-			<arg><option>-V</option> <replaceable>protocol-version</replaceable></arg>
-			<arg choice='opt' rep='repeat'><option>-T</option> <replaceable>filter-out</replaceable></arg>
-			<arg choice='opt' rep='repeat'><option>-U</option> <replaceable>unsub-topic</replaceable></arg>
 		</cmdsynopsis>
 		<cmdsynopsis>
 			<command>mosquitto_sub</command>
@@ -194,6 +194,19 @@
 				<term><option>--debug</option></term>
 				<listitem>
 					<para>Enable debug messages.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-F</option></term>
+				<listitem>
+					<para>Specify output printing format. This option allows
+						you to choose what information from each message is
+						printed to the screen. See the <link
+							linkend='outputformat'>Output Format</link> section
+						below for full details.</para>
+					<para>This option overrides the <option>-v</option> option,
+						but does not override the <option>-N</option>
+						option.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -543,6 +556,109 @@
 		</variablelist>
 	</refsect1>
 
+	<refsect1 id='outputformat'>
+		<title>Output format</title>
+		<para>There are three ways of formatting the output from mosquitto_sub.
+			In all cases a new-line character is appended for each message
+			received unless the <option>-N</option> argument is passed to
+			mosquitto_sub.</para>
+		<para>Payload-only is the default output format and will
+			print the payload exactly as it is received.</para>
+		<para>Verbose mode is activated with <option>-v</option> and prints the
+			message topic and the payload, separated by a space.</para>
+		<para>The final option is formatted output, which allows the user to
+			define a custom output format.  The behaviour is controlled with
+			the <option>-F format-string</option> option. The format string is
+			a free text string where interpreted sequences are replaced by
+			different parameters. The available interpreted sequences are
+			described below.</para>
+		<para>Three characters are used to start an interpreted sequence:
+			<option>%</option>, <option>@</option> and <option>\</option>.
+			Sequences starting with <option>%</option> are either parameters
+			related to the MQTT message being printed, or are helper sequences
+			to avoid the need to type long date format strings for example.
+			Sequences starting with <option>@</option> are passed to the
+			<citerefentry><refentrytitle>strftime</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+			function (with the @ replaced with a % - note that only the
+			character immediately after the @ is passed to strftime). This
+			allows the construction of a wide variety of time based outputs.
+			The output options for strftime vary from platform to platform, so
+			please check what is available for your platform. mosquitto_sub
+			does provide one extension to strftime which is
+			<option>@N</option>, which can be used to obtain the number of
+			nanoseconds passed in the current second. The resolution of this
+			option varies depending on the platform. The final sequence
+			character is <option>\</option>, which is used to input some
+			characters that would otherwise be difficult to enter.</para>
+
+		<refsect2>
+			<title>MQTT related parameters</title>
+			<itemizedlist mark="circle">
+				<listitem><para><option>%%</option> a literal %.</para></listitem>
+				<listitem><para><option>%l</option> the length of the payload in bytes.</para></listitem>
+				<listitem><para><option>%m</option> the message id (only relevant for messages with QoS>0).</para></listitem>
+				<listitem><para><option>%p</option> the payload raw bytes (may produce non-printable characters depending on the payload).</para></listitem>
+				<listitem><para><option>%q</option> the message QoS.</para></listitem>
+				<listitem><para><option>%r</option> the retained flag for the message.</para></listitem>
+				<listitem><para><option>%t</option> the message topic.</para></listitem>
+				<listitem><para><option>%x</option> the payload with each byte as a hexadecimal number.</para></listitem>
+			</itemizedlist>
+		</refsect2>
+
+		<refsect2>
+			<title>Helpers</title>
+			<itemizedlist mark="circle">
+				<listitem><para><option>%I</option> ISO-8601 format date and time, e.g. 2016-08-10T09:47:38+0100</para></listitem>
+				<listitem><para><option>%j</option> JSON output of message
+						parameters and timestamp, with a quoted and escaped
+						payload. For example
+						<code>{"tst":1470825369,"topic":"greeting","qos":0,"retain":0,"payload":"hello
+							world"}</code></para></listitem>
+				<listitem><para><option>%J</option> JSON output of message
+						parameters and timestamp, with a non-quoted and
+						non-escaped payload - this means the payload must
+						itself be valid JSON. For example:
+						<code>{"tst":1470825369,"topic":"foo","qos":0,"retain":0,"payload":{"temperature":27.0,"humidity":57}}</code>.</para></listitem>
+				<listitem><para><option>%I</option> ISO-8601 format date and time, e.g. 2016-08-10T09:47:38+0100</para></listitem>
+				<listitem><para><option>%U</option> Unix timestamp with nanoseconds, e.g. 1470818943.786368637</para></listitem>
+			</itemizedlist>
+		</refsect2>
+
+		<refsect2>
+			<title>Time related parameters</title>
+			<itemizedlist mark="circle">
+				<listitem><para><option>@@</option> a literal @.</para></listitem>
+				<listitem><para><option>@X</option> pass the character represented
+						by <option>X</option> to the strftime function as
+						<option>%X</option>. The options supported are platform
+						dependent.</para></listitem>
+				<listitem><para><option>@N</option> the number of nanoseconds that
+						have passed in the current second, with varying timing
+						resolution depending on platform.</para></listitem>
+			</itemizedlist>
+		</refsect2>
+
+		<refsect2>
+			<title>Escape characters</title>
+			<itemizedlist mark="circle">
+				<listitem><para><option>\\</option> a literal \.</para></listitem>
+				<listitem><para><option>\0</option> a null character. Can be used
+						to separate different parameters that may contain spaces
+						(e.g. topic, payload) so that processing with tools such as
+						<citerefentry><refentrytitle>xargs</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+						is easier.</para></listitem>
+				<listitem><para><option>\a</option> alert/bell.</para></listitem>
+				<listitem><para><option>\e</option> the escape sequence, which can
+						be used with ANSI colour codes to provide coloured output
+						for example.</para></listitem>
+				<listitem><para><option>\n</option> end of line.</para></listitem>
+				<listitem><para><option>\r</option> carriage return.</para></listitem>
+				<listitem><para><option>\t</option> horizontal tab.</para></listitem>
+				<listitem><para><option>\v</option> vertical tab.</para></listitem>
+			</itemizedlist>
+		</refsect2>
+	</refsect1>
+
 	<refsect1>
 		<title>Wills</title>
 		<para>mosquitto_sub can register a message with the broker that will be
@@ -575,6 +691,21 @@
 		<para>Subscribe to all broker status messages:</para>
 		<itemizedlist mark="circle">
 			<listitem><para>mosquitto_sub <literal>-v</literal> <literal>-t</literal> \$SYS/#</para></listitem>
+		</itemizedlist>
+
+		<para>Specify the output format as "ISO-8601 date : topic : payload in hex"</para>
+		<itemizedlist mark="circle">
+			<listitem><para>mosquitto_sub <literal>-F '@Y-@m-@dT@H:@M:@S@z : %t : %x'</literal> <literal>-t</literal> '#'</para></listitem>
+		</itemizedlist>
+
+		<para>Specify the output format as "seconds since epoch.nanoseconds : retained flag : qos : mid : payload length"</para>
+		<itemizedlist mark="circle">
+			<listitem><para>mosquitto_sub <literal>-F '%@s.@N : %r : %q : %m : %l'</literal> <literal>-q 2</literal> <literal>-t</literal> '#'</para></listitem>
+		</itemizedlist>
+
+		<para>Topic and payload output, but with colour where supported.</para>
+		<itemizedlist mark="circle">
+			<listitem><para>mosquitto_sub <literal>-F '\e[92m%t \e[96m%p\e[0m'</literal> <literal>-q 2</literal> <literal>-t</literal> '#'</para></listitem>
 		</itemizedlist>
 	</refsect1>
 
