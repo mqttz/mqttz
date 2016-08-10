@@ -50,7 +50,6 @@
 			<arg choice='opt' rep='repeat'><option>-U</option> <replaceable>unsub-topic</replaceable></arg>
 			<arg><option>-v</option></arg>
 			<arg><option>-V</option> <replaceable>protocol-version</replaceable></arg>
-			<arg><option>-x</option></arg>
 			<arg><option>--proxy</option> <replaceable>socks-url</replaceable></arg>
 			<arg><option>--quiet</option></arg>
 			<arg>
@@ -544,13 +543,6 @@
 				<listitem>
 					<para>The topic on which to send a Will, in the event that
 					the client disconnects unexpectedly.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>-x</option></term>
-				<listitem>
-					<para>Print published message payloads as hexadecimal
-						data.</para>
 				</listitem>
 			</varlistentry>
 		</variablelist>

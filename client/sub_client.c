@@ -34,19 +34,6 @@ Contributors:
 bool process_messages = true;
 int msg_count = 0;
 
-static void write_payload(const unsigned char *payload, int payloadlen, bool hex)
-{
-	int i;
-
-	if(!hex){
-		(void)fwrite(payload, 1, payloadlen, stdout);
-	}else{
-		for(i=0; i<payloadlen; i++){
-			fprintf(stdout, "%x", payload[i]);
-		}
-	}
-}
-
 static int get_time(struct tm **ti, long *ns)
 {
 #ifdef WIN32
@@ -77,6 +64,19 @@ static int get_time(struct tm **ti, long *ns)
 	}
 
 	return 0;
+}
+
+static void write_payload(const unsigned char *payload, int payloadlen, bool hex)
+{
+	int i;
+
+	if(!hex){
+		(void)fwrite(payload, 1, payloadlen, stdout);
+	}else{
+		for(i=0; i<payloadlen; i++){
+			fprintf(stdout, "%x", payload[i]);
+		}
+	}
 }
 
 void write_json_payload(const char *payload, int payloadlen)
@@ -290,7 +290,7 @@ void print_message(struct mosq_config *cfg, const struct mosquitto_message *mess
 	}else if(cfg->verbose){
 		if(message->payloadlen){
 			printf("%s ", message->topic);
-			write_payload(message->payload, message->payloadlen, cfg->hex_output);
+			write_payload(message->payload, message->payloadlen, false);
 			if(cfg->eol){
 				printf("\n");
 			}
@@ -302,7 +302,7 @@ void print_message(struct mosq_config *cfg, const struct mosquitto_message *mess
 		fflush(stdout);
 	}else{
 		if(message->payloadlen){
-			write_payload(message->payload, message->payloadlen, cfg->hex_output);
+			write_payload(message->payload, message->payloadlen, false);
 			if(cfg->eol){
 				printf("\n");
 			}
@@ -407,7 +407,7 @@ void print_usage(void)
 	printf("                     [-A bind_address]\n");
 #endif
 	printf("                     [-i id] [-I id_prefix]\n");
-	printf("                     [-d] [-N] [--quiet] [-v] [-x]\n");
+	printf("                     [-d] [-N] [--quiet] [-v]\n");
 	printf("                     [--will-topic [--will-payload payload] [--will-qos qos] [--will-retain]]\n");
 #ifdef WITH_TLS
 	printf("                     [{--cafile file | --capath dir} [--cert file] [--key file]\n");
@@ -448,7 +448,6 @@ void print_usage(void)
 	printf(" -v : print published messages verbosely.\n");
 	printf(" -V : specify the version of the MQTT protocol to use when connecting.\n");
 	printf("      Can be mqttv31 or mqttv311. Defaults to mqttv31.\n");
-	printf(" -x : print published message payloads as hexadecimal data.\n");
 	printf(" --help : display this message.\n");
 	printf(" --quiet : don't print error messages.\n");
 	printf(" --retained-only : only handle messages with the retained flag set, and exit when the\n");

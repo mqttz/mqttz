@@ -82,7 +82,6 @@ struct mosq_config {
 	int unsub_topic_count; /* sub */
 	bool verbose; /* sub */
 	bool eol; /* sub */
-	bool hex_output; /* sub */
 	int msg_count; /* sub */
 	char *format; /* sub */
 #ifdef WITH_SOCKS

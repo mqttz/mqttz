@@ -48,7 +48,6 @@ Client library:
 
 Client:
 - Add -F to mosquitto_sub to allow the user to choose the output format.
-- Add -x to mosquitto_sub for printing the payload in hexadecimal format.
 - Add -U to mosquitto_sub for unsubscribing from topics.
 - Add --retained-only to mosquitto_sub to exit after receiving all retained
   messages.

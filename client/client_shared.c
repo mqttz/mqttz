@@ -853,11 +853,6 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				goto unknown_option;
 			}
 			cfg->verbose = 1;
-		}else if(!strcmp(argv[i], "-x")){
-			if(pub_or_sub == CLIENT_PUB){
-				goto unknown_option;
-			}
-			cfg->hex_output = true;
 		}else{
 			goto unknown_option;
 		}
