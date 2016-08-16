@@ -11,6 +11,8 @@ Broker:
   #189.
 - Fix persistence saving of subscription QoS on big-endian machines.
 - Fix will retained flag handling on Windows. Closes #222.
+- Broker now displays an error if it is unable to open the log file. Closes
+  #234.
 
 Client library:
 - Support OpenSSL 1.1.0.
