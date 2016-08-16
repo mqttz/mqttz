@@ -1,5 +1,5 @@
-1.x.x - 2016xxxx
-================
+1.4.10 - 20160816
+=================
 
 Broker:
 - Fix TLS operation with websockets listeners and libwebsockts 2.x. Closes
