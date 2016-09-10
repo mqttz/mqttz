@@ -292,14 +292,6 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>$SYS/broker/messages/stored</option></term>
-				<listitem>
-					<para>The number of messages currently held in the message
-						store. This includes retained messages and messages
-						queued for durable clients.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
 				<term><option>$SYS/broker/publish/messages/dropped</option></term>
 				<listitem>
 					<para>The total number of publish messages that have been
@@ -326,6 +318,23 @@
 				<term><option>$SYS/broker/retained messages/count</option></term>
 				<listitem>
 					<para>The total number of retained messages active on the broker.</para>
+				</listitem>
+			</varlistentry>
+                        <varlistentry>
+                            <term><option>$SYS/broker/store/messages/count</option></term>
+                            <term><option>$SYS/broker/messages/stored</option> (deprecated)</term>
+				<listitem>
+					<para>The number of messages currently held in the message
+						store. This includes retained messages and messages
+						queued for durable clients.</para>
+				</listitem>
+			</varlistentry>
+                        <varlistentry>
+                            <term><option>$SYS/broker/store/messages/bytes</option></term>
+				<listitem>
+					<para>The number of bytes currently held by message payloads
+                                            in the message store. This includes retained messages
+                                            and messages queued for durable clients.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

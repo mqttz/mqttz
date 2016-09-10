@@ -358,6 +358,7 @@ struct mosquitto_db{
 #ifdef WITH_BRIDGE
 	int bridge_count;
 #endif
+	unsigned long msg_store_bytes;
 	int msg_store_count;
 	struct mosquitto__config *config;
 	int persistence_changes;
@@ -512,7 +513,7 @@ int db__close(struct mosquitto_db *db);
 int persist__backup(struct mosquitto_db *db, bool shutdown);
 int persist__restore(struct mosquitto_db *db);
 #endif
-void db__limits_set(int inflight, int queued);
+void db__limits_set(int inflight, unsigned long inflight_bytes, int queued, unsigned long queued_bytes);
 /* Return the number of in-flight messages in count. */
 int db__message_count(int *count);
 int db__message_delete(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir);

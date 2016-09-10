@@ -205,6 +205,8 @@ struct mosquitto {
 	struct mosquitto_client_msg *last_inflight_msg;
 	struct mosquitto_client_msg *queued_msgs;
 	struct mosquitto_client_msg *last_queued_msg;
+	unsigned long msg_bytes;
+	unsigned long msg_bytes12;
 	int msg_count;
 	int msg_count12;
 	struct mosquitto__acl_user *acl_list;
