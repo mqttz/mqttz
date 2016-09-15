@@ -420,8 +420,8 @@ struct mosquitto__subhier *sub__add_hier_entry(struct mosquitto__subhier **paren
 	child->parent = *parent;
 	child->topic_len = strlen(topic);
 	if(UHPA_ALLOC_TOPIC(child) == 0){
-		mosquitto__free(child);
 		child->topic_len = 0;
+		mosquitto__free(child);
 		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return NULL;
 	}else{
