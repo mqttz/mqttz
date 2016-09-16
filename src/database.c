@@ -138,12 +138,12 @@ int db__open(struct mosquitto__config *config, struct mosquitto_db *db)
 	return MOSQ_ERR_SUCCESS;
 }
 
-static void subhier_clean(struct mosquitto_db *db, struct mosquitto__subhier *subhier)
+static void subhier_clean(struct mosquitto_db *db, struct mosquitto__subhier **subhier)
 {
 	struct mosquitto__subhier *peer, *subhier_tmp;
 	struct mosquitto__subleaf *leaf, *nextleaf;
 
-	HASH_ITER(hh, subhier, peer, subhier_tmp){
+	HASH_ITER(hh, *subhier, peer, subhier_tmp){
 		leaf = peer->subs;
 		while(leaf){
 			nextleaf = leaf->next;
@@ -153,17 +153,17 @@ static void subhier_clean(struct mosquitto_db *db, struct mosquitto__subhier *su
 		if(peer->retained){
 			db__msg_store_deref(db, &peer->retained);
 		}
-		subhier_clean(db, peer->children);
+		subhier_clean(db, &peer->children);
 		UHPA_FREE_TOPIC(peer);
 
-		HASH_DELETE(hh, subhier, peer);
+		HASH_DELETE(hh, *subhier, peer);
 		mosquitto__free(peer);
 	}
 }
 
 int db__close(struct mosquitto_db *db)
 {
-	subhier_clean(db, db->subs);
+	subhier_clean(db, &db->subs);
 	db__msg_store_clean(db);
 
 	return MOSQ_ERR_SUCCESS;
