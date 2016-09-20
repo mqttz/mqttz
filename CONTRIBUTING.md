@@ -62,7 +62,6 @@ Please read the [Eclipse Foundation policy on accepting contributions via Git](h
 	```develop``` or ```fixes``` branch as appropriate to request review and
 	merge of the commits in your pushed branch.
 
-
 What happens next depends on the content of the patch. If it is 100% authored
 by the contributor and is less than 1000 lines (and meets the needs of the
 project), then it can be pulled into the main repository. If not, more steps

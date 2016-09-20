@@ -1,5 +1,5 @@
-Mosquitto
-=========
+Eclipse Mosquitto
+=================
 
 Mosquitto is an open source implementation of a server for version 3.1 and
 3.1.1 of the MQTT protocol. It also includes a C and C++ client library, and
@@ -16,7 +16,7 @@ See the following links for more information on MQTT:
 Mosquitto project information is available at the following locations:
 
 - Main homepage: <http://mosquitto.org/>
-- Bug reports: <https://github.com/eclipse/mosquitto/issues>
+- Find existing bugs or submit a new bug: <https://github.com/eclipse/mosquitto/issues>
 - Source code repository: <https://github.com/eclipse/mosquitto>
 
 There is also a public test server available at <http://test.mosquitto.org/>
@@ -73,3 +73,7 @@ already be built. Use `make binary` to skip building the man pages, or install
 ## Credits
 
 Mosquitto was written by Roger Light <roger@atchoo.org>
+
+Master: [![Travis Build Status (master)](https://travis-ci.org/eclipse/mosquitto.svg?branch=master)](https://travis-ci.org/eclipse/mosquitto)
+Develop: [![Travis Build Status (develop)](https://travis-ci.org/eclipse/mosquitto.svg?branch=develop)](https://travis-ci.org/eclipse/mosquitto)
+Fixes: [![Travis Build Status (fixes)](https://travis-ci.org/eclipse/mosquitto.svg?branch=fixes)](https://travis-ci.org/eclipse/mosquitto)
