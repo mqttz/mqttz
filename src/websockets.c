@@ -193,7 +193,10 @@ static int callback_mqtt(struct libwebsocket_context *context,
 						}
 					}
 				}
-
+				if(!mosq->listener){
+					_mosquitto_free(mosq);
+					return -1;
+				}
 #if !defined(LWS_LIBRARY_VERSION_NUMBER)
 				mosq->ws_context = context;
 #endif
@@ -205,6 +208,12 @@ static int callback_mqtt(struct libwebsocket_context *context,
 			easy_address(libwebsocket_get_socket_fd(wsi), mosq);
 			if(!mosq->address){
 				/* getpeername and inet_ntop failed and not a bridge */
+				_mosquitto_free(mosq);
+				u->mosq = NULL;
+				return -1;
+			}
+			if(mosq->listener->max_connections > 0 && mosq->listener->client_count > mosq->listener->max_connections){
+				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client connection from %s denied: max_connections exceeded.", mosq->address);
 				_mosquitto_free(mosq);
 				u->mosq = NULL;
 				return -1;
