@@ -1,5 +1,6 @@
 Broker:
 - Fix crash when "lazy" type bridge attempts to reconnect. Closes #259.
+- maximum_connections now applies to websockets listeners. Closes #271.
 
 1.4.10 - 20160816
 =================
