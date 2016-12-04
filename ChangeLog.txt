@@ -5,6 +5,7 @@ Broker:
 
 Client library:
 - Clients can now use TLS with IPv6.
+- Fix potential socket leakage when reconnecting. Closes #304.
 
 
 1.4.10 - 20160816
