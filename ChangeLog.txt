@@ -34,6 +34,8 @@ Broker:
 - max_queued_bytes feature to limit queues by real size rather than
   than just message count. Closes Eclipse #452919 or Github #100
 - queue_qos0_messages was not observing max_queued_** limits
+- Add support bridges to be configured to only send notifications to the local
+  broker.
 
 Client library:
 - Outgoing messages with QoS>1 are no longer retried after a timeout period.
