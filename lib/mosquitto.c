@@ -916,6 +916,12 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 		timeout = (mosq->next_msg_out - now)*1000;
 	}
 
+	if(timeout < 0){
+		/* There has been a delay somewhere which means we should have already
+		 * sent a message. */
+		timeout = 0;
+	}
+
 	local_timeout.tv_sec = timeout/1000;
 #ifdef HAVE_PSELECT
 	local_timeout.tv_nsec = (timeout-local_timeout.tv_sec*1000)*1e6;
