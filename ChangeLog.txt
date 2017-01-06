@@ -2,6 +2,7 @@ Broker:
 - Fix crash when "lazy" type bridge attempts to reconnect. Closes #259.
 - maximum_connections now applies to websockets listeners. Closes #271.
 - Allow bridges to use TLS with IPv6.
+- Don't error on zero length persistence files. Closes #316.
 
 Client library:
 - Clients can now use TLS with IPv6.

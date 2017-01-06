@@ -813,7 +813,14 @@ int mqtt3_db_restore(struct mosquitto_db *db)
 
 	fptr = _mosquitto_fopen(db->config->persistence_filepath, "rb");
 	if(fptr == NULL) return MOSQ_ERR_SUCCESS;
-	read_e(fptr, &header, 15);
+	rlen = fread(&header, 1, 15, fptr);
+	if(rlen == 0){
+		fclose(fptr);
+		_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Persistence file is empty.");
+		return 0;
+	}else if(rlen != 15){
+		goto error;
+	}
 	if(!memcmp(header, magic, 15)){
 		// Restore DB as normal
 		read_e(fptr, &crc, sizeof(uint32_t));
