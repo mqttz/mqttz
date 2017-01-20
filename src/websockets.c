@@ -521,6 +521,7 @@ static int callback_http(struct libwebsocket_context *context,
 												(unsigned int)filestat.st_size);
             if(libwebsocket_write(wsi, buf, buflen, LWS_WRITE_HTTP) < 0){
 				fclose(u->fptr);
+				u->fptr = NULL;
 				return -1;
 			}
 			libwebsocket_callback_on_writable(context, wsi);
@@ -546,6 +547,7 @@ static int callback_http(struct libwebsocket_context *context,
 					buflen = fread(buf, 1, sizeof(buf), u->fptr);
 					if(buflen < 1){
 						fclose(u->fptr);
+						u->fptr = NULL;
 						return -1;
 					}
 					wlen = libwebsocket_write(wsi, buf, buflen, LWS_WRITE_HTTP);
@@ -566,6 +568,15 @@ static int callback_http(struct libwebsocket_context *context,
 			}else{
 				return -1;
 			}
+
+		case LWS_CALLBACK_CLOSED:
+		case LWS_CALLBACK_CLOSED_HTTP:
+		case LWS_CALLBACK_HTTP_FILE_COMPLETION:
+			if(u && u->fptr){
+				fclose(u->fptr);
+				u->fptr = NULL;
+			}
+			break;
 #endif
 
 		default:
