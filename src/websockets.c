@@ -656,7 +656,7 @@ struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listen
 		if(!user->http_dir){
 			_mosquitto_free(user);
 			_mosquitto_free(p);
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open http dir \"%s\".", user->http_dir);
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open http dir \"%s\".", listener->http_dir);
 			return NULL;
 		}
 	}
