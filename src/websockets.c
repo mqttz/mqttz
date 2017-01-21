@@ -504,6 +504,7 @@ static int callback_http(struct libwebsocket_context *context,
 			if(fstat(fileno(u->fptr), &filestat) < 0){
 				libwebsockets_return_http_status(context, wsi, HTTP_STATUS_INTERNAL_SERVER_ERROR, NULL);
 				fclose(u->fptr);
+				u->fptr = NULL;
 				return -1;
 			}
 #ifdef WIN32
@@ -512,6 +513,8 @@ static int callback_http(struct libwebsocket_context *context,
 			if(!S_ISREG(filestat.st_mode)){
 #endif
 				libwebsockets_return_http_status(context, wsi, HTTP_STATUS_FORBIDDEN, NULL);
+				fclose(u->fptr);
+				u->fptr = NULL;
 				return -1;
 			}
 
@@ -568,6 +571,7 @@ static int callback_http(struct libwebsocket_context *context,
 			}else{
 				return -1;
 			}
+			break;
 
 		case LWS_CALLBACK_CLOSED:
 		case LWS_CALLBACK_CLOSED_HTTP:
