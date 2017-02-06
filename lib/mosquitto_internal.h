@@ -56,6 +56,9 @@ Contributors:
 #include "mosquitto.h"
 #include "time_mosq.h"
 #ifdef WITH_BROKER
+#  ifdef __linux__
+#    include <netdb.h>
+#  endif
 #  include "uthash.h"
 struct mosquitto_client_msg;
 #endif
@@ -151,6 +154,9 @@ struct mosquitto {
 	mosq_sock_t sock;
 #ifndef WITH_BROKER
 	mosq_sock_t sockpairR, sockpairW;
+#endif
+#ifdef __linux__
+	struct gaicb *adns; /* For getaddrinfo_a */
 #endif
 	enum _mosquitto_protocol protocol;
 	char *address;

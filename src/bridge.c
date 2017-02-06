@@ -131,10 +131,15 @@ int mqtt3_bridge_new(struct mosquitto_db *db, struct _mqtt3_bridge *bridge)
 		return MOSQ_ERR_NOMEM;
 	}
 
+#ifdef __linux__
+	new_context->bridge->restart_t = 1; /* force quick restart of bridge */
+	return mqtt3_bridge_connect_step1(db, new_context);
+#else
 	return mqtt3_bridge_connect(db, new_context);
+#endif
 }
 
-int mqtt3_bridge_connect(struct mosquitto_db *db, struct mosquitto *context)
+int mqtt3_bridge_connect_step1(struct mosquitto_db *db, struct mosquitto *context)
 {
 	int rc;
 	int i;
@@ -208,6 +213,31 @@ int mqtt3_bridge_connect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Connecting bridge %s (%s:%d)", context->bridge->name, context->bridge->addresses[context->bridge->cur_address].address, context->bridge->addresses[context->bridge->cur_address].port);
+	rc = _mosquitto_try_connect_step1(context, context->bridge->addresses[context->bridge->cur_address].address);
+	if(rc > 0 ){
+		if(rc == MOSQ_ERR_TLS){
+			_mosquitto_socket_close(db, context);
+			return rc; /* Error already printed */
+		}else if(rc == MOSQ_ERR_ERRNO){
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error creating bridge: %s.", strerror(errno));
+		}else if(rc == MOSQ_ERR_EAI){
+			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error creating bridge: %s.", gai_strerror(errno));
+		}
+
+		return rc;
+	}
+
+	return MOSQ_ERR_SUCCESS;
+}
+
+
+int mqtt3_bridge_connect_step2(struct mosquitto_db *db, struct mosquitto *context)
+{
+	int rc;
+
+	if(!context || !context->bridge) return MOSQ_ERR_INVAL;
+
+	_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Connecting bridge %s (%s:%d)", context->bridge->name, context->bridge->addresses[context->bridge->cur_address].address, context->bridge->addresses[context->bridge->cur_address].port);
 	rc = _mosquitto_socket_connect(context, context->bridge->addresses[context->bridge->cur_address].address, context->bridge->addresses[context->bridge->cur_address].port, NULL, false);
 	if(rc > 0 ){
 		if(rc == MOSQ_ERR_TLS){
@@ -244,6 +274,18 @@ int mqtt3_bridge_connect(struct mosquitto_db *db, struct mosquitto *context)
 		return rc;
 	}
 }
+
+
+int mqtt3_bridge_connect(struct mosquitto_db *db, struct mosquitto *context)
+{
+	int rc;
+
+	rc = mqtt3_bridge_connect_step1(db, context);
+	if(rc) return rc;
+
+	return mqtt3_bridge_connect_step2(db, context);
+}
+
 
 void mqtt3_bridge_packet_cleanup(struct mosquitto *context)
 {
