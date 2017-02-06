@@ -244,45 +244,57 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 						context->bridge->primary_retry = now + 5;
 					}
 				}else{
-					if(context->bridge->start_type == bst_lazy && context->bridge->lazy_reconnect){
-						rc = mqtt3_bridge_connect(db, context);
-						if(rc == MOSQ_ERR_SUCCESS){
-							pollfds[pollfd_index].fd = context->sock;
-							pollfds[pollfd_index].events = POLLIN;
-							pollfds[pollfd_index].revents = 0;
-							if(context->current_out_packet){
-								pollfds[pollfd_index].events |= POLLOUT;
-							}
-							context->pollfd_index = pollfd_index;
-							pollfd_index++;
-						}else{
-							context->bridge->cur_address++;
-							if(context->bridge->cur_address == context->bridge->address_count){
-								context->bridge->cur_address = 0;
-							}
-						}
-					}
-					if(context->bridge->start_type == bst_automatic && now > context->bridge->restart_t){
-						context->bridge->restart_t = 0;
-						rc = mqtt3_bridge_connect(db, context);
-						if(rc == MOSQ_ERR_SUCCESS){
-							pollfds[pollfd_index].fd = context->sock;
-							pollfds[pollfd_index].events = POLLIN;
-							pollfds[pollfd_index].revents = 0;
-							if(context->current_out_packet){
-								pollfds[pollfd_index].events |= POLLOUT;
-							}
-							context->pollfd_index = pollfd_index;
-							pollfd_index++;
-						}else{
-							/* Retry later. */
-							context->bridge->restart_t = now+context->bridge->restart_timeout;
+					if((context->bridge->start_type == bst_lazy && context->bridge->lazy_reconnect)
+							|| (context->bridge->start_type == bst_automatic && now > context->bridge->restart_t)){
 
-							context->bridge->cur_address++;
-							if(context->bridge->cur_address == context->bridge->address_count){
-								context->bridge->cur_address = 0;
+#ifdef __linux__
+						if(context->adns){
+							/* Waiting on DNS lookup */
+							rc = mqtt3_bridge_connect_step2(db, context);
+							if(rc == MOSQ_ERR_SUCCESS){
+								pollfds[pollfd_index].fd = context->sock;
+								pollfds[pollfd_index].events = POLLIN;
+								pollfds[pollfd_index].revents = 0;
+								if(context->current_out_packet){
+									pollfds[pollfd_index].events |= POLLOUT;
+								}
+								context->pollfd_index = pollfd_index;
+								pollfd_index++;
+							}else{
+								context->bridge->cur_address++;
+								if(context->bridge->cur_address == context->bridge->address_count){
+									context->bridge->cur_address = 0;
+								}
+							}
+						}else{
+							rc = mqtt3_bridge_connect_step1(db, context);
+							if(rc){
+								context->bridge->cur_address++;
+								if(context->bridge->cur_address == context->bridge->address_count){
+									context->bridge->cur_address = 0;
+								}
 							}
 						}
+#else
+						{
+							rc = mqtt3_bridge_connect(db, context);
+							if(rc == MOSQ_ERR_SUCCESS){
+								pollfds[pollfd_index].fd = context->sock;
+								pollfds[pollfd_index].events = POLLIN;
+								pollfds[pollfd_index].revents = 0;
+								if(context->current_out_packet){
+									pollfds[pollfd_index].events |= POLLOUT;
+								}
+								context->pollfd_index = pollfd_index;
+								pollfd_index++;
+							}else{
+								context->bridge->cur_address++;
+								if(context->bridge->cur_address == context->bridge->address_count){
+									context->bridge->cur_address = 0;
+								}
+							}
+						}
+#endif
 					}
 				}
 			}
