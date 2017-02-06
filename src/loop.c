@@ -250,21 +250,33 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 #ifdef __linux__
 						if(context->adns){
 							/* Waiting on DNS lookup */
-							rc = mqtt3_bridge_connect_step2(db, context);
-							if(rc == MOSQ_ERR_SUCCESS){
-								pollfds[pollfd_index].fd = context->sock;
-								pollfds[pollfd_index].events = POLLIN;
-								pollfds[pollfd_index].revents = 0;
-								if(context->current_out_packet){
-									pollfds[pollfd_index].events |= POLLOUT;
+							rc = gai_error(context->adns);
+							if(rc == EAI_INPROGRESS){
+								/* Just keep on waiting */
+							}else if(rc == 0){
+								rc = mqtt3_bridge_connect_step2(db, context);
+								if(rc == MOSQ_ERR_SUCCESS){
+									pollfds[pollfd_index].fd = context->sock;
+									pollfds[pollfd_index].events = POLLIN;
+									pollfds[pollfd_index].revents = 0;
+									if(context->current_out_packet){
+										pollfds[pollfd_index].events |= POLLOUT;
+									}
+									context->pollfd_index = pollfd_index;
+									pollfd_index++;
+								}else{
+									context->bridge->cur_address++;
+									if(context->bridge->cur_address == context->bridge->address_count){
+										context->bridge->cur_address = 0;
+									}
 								}
-								context->pollfd_index = pollfd_index;
-								pollfd_index++;
 							}else{
-								context->bridge->cur_address++;
-								if(context->bridge->cur_address == context->bridge->address_count){
-									context->bridge->cur_address = 0;
+								/* Need to retry */
+								if(context->adns->ar_result){
+									freeaddrinfo(context->adns->ar_result);
 								}
+								_mosquitto_free(context->adns);
+								context->adns = NULL;
 							}
 						}else{
 							rc = mqtt3_bridge_connect_step1(db, context);

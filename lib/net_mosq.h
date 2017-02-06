@@ -63,6 +63,7 @@ int _mosquitto_socket_close(struct mosquitto *mosq);
 int _mosquitto_try_connect(struct mosquitto *mosq, const char *host, uint16_t port, mosq_sock_t *sock, const char *bind_address, bool blocking);
 int _mosquitto_try_connect_step1(struct mosquitto *mosq, const char *host);
 int _mosquitto_try_connect_step2(struct mosquitto *mosq, uint16_t port, mosq_sock_t *sock);
+int _mosquitto_socket_connect_step3(struct mosquitto *mosq, const char *host, uint16_t port, const char *bind_address, bool blocking);
 int _mosquitto_socket_nonblock(mosq_sock_t sock);
 int _mosquitto_socketpair(mosq_sock_t *sp1, mosq_sock_t *sp2);
 
