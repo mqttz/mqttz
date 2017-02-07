@@ -290,6 +290,8 @@ int _mosquitto_try_connect_step1(struct mosquitto *mosq, const char *host)
 	s = getaddrinfo_a(GAI_NOWAIT, &mosq->adns, 1, sevp);
 	if(s){
 		errno = s;
+		_mosquitto_free(mosq->adns);
+		mosq->adns = NULL;
 		return MOSQ_ERR_EAI;
 	}
 
@@ -343,10 +345,16 @@ int _mosquitto_try_connect_step2(struct mosquitto *mosq, uint16_t port, mosq_soc
 		COMPAT_CLOSE(*sock);
 		*sock = INVALID_SOCKET;
 	}
-	freeaddrinfo(ainfo);
+	freeaddrinfo(mosq->adns->ar_result);
+	mosq->adns->ar_result = NULL;
+
+	_mosquitto_free(mosq->adns);
+	mosq->adns = NULL;
+
 	if(!rp){
 		return MOSQ_ERR_ERRNO;
 	}
+
 	return rc;
 }
 
