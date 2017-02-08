@@ -131,7 +131,7 @@ int mqtt3_bridge_new(struct mosquitto_db *db, struct _mqtt3_bridge *bridge)
 		return MOSQ_ERR_NOMEM;
 	}
 
-#ifdef __GLIBC__
+#if defined(__GLIBC__) && defined(WITH_ADNS)
 	new_context->bridge->restart_t = 1; /* force quick restart of bridge */
 	return mqtt3_bridge_connect_step1(db, new_context);
 #else
