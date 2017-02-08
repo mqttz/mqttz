@@ -271,7 +271,7 @@ static unsigned int psk_client_callback(SSL *ssl, const char *hint,
 }
 #endif
 
-#if defined(WITH_BROKER) && defined(__GLIBC__)
+#if defined(WITH_BROKER) && defined(__GLIBC__) && defined(WITH_ADNS)
 /* Async connect, part 1 (dns lookup) */
 int _mosquitto_try_connect_step1(struct mosquitto *mosq, const char *host)
 {

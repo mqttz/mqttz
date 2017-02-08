@@ -76,6 +76,9 @@ WITH_DOCS:=yes
 # Build with client support for SOCK5 proxy.
 WITH_SOCKS:=yes
 
+# Build with async dns lookup support for bridges (temporary). Requires glibc.
+#WITH_ADNS:=yes
+
 # =============================================================================
 # End of user configuration
 # =============================================================================
@@ -237,6 +240,11 @@ endif
 
 ifeq ($(WITH_EC),yes)
 	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_EC
+endif
+
+ifeq ($(WITH_ADNS),yes)
+	BROKER_LIBS:=$(BROKER_LIBS) -lanl
+	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_ADNS
 endif
 
 MAKE_ALL:=mosquitto

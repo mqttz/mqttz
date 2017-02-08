@@ -155,7 +155,7 @@ struct mosquitto {
 #ifndef WITH_BROKER
 	mosq_sock_t sockpairR, sockpairW;
 #endif
-#ifdef __GLIBC__
+#if defined(__GLIBC__) && defined(WITH_ADNS)
 	struct gaicb *adns; /* For getaddrinfo_a */
 #endif
 	enum _mosquitto_protocol protocol;
