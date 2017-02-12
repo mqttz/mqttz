@@ -377,35 +377,50 @@ int main(int argc, char *argv[])
 
 	OpenSSL_add_all_digests();
 
-	if(argc == 5){
-		if(!strcmp(argv[1], "-b")){
-			batch_mode = true;
-		}else{
-			fprintf(stderr, "Error: Unknown option '%s'\n", argv[1]);
+	if(argc == 1){
+		print_usage();
+		return 1;
+	}
+
+	if(!strcmp(argv[1], "-c")){
+		create_new = true;
+		if(argc != 4){
+			fprintf(stderr, "Error: -c argument given but password file or username missing.\n");
 			return 1;
-		}
-		password_file_tmp = argv[2];
-		username = argv[3];
-		password_cmd = argv[4];
-	}else if(argc == 4){
-		if(!strcmp(argv[1], "-c")){
-			create_new = true;
-		}else if(!strcmp(argv[1], "-D")){
-			delete_user = true;
 		}else{
-			fprintf(stderr, "Error: Unknown option '%s'\n", argv[1]);
-			return 1;
+			password_file_tmp = argv[2];
+			username = argv[3];
 		}
-		password_file_tmp = argv[2];
-		username = argv[3];
-	}else if(argc == 3){
-		if(!strcmp(argv[1], "-U")){
+	}else if(!strcmp(argv[1], "-D")){
+		delete_user = true;
+		if(argc != 4){
+			fprintf(stderr, "Error: -D argument given but password file or username missing.\n");
+			return 1;
+		}else{
+			password_file_tmp = argv[2];
+			username = argv[3];
+		}
+	}else if(!strcmp(argv[1], "-b")){
+		batch_mode = true;
+		if(argc != 5){
+			fprintf(stderr, "Error: -b argument given but password file, username or password missing.\n");
+			return 1;
+		}else{
+			password_file_tmp = argv[2];
+			username = argv[3];
+			password_cmd = argv[4];
+		}
+	}else if(!strcmp(argv[1], "-U")){
+		if(argc != 3){
+			fprintf(stderr, "Error: -U argument given but password file missing.\n");
+			return 1;
+		}else{
 			do_update_file = true;
 			password_file_tmp = argv[2];
-		}else{
-			password_file_tmp = argv[1];
-			username = argv[2];
 		}
+	}else if(argc == 3){
+		password_file_tmp = argv[1];
+		username = argv[2];
 	}else{
 		print_usage();
 		return 1;
