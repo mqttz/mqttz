@@ -6,6 +6,7 @@ Broker:
 - For http only websockets clients, close files served over http in all cases
   when the client disconnects. Closes #354.
 - Fix error message when websockets http_dir directory does not exist.
+- Improve password utility error message. Closes #379.
 
 Client library:
 - Clients can now use TLS with IPv6.
