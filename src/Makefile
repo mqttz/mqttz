@@ -11,6 +11,7 @@ endif
 OBJS=	mosquitto.o \
 		bridge.o \
 		conf.o \
+		conf_includedir.o \
 		context.o \
 		database.o \
 		handle_connack.o \
@@ -62,10 +63,13 @@ mosquitto.o : mosquitto.c mosquitto_broker_internal.h
 
 bridge.o : bridge.c mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
-	
+
 conf.o : conf.c mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
-	
+
+conf_includedir.o : conf_includedir.c mosquitto_broker_internal.h
+	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
+
 context.o : context.c mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
@@ -119,10 +123,10 @@ net.o : net.c mosquitto_broker_internal.h
 
 net_mosq.o : ../lib/net_mosq.c ../lib/net_mosq.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
-	
+
 persist.o : persist.c persist.h mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
-	
+
 packet_mosq.o : ../lib/packet_mosq.c ../lib/packet_mosq.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 

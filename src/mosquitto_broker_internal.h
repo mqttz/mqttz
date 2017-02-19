@@ -477,6 +477,7 @@ int config__parse_args(struct mosquitto__config *config, int argc, char *argv[])
 int config__read(struct mosquitto__config *config, bool reload);
 /* Free all config data. */
 void config__cleanup(struct mosquitto__config *config);
+int config__get_dir_files(const char *include_dir, char ***files, int *file_count);
 
 int drop_privileges(struct mosquitto__config *config, bool temporary);
 int restore_privileges(void);

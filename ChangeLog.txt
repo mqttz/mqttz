@@ -36,6 +36,8 @@ Broker:
 - queue_qos0_messages was not observing max_queued_** limits
 - Add support bridges to be configured to only send notifications to the local
   broker.
+- When using the include_dir configuration option sort the files
+  alphabetically before loading them.  Closes #17.
 
 Client library:
 - Outgoing messages with QoS>1 are no longer retried after a timeout period.

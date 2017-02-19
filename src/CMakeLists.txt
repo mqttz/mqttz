@@ -4,6 +4,7 @@ include_directories(${mosquitto_SOURCE_DIR} ${mosquitto_SOURCE_DIR}/src
 
 set (MOSQ_SRCS
 	conf.c
+	conf_includedir.c
 	context.c
 	database.c
 	handle_connack.c
