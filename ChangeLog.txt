@@ -54,6 +54,8 @@ Client library:
   according to the UTF-8 spec and to the additional restrictions imposed by
   the MQTT spec.
 - Topic inputs are checked for UTF-8 validity.
+- Add mosquitto_userdata function to allow retrieving the client userdata
+  member variable. Closes #111.
 
 Client:
 - Add -F to mosquitto_sub to allow the user to choose the output format.

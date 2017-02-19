@@ -1002,7 +1002,8 @@ libmosq_EXPORT int mosquitto_opts_set(struct mosquitto *mosq, enum mosq_opt_t op
  *                Your callback must write the password into "buf", which is
  *                "size" bytes long. The return value must be the length of the
  *                password. "userdata" will be set to the calling mosquitto
- *                instance.
+ *                instance. The mosquitto userdata member variable can be
+ *                retrieved using <mosquitto_userdata>.
  *
  * Returns:
  *	MOSQ_ERR_SUCCESS - on success.
@@ -1010,7 +1011,8 @@ libmosq_EXPORT int mosquitto_opts_set(struct mosquitto *mosq, enum mosq_opt_t op
  * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
  *
  * See Also:
- *	<mosquitto_tls_opts_set>, <mosquitto_tls_psk_set>, <mosquitto_tls_insecure_set>
+ *	<mosquitto_tls_opts_set>, <mosquitto_tls_psk_set>,
+ *	<mosquitto_tls_insecure_set>, <mosquitto_userdata>
  */
 libmosq_EXPORT int mosquitto_tls_set(struct mosquitto *mosq,
 		const char *cafile, const char *capath,
@@ -1691,6 +1693,19 @@ libmosq_EXPORT int mosquitto_subscribe_callback(
  *   MOSQ_ERR_MALFORMED_UTF8 - if str is not valid UTF-8
  */
 libmosq_EXPORT int mosquitto_validate_utf8(const char *str, int len);
+
+
+/* Function: mosquitto_userdata
+ *
+ * Retrieve the "userdata" variable for a mosquitto client.
+ *
+ * Parameters:
+ * 	mosq - a valid mosquitto instance.
+ *
+ * Returns:
+ *	A pointer to the userdata member variable.
+ */
+libmosq_EXPORT void *mosquitto_userdata(struct mosquitto *mosq);
 
 #ifdef __cplusplus
 }

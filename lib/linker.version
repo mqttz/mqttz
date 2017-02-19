@@ -85,4 +85,5 @@ MOSQ_1.5 {
 		mosquitto_subscribe_callback;
 		mosquitto_message_free_contents;
 		mosquitto_validate_utf8;
+		mosquitto_userdata;
 } MOSQ_1.4;
