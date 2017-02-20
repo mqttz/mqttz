@@ -924,6 +924,10 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 			port[len] = '\0';
 		}else{
 			host = malloc(len + 1);
+			if(!host){
+				fprintf(stderr, "Error: Out of memory.\n");
+				goto cleanup;
+			}
 			memcpy(host, &(str[start]), len);
 			host[len] = '\0';
 		}
