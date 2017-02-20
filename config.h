@@ -13,6 +13,7 @@
  * ============================================================ */
 #if defined(_MSC_VER) && _MSC_VER < 1900
 #  define snprintf sprintf_s
+#  define EPROTO ECONNABORTED
 #endif
 
 #ifdef WIN32
@@ -27,6 +28,3 @@
 #define uthash_malloc(sz) _mosquitto_malloc(sz)
 #define uthash_free(ptr,sz) _mosquitto_free(ptr)
 
-#ifndef EPROTO
-#  define EPROTO ECONNABORTED
-#endif
