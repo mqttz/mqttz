@@ -35,6 +35,7 @@ parts:
       - libssl-dev
       - uuid-dev
       - libc-ares-dev
+      - xsltproc
     stage-packages:
       - libssl1.0.0
       - libuuid1
