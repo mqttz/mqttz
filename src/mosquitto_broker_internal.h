@@ -14,8 +14,8 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
-#ifndef MQTT3_H
-#define MQTT3_H
+#ifndef MOSQUITTO_BROKER_INTERNAL_H
+#define MOSQUITTO_BROKER_INTERNAL_H
 
 #include "config.h"
 #include <stdio.h>
@@ -31,6 +31,7 @@ Contributors:
 #    define libwebsocket_write(A, B, C, D) lws_write((A), (B), (C), (D))
 #    define libwebsocket_get_socket_fd(A) lws_get_socket_fd((A))
 #    define libwebsockets_return_http_status(A, B, C, D) lws_return_http_status((B), (C), (D))
+#    define libwebsockets_get_protocol(A) lws_get_protocol((A))
 
 #    define libwebsocket_context lws_context
 #    define libwebsocket_protocols lws_protocols
@@ -570,6 +571,8 @@ int log__printf(struct mosquitto *mosq, int level, const char *fmt, ...) __attri
 #ifdef WITH_BRIDGE
 int bridge__new(struct mosquitto_db *db, struct mosquitto__bridge *bridge);
 int bridge__connect(struct mosquitto_db *db, struct mosquitto *context);
+int bridge__connect_step1(struct mosquitto_db *db, struct mosquitto *context);
+int bridge__connect_step2(struct mosquitto_db *db, struct mosquitto *context);
 void bridge__packet_cleanup(struct mosquitto *context);
 #endif
 

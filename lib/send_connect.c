@@ -15,6 +15,7 @@ Contributors:
 */
 
 #include <assert.h>
+#include <string.h>
 
 #include "logging_mosq.h"
 #include "memory_mosq.h"

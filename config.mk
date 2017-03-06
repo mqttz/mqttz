@@ -86,6 +86,9 @@ WITH_STRIP:=no
 # Build static libraries
 WITH_STATIC_LIBRARIES:=no
 
+# Build with async dns lookup support for bridges (temporary). Requires glibc.
+#WITH_ADNS:=yes
+
 # =============================================================================
 # End of user configuration
 # =============================================================================
@@ -164,6 +167,10 @@ endif
 ifeq ($(UNAME),QNX)
 	BROKER_LIBS:=$(BROKER_LIBS) -lsocket
 	LIB_LIBS:=$(LIB_LIBS) -lsocket
+endif
+
+ifeq ($(UNAME),Linux)
+	BROKER_LIBS:=$(BROKER_LIBS) -lanl
 endif
 
 ifeq ($(WITH_WRAP),yes)
@@ -248,6 +255,11 @@ endif
 
 ifeq ($(WITH_EC),yes)
 	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_EC
+endif
+
+ifeq ($(WITH_ADNS),yes)
+	BROKER_LIBS:=$(BROKER_LIBS) -lanl
+	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_ADNS
 endif
 
 MAKE_ALL:=mosquitto

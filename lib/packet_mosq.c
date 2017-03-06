@@ -16,6 +16,7 @@ Contributors:
 
 #include <assert.h>
 #include <errno.h>
+#include <string.h>
 
 #ifdef WITH_BROKER
 #  include "mosquitto_broker_internal.h"

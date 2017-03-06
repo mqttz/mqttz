@@ -264,7 +264,10 @@ int main(int argc, char *argv[])
 
 	/* Initialise logging only after initialising the database in case we're
 	 * logging to topics */
-	log__init(&config);
+	if(log__init(&config)){
+		rc = 1;
+		return rc;
+	}
 	log__printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s (build date %s) starting", VERSION, TIMESTAMP);
 	if(config.config_file){
 		log__printf(NULL, MOSQ_LOG_INFO, "Config loaded from %s.", config.config_file);

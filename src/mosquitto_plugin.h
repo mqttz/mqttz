@@ -53,6 +53,10 @@ struct mosquitto_acl_msg {
  *
  * gcc -I<path to mosquitto_plugin.h> -fPIC -shared plugin.c -o plugin.so
  *
+ * On Mac OS X:
+ *
+ * gcc -I<path to mosquitto_plugin.h> -fPIC -shared plugin.c -undefined dynamic_lookup -o plugin.so
+ *
  * Authentication plugins can implement one or both of authentication and
  * access control. If your plugin does not wish to handle either of
  * authentication or access control it should return MOSQ_ERR_PLUGIN_DEFER. In
