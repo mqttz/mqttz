@@ -64,7 +64,7 @@ int mosquitto__server_certificate_verify(int preverify_ok, X509_STORE_CTX *ctx)
 			preverify_ok = mosquitto__verify_certificate_hostname(cert, mosq->host);
 #endif
 			if (preverify_ok != 1) {
-				_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Error: host name verification failed.");
+				log__printf(mosq, MOSQ_LOG_ERR, "Error: host name verification failed.");
 			}
 			return preverify_ok;
 		}else{
