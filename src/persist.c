@@ -79,6 +79,16 @@ static int mqtt3_db_client_messages_write(struct mosquitto_db *db, FILE *db_fptr
 
 	cmsg = context->msgs;
 	while(cmsg){
+		if(!strncmp(cmsg->store->topic, "$SYS", 4)
+				&& cmsg->store->ref_count <= 1
+				&& cmsg->store->dest_id_count == 0){
+
+			/* This $SYS message won't have been persisted, so we can't persist
+			 * this client message. */
+			cmsg = cmsg->next;
+			continue;
+		}
+
 		slen = strlen(context->id);
 
 		length = htonl(sizeof(dbid_t) + sizeof(uint16_t) + sizeof(uint8_t) +

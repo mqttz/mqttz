@@ -1,3 +1,10 @@
+1.4.12 - 201703xx
+=================
+
+Broker:
+- Fix mosquitto.db from becoming corrupted due to client messages being
+  persisted with no stored message. Closes #424.
+
 1.4.11 - 20170220
 =================
 
