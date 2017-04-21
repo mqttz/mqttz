@@ -4,9 +4,14 @@ DIRS=lib client src
 DOCDIRS=man
 DISTDIRS=man
 
-.PHONY : all mosquitto docs binary clean reallyclean test install uninstall dist sign copy
+.PHONY : all mosquitto api docs binary clean reallyclean test install uninstall dist sign copy
 
 all : $(MAKE_ALL)
+
+api :
+	mkdir -p api p
+	naturaldocs -o HTML api -i lib -p p
+	rm -rf p
 
 docs :
 	set -e; for d in ${DOCDIRS}; do $(MAKE) -C $${d}; done
