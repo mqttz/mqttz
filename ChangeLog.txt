@@ -5,6 +5,7 @@ Broker:
 - Fix mosquitto.db from becoming corrupted due to client messages being
   persisted with no stored message. Closes #424.
 - Fix bridge not restarting properly. Closes #428.
+- Fix unitialized memory in gets_quiet on Windows. Closes #426.
 
 1.4.11 - 20170220
 =================
