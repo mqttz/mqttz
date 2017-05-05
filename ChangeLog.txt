@@ -8,6 +8,7 @@ Broker:
 - Fix unitialized memory in gets_quiet on Windows. Closes #426.
 - Fix building with WITH_ADNS=no for systems that don't use glibc. Closes
   #415.
+- Fixes to readme.md.
 
 1.4.11 - 20170220
 =================
