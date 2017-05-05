@@ -9,6 +9,8 @@ Broker:
 - Fix building with WITH_ADNS=no for systems that don't use glibc. Closes
   #415.
 - Fixes to readme.md.
+- Fix deprecation warning for OpenSSL 1.1. PR #416.
+
 
 1.4.11 - 20170220
 =================
