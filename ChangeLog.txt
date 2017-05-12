@@ -10,6 +10,7 @@ Broker:
   #415.
 - Fixes to readme.md.
 - Fix deprecation warning for OpenSSL 1.1. PR #416.
+- Don't segfault on duplicate bridge names. Closes #446.
 
 
 1.4.11 - 20170220
