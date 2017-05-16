@@ -60,11 +60,11 @@ int mosquitto_validate_utf8(const char *str, int len)
 		}
 
 		/* Reconstruct full code point */
+		if(i == len-codelen+1){
+			/* Not enough data */
+			return MOSQ_ERR_MALFORMED_UTF8;
+		}
 		for(j=0; j<codelen-1; j++){
-			if(i == len-1){
-				/* Not enough data */
-				return MOSQ_ERR_MALFORMED_UTF8;
-			}
 			if((ustr[++i] & 0xC0) != 0x80){
 				/* Not a continuation byte */
 				return MOSQ_ERR_MALFORMED_UTF8;
@@ -77,12 +77,12 @@ int mosquitto_validate_utf8(const char *str, int len)
 			return MOSQ_ERR_MALFORMED_UTF8;
 		}
 
-		/* Check for overlong encodings */
+		/* Check for overlong or out of range encodings */
 		if(codelen == 2 && codepoint < 0x0080){
 			return MOSQ_ERR_MALFORMED_UTF8;
 		}else if(codelen == 3 && codepoint < 0x0800){
 			return MOSQ_ERR_MALFORMED_UTF8;
-		}else if(codelen == 4 && codepoint < 0x10000){
+		}else if(codelen == 4 && (codepoint < 0x10000 || codepoint > 0x10FFFF)){
 			return MOSQ_ERR_MALFORMED_UTF8;
 		}
 	}

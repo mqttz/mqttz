@@ -53,7 +53,8 @@ int main(int argc, char *argv[])
 	assert_valid("2.3.2  U-0000E000 = ee 80 80 = \"î€€\"");
 	assert_valid("2.3.3  U-0000FFFD = ef bf bd = \"ï¿½\"");
 	assert_valid("2.3.4  U-0010FFFF = f4 8f bf bf = \"ô¿¿\"");
-	assert_valid("2.3.5  U-00110000 = f4 90 80 80 = \"ô€€\"");
+	/* This used to be valid in pre-2003 utf-8 */
+	assert_invalid("2.3.5  U-00110000 = f4 90 80 80 = \"ô€€\"");
 
 	/* 3  Malformed sequences */
 	/* 3.1  Unexpected continuation bytes */
