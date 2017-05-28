@@ -261,6 +261,26 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 	}
 
 	acl_root = db->acl_patterns;
+
+	if(acl_root){
+		/* We are using pattern based acls. Check whether the username or
+		 * client id contains a +, # or / and if so deny access.
+		 *
+		 * Without this, a malicious client may configure its username/client
+		 * id to bypass ACL checks (or have a username/client id that cannot
+		 * publish or receive messages to its own place in the hierarchy).
+		 */
+		if(context->username && strpbrk(context->username, "+#/")){
+			_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "ACL denying access to client with dangerous username \"%s\"", context->username);
+			return MOSQ_ERR_ACL_DENIED;
+		}
+
+		if(context->id && strpbrk(context->id, "+#/")){
+			_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "ACL denying access to client with dangerous client id \"%s\"", context->id);
+			return MOSQ_ERR_ACL_DENIED;
+		}
+	}
+
 	/* Loop through all pattern ACLs. */
 	clen = strlen(context->id);
 	while(acl_root){
