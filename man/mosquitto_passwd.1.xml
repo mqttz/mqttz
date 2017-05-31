@@ -124,7 +124,7 @@
 	<refsect1>
 		<title>Bugs</title>
 		<para><command>mosquitto</command> bug information can be found at
-			<uri type="webpage">https://github.com/eclipse/mosquitto/issues</uri></para>
+			<ulink url="https://github.com/eclipse/mosquitto/issues"/></para>
 	</refsect1>
 
 	<refsect1>
