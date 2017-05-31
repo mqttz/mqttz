@@ -1,3 +1,7 @@
+Clients:
+- Don't use / in auto-generated client ids.
+
+
 1.4.12 - 20170528
 =================
 
