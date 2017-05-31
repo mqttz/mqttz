@@ -5,6 +5,14 @@ include ../config.mk
 all :  mosquitto.8 mosquitto-tls.7 mosquitto.conf.5 mosquitto_passwd.1 mosquitto_pub.1 mosquitto_sub.1 mqtt.7 libmosquitto.3
 
 clean :
+	-rm -f libmosquitto.3
+	-rm -f mosquitto.8
+	-rm -f mosquitto.conf.5
+	-rm -f mosquitto_passwd.1
+	-rm -f mosquitto_pub.1
+	-rm -f mosquitto_sub.1
+	-rm -f mosquitto-tls.7
+	-rm -f mqtt.7
 
 reallyclean : clean
 	-rm -f *.orig
