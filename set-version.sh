@@ -2,7 +2,7 @@
 
 MAJOR=1
 MINOR=4
-REVISION=11
+REVISION=12
 
 sed -i "s/^VERSION=.*/VERSION=${MAJOR}.${MINOR}.${REVISION}/" config.mk
 

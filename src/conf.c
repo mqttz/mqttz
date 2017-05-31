@@ -953,6 +953,14 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 					if(reload) continue; // FIXME
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
+						/* Check for existing bridge name. */
+						for(i=0; i<config->bridge_count; i++){
+							if(!strcmp(config->bridges[i].name, token)){
+								_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate bridge name \"%s\".", token);
+								return MOSQ_ERR_INVAL;
+							}
+						}
+
 						config->bridge_count++;
 						config->bridges = mosquitto__realloc(config->bridges, config->bridge_count*sizeof(struct mosquitto__bridge));
 						if(!config->bridges){
