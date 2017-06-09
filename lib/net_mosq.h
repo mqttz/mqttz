@@ -90,6 +90,7 @@ int _mosquitto_packet_read(struct mosquitto *mosq);
 #ifdef WITH_TLS
 int _mosquitto_socket_apply_tls(struct mosquitto *mosq);
 int mosquitto__socket_connect_tls(struct mosquitto *mosq);
+int _mosquitto_verify_ocsp_status_cb(SSL * ssl, void *arg);
 #endif
 
 #endif

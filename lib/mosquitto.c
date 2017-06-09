@@ -203,6 +203,7 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 	mosq->tls_cert_reqs = SSL_VERIFY_PEER;
 	mosq->tls_insecure = false;
 	mosq->want_write = false;
+	mosq->tls_ocsp_required = false;
 #endif
 #ifdef WITH_THREADING
 	pthread_mutex_init(&mosq->callback_mutex, NULL);
@@ -830,6 +831,24 @@ int mosquitto_tls_psk_set(struct mosquitto *mosq, const char *psk, const char *i
 #else
 	return MOSQ_ERR_NOT_SUPPORTED;
 #endif
+}
+
+
+int mosquitto_tls_ocsp_set(struct mosquitto *mosq, int ocsp_reqs)
+{
+#ifdef WITH_TLS
+	if (ocsp_reqs==0) {
+		mosq->tls_ocsp_required = false;
+		return  MOSQ_ERR_SUCCESS;
+	}
+
+	if (ocsp_reqs==1) {
+		mosq->tls_ocsp_required = true;
+		return  MOSQ_ERR_SUCCESS;
+	}
+#endif
+
+	return MOSQ_ERR_INVAL;
 }
 
 

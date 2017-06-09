@@ -335,6 +335,7 @@ struct _mqtt3_bridge{
 	char *tls_certfile;
 	char *tls_keyfile;
 	bool tls_insecure;
+	bool tls_ocsp_required;
 	char *tls_version;
 #  ifdef REAL_WITH_TLS_PSK
 	char *tls_psk_identity;
