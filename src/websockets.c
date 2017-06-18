@@ -218,6 +218,8 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				u->mosq = NULL;
 				return -1;
 			}
+			mosq->sock = libwebsocket_get_socket_fd(wsi);
+			HASH_ADD(hh_sock, db->contexts_by_sock, sock, sizeof(mosq->sock), mosq);
 			break;
 
 		case LWS_CALLBACK_CLOSED:
@@ -226,6 +228,10 @@ static int callback_mqtt(struct libwebsocket_context *context,
 			}
 			mosq = u->mosq;
 			if(mosq){
+				if(mosq->sock > 0){
+					HASH_DELETE(hh_sock, db->contexts_by_sock, mosq);
+					mosq->sock = INVALID_SOCKET;
+				}
 				mosq->wsi = NULL;
 				do_disconnect(db, mosq);
 			}
@@ -412,6 +418,9 @@ static int callback_http(struct libwebsocket_context *context,
 	char *filename, *filename_canonical;
 	unsigned char buf[4096];
 	struct stat filestat;
+	struct mosquitto_db *db = &int_db;
+	struct mosquitto *mosq;
+	struct lws_pollargs *pollargs = (struct lws_pollargs *)in;
 
 	/* FIXME - ssl cert verification is done here. */
 
@@ -582,6 +591,15 @@ static int callback_http(struct libwebsocket_context *context,
 			}
 			break;
 #endif
+
+		case LWS_CALLBACK_ADD_POLL_FD:
+		case LWS_CALLBACK_DEL_POLL_FD:
+		case LWS_CALLBACK_CHANGE_MODE_POLL_FD:
+			HASH_FIND(hh_sock, db->contexts_by_sock, &pollargs->fd, sizeof(pollargs->fd), mosq);
+			if(mosq){
+				mosq->ws_want_write = true;
+			}
+			break;
 
 		default:
 			return 0;

@@ -1,3 +1,6 @@
+Broker:
+- Fix for poor websockets performance.
+
 Clients:
 - Don't use / in auto-generated client ids.
 
