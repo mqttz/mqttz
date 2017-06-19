@@ -353,7 +353,7 @@ int mosquitto_acl_check(struct mosquitto_db *db, struct mosquitto *context, cons
 	int rc;
 	int i;
 	struct mosquitto_acl_msg msg;
-	char *username;
+	const char *username;
 
 	if(!context->id){
 		return MOSQ_ERR_ACL_DENIED;
@@ -371,7 +371,7 @@ int mosquitto_acl_check(struct mosquitto_db *db, struct mosquitto *context, cons
 		memset(&msg, 0, sizeof(msg));
 		msg.topic = topic;
 
-		username = mosquito_client_username(context);
+		username = mosquitto_client_username(context);
 		/* Check whether the client id or username contains a +, # or / and if
 		 * so deny access.
 		 *
@@ -379,11 +379,11 @@ int mosquitto_acl_check(struct mosquitto_db *db, struct mosquitto *context, cons
 		 * plugins against possible pattern based attacks.
 		 */
 		if(username && strpbrk(username, "+#/")){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "ACL denying access to client with dangerous username \"%s\"", username);
+			log__printf(NULL, MOSQ_LOG_NOTICE, "ACL denying access to client with dangerous username \"%s\"", username);
 			return MOSQ_ERR_ACL_DENIED;
 		}
 		if(context->id && strpbrk(context->id, "+#/")){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "ACL denying access to client with dangerous client id \"%s\"", context->id);
+			log__printf(NULL, MOSQ_LOG_NOTICE, "ACL denying access to client with dangerous client id \"%s\"", context->id);
 			return MOSQ_ERR_ACL_DENIED;
 		}
 
