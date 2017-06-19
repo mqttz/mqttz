@@ -231,6 +231,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				if(mosq->sock > 0){
 					HASH_DELETE(hh_sock, db->contexts_by_sock, mosq);
 					mosq->sock = INVALID_SOCKET;
+					mosq->pollfd_index = -1;
 				}
 				mosq->wsi = NULL;
 				do_disconnect(db, mosq);
@@ -256,7 +257,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				}
 			}
 
-			while(mosq->current_out_packet && !lws_send_pipe_choked(mosq->wsi)){
+			if(mosq->current_out_packet && !lws_send_pipe_choked(mosq->wsi)){
 				packet = mosq->current_out_packet;
 
 				if(packet->pos == 0 && packet->to_process == packet->packet_length){
@@ -296,10 +297,6 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				_mosquitto_free(packet);
 
 				mosq->next_msg_out = mosquitto_time() + mosq->keepalive;
-
-				if(mosq->current_out_packet){
-					libwebsocket_callback_on_writable(mosq->ws_context, mosq->wsi);
-				}
 			}
 			if(mosq->current_out_packet){
 				libwebsocket_callback_on_writable(mosq->ws_context, mosq->wsi);
