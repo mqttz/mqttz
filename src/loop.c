@@ -106,14 +106,12 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 #endif
 	int i;
 	struct pollfd *pollfds = NULL;
-	int pollfd_count = 0;
 	int pollfd_index;
 	int pollfd_max;
 #ifdef WITH_BRIDGE
 	mosq_sock_t bridge_sock;
 	int rc;
 #endif
-	int context_count;
 	time_t expiration_check_time = 0;
 	time_t last_timeout_check = 0;
 	char *id;
@@ -147,12 +145,6 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 		}
 #endif
 
-		context_count = HASH_CNT(hh_sock, db->contexts_by_sock);
-#ifdef WITH_BRIDGE
-		context_count += db->bridge_count;
-#endif
-
-		pollfd_count = listensock_count + context_count;
 		memset(pollfds, -1, sizeof(struct pollfd)*pollfd_max);
 
 		pollfd_index = 0;
@@ -445,6 +437,7 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 		if(context->sock != INVALID_SOCKET){
 			HASH_DELETE(hh_sock, db->contexts_by_sock, context);
 			context->sock = INVALID_SOCKET;
+			context->pollfd_index = -1;
 		}
 	}else
 #endif
