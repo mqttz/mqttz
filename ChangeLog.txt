@@ -1,5 +1,6 @@
 Broker:
 - Fix for poor websockets performance.
+- Fix lazy bridges not timing out for idle_timeout. Closes #417.
 
 Clients:
 - Don't use / in auto-generated client ids.
