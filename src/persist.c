@@ -402,6 +402,9 @@ int mqtt3_db_backup(struct mosquitto_db *db, bool shutdown)
 			goto error;
 		}
 	}
+
+	/* Set permissions to -rw------- */
+	umask(0077);
 #endif
 
 	db_fptr = _mosquitto_fopen(outfile, "wb");
