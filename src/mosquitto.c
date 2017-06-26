@@ -269,7 +269,7 @@ int main(int argc, char *argv[])
 	}
 
 	if(config.daemon && config.pid_file){
-		pid = _mosquitto_fopen(config.pid_file, "wt");
+		pid = _mosquitto_fopen(config.pid_file, "wt", false);
 		if(pid){
 			fprintf(pid, "%d", getpid());
 			fclose(pid);

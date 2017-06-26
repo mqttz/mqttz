@@ -402,12 +402,9 @@ int mqtt3_db_backup(struct mosquitto_db *db, bool shutdown)
 			goto error;
 		}
 	}
-
-	/* Set permissions to -rw------- */
-	umask(0077);
 #endif
 
-	db_fptr = _mosquitto_fopen(outfile, "wb");
+	db_fptr = _mosquitto_fopen(outfile, "wb", true);
 	if(db_fptr == NULL){
 		_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Error saving in-memory database, unable to open %s for writing.", outfile);
 		goto error;
@@ -824,7 +821,7 @@ int mqtt3_db_restore(struct mosquitto_db *db)
 
 	db->msg_store_load = NULL;
 
-	fptr = _mosquitto_fopen(db->config->persistence_filepath, "rb");
+	fptr = _mosquitto_fopen(db->config->persistence_filepath, "rb", false);
 	if(fptr == NULL) return MOSQ_ERR_SUCCESS;
 	rlen = fread(&header, 1, 15, fptr);
 	if(rlen == 0){

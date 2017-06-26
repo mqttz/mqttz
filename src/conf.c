@@ -1762,7 +1762,7 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 	int rc;
 	FILE *fptr = NULL;
 
-	fptr = _mosquitto_fopen(file, "rt");
+	fptr = _mosquitto_fopen(file, "rt", false);
 	if(!fptr){
 		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open config file %s\n", file);
 		return 1;

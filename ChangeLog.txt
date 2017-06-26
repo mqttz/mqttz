@@ -1,3 +1,12 @@
+1.4.13 - 20170xxx
+=================
+
+Security:
+- Fix CVE-2017-9868. The persistence file was readable by all local users,
+  potentially allowing sensitive information to be leaked.
+  This can also be fixed administratively, by restricting access to the
+  directory in which the persistence file is stored.
+
 Broker:
 - Fix for poor websockets performance.
 - Fix lazy bridges not timing out for idle_timeout. Closes #417.
