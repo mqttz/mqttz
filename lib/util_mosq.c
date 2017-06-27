@@ -407,7 +407,7 @@ FILE *_mosquitto_fopen(const char *path, const char *mode, bool restrict_read)
 		FILE *fptr;
 		mode_t old_mask;
 
-		old_mask = umask(0700);
+		old_mask = umask(0077);
 		fptr = fopen(path, mode);
 		umask(old_mask);
 
