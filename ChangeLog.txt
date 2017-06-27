@@ -19,6 +19,8 @@ Broker:
 - Auth plugins can be configured to disable the check for +# in
   usernames/client ids with the auth_plugin_deny_special_chars option.
   Partially closes #462.
+- Restrictions for CVE-2017-7650 have been relaxed - '/' is allowed in
+  usernames/client ids.
 
 Clients:
 - Don't use / in auto-generated client ids.
