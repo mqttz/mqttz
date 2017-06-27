@@ -387,12 +387,6 @@ int main(int argc, char *argv[])
 	_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s terminating", VERSION);
 	mqtt3_log_close(&config);
 
-#ifdef WITH_PERSISTENCE
-	if(config.persistence){
-		mqtt3_db_backup(&int_db, true);
-	}
-#endif
-
 #ifdef WITH_WEBSOCKETS
 	for(i=0; i<int_db.config->listener_count; i++){
 		if(int_db.config->listeners[i].ws_context){
@@ -427,6 +421,12 @@ int main(int argc, char *argv[])
 	}
 #endif
 	mosquitto__free_disused_contexts(&int_db);
+
+#ifdef WITH_PERSISTENCE
+	if(config.persistence){
+		mqtt3_db_backup(&int_db, true);
+	}
+#endif
 
 	mqtt3_db_close(&int_db);
 

@@ -452,6 +452,7 @@ void mqtt3_context_cleanup(struct mosquitto_db *db, struct mosquitto *context, b
 void mqtt3_context_disconnect(struct mosquitto_db *db, struct mosquitto *context);
 void mosquitto__add_context_to_disused(struct mosquitto_db *db, struct mosquitto *context);
 void mosquitto__free_disused_contexts(struct mosquitto_db *db);
+void mqtt3_context_send_will(struct mosquitto_db *db, struct mosquitto *context);
 
 /* ============================================================
  * Logging functions

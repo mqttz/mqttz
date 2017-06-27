@@ -14,6 +14,8 @@ Broker:
 - Set persistence file to only be readable by owner, except on Windows. Closes
   #468.
 - Fix CONNECT check for reserved=0, as per MQTT v3.1.1 check MQTT-3.1.2-3.
+- When the broker stop, wills for any connected clients are now "sent". Closes
+  #477.
 
 Clients:
 - Don't use / in auto-generated client ids.
