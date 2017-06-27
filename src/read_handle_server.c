@@ -171,6 +171,13 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 		rc = 1;
 		goto handle_connect_error;
 	}
+	if(context->protocol == mosq_p_mqtt311){
+		if((connect_flags & 0x01) != 0x00){
+			rc = MOSQ_ERR_PROTOCOL;
+			goto handle_connect_error;
+		}
+	}
+
 	clean_session = (connect_flags & 0x02) >> 1;
 	will = connect_flags & 0x04;
 	will_qos = (connect_flags & 0x18) >> 3;

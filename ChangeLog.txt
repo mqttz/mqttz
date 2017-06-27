@@ -13,6 +13,7 @@ Broker:
 - Fix problems with large retained messages over websockets. Closes #427.
 - Set persistence file to only be readable by owner, except on Windows. Closes
   #468.
+- Fix CONNECT check for reserved=0, as per MQTT v3.1.1 check MQTT-3.1.2-3.
 
 Clients:
 - Don't use / in auto-generated client ids.
