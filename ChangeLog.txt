@@ -1,4 +1,4 @@
-1.4.13 - 20170xxx
+1.4.13 - 20170627
 =================
 
 Security:
@@ -20,7 +20,7 @@ Broker:
   usernames/client ids with the auth_plugin_deny_special_chars option.
   Partially closes #462.
 - Restrictions for CVE-2017-7650 have been relaxed - '/' is allowed in
-  usernames/client ids.
+  usernames/client ids. Remainder of fix for #462.
 
 Clients:
 - Don't use / in auto-generated client ids.
