@@ -204,6 +204,7 @@ void mqtt3_config_init(struct mqtt3_config *config)
 	config->bridge_count = 0;
 #endif
 	config->auth_plugin = NULL;
+	config->auth_plugin_deny_special_chars = true;
 	config->verbose = false;
 	config->message_size_limit = 0;
 }
@@ -669,6 +670,9 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 				}else if(!strcmp(token, "auth_plugin")){
 					if(reload) continue; // Auth plugin not currently valid for reloading.
 					if(_conf_parse_string(&token, "auth_plugin", &config->auth_plugin, saveptr)) return MOSQ_ERR_INVAL;
+				}else if(!strcmp(token, "auth_plugin_deny_special_chars")){
+					if(reload) continue; // Auth plugin not currently valid for reloading.
+					if(_conf_parse_bool(&token, "auth_plugin_deny_special_chars", &config->auth_plugin_deny_special_chars, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "auto_id_prefix")){
 					if(_conf_parse_string(&token, "auto_id_prefix", &config->auto_id_prefix, saveptr)) return MOSQ_ERR_INVAL;
 					if(config->auto_id_prefix){

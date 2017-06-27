@@ -106,6 +106,7 @@ struct mqtt3_config {
 	bool allow_anonymous;
 	bool allow_duplicate_messages;
 	bool allow_zero_length_clientid;
+	bool auth_plugin_deny_special_chars;
 	char *auto_id_prefix;
 	int auto_id_prefix_len;
 	int autosave_interval;
