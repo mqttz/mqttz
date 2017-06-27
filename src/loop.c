@@ -119,6 +119,8 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 #ifndef WIN32
 	sigemptyset(&sigblock);
 	sigaddset(&sigblock, SIGINT);
+	sigaddset(&sigblock, SIGTERM);
+	sigaddset(&sigblock, SIGHUP);
 #endif
 
 #ifdef WIN32
