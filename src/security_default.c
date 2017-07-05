@@ -33,6 +33,9 @@ static int _pw_digest(const char *password, const unsigned char *salt, unsigned 
 static int _base64_decode(char *in, unsigned char **decoded, unsigned int *decoded_len);
 #endif
 
+static int mosquitto__memcmp_const(const void *ptr1, const void *b, size_t len);
+
+
 int mosquitto_security_init_default(struct mosquitto_db *db, bool reload)
 {
 	int rc;
@@ -650,6 +653,23 @@ static int _psk_file_parse(struct mosquitto_db *db)
 	return MOSQ_ERR_SUCCESS;
 }
 
+
+static int mosquitto__memcmp_const(const void *a, const void *b, size_t len)
+{
+	int i;
+	int rc = 0;
+
+	if(!a || !b) return 1;
+
+	for(i=0; i<len; i++){
+		if( ((char *)a)[i] != ((char *)b)[i] ){
+			rc = 1;
+		}
+	}
+	return rc;
+}
+
+
 int mosquitto_unpwd_check_default(struct mosquitto_db *db, const char *username, const char *password)
 {
 	struct _mosquitto_unpwd *u, *tmp;
@@ -670,7 +690,7 @@ int mosquitto_unpwd_check_default(struct mosquitto_db *db, const char *username,
 #ifdef WITH_TLS
 					rc = _pw_digest(password, u->salt, u->salt_len, hash, &hash_len);
 					if(rc == MOSQ_ERR_SUCCESS){
-						if(hash_len == u->password_len && !memcmp(u->password, hash, hash_len)){
+						if(hash_len == u->password_len && !mosquitto__memcmp_const(u->password, hash, hash_len)){
 							return MOSQ_ERR_SUCCESS;
 						}else{
 							return MOSQ_ERR_AUTH;

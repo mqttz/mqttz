@@ -1,3 +1,6 @@
+Broker:
+- Use constant time memcmp for password comparisons.
+
 1.4.13 - 20170627
 =================
 
