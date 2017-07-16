@@ -645,7 +645,7 @@ int mosquitto_tls_set(struct mosquitto *mosq, const char *cafile, const char *ca
 	mosquitto__free(mosq->tls_cafile);
 	mosq->tls_cafile = NULL;
 	if(cafile){
-		fptr = mosquitto__fopen(cafile, "rt");
+		fptr = mosquitto__fopen(cafile, "rt", false);
 		if(fptr){
 			fclose(fptr);
 		}else{
@@ -670,7 +670,7 @@ int mosquitto_tls_set(struct mosquitto *mosq, const char *cafile, const char *ca
 	mosquitto__free(mosq->tls_certfile);
 	mosq->tls_certfile = NULL;
 	if(certfile){
-		fptr = mosquitto__fopen(certfile, "rt");
+		fptr = mosquitto__fopen(certfile, "rt", false);
 		if(fptr){
 			fclose(fptr);
 		}else{
@@ -690,7 +690,7 @@ int mosquitto_tls_set(struct mosquitto *mosq, const char *cafile, const char *ca
 	mosquitto__free(mosq->tls_keyfile);
 	mosq->tls_keyfile = NULL;
 	if(keyfile){
-		fptr = mosquitto__fopen(keyfile, "rt");
+		fptr = mosquitto__fopen(keyfile, "rt", false);
 		if(fptr){
 			fclose(fptr);
 		}else{

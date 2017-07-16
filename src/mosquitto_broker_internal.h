@@ -174,6 +174,7 @@ struct mosquitto__auth_plugin_config
 	char *path;
 	struct mosquitto_opt *options;
 	int option_count;
+	bool deny_special_chars;
 };
 
 struct mosquitto__config {
@@ -557,6 +558,7 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 void context__disconnect(struct mosquitto_db *db, struct mosquitto *context);
 void context__add_to_disused(struct mosquitto_db *db, struct mosquitto *context);
 void context__free_disused(struct mosquitto_db *db);
+void context__send_will(struct mosquitto_db *db, struct mosquitto *context);
 
 /* ============================================================
  * Logging functions

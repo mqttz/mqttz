@@ -246,7 +246,7 @@ int main(int argc, char *argv[])
 	}
 
 	if(config.daemon && config.pid_file){
-		pid = mosquitto__fopen(config.pid_file, "wt");
+		pid = mosquitto__fopen(config.pid_file, "wt", false);
 		if(pid){
 			fprintf(pid, "%d", getpid());
 			fclose(pid);
@@ -365,12 +365,6 @@ int main(int argc, char *argv[])
 	log__printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s terminating", VERSION);
 	log__close(&config);
 
-#ifdef WITH_PERSISTENCE
-	if(config.persistence){
-		persist__backup(&int_db, true);
-	}
-#endif
-
 #ifdef WITH_WEBSOCKETS
 	for(i=0; i<int_db.config->listener_count; i++){
 		if(int_db.config->listeners[i].ws_context){
@@ -401,6 +395,12 @@ int main(int argc, char *argv[])
 	mosquitto__free(int_db.bridges);
 #endif
 	context__free_disused(&int_db);
+
+#ifdef WITH_PERSISTENCE
+	if(config.persistence){
+		persist__backup(&int_db, true);
+	}
+#endif
 
 	db__close(&int_db);
 

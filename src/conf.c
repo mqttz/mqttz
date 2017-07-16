@@ -706,8 +706,16 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 					cur_auth_plugin->path = NULL;
 					cur_auth_plugin->options = NULL;
 					cur_auth_plugin->option_count = 0;
+					cur_auth_plugin->deny_special_chars = true;
 					config->auth_plugin_count++;
 					if(conf__parse_string(&token, "auth_plugin", &cur_auth_plugin->path, saveptr)) return MOSQ_ERR_INVAL;
+				}else if(!strcmp(token, "auth_plugin_deny_special_chars")){
+					if(reload) continue; // Auth plugin not currently valid for reloading.
+					if(!cur_auth_plugin){
+						log__printf(NULL, MOSQ_LOG_ERR, "Error: An auth_plugin_deny_special_chars option exists in the config file without an auth_plugin.");
+						return MOSQ_ERR_INVAL;
+					}
+					if(conf__parse_bool(&token, "auth_plugin_deny_special_chars", &cur_auth_plugin->deny_special_chars, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "auto_id_prefix")){
 					if(conf__parse_string(&token, "auto_id_prefix", &config->auto_id_prefix, saveptr)) return MOSQ_ERR_INVAL;
 					if(config->auto_id_prefix){
@@ -1825,7 +1833,7 @@ int config__read_file(struct mosquitto__config *config, bool reload, const char 
 	int rc;
 	FILE *fptr = NULL;
 
-	fptr = mosquitto__fopen(file, "rt");
+	fptr = mosquitto__fopen(file, "rt", false);
 	if(!fptr){
 		log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open config file %s\n", file);
 		return 1;

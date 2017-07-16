@@ -200,6 +200,8 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				u->mosq = NULL;
 				return -1;
 			}
+			mosq->sock = libwebsocket_get_socket_fd(wsi);
+			HASH_ADD(hh_sock, db->contexts_by_sock, sock, sizeof(mosq->sock), mosq);
 			break;
 
 		case LWS_CALLBACK_CLOSED:
@@ -208,6 +210,11 @@ static int callback_mqtt(struct libwebsocket_context *context,
 			}
 			mosq = u->mosq;
 			if(mosq){
+				if(mosq->sock > 0){
+					HASH_DELETE(hh_sock, db->contexts_by_sock, mosq);
+					mosq->sock = INVALID_SOCKET;
+					mosq->pollfd_index = -1;
+				}
 				mosq->wsi = NULL;
 				do_disconnect(db, mosq);
 			}
@@ -232,7 +239,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				}
 			}
 
-			while(mosq->current_out_packet && !lws_send_pipe_choked(mosq->wsi)){
+			if(mosq->current_out_packet && !lws_send_pipe_choked(mosq->wsi)){
 				packet = mosq->current_out_packet;
 
 				if(packet->pos == 0 && packet->to_process == packet->packet_length){
@@ -268,10 +275,6 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				mosquitto__free(packet);
 
 				mosq->next_msg_out = mosquitto_time() + mosq->keepalive;
-
-				if(mosq->current_out_packet){
-					libwebsocket_callback_on_writable(mosq->ws_context, mosq->wsi);
-				}
 			}
 			if(mosq->current_out_packet){
 				libwebsocket_callback_on_writable(mosq->ws_context, mosq->wsi);
@@ -387,6 +390,9 @@ static int callback_http(struct libwebsocket_context *context,
 	char *filename, *filename_canonical;
 	unsigned char buf[4096];
 	struct stat filestat;
+	struct mosquitto_db *db = &int_db;
+	struct mosquitto *mosq;
+	struct lws_pollargs *pollargs = (struct lws_pollargs *)in;
 
 	/* FIXME - ssl cert verification is done here. */
 
@@ -551,6 +557,15 @@ static int callback_http(struct libwebsocket_context *context,
 			if(u && u->fptr){
 				fclose(u->fptr);
 				u->fptr = NULL;
+			}
+			break;
+
+		case LWS_CALLBACK_ADD_POLL_FD:
+		case LWS_CALLBACK_DEL_POLL_FD:
+		case LWS_CALLBACK_CHANGE_MODE_POLL_FD:
+			HASH_FIND(hh_sock, db->contexts_by_sock, &pollargs->fd, sizeof(pollargs->fd), mosq);
+			if(mosq && (pollargs->events & POLLOUT)){
+				mosq->ws_want_write = true;
 			}
 			break;
 

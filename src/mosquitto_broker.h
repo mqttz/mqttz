@@ -37,6 +37,7 @@ enum mosquitto_protocol {
  *
  * ========================================================================= */
 
+
 /*
  * Function: mosquitto_log_printf
  *

@@ -105,13 +105,12 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 #endif
 	int i;
 	struct pollfd *pollfds = NULL;
-	int pollfd_count = 0;
 	int pollfd_index;
+	int pollfd_max;
 #ifdef WITH_BRIDGE
 	mosq_sock_t bridge_sock;
 	int rc;
 #endif
-	int context_count;
 	time_t expiration_check_time = 0;
 	char *id;
 
@@ -121,7 +120,20 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 	sigaddset(&sigblock, SIGTERM);
 	sigaddset(&sigblock, SIGUSR1);
 	sigaddset(&sigblock, SIGUSR2);
+	sigaddset(&sigblock, SIGHUP);
 #endif
+
+#ifdef WIN32
+	pollfd_max = _getmaxstdio();
+#else
+	pollfd_max = getdtablesize();
+#endif
+
+	pollfds = mosquitto__malloc(sizeof(struct pollfd)*pollfd_max);
+	if(!pollfds){
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		return MOSQ_ERR_NOMEM;
+	}
 
 	if(db->config->persistent_client_expiration > 0){
 		expiration_check_time = time(NULL) + 3600;
@@ -135,21 +147,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 		}
 #endif
 
-		context_count = HASH_CNT(hh_sock, db->contexts_by_sock);
-#ifdef WITH_BRIDGE
-		context_count += db->bridge_count;
-#endif
-
-		if(listensock_count + context_count > pollfd_count || !pollfds){
-			pollfd_count = listensock_count + context_count;
-			pollfds = mosquitto__realloc(pollfds, sizeof(struct pollfd)*pollfd_count);
-			if(!pollfds){
-				log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-				return MOSQ_ERR_NOMEM;
-			}
-		}
-
-		memset(pollfds, -1, sizeof(struct pollfd)*pollfd_count);
+		memset(pollfds, -1, sizeof(struct pollfd)*pollfd_max);
 
 		pollfd_index = 0;
 		for(i=0; i<listensock_count; i++){
@@ -197,8 +195,9 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 						pollfds[pollfd_index].fd = context->sock;
 						pollfds[pollfd_index].events = POLLIN;
 						pollfds[pollfd_index].revents = 0;
-						if(context->current_out_packet || context->state == mosq_cs_connect_pending){
+						if(context->current_out_packet || context->state == mosq_cs_connect_pending || context->ws_want_write){
 							pollfds[pollfd_index].events |= POLLOUT;
+							context->ws_want_write = false;
 						}
 						context->pollfd_index = pollfd_index;
 						pollfd_index++;
@@ -276,7 +275,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 								if(context->adns->ar_result){
 									freeaddrinfo(context->adns->ar_result);
 								}
-								_mosquitto_free(context->adns);
+								mosquitto__free(context->adns);
 								context->adns = NULL;
 							}
 						}else{
@@ -429,7 +428,11 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 		if(context->wsi){
 			libwebsocket_callback_on_writable(context->ws_context, context->wsi);
 		}
-		context->sock = INVALID_SOCKET;
+		if(context->sock != INVALID_SOCKET){
+			HASH_DELETE(hh_sock, db->contexts_by_sock, context);
+			context->sock = INVALID_SOCKET;
+			context->pollfd_index = -1;
+		}
 	}else
 #endif
 	{
@@ -475,6 +478,18 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 		}
 
 		assert(pollfds[context->pollfd_index].fd == context->sock);
+
+#ifdef WITH_WEBSOCKETS
+		if(context->wsi){
+			struct lws_pollfd wspoll;
+			wspoll.fd = pollfds[context->pollfd_index].fd;
+			wspoll.events = pollfds[context->pollfd_index].events;
+			wspoll.revents = pollfds[context->pollfd_index].revents;
+			lws_service_fd(lws_get_context(context->wsi), &wspoll);
+			continue;
+		}
+#endif
+
 #ifdef WITH_TLS
 		if(pollfds[context->pollfd_index].revents & POLLOUT ||
 				context->want_write ||
@@ -504,6 +519,12 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 		if(context->pollfd_index < 0){
 			continue;
 		}
+#ifdef WITH_WEBSOCKETS
+		if(context->wsi){
+			// Websocket are already handled above
+			continue;
+		}
+#endif
 
 #ifdef WITH_TLS
 		if(pollfds[context->pollfd_index].revents & POLLIN ||
@@ -518,7 +539,7 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 				}
 			}while(SSL_DATA_PENDING(context));
 		}
-		if(pollfds[context->pollfd_index].revents & (POLLERR | POLLNVAL | POLLHUP)){
+		if(context->pollfd_index >= 0 && pollfds[context->pollfd_index].revents & (POLLERR | POLLNVAL | POLLHUP)){
 			do_disconnect(db, context);
 			continue;
 		}

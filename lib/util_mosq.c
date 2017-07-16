@@ -18,7 +18,12 @@ Contributors:
 #include <string.h>
 
 #ifdef WIN32
-#include <winsock2.h>
+#  include <winsock2.h>
+#  include <aclapi.h>
+#  include <io.h>
+#  include <lmcons.h>
+#else
+#  include <sys/stat.h>
 #endif
 
 
@@ -299,7 +304,7 @@ int mosquitto__hex2bin(const char *hex, unsigned char *bin, int bin_max_len)
 }
 #endif
 
-FILE *mosquitto__fopen(const char *path, const char *mode)
+FILE *mosquitto__fopen(const char *path, const char *mode, bool restrict_read)
 {
 #ifdef WIN32
 	char buf[4096];
@@ -308,10 +313,69 @@ FILE *mosquitto__fopen(const char *path, const char *mode)
 	if(rc == 0 || rc > 4096){
 		return NULL;
 	}else{
-		return fopen(buf, mode);
+		if (restrict_read) {
+			HANDLE hfile;
+			SECURITY_ATTRIBUTES sec;
+			EXPLICIT_ACCESS ea;
+			PACL pacl = NULL;
+			char username[UNLEN + 1];
+			int ulen = UNLEN;
+			SECURITY_DESCRIPTOR sd;
+
+			GetUserName(username, &ulen);
+			if (!InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION)) {
+				return NULL;
+			}
+			BuildExplicitAccessWithName(&ea, username, GENERIC_ALL, SET_ACCESS, NO_INHERITANCE);
+			if (SetEntriesInAcl(1, &ea, NULL, &pacl) != ERROR_SUCCESS) {
+				return NULL;
+			}
+			if (!SetSecurityDescriptorDacl(&sd, TRUE, pacl, FALSE)) {
+				LocalFree(pacl);
+				return NULL;
+			}
+
+			sec.nLength = sizeof(SECURITY_ATTRIBUTES);
+			sec.bInheritHandle = FALSE;
+			sec.lpSecurityDescriptor = &sd;
+
+			hfile = CreateFile(buf, GENERIC_READ | GENERIC_WRITE, 0,
+				&sec,
+				CREATE_NEW,
+				FILE_ATTRIBUTE_NORMAL,
+				NULL);
+
+			LocalFree(pacl);
+
+			int fd = _open_osfhandle((intptr_t)hfile, 0);
+			if (fd < 0) {
+				return NULL;
+			}
+
+			FILE *fptr = _fdopen(fd, mode);
+			if (!fptr) {
+				_close(fd);
+				return NULL;
+			}
+			return fptr;
+
+		}else {
+			return fopen(buf, mode);
+		}
 	}
 #else
-	return fopen(path, mode);
+	if (restrict_read) {
+		FILE *fptr;
+		mode_t old_mask;
+
+		old_mask = umask(0077);
+		fptr = fopen(path, mode);
+		umask(old_mask);
+
+		return fptr;
+	}else{
+		return fopen(path, mode);
+	}
 #endif
 }
 

@@ -401,7 +401,7 @@ int persist__backup(struct mosquitto_db *db, bool shutdown)
 	}
 #endif
 
-	db_fptr = mosquitto__fopen(outfile, "wb");
+	db_fptr = mosquitto__fopen(outfile, "wb", true);
 	if(db_fptr == NULL){
 		log__printf(NULL, MOSQ_LOG_INFO, "Error saving in-memory database, unable to open %s for writing.", outfile);
 		goto error;
@@ -833,7 +833,7 @@ int persist__restore(struct mosquitto_db *db)
 
 	db->msg_store_load = NULL;
 
-	fptr = mosquitto__fopen(db->config->persistence_filepath, "rb");
+	fptr = mosquitto__fopen(db->config->persistence_filepath, "rb", false);
 	if(fptr == NULL) return MOSQ_ERR_SUCCESS;
 	rlen = fread(&header, 1, 15, fptr);
 	if(rlen == 0){

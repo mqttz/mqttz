@@ -69,7 +69,7 @@ int log__init(struct mosquitto__config *config)
 		if(drop_privileges(config, true)){
 			return 1;
 		}
-		config->log_fptr = mosquitto__fopen(config->log_file, "at");
+		config->log_fptr = mosquitto__fopen(config->log_file, "at", true);
 		if(!config->log_fptr){
 			log_destinations = MQTT3_LOG_STDERR;
 			log_priorities = MOSQ_LOG_ERR;
