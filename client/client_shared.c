@@ -317,11 +317,12 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 	}
 #endif
 
+	if(cfg->clean_session == false && (cfg->id_prefix || !cfg->id)){
+		if(!cfg->quiet) fprintf(stderr, "Error: You must provide a client id if you are using the -c option.\n");
+		return 1;
+	}
+
 	if(pub_or_sub == CLIENT_SUB){
-		if(cfg->clean_session == false && (cfg->id_prefix || !cfg->id)){
-			if(!cfg->quiet) fprintf(stderr, "Error: You must provide a client id if you are using the -c option.\n");
-			return 1;
-		}
 		if(cfg->topic_count == 0){
 			if(!cfg->quiet) fprintf(stderr, "Error: You must specify a topic to subscribe to.\n");
 			return 1;
@@ -834,9 +835,6 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 			}
 			i++;
 		}else if(!strcmp(argv[i], "-c") || !strcmp(argv[i], "--disable-clean-session")){
-			if(pub_or_sub == CLIENT_PUB){
-				goto unknown_option;
-			}
 			cfg->clean_session = false;
 		}else if(!strcmp(argv[i], "-N")){
 			if(pub_or_sub == CLIENT_PUB){

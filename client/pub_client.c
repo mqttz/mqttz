@@ -207,7 +207,7 @@ void print_usage(void)
 	printf("mosquitto_pub version %s running on libmosquitto %d.%d.%d.\n\n", VERSION, major, minor, revision);
 	printf("Usage: mosquitto_pub {[-h host] [-p port] [-u username [-P password]] -t topic | -L URL}\n");
 	printf("                     {-f file | -l | -n | -m message}\n");
-	printf("                     [-k keepalive] [-q qos] [-r]\n");
+	printf("                     [-c] [-k keepalive] [-q qos] [-r]\n");
 #ifdef WITH_SRV
 	printf("                     [-A bind_address] [-S]\n");
 #else

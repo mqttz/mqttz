@@ -60,6 +60,7 @@ Client library:
 Client:
 - Add -F to mosquitto_sub to allow the user to choose the output format.
 - Add -U to mosquitto_sub for unsubscribing from topics.
+- Add -c (clean session) to mosquitto_pub.
 - Add --retained-only to mosquitto_sub to exit after receiving all retained
   messages.
 - Connections now default to using MQTT v3.1.1.

@@ -23,7 +23,7 @@
 					<arg><option>-p</option> <replaceable>port number</replaceable></arg>
 					<arg>
 						<arg><option>-u</option> <replaceable>username</replaceable></arg>
-						<arg><option>-P</option> <replaceable>password</replaceable></arg>
+						earg><option>-P</option> <replaceable>password</replaceable></arg>
 					</arg>
 					<arg choice='plain' rep='repeat'><option>-t</option> <replaceable>message-topic</replaceable></arg>
 				</arg>
@@ -131,8 +131,8 @@
 					after it disconnects, along with subsequent QoS 1 and QoS 2
 					messages that arrive. When the client reconnects, it will
 					receive all of the queued messages.</para>
-					<para>If using this option, it is recommended that the
-					client id is set manually with <option>--id</option></para>
+					<para>If using this option, the client id must be set
+						manually with <option>--id</option></para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

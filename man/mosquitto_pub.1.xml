@@ -30,6 +30,7 @@
 				<arg choice='plain'><option>-L</option> <replaceable>URL</replaceable></arg>
 			</group>
 			<arg><option>-A</option> <replaceable>bind_address</replaceable></arg>
+			<arg><option>-c</option></arg>
 			<arg><option>-d</option></arg>
 			<arg><option>-i</option> <replaceable>client_id</replaceable></arg>
 			<arg><option>-I</option> <replaceable>client id prefix</replaceable></arg>
@@ -111,6 +112,19 @@
 						address/hostname. Use this argument if you need to
 						restrict network communication to a particular
 						interface.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-c</option></term>
+				<term><option>--disable-clean-session</option></term>
+				<listitem>
+					<para>Disable the 'clean session' flag. This means that all
+					of the subscriptions for the client will be maintained
+					after it disconnects, along with subsequent QoS 1 and QoS 2
+					messages that arrive. When the client reconnects, it will
+					receive all of the queued messages.</para>
+					<para>If using this option, the client id must be set
+						manually with <option>--id</option></para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

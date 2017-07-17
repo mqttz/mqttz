@@ -71,7 +71,7 @@ struct mosq_config {
 	char *psk_identity;
 #  endif
 #endif
-	bool clean_session; /* sub */
+	bool clean_session;
 	char **topics; /* sub */
 	int topic_count; /* sub */
 	bool no_retain; /* sub */
