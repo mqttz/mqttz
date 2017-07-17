@@ -1,10 +1,12 @@
 include ../config.mk
 
-.PHONY: all install uninstall reallyclean clean
+.PHONY: all install uninstall reallyclean clean static static_pub static_sub
 
 all : mosquitto_pub mosquitto_sub
 
 static : static_pub static_sub
+	# This makes mosquitto_pub/sub versions that are statically linked with
+	# libmosquitto only.
 
 static_pub : pub_client.o client_shared.o ../lib/libmosquitto.a
 	${CROSS_COMPILE}${CC} $^ -o mosquitto_pub ${CLIENT_LDFLAGS} -lssl -lcrypto -lpthread
@@ -29,6 +31,9 @@ client_shared.o : client_shared.c client_shared.h
 
 ../lib/libmosquitto.so.${SOVERSION} :
 	$(MAKE) -C ../lib
+
+../lib/libmosquitto.a :
+	$(MAKE) -C ../lib libmosquitto.a
 
 install : all
 	$(INSTALL) -d ${DESTDIR}$(prefix)/bin
