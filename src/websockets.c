@@ -621,7 +621,7 @@ struct libwebsocket_context *mosq_websockets_init(struct mosquitto__listener *li
 		info.options |= LWS_SERVER_OPTION_REQUIRE_VALID_OPENSSL_CLIENT_CERT;
 	}
 #endif
-	info.options |= LWS_SERVER_OPTION_DISABLE_IPV6;
+
 #if LWS_LIBRARY_VERSION_MAJOR>1
 	info.options |= LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
 #endif
