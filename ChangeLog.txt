@@ -1,5 +1,10 @@
 Broker:
 - Use constant time memcmp for password comparisons.
+- Fix incorrect PSK key being used if it had leading zeroes.
+
+Client library:
+- Fix incorrect PSK key being used if it had leading zeroes.
+
 
 1.4.14 - 20170710
 =================
