@@ -950,9 +950,10 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 				/* Fake write possible, to stimulate output write even though
 				 * we didn't ask for it, because at that point the publish or
 				 * other command wasn't present. */
-				FD_SET(mosq->sock, &writefds);
+				if(mosq->sock != INVALID_SOCKET)
+					FD_SET(mosq->sock, &writefds);
 			}
-			if(FD_ISSET(mosq->sock, &writefds)){
+			if(mosq->sock != INVALID_SOCKET && FD_ISSET(mosq->sock, &writefds)){
 #ifdef WITH_TLS
 				if(mosq->want_connect){
 					rc = net__socket_connect_tls(mosq);

@@ -375,6 +375,16 @@ int main(int argc, char *argv[])
 #endif
 
 	HASH_ITER(hh_id, int_db.contexts_by_id, ctxt, ctxt_tmp){
+		mqtt3_context_send_will(&int_db, ctxt);
+	}
+
+#ifdef WITH_PERSISTENCE
+	if(config.persistence){
+		mqtt3_db_backup(&int_db, true);
+	}
+#endif
+
+	HASH_ITER(hh_id, int_db.contexts_by_id, ctxt, ctxt_tmp){
 #ifdef WITH_WEBSOCKETS
 		if(!ctxt->wsi){
 			context__cleanup(&int_db, ctxt, true);
@@ -395,12 +405,6 @@ int main(int argc, char *argv[])
 	mosquitto__free(int_db.bridges);
 #endif
 	context__free_disused(&int_db);
-
-#ifdef WITH_PERSISTENCE
-	if(config.persistence){
-		persist__backup(&int_db, true);
-	}
-#endif
 
 	db__close(&int_db);
 

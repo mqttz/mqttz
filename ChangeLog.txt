@@ -74,6 +74,13 @@ Build:
   build and install static versions of the client libraries.
 
 
+1.4.14 - 20170710
+=================
+
+Broker:
+- Fix regression from 1.4.13 where persistence data was not being saved.
+
+
 1.4.13 - 20170627
 =================
 
