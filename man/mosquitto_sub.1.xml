@@ -23,7 +23,7 @@
 					<arg><option>-p</option> <replaceable>port number</replaceable></arg>
 					<arg>
 						<arg><option>-u</option> <replaceable>username</replaceable></arg>
-						earg><option>-P</option> <replaceable>password</replaceable></arg>
+						<arg><option>-P</option> <replaceable>password</replaceable></arg>
 					</arg>
 					<arg choice='plain' rep='repeat'><option>-t</option> <replaceable>message-topic</replaceable></arg>
 				</arg>
