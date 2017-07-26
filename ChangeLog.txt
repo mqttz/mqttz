@@ -3,6 +3,7 @@ Broker:
 - Fix incorrect PSK key being used if it had leading zeroes.
 - Fix memory leak if a client provided a username/password for a listener with
   use_identity_as_username configured.
+- Fix use_identity_as_username not working on websockets clients.
 
 Client library:
 - Fix incorrect PSK key being used if it had leading zeroes.
