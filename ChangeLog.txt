@@ -6,6 +6,7 @@ Broker:
 - Fix use_identity_as_username not working on websockets clients.
 - Don't crash if an auth plugin returns MOSQ_ERR_AUTH for a username check on
   a websockets client. Closes #490.
+- Fix 08-ssl-bridge.py test when using async dns lookups. Closes #507.
 
 Client library:
 - Fix incorrect PSK key being used if it had leading zeroes.
