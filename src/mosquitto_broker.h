@@ -72,8 +72,7 @@ void mosquitto_log_printf(int level, const char *fmt, ...);
 /*
  * Function: mosquitto_client_address
  *
- * Retrieve the username associated with a client, or NULL if the client
- * provided no username.
+ * Retrieve the IP address of the client as a string.
  */
 const char *mosquitto_client_address(const struct mosquitto *client);
 

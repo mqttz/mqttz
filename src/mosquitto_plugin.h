@@ -22,6 +22,7 @@ Contributors:
 #define MOSQ_ACL_NONE 0x00
 #define MOSQ_ACL_READ 0x01
 #define MOSQ_ACL_WRITE 0x02
+#define MOSQ_ACL_SUBSCRIBE 0x04
 
 #include <stdbool.h>
 
