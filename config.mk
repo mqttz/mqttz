@@ -90,7 +90,7 @@ WITH_STATIC_LIBRARIES:=no
 #WITH_ADNS:=yes
 
 # Build with epoll support.
-#WITH_EPOLL:=yes
+WITH_EPOLL:=yes
 
 # =============================================================================
 # End of user configuration
