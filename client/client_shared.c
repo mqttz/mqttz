@@ -123,7 +123,7 @@ void init_config(struct mosq_config *cfg)
 	cfg->keepalive = 60;
 	cfg->clean_session = true;
 	cfg->eol = true;
-	cfg->protocol_version = MQTT_PROTOCOL_V31;
+	cfg->protocol_version = MQTT_PROTOCOL_V311;
 }
 
 void client_config_cleanup(struct mosq_config *cfg)
