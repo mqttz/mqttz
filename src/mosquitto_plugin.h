@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2012-2016 Roger Light <roger@atchoo.org>
+Copyright (c) 2012-2017 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -94,6 +94,7 @@ struct mosquitto_acl_msg {
  */
 int mosquitto_auth_plugin_version(void);
 
+
 /*
  * Function: mosquitto_auth_plugin_init
  *
@@ -115,6 +116,7 @@ int mosquitto_auth_plugin_version(void);
  */
 int mosquitto_auth_plugin_init(void **user_data, struct mosquitto_opt *opts, int opt_count);
 
+
 /*
  * Function: mosquitto_auth_plugin_cleanup
  *
@@ -135,13 +137,17 @@ int mosquitto_auth_plugin_init(void **user_data, struct mosquitto_opt *opts, int
  */
 int mosquitto_auth_plugin_cleanup(void *user_data, struct mosquitto_opt *opts, int opt_count);
 
+
 /*
  * Function: mosquitto_auth_security_init
  *
- * Called when the broker initialises the security functions when it starts up.
- * If the broker is requested to reload its configuration whilst running,
- * <mosquitto_auth_security_cleanup> will be called, followed by this function.
- * In this situation, the reload parameter will be true.
+ * This function is called in two scenarios:
+ *
+ * 1. When the broker starts up.
+ * 2. If the broker is requested to reload its configuration whilst running. In
+ *    this case, <mosquitto_auth_security_cleanup> will be called first, then
+ *    this function will be called.  In this situation, the reload parameter
+ *    will be true.
  *
  * Parameters:
  *
@@ -159,13 +165,17 @@ int mosquitto_auth_plugin_cleanup(void *user_data, struct mosquitto_opt *opts, i
  */
 int mosquitto_auth_security_init(void *user_data, struct mosquitto_opt *opts, int opt_count, bool reload);
 
+
 /* 
  * Function: mosquitto_auth_security_cleanup
  *
- * Called when the broker cleans up the security functions when it shuts down.
- * If the broker is requested to reload its configuration whilst running,
- * this function will be called, followed by <mosquitto_auth_security_init>.
- * In this situation, the reload parameter will be true.
+ * This function is called in two scenarios:
+ *
+ * 1. When the broker is shutting down.
+ * 2. If the broker is requested to reload its configuration whilst running. In
+ *    this case, this function will be called, followed by
+ *    <mosquitto_auth_security_init>. In this situation, the reload parameter
+ *    will be true.
  *
  * Parameters:
  *
@@ -183,6 +193,7 @@ int mosquitto_auth_security_init(void *user_data, struct mosquitto_opt *opts, in
  */
 int mosquitto_auth_security_cleanup(void *user_data, struct mosquitto_opt *opts, int opt_count, bool reload);
 
+
 /*
  * Function: mosquitto_auth_acl_check
  *
@@ -197,6 +208,7 @@ int mosquitto_auth_security_cleanup(void *user_data, struct mosquitto_opt *opts,
  */
 int mosquitto_auth_acl_check(void *user_data, int access, const struct mosquitto *client, struct mosquitto_acl_msg *msg);
 
+
 /*
  * Function: mosquitto_auth_unpwd_check
  *
@@ -209,6 +221,7 @@ int mosquitto_auth_acl_check(void *user_data, int access, const struct mosquitto
  *	MOSQ_ERR_PLUGIN_DEFER if your plugin does not wish to handle this check.
  */
 int mosquitto_auth_unpwd_check(void *user_data, const struct mosquitto *client, const char *username, const char *password);
+
 
 /*
  * Function: mosquitto_psk_key_get
