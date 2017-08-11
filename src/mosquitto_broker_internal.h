@@ -140,8 +140,8 @@ typedef uint64_t dbid_t;
 
 struct mosquitto__listener {
 	int fd;
-	char *host;
 	uint16_t port;
+	char *host;
 	int max_connections;
 	char *mount_point;
 	mosq_sock_t *socks;
@@ -156,11 +156,11 @@ struct mosquitto__listener {
 	char *keyfile;
 	char *ciphers;
 	char *psk_hint;
-	bool require_certificate;
 	SSL_CTX *ssl_ctx;
 	char *crlfile;
 	bool use_identity_as_username;
 	bool use_subject_as_username;
+	bool require_certificate;
 	char *tls_version;
 #endif
 #ifdef WITH_WEBSOCKETS
@@ -361,16 +361,16 @@ struct mosquitto_db{
 #ifdef WITH_BRIDGE
 	int bridge_count;
 #endif
-	unsigned long msg_store_bytes;
 	int msg_store_count;
+	unsigned long msg_store_bytes;
 	struct mosquitto__config *config;
-	int persistence_changes;
 	struct mosquitto__auth_plugin *auth_plugins;
 	int auth_plugin_count;
 #ifdef WITH_SYS_TREE
 	int subscription_count;
 	int retained_count;
 #endif
+	int persistence_changes;
 	struct mosquitto *ll_for_free;
 #ifdef WITH_EPOLL
 	int epollfd;
@@ -427,9 +427,9 @@ struct mosquitto__bridge{
 	char *local_clientid;
 	char *local_username;
 	char *local_password;
+	char *notification_topic;
 	bool notifications;
 	bool notifications_local_only;
-	char *notification_topic;
 	enum mosquitto_bridge_start_type start_type;
 	int idle_timeout;
 	int restart_timeout;
@@ -438,11 +438,11 @@ struct mosquitto__bridge{
 	bool attempt_unsubscribe;
 	bool initial_notification_done;
 #ifdef WITH_TLS
+	bool tls_insecure;
 	char *tls_cafile;
 	char *tls_capath;
 	char *tls_certfile;
 	char *tls_keyfile;
-	bool tls_insecure;
 	char *tls_version;
 #  ifdef REAL_WITH_TLS_PSK
 	char *tls_psk_identity;

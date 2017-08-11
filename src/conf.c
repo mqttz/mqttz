@@ -51,8 +51,8 @@ struct config_recurse {
 	int log_type;
 	int log_type_set;
 	unsigned long max_inflight_bytes;
-	int max_inflight_messages;
 	unsigned long max_queued_bytes;
+	int max_inflight_messages;
 	int max_queued_messages;
 };
 
