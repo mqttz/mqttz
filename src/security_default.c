@@ -238,6 +238,7 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 	if(!db || !context || !topic) return MOSQ_ERR_INVAL;
 	if(!db->acl_list && !db->acl_patterns) return MOSQ_ERR_PLUGIN_DEFER;
 	if(context->bridge) return MOSQ_ERR_SUCCESS;
+	if(access == MOSQ_ACL_SUBSCRIBE) return MOSQ_ERR_SUCCESS; /* FIXME - implement ACL subscription strings. */
 	if(!context->acl_list && !db->acl_patterns) return MOSQ_ERR_ACL_DENIED;
 
 	if(context->acl_list){

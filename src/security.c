@@ -392,6 +392,9 @@ int mosquitto_acl_check(struct mosquitto_db *db, struct mosquitto *context, cons
 		if(db->auth_plugins[i].version == 3){
 			rc = db->auth_plugins[i].acl_check_v3(db->auth_plugins[i].user_data, access, context, &msg);
 		}else if(db->auth_plugins[i].version == 2){
+			if(access == MOSQ_ACL_SUBSCRIBE){
+				return MOSQ_ERR_SUCCESS;
+			}
 			rc = db->auth_plugins[i].acl_check_v2(db->auth_plugins[i].user_data, context->id, username, topic, access);
 		}else{
 			rc = MOSQ_ERR_INVAL;

@@ -199,7 +199,19 @@ int mosquitto_auth_security_cleanup(void *user_data, struct mosquitto_opt *opts,
  * Function: mosquitto_auth_acl_check
  *
  * Called by the broker when topic access must be checked. access will be one
- * of MOSQ_ACL_READ (for subscriptions) or MOSQ_ACL_WRITE (for publish).
+ * of:
+ *  MOSQ_ACL_SUBSCRIBE when a client is asking to subscribe to a topic string.
+ *                     This differs from MOSQ_ACL_READ in that it allows you to
+ *                     deny access to topic strings rather than by pattern. For
+ *                     example, you may use MOSQ_ACL_SUBSCRIBE to deny
+ *                     subscriptions to '#', but allow all topics in
+ *                     MOSQ_ACL_READ. This allows clients to subscribe to any
+ *                     topic they want, but not discover what topics are in use
+ *                     on the server.
+ *  MOSQ_ACL_READ      when a message is about to be sent to a client (i.e. whether
+ *                     it can read that topic or not).
+ *  MOSQ_ACL_WRITE     when a message has been received from a client (i.e. whether
+ *                     it can write to that topic or not).
  *
  * Return:
  *	MOSQ_ERR_SUCCESS if access was granted.
