@@ -259,6 +259,11 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		}
 	}
 
+	if(mosquitto_validate_utf8(client_id, strlen(client_id)) != MOSQ_ERR_SUCCESS){
+		rc = 1;
+		goto handle_connect_error;
+	}
+
 	if(will){
 		will_struct = mosquitto__calloc(1, sizeof(struct mosquitto_message));
 		if(!will_struct){
@@ -322,6 +327,11 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	if(username_flag){
 		rc = packet__read_string(&context->in_packet, &username);
 		if(rc == MOSQ_ERR_SUCCESS){
+			if(mosquitto_validate_utf8(username, strlen(username)) != MOSQ_ERR_SUCCESS){
+				rc = MOSQ_ERR_PROTOCOL;
+				goto handle_connect_error;
+			}
+
 			if(password_flag){
 				rc = packet__read_string(&context->in_packet, &password);
 				if(rc == MOSQ_ERR_NOMEM){
