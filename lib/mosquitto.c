@@ -23,6 +23,7 @@ Contributors:
 #include <sys/select.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <time.h>
 #else
 #include <winsock2.h>
 #include <windows.h>
@@ -983,6 +984,9 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 	int rc;
 	unsigned int reconnects = 0;
 	unsigned long reconnect_delay;
+#ifndef WIN32
+	struct timespec req, rem;
+#endif
 
 	if(!mosq) return MOSQ_ERR_INVAL;
 
@@ -1042,7 +1046,10 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 #ifdef WIN32
 				Sleep(reconnect_delay*1000);
 #else
-				sleep(reconnect_delay);
+				req.tv_sec = reconnect_delay;
+				req.tv_nsec = 0;
+				while(nanosleep(&req, &rem) == -1 && errno == EINTR)
+					req = rem;
 #endif
 
 				pthread_mutex_lock(&mosq->state_mutex);
