@@ -11,6 +11,9 @@ Broker:
 Client library:
 - Fix incorrect PSK key being used if it had leading zeroes.
 
+Build:
+- Don't run TLS-PSK tests if TLS-PSK disabled at compile time. Closes #636.
+
 
 1.4.14 - 20170710
 =================
