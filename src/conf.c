@@ -64,6 +64,35 @@ static int _conf_parse_int(char **token, const char *name, int *value, char *sav
 static int _conf_parse_string(char **token, const char *name, char **value, char *saveptr);
 static int _config_read_file(struct mqtt3_config *config, bool reload, const char *file, struct config_recurse *config_tmp, int level, int *lineno);
 
+static char *fgets_extending(char **buf, int *buflen, FILE *stream)
+{
+	char *rc;
+	char endchar;
+	int offset = 0;
+	char *newbuf;
+
+	do{
+		rc = fgets(&((*buf)[offset]), *buflen-offset, stream);
+		if(feof(stream)){
+			return rc;
+		}
+
+		endchar = (*buf)[strlen(*buf)-1];
+		if(endchar == '\n'){
+			return rc;
+		}
+		/* No EOL char found, so extend buffer */
+		offset = *buflen-1;
+		*buflen += 1000;
+		newbuf = realloc(*buf, *buflen);
+		if(!newbuf){
+			return NULL;
+		}
+		*buf = newbuf;
+	}while(1);
+}
+
+
 static int _conf_attempt_resolve(const char *host, const char *text, int log, const char *msg)
 {
 	struct addrinfo gai_hints;
@@ -540,10 +569,9 @@ int mqtt3_config_read(struct mqtt3_config *config, bool reload)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int _config_read_file_core(struct mqtt3_config *config, bool reload, const char *file, struct config_recurse *cr, int level, int *lineno, FILE *fptr)
+int _config_read_file_core(struct mqtt3_config *config, bool reload, const char *file, struct config_recurse *cr, int level, int *lineno, FILE *fptr, char **buf, int *buflen)
 {
 	int rc;
-	char buf[1024];
 	char *token;
 	int tmp_int;
 	char *saveptr = NULL;
@@ -572,13 +600,13 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 
 	*lineno = 0;
 
-	while(fgets(buf, 1024, fptr)){
+	while(fgets_extending(buf, buflen, fptr)){
 		(*lineno)++;
-		if(buf[0] != '#' && buf[0] != 10 && buf[0] != 13){
-			while(buf[strlen(buf)-1] == 10 || buf[strlen(buf)-1] == 13){
-				buf[strlen(buf)-1] = 0;
+		if((*buf)[0] != '#' && (*buf)[0] != 10 && (*buf)[0] != 13){
+			while((*buf)[strlen((*buf))-1] == 10 || (*buf)[strlen((*buf))-1] == 13){
+				(*buf)[strlen((*buf))-1] = 0;
 			}
-			token = strtok_r(buf, " ", &saveptr);
+			token = strtok_r((*buf), " ", &saveptr);
 			if(token){
 				if(!strcmp(token, "acl_file")){
 					if(reload){
@@ -1016,7 +1044,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 							snprintf(conf_file, len, "%s\\%s", token, find_data.cFileName);
 							conf_file[len] = '\0';
 								
-							rc = _config_read_file(config, reload, conf_file, cr, level+1, &lineno_ext);
+							rc = _config_read_file(config, reload, conf_file, cr, level+1, &lineno_ext, buf, buflen);
 							if(rc){
 								FindClose(fh);
 								_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error found at %s:%d.", conf_file, lineno_ext);
@@ -1768,6 +1796,8 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 {
 	int rc;
 	FILE *fptr = NULL;
+	char *buf;
+	int buflen;
 
 	fptr = _mosquitto_fopen(file, "rt", false);
 	if(!fptr){
@@ -1775,7 +1805,15 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 		return 1;
 	}
 
-	rc = _config_read_file_core(config, reload, file, cr, level, lineno, fptr);
+	buflen = 1000;
+	buf = _mosquitto_malloc(buflen);
+	if(!buf){
+		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		return MOSQ_ERR_NOMEM;
+	}
+
+	rc = _config_read_file_core(config, reload, file, cr, level, lineno, fptr, &buf, &buflen);
+	_mosquitto_free(buf);
 	fclose(fptr);
 
 	return rc;

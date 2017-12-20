@@ -7,6 +7,8 @@ Broker:
 - Don't crash if an auth plugin returns MOSQ_ERR_AUTH for a username check on
   a websockets client. Closes #490.
 - Fix 08-ssl-bridge.py test when using async dns lookups. Closes #507.
+- Lines in the config file are no longer limited to 1024 characters long.
+  Closes #652.
 
 Client library:
 - Fix incorrect PSK key being used if it had leading zeroes.
