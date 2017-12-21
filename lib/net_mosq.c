@@ -329,7 +329,6 @@ int _mosquitto_try_connect_step2(struct mosquitto *mosq, uint16_t port, mosq_soc
 
 		/* Set non-blocking */
 		if(_mosquitto_socket_nonblock(*sock)){
-			COMPAT_CLOSE(*sock);
 			continue;
 		}
 
@@ -344,7 +343,6 @@ int _mosquitto_try_connect_step2(struct mosquitto *mosq, uint16_t port, mosq_soc
 
 			/* Set non-blocking */
 			if(_mosquitto_socket_nonblock(*sock)){
-				COMPAT_CLOSE(*sock);
 				continue;
 			}
 			break;
@@ -429,7 +427,6 @@ int _mosquitto_try_connect(struct mosquitto *mosq, const char *host, uint16_t po
 		if(!blocking){
 			/* Set non-blocking */
 			if(_mosquitto_socket_nonblock(*sock)){
-				COMPAT_CLOSE(*sock);
 				continue;
 			}
 		}
@@ -446,7 +443,6 @@ int _mosquitto_try_connect(struct mosquitto *mosq, const char *host, uint16_t po
 			if(blocking){
 				/* Set non-blocking */
 				if(_mosquitto_socket_nonblock(*sock)){
-					COMPAT_CLOSE(*sock);
 					continue;
 				}
 			}
@@ -1250,7 +1246,6 @@ int _mosquitto_socketpair(mosq_sock_t *pairR, mosq_sock_t *pairW)
 			continue;
 		}
 		if(_mosquitto_socket_nonblock(spR)){
-			COMPAT_CLOSE(spR);
 			COMPAT_CLOSE(listensock);
 			continue;
 		}
@@ -1278,7 +1273,6 @@ int _mosquitto_socketpair(mosq_sock_t *pairR, mosq_sock_t *pairW)
 
 		if(_mosquitto_socket_nonblock(spW)){
 			COMPAT_CLOSE(spR);
-			COMPAT_CLOSE(spW);
 			COMPAT_CLOSE(listensock);
 			continue;
 		}
@@ -1296,13 +1290,11 @@ int _mosquitto_socketpair(mosq_sock_t *pairR, mosq_sock_t *pairW)
 		return MOSQ_ERR_ERRNO;
 	}
 	if(_mosquitto_socket_nonblock(sv[0])){
-		COMPAT_CLOSE(sv[0]);
 		COMPAT_CLOSE(sv[1]);
 		return MOSQ_ERR_ERRNO;
 	}
 	if(_mosquitto_socket_nonblock(sv[1])){
 		COMPAT_CLOSE(sv[0]);
-		COMPAT_CLOSE(sv[1]);
 		return MOSQ_ERR_ERRNO;
 	}
 	*pairR = sv[0];
