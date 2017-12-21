@@ -12,6 +12,8 @@ Broker:
 
 Client library:
 - Fix incorrect PSK key being used if it had leading zeroes.
+- Initialise "result" variable as soon as possible in
+  mosquitto_topic_matches_sub. Closes #654.
 
 Build:
 - Don't run TLS-PSK tests if TLS-PSK disabled at compile time. Closes #636.

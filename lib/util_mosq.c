@@ -228,13 +228,17 @@ int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result
 	int spos, tpos;
 	bool multilevel_wildcard = false;
 
-	if(!sub || !topic || !result) return MOSQ_ERR_INVAL;
+	if(!result) return MOSQ_ERR_INVAL;
+	*result = false;
+
+	if(!sub || !topic){
+		return MOSQ_ERR_INVAL;
+	}
 
 	slen = strlen(sub);
 	tlen = strlen(topic);
 
 	if(!slen || !tlen){
-		*result = false;
 		return MOSQ_ERR_INVAL;
 	}
 
@@ -242,7 +246,6 @@ int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result
 		if((sub[0] == '$' && topic[0] != '$')
 				|| (topic[0] == '$' && sub[0] != '$')){
 
-			*result = false;
 			return MOSQ_ERR_SUCCESS;
 		}
 	}
@@ -269,7 +272,6 @@ int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result
 				return MOSQ_ERR_SUCCESS;
 			}else if(tpos == tlen && spos == slen-1 && sub[spos] == '+'){
 				if(spos > 0 && sub[spos-1] != '/'){
-					*result = false;
 					return MOSQ_ERR_INVAL;
 				}
 				spos++;
@@ -280,12 +282,10 @@ int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result
 			if(sub[spos] == '+'){
 				/* Check for bad "+foo" or "a/+foo" subscription */
 				if(spos > 0 && sub[spos-1] != '/'){
-					*result = false;
 					return MOSQ_ERR_INVAL;
 				}
 				/* Check for bad "foo+" or "foo+/a" subscription */
 				if(spos < slen-1 && sub[spos+1] != '/'){
-					*result = false;
 					return MOSQ_ERR_INVAL;
 				}
 				spos++;
@@ -298,19 +298,16 @@ int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result
 				}
 			}else if(sub[spos] == '#'){
 				if(spos > 0 && sub[spos-1] != '/'){
-					*result = false;
 					return MOSQ_ERR_INVAL;
 				}
 				multilevel_wildcard = true;
 				if(spos+1 != slen){
-					*result = false;
 					return MOSQ_ERR_INVAL;
 				}else{
 					*result = true;
 					return MOSQ_ERR_SUCCESS;
 				}
 			}else{
-				*result = false;
 				return MOSQ_ERR_SUCCESS;
 			}
 		}
