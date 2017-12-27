@@ -250,7 +250,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				return -1;
 			}
 			mosq = u->mosq;
-			if(!mosq || mosq->state == mosq_cs_disconnect_ws || mosq->state == mosq_cs_disconnecting){
+			if(!mosq){
 				return -1;
 			}
 
@@ -283,6 +283,9 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				count = packet->to_process;
 #endif
 				if(count < 0){
+					if (mosq->state == mosq_cs_disconnect_ws || mosq->state == mosq_cs_disconnecting){
+						return -1;
+					}
 					return 0;
 				}
 #ifdef WITH_SYS_TREE
@@ -291,6 +294,9 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				packet->to_process -= count;
 				packet->pos += count;
 				if(packet->to_process > 0){
+					if (mosq->state == mosq_cs_disconnect_ws || mosq->state == mosq_cs_disconnecting){
+						return -1;
+					}
 					break;
 				}
 
@@ -314,6 +320,9 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				_mosquitto_free(packet);
 
 				mosq->next_msg_out = mosquitto_time() + mosq->keepalive;
+			}
+			if (mosq->state == mosq_cs_disconnect_ws || mosq->state == mosq_cs_disconnecting){
+				return -1;
 			}
 			if(mosq->current_out_packet){
 				libwebsocket_callback_on_writable(mosq->ws_context, mosq->wsi);
@@ -396,7 +405,12 @@ static int callback_mqtt(struct libwebsocket_context *context,
 
 				mosq->last_msg_in = mosquitto_time();
 
-				if(rc){
+				if(rc && (mosq->out_packet || mosq->current_out_packet)) {
+					if(mosq->state != mosq_cs_disconnecting){
+						mosq->state = mosq_cs_disconnect_ws;
+					}
+					libwebsocket_callback_on_writable(mosq->ws_context, mosq->wsi);
+				} else if (rc) {
 					do_disconnect(db, mosq);
 					return -1;
 				}
