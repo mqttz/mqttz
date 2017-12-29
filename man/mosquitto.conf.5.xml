@@ -116,7 +116,7 @@
 					<para><code>user &lt;username&gt;</code></para>
 
 					<para>The username referred to here is the same as in
-						<option>password_fil</option>e. It is not the
+						<option>password_file</option>. It is not the
 						clientid.</para>
 
 					<para>It is also possible to define ACLs based on pattern
