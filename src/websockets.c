@@ -285,11 +285,21 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				if(count < 0){
 					return 0;
 				}
+#ifdef WITH_SYS_TREE
+				g_bytes_sent += count;
+#endif
 				packet->to_process -= count;
 				packet->pos += count;
 				if(packet->to_process > 0){
 					break;
 				}
+
+#ifdef WITH_SYS_TREE
+				g_msgs_sent++;
+				if(((packet->command)&0xF6) == PUBLISH){
+					g_pub_msgs_sent++;
+				}
+#endif
 
 				/* Free data and reset values */
 				mosq->current_out_packet = mosq->out_packet;
