@@ -59,6 +59,7 @@ endif
 	./04-retain-qos0-repeated.py
 	./04-retain-qos1-qos0.py
 	./04-retain-qos0-clear.py
+	./04-retain-upgrade-outgoing-qos.py
 
 05 :
 	./05-clean-session-qos1.py 

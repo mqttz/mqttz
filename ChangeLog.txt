@@ -11,6 +11,7 @@ Broker:
   Closes #652.
 - Fix $SYS counters of messages and bytes sent when message is sent over
   a Websockets. Closes #250.
+- Fix upgrade_outgoing_qos for retained message. Closes #534.
 
 Client library:
 - Fix incorrect PSK key being used if it had leading zeroes.
