@@ -39,10 +39,10 @@ extern unsigned int g_connection_count;
 #define G_MSGS_SENT_INC(A) (g_msgs_sent+=(A))
 #define G_PUB_MSGS_RECEIVED_INC(A) (g_pub_msgs_received+=(A))
 #define G_PUB_MSGS_SENT_INC(A) (g_pub_msgs_sent+=(A))
-#define G_MSGS_DROPPED_INC(A) (g_msgs_dropped++)
-#define G_CLIENTS_EXPIRED_INC(A) (g_clients_expired++)
-#define G_SOCKET_CONNECTIONS_INC(A) (g_socket_connections++)
-#define G_CONNECTION_COUNT_INC(A) (g_connection_count++)
+#define G_MSGS_DROPPED_INC() (g_msgs_dropped++)
+#define G_CLIENTS_EXPIRED_INC() (g_clients_expired++)
+#define G_SOCKET_CONNECTIONS_INC() (g_socket_connections++)
+#define G_CONNECTION_COUNT_INC() (g_connection_count++)
 
 #else
 

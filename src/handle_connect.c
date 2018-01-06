@@ -407,7 +407,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 				}
 				name_entry = X509_NAME_get_entry(name, i);
 				if(name_entry){
-					context->username = mosquitto__strdup((char *)ASN1_STRING_data(name_entry->value));
+					context->username = mosquitto__strdup((char *)X509_NAME_ENTRY_get_data(name_entry));
 				}
 			} else { // use_subject_as_username
 				BIO *subject_bio = BIO_new(BIO_s_mem());

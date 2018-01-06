@@ -120,16 +120,17 @@ DWORD WINAPI SigThreadProc(void* data)
 	while (true) {
 		int wr = WaitForMultipleObjects(sizeof(evt) / sizeof(HANDLE), evt, FALSE, INFINITE);
 		switch (wr) {
-		case WAIT_OBJECT_0 + 0:
-			handle_sigint(SIGINT);
-			break;
-		case WAIT_OBJECT_0 + 1:
-			flag_reload = true;
-			continue;
-		case WAIT_OBJECT_0 + 2:
-			handle_sigusr1(0);
-			continue;
-		break;
+			case WAIT_OBJECT_0 + 0:
+				handle_sigint(SIGINT);
+				break;
+			case WAIT_OBJECT_0 + 1:
+				flag_reload = true;
+				continue;
+			case WAIT_OBJECT_0 + 2:
+				handle_sigusr1(0);
+				continue;
+				break;
+		}
 	}
 	CloseHandle(evt[0]);
 	CloseHandle(evt[1]);

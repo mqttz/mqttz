@@ -603,12 +603,14 @@ int mosquitto_unpwd_check_default(struct mosquitto_db *db, const char *username,
 int mosquitto_psk_key_get_default(struct mosquitto_db *db, const char *hint, const char *identity, char *key, int max_key_len);
 
 /* ============================================================
- * Window service related functions
+ * Window service and signal related functions
  * ============================================================ */
 #if defined(WIN32) || defined(__CYGWIN__)
 void service_install(void);
 void service_uninstall(void);
 void service_run(void);
+
+DWORD WINAPI SigThreadProc(void* data);
 #endif
 
 /* ============================================================

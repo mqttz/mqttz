@@ -31,7 +31,7 @@ extern "C" {
 #	define libmosq_EXPORT
 #endif
 
-#ifdef WIN32
+#if defined(_MSC_VER) && _MSC_VER < 1900
 #	ifndef __cplusplus
 #		define bool char
 #		define true 1

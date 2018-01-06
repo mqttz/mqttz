@@ -1,5 +1,5 @@
-option(WITH_STATIC_LIBRARIES "Build the static libraries?" ON)
-option(WITH_PIC "Build the static library with PIC(Position Independent Code) enabled archives?" OFF)
+option(WITH_STATIC_LIBRARIES "Build static versions of the libmosquitto/pp libraries?" OFF)
+option(WITH_PIC "Build the static library with PIC (Position Independent Code) enabled archives?" OFF)
 add_subdirectory(cpp)
 
 option(WITH_THREADING "Include client library threading support?" ON)
@@ -90,12 +90,10 @@ if (${WITH_SRV} STREQUAL ON)
 	endif (ARES_HEADER)
 endif (${WITH_SRV} STREQUAL ON)
 
-add_library(libmosquitto_obj OBJECT ${C_SRC})
-set_target_properties(libmosquitto_obj PROPERTIES
+add_library(libmosquitto SHARED ${C_SRC})
+set_target_properties(libmosquitto PROPERTIES
 	POSITION_INDEPENDENT_CODE 1
 )
-
-add_library(libmosquitto SHARED $<TARGET_OBJECTS:libmosquitto_obj>)
 
 target_link_libraries(libmosquitto ${LIBRARIES})
 
@@ -108,11 +106,12 @@ set_target_properties(libmosquitto PROPERTIES
 install(TARGETS libmosquitto RUNTIME DESTINATION "${BINDIR}" LIBRARY DESTINATION "${LIBDIR}")
 
 if (${WITH_STATIC_LIBRARIES} STREQUAL ON)
-	if (${WITH_PIC} STREQUAL OFF)
-		add_library(libmosquitto_static STATIC ${C_SRC})
-	else (${WITH_PIC} STREQUAL OFF)
-		add_library(libmosquitto_static STATIC $<TARGET_OBJECTS:libmosquitto_obj>)
-	endif (${WITH_PIC} STREQUAL OFF)
+	add_library(libmosquitto_static STATIC ${C_SRC})
+	if (${WITH_PIC} STREQUAL ON)
+		set_target_properties(libmosquitto_static PROPERTIES
+			POSITION_INDEPENDENT_CODE 1
+		)
+	endif (${WITH_PIC} STREQUAL ON)
 
 	target_link_libraries(libmosquitto_static ${LIBRARIES})
 
