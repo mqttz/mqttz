@@ -18,6 +18,8 @@ Client library:
 - Initialise "result" variable as soon as possible in
   mosquitto_topic_matches_sub. Closes #654.
 - No need to close socket again if setting non-blocking failed. Closes #649.
+- Fix mosquitto_topic_matches_sub() not correctly matching foo/bar against
+  foo/+/#. Closes #670.
 
 Build:
 - Don't run TLS-PSK tests if TLS-PSK disabled at compile time. Closes #636.

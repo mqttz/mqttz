@@ -308,6 +308,18 @@ int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result
 					return MOSQ_ERR_SUCCESS;
 				}
 			}else{
+				/* Check for e.g. foo/bar matching foo/+/# */
+				if(spos > 0
+						&& spos+2 == slen
+						&& tpos == tlen
+						&& sub[spos-1] == '+'
+						&& sub[spos] == '/'
+						&& sub[spos+1] == '#')
+				{
+					*result = true;
+					multilevel_wildcard = true;
+					return MOSQ_ERR_SUCCESS;
+				}
 				return MOSQ_ERR_SUCCESS;
 			}
 		}
