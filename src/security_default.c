@@ -759,7 +759,7 @@ int mosquitto_security_apply_default(struct mosquitto_db *db)
 			continue;
 		}
 		/* Check for connected clients that are no longer authorised */
-		if(mosquitto_unpwd_check_default(db, context->username, context->password) != MOSQ_ERR_SUCCESS){
+		if(mosquitto_unpwd_check(db, context, context->username, context->password) != MOSQ_ERR_SUCCESS){
 			context->state = mosq_cs_disconnecting;
 			do_disconnect(db, context);
 			continue;
