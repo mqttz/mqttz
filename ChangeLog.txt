@@ -42,6 +42,8 @@ Broker:
 - When using the include_dir configuration option sort the files
   alphabetically before loading them.  Closes #17.
 - IPv6 is no longer disabled for websockets listeners.
+- Remove all build timestamp information including $SYS/broker/timestamp.
+  Close #651.
 
 Client library:
 - Outgoing messages with QoS>1 are no longer retried after a timeout period.

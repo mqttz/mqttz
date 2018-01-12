@@ -268,7 +268,7 @@ int main(int argc, char *argv[])
 		rc = 1;
 		return rc;
 	}
-	log__printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s (build date %s) starting", VERSION, TIMESTAMP);
+	log__printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s starting", VERSION);
 	if(config.config_file){
 		log__printf(NULL, MOSQ_LOG_INFO, "Config loaded from %s.", config.config_file);
 	}else{
