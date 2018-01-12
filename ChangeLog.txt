@@ -12,6 +12,8 @@ Broker:
 - Fix $SYS counters of messages and bytes sent when message is sent over
   a Websockets. Closes #250.
 - Fix upgrade_outgoing_qos for retained message. Closes #534.
+- Fix CONNACK message not being sent for unauthorised connect on websockets.
+  Closes #8.
 
 Client library:
 - Fix incorrect PSK key being used if it had leading zeroes.
