@@ -183,7 +183,7 @@ static int sub__topic_tokenise(const char *subtopic, struct sub__token **topics)
 	assert(topics);
 
 	if(subtopic[0] != '$'){
-		new_topic = sub__topic_append(&tail, topics, " ");
+		new_topic = sub__topic_append(&tail, topics, "");
 		if(!new_topic) goto cleanup;
 	}
 
