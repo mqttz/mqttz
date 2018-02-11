@@ -152,6 +152,21 @@ int mosquitto_pub_topic_check(const char *str)
 	return MOSQ_ERR_SUCCESS;
 }
 
+int mosquitto_pub_topic_check2(const char *str, size_t len)
+{
+	int i;
+
+	if(len > 65535) return MOSQ_ERR_INVAL;
+
+	for(i=0; i<len; i++){
+		if(str[i] == '+' || str[i] == '#'){
+			return MOSQ_ERR_INVAL;
+		}
+	}
+
+	return MOSQ_ERR_SUCCESS;
+}
+
 /* Check that a topic used for subscriptions is valid.
  * Search for + or # in a topic, check they aren't in invalid positions such as
  * foo/#/bar, foo/+bar or foo/bar#.
@@ -182,24 +197,54 @@ int mosquitto_sub_topic_check(const char *str)
 	return MOSQ_ERR_SUCCESS;
 }
 
-/* Does a topic match a subscription? */
+int mosquitto_sub_topic_check2(const char *str, size_t len)
+{
+	char c = '\0';
+	int i;
+
+	if(len > 65535) return MOSQ_ERR_INVAL;
+
+	for(i=0; i<len; i++){
+		if(str[i] == '+'){
+			if((c != '\0' && c != '/') || (i<len-1 && str[i+1] != '/')){
+				return MOSQ_ERR_INVAL;
+			}
+		}else if(str[i] == '#'){
+			if((c != '\0' && c != '/')  || i<len-1){
+				return MOSQ_ERR_INVAL;
+			}
+		}
+		c = str[i];
+	}
+
+	return MOSQ_ERR_SUCCESS;
+}
+
 int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result)
 {
 	int slen, tlen;
-	int spos, tpos;
-	bool multilevel_wildcard = false;
-
 	if(!sub || !topic || !result) return MOSQ_ERR_INVAL;
 
 	slen = strlen(sub);
 	tlen = strlen(topic);
 
-	if(!slen || !tlen){
+	return mosquitto_topic_matches_sub2(sub, slen, topic, tlen, result);
+}
+
+/* Does a topic match a subscription? */
+int mosquitto_topic_matches_sub2(const char *sub, size_t sublen, const char *topic, size_t topiclen, bool *result)
+{
+	int spos, tpos;
+	bool multilevel_wildcard = false;
+
+	if(!sub || !topic || !result) return MOSQ_ERR_INVAL;
+
+	if(!sublen || !topiclen){
 		*result = false;
 		return MOSQ_ERR_INVAL;
 	}
 
-	if(slen && tlen){
+	if(sublen && topiclen){
 		if((sub[0] == '$' && topic[0] != '$')
 				|| (topic[0] == '$' && sub[0] != '$')){
 
@@ -211,11 +256,11 @@ int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result
 	spos = 0;
 	tpos = 0;
 
-	while(spos < slen && tpos <= tlen){
+	while(spos < sublen && tpos <= topiclen){
 		if(sub[spos] == topic[tpos]){
-			if(tpos == tlen-1){
+			if(tpos == topiclen-1){
 				/* Check for e.g. foo matching foo/# */
-				if(spos == slen-3 
+				if(spos == sublen-3 
 						&& sub[spos+1] == '/'
 						&& sub[spos+2] == '#'){
 					*result = true;
@@ -225,10 +270,10 @@ int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result
 			}
 			spos++;
 			tpos++;
-			if(spos == slen && tpos == tlen){
+			if(spos == sublen && tpos == topiclen){
 				*result = true;
 				return MOSQ_ERR_SUCCESS;
-			}else if(tpos == tlen && spos == slen-1 && sub[spos] == '+'){
+			}else if(tpos == topiclen && spos == sublen-1 && sub[spos] == '+'){
 				if(spos > 0 && sub[spos-1] != '/'){
 					*result = false;
 					return MOSQ_ERR_INVAL;
@@ -245,15 +290,15 @@ int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result
 					return MOSQ_ERR_INVAL;
 				}
 				/* Check for bad "foo+" or "foo+/a" subscription */
-				if(spos < slen-1 && sub[spos+1] != '/'){
+				if(spos < sublen-1 && sub[spos+1] != '/'){
 					*result = false;
 					return MOSQ_ERR_INVAL;
 				}
 				spos++;
-				while(tpos < tlen && topic[tpos] != '/'){
+				while(tpos < topiclen && topic[tpos] != '/'){
 					tpos++;
 				}
-				if(tpos == tlen && spos == slen){
+				if(tpos == topiclen && spos == sublen){
 					*result = true;
 					return MOSQ_ERR_SUCCESS;
 				}
@@ -263,7 +308,7 @@ int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result
 					return MOSQ_ERR_INVAL;
 				}
 				multilevel_wildcard = true;
-				if(spos+1 != slen){
+				if(spos+1 != sublen){
 					*result = false;
 					return MOSQ_ERR_INVAL;
 				}else{
@@ -276,7 +321,7 @@ int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result
 			}
 		}
 	}
-	if(multilevel_wildcard == false && (tpos < tlen || spos < slen)){
+	if(multilevel_wildcard == false && (tpos < topiclen || spos < sublen)){
 		*result = false;
 	}
 

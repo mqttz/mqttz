@@ -1472,6 +1472,7 @@ libmosq_EXPORT int mosquitto_sub_topic_tokens_free(char ***topics, int count);
 
 /*
  * Function: mosquitto_topic_matches_sub
+ * Function: mosquitto_topic_matches_sub2
  *
  * Check whether a topic matches a subscription.
  *
@@ -1482,7 +1483,9 @@ libmosq_EXPORT int mosquitto_sub_topic_tokens_free(char ***topics, int count);
  *
  * Parameters:
  *	sub - subscription string to check topic against.
+ *	sublen - length in bytes of sub string
  *	topic - topic to check.
+ *	topiclen - length in bytes of topic string
  *	result - bool pointer to hold result. Will be set to true if the topic
  *	         matches the subscription.
  *
@@ -1492,6 +1495,7 @@ libmosq_EXPORT int mosquitto_sub_topic_tokens_free(char ***topics, int count);
  * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
  */
 libmosq_EXPORT int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result);
+libmosq_EXPORT int mosquitto_topic_matches_sub2(const char *sub, size_t sublen, const char *topic, size_t topiclen, bool *result);
 
 /*
  * Function: mosquitto_pub_topic_check
@@ -1507,6 +1511,7 @@ libmosq_EXPORT int mosquitto_topic_matches_sub(const char *sub, const char *topi
  *
  * Parameters:
  *   topic - the topic to check
+ *   topiclen - length of the topic in bytes
  *
  * Returns:
  *   MOSQ_ERR_SUCCESS -        for a valid topic
@@ -1517,6 +1522,7 @@ libmosq_EXPORT int mosquitto_topic_matches_sub(const char *sub, const char *topi
  *   <mosquitto_sub_topic_check>
  */
 libmosq_EXPORT int mosquitto_pub_topic_check(const char *topic);
+libmosq_EXPORT int mosquitto_pub_topic_check2(const char *topic, size_t topiclen);
 
 /*
  * Function: mosquitto_sub_topic_check
@@ -1534,6 +1540,7 @@ libmosq_EXPORT int mosquitto_pub_topic_check(const char *topic);
  *
  * Parameters:
  *   topic - the topic to check
+ *   topiclen - the length in bytes of the topic
  *
  * Returns:
  *   MOSQ_ERR_SUCCESS -        for a valid topic
@@ -1545,6 +1552,7 @@ libmosq_EXPORT int mosquitto_pub_topic_check(const char *topic);
  *   <mosquitto_sub_topic_check>
  */
 libmosq_EXPORT int mosquitto_sub_topic_check(const char *topic);
+libmosq_EXPORT int mosquitto_sub_topic_check2(const char *topic, size_t topiclen);
 
 
 struct libmosquitto_will {

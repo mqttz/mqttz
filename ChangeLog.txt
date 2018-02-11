@@ -62,6 +62,9 @@ Client library:
 - Topic inputs are checked for UTF-8 validity.
 - Add mosquitto_userdata function to allow retrieving the client userdata
   member variable. Closes #111.
+- Add mosquitto_pub_topic_check2(), mosquitto_sub_topic_check2(), and
+  mosquitto_topic_matches_sub2() which are identical to the similarly named
+  functions but also take length arguments.
 
 Client:
 - Add -F to mosquitto_sub to allow the user to choose the output format.
