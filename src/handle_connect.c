@@ -139,7 +139,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		goto handle_connect_error;
 	}
 
-	if(packet__read_string(&context->in_packet, &protocol_name)){
+	if(packet__read_string(&context->in_packet, &protocol_name, &slen)){
 		rc = 1;
 		goto handle_connect_error;
 		return 1;
@@ -221,12 +221,11 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		goto handle_connect_error;
 	}
 
-	if(packet__read_string(&context->in_packet, &client_id)){
+	if(packet__read_string(&context->in_packet, &client_id, &slen)){
 		rc = 1;
 		goto handle_connect_error;
 	}
 
-	slen = strlen(client_id);
 	if(slen == 0){
 		if(context->protocol == mosq_p_mqtt31){
 			send__connack(context, 0, CONNACK_REFUSED_IDENTIFIER_REJECTED);
@@ -259,7 +258,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		}
 	}
 
-	if(mosquitto_validate_utf8(client_id, strlen(client_id)) != MOSQ_ERR_SUCCESS){
+	if(mosquitto_validate_utf8(client_id, slen) != MOSQ_ERR_SUCCESS){
 		rc = 1;
 		goto handle_connect_error;
 	}
@@ -270,11 +269,11 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			rc = MOSQ_ERR_NOMEM;
 			goto handle_connect_error;
 		}
-		if(packet__read_string(&context->in_packet, &will_topic)){
+		if(packet__read_string(&context->in_packet, &will_topic, &slen)){
 			rc = 1;
 			goto handle_connect_error;
 		}
-		if(STREMPTY(will_topic)){
+		if(!slen){
 			rc = 1;
 			goto handle_connect_error;
 		}
@@ -325,15 +324,15 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	if(username_flag){
-		rc = packet__read_string(&context->in_packet, &username);
+		rc = packet__read_string(&context->in_packet, &username, &slen);
 		if(rc == MOSQ_ERR_SUCCESS){
-			if(mosquitto_validate_utf8(username, strlen(username)) != MOSQ_ERR_SUCCESS){
+			if(mosquitto_validate_utf8(username, slen) != MOSQ_ERR_SUCCESS){
 				rc = MOSQ_ERR_PROTOCOL;
 				goto handle_connect_error;
 			}
 
 			if(password_flag){
-				rc = packet__read_string(&context->in_packet, &password);
+				rc = packet__read_string(&context->in_packet, &password, &slen);
 				if(rc == MOSQ_ERR_NOMEM){
 					rc = MOSQ_ERR_NOMEM;
 					goto handle_connect_error;

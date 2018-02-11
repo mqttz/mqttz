@@ -192,26 +192,27 @@ void packet__write_bytes(struct mosquitto__packet *packet, const void *bytes, ui
 }
 
 
-int packet__read_string(struct mosquitto__packet *packet, char **str)
+int packet__read_string(struct mosquitto__packet *packet, char **str, int *length)
 {
-	uint16_t len;
+	uint16_t slen;
 	int rc;
 
 	assert(packet);
-	rc = packet__read_uint16(packet, &len);
+	rc = packet__read_uint16(packet, &slen);
 	if(rc) return rc;
 
-	if(packet->pos+len > packet->remaining_length) return MOSQ_ERR_PROTOCOL;
+	if(packet->pos+slen > packet->remaining_length) return MOSQ_ERR_PROTOCOL;
 
-	*str = mosquitto__malloc(len+1);
+	*str = mosquitto__malloc(slen+1);
 	if(*str){
-		memcpy(*str, &(packet->payload[packet->pos]), len);
-		(*str)[len] = '\0';
-		packet->pos += len;
+		memcpy(*str, &(packet->payload[packet->pos]), slen);
+		(*str)[slen] = '\0';
+		packet->pos += slen;
 	}else{
 		return MOSQ_ERR_NOMEM;
 	}
 
+	*length = slen;
 	return MOSQ_ERR_SUCCESS;
 }
 

@@ -35,6 +35,7 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 {
 	uint16_t mid;
 	char *sub;
+	int slen;
 
 	if(!context) return MOSQ_ERR_INVAL;
 	log__printf(NULL, MOSQ_LOG_DEBUG, "Received UNSUBSCRIBE from %s", context->id);
@@ -54,12 +55,12 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 	}
 	while(context->in_packet.pos < context->in_packet.remaining_length){
 		sub = NULL;
-		if(packet__read_string(&context->in_packet, &sub)){
+		if(packet__read_string(&context->in_packet, &sub, &slen)){
 			return 1;
 		}
 
 		if(sub){
-			if(STREMPTY(sub)){
+			if(!slen){
 				log__printf(NULL, MOSQ_LOG_INFO,
 						"Empty unsubscription string from %s, disconnecting.",
 						context->id);
@@ -73,7 +74,7 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 				mosquitto__free(sub);
 				return 1;
 			}
-			if(mosquitto_validate_utf8(sub, strlen(sub))){
+			if(mosquitto_validate_utf8(sub, slen)){
 				log__printf(NULL, MOSQ_LOG_INFO,
 						"Malformed UTF-8 in unsubscription string from %s, disconnecting.",
 						context->id);

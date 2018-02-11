@@ -29,7 +29,7 @@ int packet__queue(struct mosquitto *mosq, struct mosquitto__packet *packet);
 
 int packet__read_byte(struct mosquitto__packet *packet, uint8_t *byte);
 int packet__read_bytes(struct mosquitto__packet *packet, void *bytes, uint32_t count);
-int packet__read_string(struct mosquitto__packet *packet, char **str);
+int packet__read_string(struct mosquitto__packet *packet, char **str, int *length);
 int packet__read_uint16(struct mosquitto__packet *packet, uint16_t *word);
 
 void packet__write_byte(struct mosquitto__packet *packet, uint8_t byte);
