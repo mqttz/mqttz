@@ -44,6 +44,7 @@ Broker:
 - IPv6 is no longer disabled for websockets listeners.
 - Remove all build timestamp information including $SYS/broker/timestamp.
   Close #651.
+- Correctly handle incoming strings that contain a NULL byte. Closes #693.
 
 Client library:
 - Outgoing messages with QoS>1 are no longer retried after a timeout period.

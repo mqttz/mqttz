@@ -37,7 +37,7 @@ Contributors:
 #  include <libwebsockets.h>
 #endif
 
-static char *client_id_gen(struct mosquitto_db *db)
+static char *client_id_gen(struct mosquitto_db *db, int *idlen)
 {
 	char *client_id;
 #ifdef WITH_UUID
@@ -47,23 +47,24 @@ static char *client_id_gen(struct mosquitto_db *db)
 #endif
 
 #ifdef WITH_UUID
-	client_id = (char *)mosquitto__calloc(37 + db->config->auto_id_prefix_len, sizeof(char));
+	*idlen = 36 + db->config->auto_id_prefix_len;
+#else
+	*idlen = 64 + db->config->auto_id_prefix_len;
+#endif
+
+	client_id = (char *)mosquitto__calloc((*idlen) + 1, sizeof(char));
 	if(!client_id){
 		return NULL;
 	}
 	if(db->config->auto_id_prefix){
 		memcpy(client_id, db->config->auto_id_prefix, db->config->auto_id_prefix_len);
 	}
+
+
+#ifdef WITH_UUID
 	uuid_generate_random(uuid);
 	uuid_unparse_lower(uuid, &client_id[db->config->auto_id_prefix_len]);
 #else
-	client_id = (char *)mosquitto__calloc(65 + db->config->auto_id_prefix_len, sizeof(char));
-	if(!client_id){
-		return NULL;
-	}
-	if(db->config->auto_id_prefix){
-		memcpy(client_id, db->config->auto_id_prefix, db->config->auto_id_prefix_len);
-	}
 	for(i=0; i<64; i++){
 		client_id[i+db->config->auto_id_prefix_len] = (rand()%73)+48;
 	}
@@ -240,7 +241,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 				rc = MOSQ_ERR_PROTOCOL;
 				goto handle_connect_error;
 			}else{
-				client_id = client_id_gen(db);
+				client_id = client_id_gen(db, &slen);
 				if(!client_id){
 					rc = MOSQ_ERR_NOMEM;
 					goto handle_connect_error;
