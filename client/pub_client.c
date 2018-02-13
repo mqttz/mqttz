@@ -34,6 +34,7 @@ Contributors:
 #define STATUS_CONNECTING 0
 #define STATUS_CONNACK_RECVD 1
 #define STATUS_WAITING 2
+#define STATUS_DISCONNECTING 3
 
 /* Global variables for use in callbacks. See sub_client.c for an example of
  * using a struct to hold variables for use in callbacks. */
@@ -414,8 +415,15 @@ int main(int argc, char *argv[])
 					}
 				}
 				if(feof(stdin)){
-					last_mid = mid_sent;
-					status = STATUS_WAITING;
+					if(last_mid == -1){
+						/* Empty file */
+						mosquitto_disconnect(mosq);
+						disconnect_sent = true;
+						status = STATUS_DISCONNECTING;
+					}else{
+						last_mid = mid_sent;
+						status = STATUS_WAITING;
+					}
 				}
 			}else if(status == STATUS_WAITING){
 				if(last_mid_sent == last_mid && disconnect_sent == false){

@@ -371,6 +371,12 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 
 #ifdef WITH_TLS
 	if(context->listener && context->listener->ssl_ctx && (context->listener->use_identity_as_username || context->listener->use_subject_as_username)){
+		/* Don't need the username or password if provided */
+		mosquitto__free(username);
+		username = NULL;
+		mosquitto__free(password);
+		password = NULL;
+
 		if(!context->ssl){
 			send__connack(context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
 			rc = 1;
@@ -645,5 +651,3 @@ int handle__disconnect(struct mosquitto_db *db, struct mosquitto *context)
 	do_disconnect(db, context);
 	return MOSQ_ERR_SUCCESS;
 }
-
-

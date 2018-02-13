@@ -4,12 +4,12 @@ Copyright (c) 2009-2016 Roger Light <roger@atchoo.org>
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
 and Eclipse Distribution License v1.0 which accompany this distribution.
- 
+
 The Eclipse Public License is available at
    http://www.eclipse.org/legal/epl-v10.html
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
- 
+
 Contributors:
    Roger Light - initial implementation and documentation.
 */
@@ -143,33 +143,39 @@ int net__socket_close(struct mosquitto *mosq)
 
 	assert(mosq);
 #ifdef WITH_TLS
-	if(mosq->ssl){
-		SSL_shutdown(mosq->ssl);
-		SSL_free(mosq->ssl);
-		mosq->ssl = NULL;
-	}
-	if(mosq->ssl_ctx){
-		SSL_CTX_free(mosq->ssl_ctx);
-		mosq->ssl_ctx = NULL;
+#ifdef WITH_WEBSOCKETS
+	if(!mosq->wsi)
+#endif
+	{
+		if(mosq->ssl){
+			SSL_shutdown(mosq->ssl);
+			SSL_free(mosq->ssl);
+			mosq->ssl = NULL;
+		}
+		if(mosq->ssl_ctx){
+			SSL_CTX_free(mosq->ssl_ctx);
+			mosq->ssl_ctx = NULL;
+		}
 	}
 #endif
 
-	if((int)mosq->sock >= 0){
-#ifdef WITH_BROKER
-		HASH_DELETE(hh_sock, db->contexts_by_sock, mosq);
-#endif
-		rc = COMPAT_CLOSE(mosq->sock);
-		mosq->sock = INVALID_SOCKET;
 #ifdef WITH_WEBSOCKETS
-	}else if(mosq->sock == WEBSOCKET_CLIENT){
+	if(mosq->wsi)
+	{
 		if(mosq->state != mosq_cs_disconnecting){
 			mosq->state = mosq_cs_disconnect_ws;
 		}
-		if(mosq->wsi){
-			libwebsocket_callback_on_writable(mosq->ws_context, mosq->wsi);
-		}
-		mosq->sock = INVALID_SOCKET;
+		libwebsocket_callback_on_writable(mosq->ws_context, mosq->wsi);
+	}else
 #endif
+	{
+		if((int)mosq->sock >= 0){
+#ifdef WITH_BROKER
+			HASH_DELETE(hh_sock, db->contexts_by_sock, mosq);
+#endif
+			rc = COMPAT_CLOSE(mosq->sock);
+			mosq->sock = INVALID_SOCKET;
+		}
 	}
 
 #ifdef WITH_BROKER
@@ -253,7 +259,6 @@ int net__try_connect_step2(struct mosquitto *mosq, uint16_t port, mosq_sock_t *s
 
 		/* Set non-blocking */
 		if(net__socket_nonblock(*sock)){
-			COMPAT_CLOSE(*sock);
 			continue;
 		}
 
@@ -268,7 +273,6 @@ int net__try_connect_step2(struct mosquitto *mosq, uint16_t port, mosq_sock_t *s
 
 			/* Set non-blocking */
 			if(net__socket_nonblock(*sock)){
-				COMPAT_CLOSE(*sock);
 				continue;
 			}
 			break;
@@ -353,7 +357,6 @@ int net__try_connect(struct mosquitto *mosq, const char *host, uint16_t port, mo
 		if(!blocking){
 			/* Set non-blocking */
 			if(net__socket_nonblock(*sock)){
-				COMPAT_CLOSE(*sock);
 				continue;
 			}
 		}
@@ -370,7 +373,6 @@ int net__try_connect(struct mosquitto *mosq, const char *host, uint16_t port, mo
 			if(blocking){
 				/* Set non-blocking */
 				if(net__socket_nonblock(*sock)){
-					COMPAT_CLOSE(*sock);
 					continue;
 				}
 			}
@@ -801,7 +803,6 @@ int net__socketpair(mosq_sock_t *pairR, mosq_sock_t *pairW)
 			continue;
 		}
 		if(net__socket_nonblock(spR)){
-			COMPAT_CLOSE(spR);
 			COMPAT_CLOSE(listensock);
 			continue;
 		}
@@ -829,7 +830,6 @@ int net__socketpair(mosq_sock_t *pairR, mosq_sock_t *pairW)
 
 		if(net__socket_nonblock(spW)){
 			COMPAT_CLOSE(spR);
-			COMPAT_CLOSE(spW);
 			COMPAT_CLOSE(listensock);
 			continue;
 		}
@@ -847,13 +847,11 @@ int net__socketpair(mosq_sock_t *pairR, mosq_sock_t *pairW)
 		return MOSQ_ERR_ERRNO;
 	}
 	if(net__socket_nonblock(sv[0])){
-		COMPAT_CLOSE(sv[0]);
 		COMPAT_CLOSE(sv[1]);
 		return MOSQ_ERR_ERRNO;
 	}
 	if(net__socket_nonblock(sv[1])){
 		COMPAT_CLOSE(sv[0]);
-		COMPAT_CLOSE(sv[1]);
 		return MOSQ_ERR_ERRNO;
 	}
 	*pairR = sv[0];

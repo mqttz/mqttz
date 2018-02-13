@@ -658,9 +658,12 @@ static int retain__process(struct mosquitto_db *db, struct mosquitto_msg_store *
 		return rc;
 	}
 
-	qos = retained->qos;
-
-	if(qos > sub_qos) qos = sub_qos;
+	if (db->config->upgrade_outgoing_qos){
+		qos = sub_qos;
+	} else {
+		qos = retained->qos;
+		if(qos > sub_qos) qos = sub_qos;
+	}
 	if(qos > 0){
 		mid = mosquitto__mid_generate(context);
 	}else{

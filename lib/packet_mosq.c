@@ -4,12 +4,12 @@ Copyright (c) 2009-2016 Roger Light <roger@atchoo.org>
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
 and Eclipse Distribution License v1.0 which accompany this distribution.
- 
+
 The Eclipse Public License is available at
    http://www.eclipse.org/legal/epl-v10.html
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
- 
+
 Contributors:
    Roger Light - initial implementation and documentation.
 */
@@ -269,7 +269,11 @@ int packet__write(struct mosquitto *mosq)
 	}
 	pthread_mutex_unlock(&mosq->out_packet_mutex);
 
+#if defined(WITH_TLS) && !defined(WITH_BROKER)
+	if((mosq->state == mosq_cs_connect_pending) || mosq->want_connect){
+#else
 	if(mosq->state == mosq_cs_connect_pending){
+#endif
 		pthread_mutex_unlock(&mosq->current_out_packet_mutex);
 		return MOSQ_ERR_SUCCESS;
 	}
@@ -315,7 +319,7 @@ int packet__write(struct mosquitto *mosq)
 			}
 			pthread_mutex_unlock(&mosq->callback_mutex);
 		}else if(((packet->command)&0xF0) == DISCONNECT){
-			/* FIXME what cleanup needs doing here? 
+			/* FIXME what cleanup needs doing here?
 			 * incoming/outgoing messages? */
 			net__socket_close(mosq);
 
@@ -533,4 +537,3 @@ int packet__read(struct mosquitto *mosq)
 	pthread_mutex_unlock(&mosq->msgtime_mutex);
 	return rc;
 }
-

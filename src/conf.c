@@ -4,12 +4,12 @@ Copyright (c) 2009-2016 Roger Light <roger@atchoo.org>
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
 and Eclipse Distribution License v1.0 which accompany this distribution.
- 
+
 The Eclipse Public License is available at
    http://www.eclipse.org/legal/epl-v10.html
 and the Eclipse Distribution License is available at
   http://www.eclipse.org/org/documents/edl-v10.php.
- 
+
 Contributors:
    Roger Light - initial implementation and documentation.
 */
@@ -66,6 +66,35 @@ static int conf__parse_int(char **token, const char *name, int *value, char *sav
 static int conf__parse_string(char **token, const char *name, char **value, char *saveptr);
 static int config__read_file(struct mosquitto__config *config, bool reload, const char *file, struct config_recurse *config_tmp, int level, int *lineno);
 static int config__check(struct mosquitto__config *config);
+
+static char *fgets_extending(char **buf, int *buflen, FILE *stream)
+{
+	char *rc;
+	char endchar;
+	int offset = 0;
+	char *newbuf;
+
+	do{
+		rc = fgets(&((*buf)[offset]), *buflen-offset, stream);
+		if(feof(stream)){
+			return rc;
+		}
+
+		endchar = (*buf)[strlen(*buf)-1];
+		if(endchar == '\n'){
+			return rc;
+		}
+		/* No EOL char found, so extend buffer */
+		offset = *buflen-1;
+		*buflen += 1000;
+		newbuf = realloc(*buf, *buflen);
+		if(!newbuf){
+			return NULL;
+		}
+		*buf = newbuf;
+	}while(1);
+}
+
 
 static int conf__attempt_resolve(const char *host, const char *text, int log, const char *msg)
 {
@@ -253,7 +282,12 @@ void config__cleanup(struct mosquitto__config *config)
 			mosquitto__free(config->listeners[i].psk_hint);
 			mosquitto__free(config->listeners[i].crlfile);
 			mosquitto__free(config->listeners[i].tls_version);
-			SSL_CTX_free(config->listeners[i].ssl_ctx);
+#ifdef WITH_WEBSOCKETS
+			if(!config->listeners[i].ws_context) /* libwebsockets frees its own SSL_CTX */
+#endif
+			{
+				SSL_CTX_free(config->listeners[i].ssl_ctx);
+			}
 #endif
 #ifdef WITH_WEBSOCKETS
 			mosquitto__free(config->listeners[i].http_dir);
@@ -561,10 +595,9 @@ int config__read(struct mosquitto__config *config, bool reload)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int config__read_file_core(struct mosquitto__config *config, bool reload, const char *file, struct config_recurse *cr, int level, int *lineno, FILE *fptr)
+int config__read_file_core(struct mosquitto__config *config, bool reload, const char *file, struct config_recurse *cr, int level, int *lineno, FILE *fptr, char **buf, int *buflen)
 {
 	int rc;
-	char buf[1024];
 	char *token;
 	int tmp_int;
 	char *saveptr = NULL;
@@ -595,13 +628,13 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 
 	*lineno = 0;
 
-	while(fgets(buf, 1024, fptr)){
+	while(fgets_extending(buf, buflen, fptr)){
 		(*lineno)++;
-		if(buf[0] != '#' && buf[0] != 10 && buf[0] != 13){
-			while(buf[strlen(buf)-1] == 10 || buf[strlen(buf)-1] == 13){
-				buf[strlen(buf)-1] = 0;
+		if((*buf)[0] != '#' && (*buf)[0] != 10 && (*buf)[0] != 13){
+			while((*buf)[strlen((*buf))-1] == 10 || (*buf)[strlen((*buf))-1] == 13){
+				(*buf)[strlen((*buf))-1] = 0;
 			}
-			token = strtok_r(buf, " ", &saveptr);
+			token = strtok_r((*buf), " ", &saveptr);
 			if(token){
 				if(!strcmp(token, "acl_file")){
 					if(reload){
@@ -1055,8 +1088,8 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 							}
 							snprintf(conf_file, len, "%s\\%s", token, find_data.cFileName);
 							conf_file[len] = '\0';
-								
-							rc = config__read_file(config, reload, conf_file, cr, level+1, &lineno_ext);
+
+							rc = config__read_file(config, reload, conf_file, cr, level+1, &lineno_ext, buf, buflen);
 							if(rc){
 								FindClose(fh);
 								log__printf(NULL, MOSQ_LOG_ERR, "Error found at %s:%d.", conf_file, lineno_ext);
@@ -1084,7 +1117,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 									}
 									snprintf(conf_file, len, "%s/%s", token, de->d_name);
 									conf_file[len] = '\0';
-									
+
 									rc = config__read_file(config, reload, conf_file, cr, level+1, &lineno_ext);
 									if(rc){
 										closedir(dh);
@@ -1381,7 +1414,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 						return MOSQ_ERR_INVAL;
 					}
 					if(conf__parse_bool(&token, "notifications_local_only", &cur_bridge->notifications_local_only, saveptr)) return MOSQ_ERR_INVAL;
-#else					
+#else
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "notification_topic")){
@@ -1611,7 +1644,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
 						cur_bridge->topic_count++;
-						cur_bridge->topics = mosquitto__realloc(cur_bridge->topics, 
+						cur_bridge->topics = mosquitto__realloc(cur_bridge->topics,
 								sizeof(struct mosquitto__bridge_topic)*cur_bridge->topic_count);
 						if(!cur_bridge->topics){
 							log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
@@ -1691,7 +1724,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 							}
 						}
 					}
-					if(cur_topic->topic == NULL && 
+					if(cur_topic->topic == NULL &&
 							(cur_topic->local_prefix == NULL || cur_topic->remote_prefix == NULL)){
 
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge remapping.");
@@ -1832,6 +1865,8 @@ int config__read_file(struct mosquitto__config *config, bool reload, const char 
 {
 	int rc;
 	FILE *fptr = NULL;
+	char *buf;
+	int buflen;
 
 	fptr = mosquitto__fopen(file, "rt", false);
 	if(!fptr){
@@ -1839,7 +1874,15 @@ int config__read_file(struct mosquitto__config *config, bool reload, const char 
 		return 1;
 	}
 
-	rc = config__read_file_core(config, reload, file, cr, level, lineno, fptr);
+	buflen = 1000;
+	buf = mosquitto__malloc(buflen);
+	if(!buf){
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		return MOSQ_ERR_NOMEM;
+	}
+
+	rc = config__read_file_core(config, reload, file, cr, level, lineno, fptr, &buf, &buflen);
+	mosquitto__free(buf);
 	fclose(fptr);
 
 	return rc;
@@ -1918,7 +1961,7 @@ static int conf__parse_bool(char **token, const char *name, bool *value, char *s
 		log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty %s value in configuration.", name);
 		return MOSQ_ERR_INVAL;
 	}
-	
+
 	return MOSQ_ERR_SUCCESS;
 }
 
