@@ -60,6 +60,8 @@ Broker:
 - Fix upgrade_outgoing_qos for retained message. Closes #534.
 - Fix CONNACK message not being sent for unauthorised connect on websockets.
   Closes #8.
+- Add set_tcp_nodelay option to allow Nagle's algorithm to be disabled on
+  client sockets. Closes #433.
 
 Client library:
 - Outgoing messages with QoS>1 are no longer retried after a timeout period.

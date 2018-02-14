@@ -21,6 +21,7 @@ Contributors:
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <netinet/tcp.h>
 #else
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -120,6 +121,12 @@ int net__socket_accept(struct mosquitto_db *db, mosq_sock_t listensock)
 		return -1;
 	}
 #endif
+
+	if(db->config->set_tcp_nodelay){
+		int flag = 1;
+		setsockopt(new_sock, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(int));
+	}
+
 	new_context = context__init(db, new_sock);
 	if(!new_context){
 		COMPAT_CLOSE(new_sock);

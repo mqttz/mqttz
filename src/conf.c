@@ -188,6 +188,7 @@ static void config__init_reload(struct mosquitto__config *config)
 	mosquitto__free(config->psk_file);
 	config->psk_file = NULL;
 	config->queue_qos0_messages = false;
+	config->set_tcp_nodelay = false;
 	config->sys_interval = 10;
 	config->upgrade_outgoing_qos = false;
 	if(config->auth_plugins){
@@ -1575,6 +1576,8 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 #else
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
+				}else if(!strcmp(token, "set_tcp_nodelay")){
+					if(conf__parse_bool(&token, "set_tcp_nodelay", &config->set_tcp_nodelay, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "start_type")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME

@@ -586,6 +586,17 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>set_tcp_nodelay</option> [ true | false ]</term>
+				<listitem>
+					<para>If set to true, the TCP_NODELAY option will be set on
+							client sockets to disable Nagle's algorithm. This
+							has the effect of reducing latency of some messages
+							at potentially increasing the number of TCP packets
+							being sent. Defaults to false.</para>
+					<para>Reloaded on reload signal.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>store_clean_interval</option> <replaceable>seconds</replaceable></term>
 				<listitem>
 					<para>The integer number of seconds between the internal
