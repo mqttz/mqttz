@@ -757,7 +757,7 @@ int net__socket_connect_step3(struct mosquitto *mosq, const char *host)
 int net__socket_connect(struct mosquitto *mosq, const char *host, uint16_t port, const char *bind_address, bool blocking)
 {
 	mosq_sock_t sock = INVALID_SOCKET;
-	int rc;
+	int rc, rc2;
 
 	if(!mosq || !host || !port) return MOSQ_ERR_INVAL;
 
@@ -770,8 +770,8 @@ int net__socket_connect(struct mosquitto *mosq, const char *host, uint16_t port,
 	if(!mosq->socks5_host)
 #endif
 	{
-		rc = net__socket_connect_step3(mosq, host);
-		if(rc) return rc;
+		rc2 = net__socket_connect_step3(mosq, host);
+		if(rc2) return rc2;
 	}
 
 	return MOSQ_ERR_SUCCESS;
