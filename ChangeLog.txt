@@ -1,3 +1,8 @@
+Security:
+- Fix CVE-xxxx-xxxx. If a SIGHUP is sent to the broker when there are no more
+  file descriptors, then opening the configuration file will fail and security
+  settings will be set back to their default values.
+
 Broker:
 - Use constant time memcmp for password comparisons.
 - Fix incorrect PSK key being used if it had leading zeroes.
