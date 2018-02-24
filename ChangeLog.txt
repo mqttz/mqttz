@@ -2,6 +2,11 @@ Security:
 - Fix CVE-xxxx-xxxx. If a SIGHUP is sent to the broker when there are no more
   file descriptors, then opening the configuration file will fail and security
   settings will be set back to their default values.
+- Fix CVE-xxxx-xxxx. Unauthenticated clients can cause excessive memory use by
+  setting "remaining length" to be a large value. This is now mitigated by
+  limiting the size of remaining length to valid values. A "memory_limit"
+  configuration option has also been added to allow the overall memory used by
+  the broker to be limited.
 
 Broker:
 - Use constant time memcmp for password comparisons.

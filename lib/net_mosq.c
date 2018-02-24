@@ -1090,6 +1090,36 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 		 * positive. */
 		mosq->in_packet.remaining_count *= -1;
 
+#ifdef WITH_BROKER
+		/* Check packet sizes before allocating memory.
+		 * Will need modifying for MQTT v5. */
+		switch(mosq->in_packet.command & 0xF0){
+			case CONNECT:
+				if(mosq->in_packet.remaining_length > 327699){
+					return MOSQ_ERR_PROTOCOL;
+				}
+				break;
+
+			case PUBACK:
+			case PUBREC:
+			case PUBREL:
+			case PUBCOMP:
+			case UNSUBACK:
+				if(mosq->in_packet.remaining_length != 2){
+					return MOSQ_ERR_PROTOCOL;
+				}
+				break;
+
+			case PINGREQ:
+			case PINGRESP:
+			case DISCONNECT:
+				if(mosq->in_packet.remaining_length != 0){
+					return MOSQ_ERR_PROTOCOL;
+				}
+				break;
+		}
+#endif
+
 		if(mosq->in_packet.remaining_length > 0){
 			mosq->in_packet.payload = _mosquitto_malloc(mosq->in_packet.remaining_length*sizeof(uint8_t));
 			if(!mosq->in_packet.payload) return MOSQ_ERR_NOMEM;
