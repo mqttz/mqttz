@@ -15,7 +15,7 @@ Contributors:
 */
 
 #include <assert.h>
-//#include <string.h>
+#include <string.h>
 
 #include "mosquitto.h"
 #include "logging_mosq.h"
