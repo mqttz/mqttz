@@ -1108,7 +1108,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 							snprintf(conf_file, len, "%s\\%s", token, find_data.cFileName);
 							conf_file[len] = '\0';
 								
-							rc = _config_read_file(config, reload, conf_file, cr, level+1, &lineno_ext, buf, buflen);
+							rc = _config_read_file(config, reload, conf_file, cr, level+1, &lineno_ext);
 							if(rc){
 								FindClose(fh);
 								_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error found at %s:%d.", conf_file, lineno_ext);
