@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2010-2014 Roger Light <roger@atchoo.org>
+Copyright (c) 2010-2018 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -1202,15 +1202,20 @@ int mosquitto_loop_write(struct mosquitto *mosq, int max_packets)
 
 bool mosquitto_want_write(struct mosquitto *mosq)
 {
+	bool result = false;
 	if(mosq->out_packet || mosq->current_out_packet){
-		return true;
-#ifdef WITH_TLS
-	}else if(mosq->ssl && mosq->want_write){
-		return true;
-#endif
-	}else{
-		return false;
+		result = true;
 	}
+#ifdef WITH_TLS
+	if(mosq->ssl){
+		if (mosq->want_write) {
+			result = true;
+		}else if(mosq->want_connect){
+			result = false;
+		}
+	}
+#endif
+	return result;
 }
 
 int mosquitto_opts_set(struct mosquitto *mosq, enum mosq_opt_t option, void *value)

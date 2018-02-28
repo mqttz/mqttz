@@ -116,7 +116,7 @@
 					<para><code>user &lt;username&gt;</code></para>
 
 					<para>The username referred to here is the same as in
-						<option>password_fil</option>e. It is not the
+						<option>password_file</option>. It is not the
 						clientid.</para>
 
 					<para>It is also possible to define ACLs based on pattern
@@ -1031,9 +1031,9 @@
 				<listitem>
 					<para>Set the clientid to use on the local broker. If not
 						defined, this defaults to
-						<option>local.&lt;clientid&gt;</option>. If you are
+						<option>local.&lt;remote_clientid&gt;</option>. If you are
 						bridging a broker to itself, it is important that
-						local_clientid and clientid do not match.</para>
+						local_clientid and remote_clientid do not match.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -1059,7 +1059,7 @@
 						notification messages to the local and remote brokers
 						giving information about the state of the bridge
 						connection. Retained messages are published to the
-						topic $SYS/broker/connection/&lt;clientid&gt;/state
+						topic $SYS/broker/connection/&lt;remote_clientid&gt;/state
 						unless otherwise set with
 						<option>notification_topic</option>s.  If the message
 						is 1 then the connection is active, or 0 if the
@@ -1073,7 +1073,7 @@
 					<para>Choose the topic on which notifications will be
 						published for this bridge. If not set the messages will
 						be sent on the topic
-						$SYS/broker/connection/&lt;clientid&gt;/state.</para>
+						$SYS/broker/connection/&lt;remote_clientid&gt;/state.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -1295,21 +1295,6 @@ topic clients/total in 0 test/mosquitto/org $SYS/broker/
 			<para>The following options are available for all bridges to
 				configure SSL/TLS support.</para>
 			<variablelist>
-				<varlistentry>
-					<term><option>bridge_attempt_unsubscribe</option> [ true | false ]</term>
-					<listitem>
-						<para>If a bridge has topics that have "out" direction,
-							the default behaviour is to send an unsubscribe
-							request to the remote broker on that topic. This
-							means that changing a topic direction from "in" to
-							"out" will not keep receiving incoming messages.
-							Sending these unsubscribe requests is not always
-							desirable, setting
-							<option>bridge_attempt_unsubscribe</option> to
-							<replaceable>false</replaceable> will disable
-							sending the unsubscribe request.</para>
-					</listitem>
-				</varlistentry>
 				<varlistentry>
 					<term><option>bridge_cafile</option> <replaceable>file path</replaceable></term>
 					<listitem>

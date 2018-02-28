@@ -1,9 +1,46 @@
+1.4.15 - 20180228
+=================
+
+Security:
+- Fix CVE-2017-7652. If a SIGHUP is sent to the broker when there are no more
+  file descriptors, then opening the configuration file will fail and security
+  settings will be set back to their default values.
+- Fix CVE-2017-7651. Unauthenticated clients can cause excessive memory use by
+  setting "remaining length" to be a large value. This is now mitigated by
+  limiting the size of remaining length to valid values. A "memory_limit"
+  configuration option has also been added to allow the overall memory used by
+  the broker to be limited.
+
 Broker:
 - Use constant time memcmp for password comparisons.
 - Fix incorrect PSK key being used if it had leading zeroes.
+- Fix memory leak if a client provided a username/password for a listener with
+  use_identity_as_username configured.
+- Fix use_identity_as_username not working on websockets clients.
+- Don't crash if an auth plugin returns MOSQ_ERR_AUTH for a username check on
+  a websockets client. Closes #490.
+- Fix 08-ssl-bridge.py test when using async dns lookups. Closes #507.
+- Lines in the config file are no longer limited to 1024 characters long.
+  Closes #652.
+- Fix $SYS counters of messages and bytes sent when message is sent over
+  a Websockets. Closes #250.
+- Fix upgrade_outgoing_qos for retained message. Closes #534.
+- Fix CONNACK message not being sent for unauthorised connect on websockets.
+  Closes #8.
 
 Client library:
 - Fix incorrect PSK key being used if it had leading zeroes.
+- Initialise "result" variable as soon as possible in
+  mosquitto_topic_matches_sub. Closes #654.
+- No need to close socket again if setting non-blocking failed. Closes #649.
+- Fix mosquitto_topic_matches_sub() not correctly matching foo/bar against
+  foo/+/#. Closes #670.
+
+Clients:
+- Correctly handle empty files with "mosquitto_pub -l". Closes #676.
+
+Build:
+- Don't run TLS-PSK tests if TLS-PSK disabled at compile time. Closes #636.
 
 
 1.4.14 - 20170710

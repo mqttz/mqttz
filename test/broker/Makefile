@@ -59,6 +59,7 @@ endif
 	./04-retain-qos0-repeated.py
 	./04-retain-qos1-qos0.py
 	./04-retain-qos0-clear.py
+	./04-retain-upgrade-outgoing-qos.py
 
 05 :
 	./05-clean-session-qos1.py 
@@ -71,6 +72,8 @@ endif
 	./06-bridge-b2br-disconnect-qos2.py
 	./06-bridge-fail-persist-resend-qos1.py
 	./06-bridge-fail-persist-resend-qos2.py
+	./06-bridge-b2br-remapping.py
+	./06-bridge-br2b-remapping.py
 
 07 :
 	./07-will-qos0.py
@@ -89,8 +92,10 @@ ifeq ($(WITH_TLS),yes)
 	./08-ssl-connect-identity.py
 	./08-ssl-connect-no-identity.py
 	./08-ssl-bridge.py
+ifeq ($(WITH_TLS_PSK),yes)
 	./08-tls-psk-pub.py
 	./08-tls-psk-bridge.py
+endif
 endif
 
 09 :

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2014 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2018 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -336,6 +336,12 @@ int mqtt3_handle_connect(struct mosquitto_db *db, struct mosquitto *context)
 
 #ifdef WITH_TLS
 	if(context->listener && context->listener->ssl_ctx && context->listener->use_identity_as_username){
+		/* Don't need the username or password if provided */
+		_mosquitto_free(username);
+		username = NULL;
+		_mosquitto_free(password);
+		password = NULL;
+
 		if(!context->ssl){
 			_mosquitto_send_connack(context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
 			rc = 1;

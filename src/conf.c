@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2014 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2018 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -64,6 +64,35 @@ static int _conf_parse_int(char **token, const char *name, int *value, char *sav
 static int _conf_parse_string(char **token, const char *name, char **value, char *saveptr);
 static int _config_read_file(struct mqtt3_config *config, bool reload, const char *file, struct config_recurse *config_tmp, int level, int *lineno);
 
+static char *fgets_extending(char **buf, int *buflen, FILE *stream)
+{
+	char *rc;
+	char endchar;
+	int offset = 0;
+	char *newbuf;
+
+	do{
+		rc = fgets(&((*buf)[offset]), *buflen-offset, stream);
+		if(feof(stream)){
+			return rc;
+		}
+
+		endchar = (*buf)[strlen(*buf)-1];
+		if(endchar == '\n'){
+			return rc;
+		}
+		/* No EOL char found, so extend buffer */
+		offset = *buflen-1;
+		*buflen += 1000;
+		newbuf = realloc(*buf, *buflen);
+		if(!newbuf){
+			return NULL;
+		}
+		*buf = newbuf;
+	}while(1);
+}
+
+
 static int _conf_attempt_resolve(const char *host, const char *text, int log, const char *msg)
 {
 	struct addrinfo gai_hints;
@@ -100,7 +129,7 @@ static int _conf_attempt_resolve(const char *host, const char *text, int log, co
 	return MOSQ_ERR_SUCCESS;
 }
 
-static void _config_init_reload(struct mqtt3_config *config)
+static void _config_init_reload(struct mosquitto_db *db, struct mqtt3_config *config)
 {
 	int i;
 	/* Set defaults */
@@ -136,7 +165,7 @@ static void _config_init_reload(struct mqtt3_config *config)
 #else
 	config->log_facility = LOG_DAEMON;
 	config->log_dest = MQTT3_LOG_STDERR;
-	if(config->verbose){
+	if(db->verbose){
 		config->log_type = INT_MAX;
 	}else{
 		config->log_type = MOSQ_LOG_ERR | MOSQ_LOG_WARNING | MOSQ_LOG_NOTICE | MOSQ_LOG_INFO;
@@ -168,11 +197,10 @@ static void _config_init_reload(struct mqtt3_config *config)
 	}
 }
 
-void mqtt3_config_init(struct mqtt3_config *config)
+void mqtt3_config_init(struct mosquitto_db *db, struct mqtt3_config *config)
 {
 	memset(config, 0, sizeof(struct mqtt3_config));
-	_config_init_reload(config);
-	config->config_file = NULL;
+	_config_init_reload(db, config);
 	config->daemon = false;
 	config->default_listener.host = NULL;
 	config->default_listener.port = 0;
@@ -205,7 +233,6 @@ void mqtt3_config_init(struct mqtt3_config *config)
 #endif
 	config->auth_plugin = NULL;
 	config->auth_plugin_deny_special_chars = true;
-	config->verbose = false;
 	config->message_size_limit = 0;
 }
 
@@ -219,7 +246,6 @@ void mqtt3_config_cleanup(struct mqtt3_config *config)
 	if(config->acl_file) _mosquitto_free(config->acl_file);
 	if(config->auto_id_prefix) _mosquitto_free(config->auto_id_prefix);
 	if(config->clientid_prefixes) _mosquitto_free(config->clientid_prefixes);
-	if(config->config_file) _mosquitto_free(config->config_file);
 	if(config->password_file) _mosquitto_free(config->password_file);
 	if(config->persistence_location) _mosquitto_free(config->persistence_location);
 	if(config->persistence_file) _mosquitto_free(config->persistence_file);
@@ -240,10 +266,13 @@ void mqtt3_config_cleanup(struct mqtt3_config *config)
 			if(config->listeners[i].psk_hint) _mosquitto_free(config->listeners[i].psk_hint);
 			if(config->listeners[i].crlfile) _mosquitto_free(config->listeners[i].crlfile);
 			if(config->listeners[i].tls_version) _mosquitto_free(config->listeners[i].tls_version);
-			if(config->listeners[i].ssl_ctx) SSL_CTX_free(config->listeners[i].ssl_ctx);
-#endif
 #ifdef WITH_WEBSOCKETS
 			if(config->listeners[i].http_dir) _mosquitto_free(config->listeners[i].http_dir);
+			if(!config->listeners[i].ws_context) /* libwebsockets frees its own SSL_CTX */
+#endif
+			{
+				SSL_CTX_free(config->listeners[i].ssl_ctx);
+			}
 #endif
 		}
 		_mosquitto_free(config->listeners);
@@ -322,7 +351,7 @@ static void print_usage(void)
 	printf("\nSee http://mosquitto.org/ for more information.\n\n");
 }
 
-int mqtt3_config_parse_args(struct mqtt3_config *config, int argc, char *argv[])
+int mqtt3_config_parse_args(struct mosquitto_db *db, struct mqtt3_config *config, int argc, char *argv[])
 {
 	int i;
 	int port_tmp;
@@ -330,13 +359,9 @@ int mqtt3_config_parse_args(struct mqtt3_config *config, int argc, char *argv[])
 	for(i=1; i<argc; i++){
 		if(!strcmp(argv[i], "-c") || !strcmp(argv[i], "--config-file")){
 			if(i<argc-1){
-				config->config_file = _mosquitto_strdup(argv[i+1]);
-				if(!config->config_file){
-					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-					return MOSQ_ERR_NOMEM;
-				}
+				db->config_file = argv[i+1];
 
-				if(mqtt3_config_read(config, false)){
+				if(mqtt3_config_read(db, config, false)){
 					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open configuration file.");
 					return MOSQ_ERR_INVAL;
 				}
@@ -368,7 +393,7 @@ int mqtt3_config_parse_args(struct mqtt3_config *config, int argc, char *argv[])
 			}
 			i++;
 		}else if(!strcmp(argv[i], "-v") || !strcmp(argv[i], "--verbose")){
-			config->verbose = true;
+			db->verbose = true;
 		}else{
 			fprintf(stderr, "Error: Unknown option '%s'.\n",argv[i]);
 			print_usage();
@@ -443,21 +468,86 @@ int mqtt3_config_parse_args(struct mqtt3_config *config, int argc, char *argv[])
 	if(!config->user){
 		config->user = "mosquitto";
 	}
-	if(config->verbose){
+	if(db->verbose){
 		config->log_type = INT_MAX;
 	}
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mqtt3_config_read(struct mqtt3_config *config, bool reload)
+/* Copy reloaded config into existing config struct */
+void config__copy(struct mqtt3_config *src, struct mqtt3_config *dest)
+{
+	_mosquitto_free(dest->acl_file);
+	dest->acl_file = src->acl_file;
+
+	dest->allow_anonymous = src->allow_anonymous;
+	dest->allow_duplicate_messages = src->allow_duplicate_messages;
+	dest->allow_zero_length_clientid = src->allow_zero_length_clientid;
+
+	_mosquitto_free(dest->auto_id_prefix);
+	dest->auto_id_prefix = src->auto_id_prefix;
+	dest->auto_id_prefix_len = src->auto_id_prefix_len;
+
+	dest->autosave_interval = src->autosave_interval;
+	dest->autosave_on_changes = src->autosave_on_changes;
+
+	_mosquitto_free(dest->clientid_prefixes);
+	dest->clientid_prefixes = src->clientid_prefixes;
+
+	dest->connection_messages = src->connection_messages;
+	dest->log_dest = src->log_dest;
+	dest->log_facility = src->log_facility;
+	dest->log_type = src->log_type;
+	dest->log_timestamp = src->log_timestamp;
+
+	_mosquitto_free(dest->log_file);
+	dest->log_file = src->log_file;
+
+	dest->message_size_limit = src->message_size_limit;
+
+	_mosquitto_free(dest->password_file);
+	dest->password_file = src->password_file;
+
+	dest->persistence = src->persistence;
+
+	_mosquitto_free(dest->persistence_location);
+	dest->persistence_location = src->persistence_location;
+
+	_mosquitto_free(dest->persistence_file);
+	dest->persistence_file = src->persistence_file;
+
+	_mosquitto_free(dest->persistence_filepath);
+	dest->persistence_filepath = src->persistence_filepath;
+
+	dest->persistent_client_expiration = src->persistent_client_expiration;
+
+	_mosquitto_free(dest->psk_file);
+	dest->psk_file = src->psk_file;
+
+	dest->queue_qos0_messages = src->queue_qos0_messages;
+	dest->retry_interval = src->retry_interval;
+	dest->sys_interval = src->sys_interval;
+	dest->upgrade_outgoing_qos = src->upgrade_outgoing_qos;
+
+#ifdef WITH_WEBSOCKETS
+	dest->websockets_log_level = src->websockets_log_level;
+#endif
+}
+
+int mqtt3_config_read(struct mosquitto_db *db, struct mqtt3_config *config, bool reload)
 {
 	int rc = MOSQ_ERR_SUCCESS;
 	struct config_recurse cr;
 	int lineno;
 	int len;
+	struct mqtt3_config config_reload;
 #ifdef WITH_BRIDGE
 	int i;
 #endif
+
+	if(reload){
+		memset(&config_reload, 0, sizeof(struct mqtt3_config));
+	}
 
 	cr.log_dest = MQTT3_LOG_NONE;
 	cr.log_dest_set = 0;
@@ -466,16 +556,22 @@ int mqtt3_config_read(struct mqtt3_config *config, bool reload)
 	cr.max_inflight_messages = 20;
 	cr.max_queued_messages = 100;
 
-	if(!config->config_file) return 0;
+	if(!db->config_file) return 0;
 
 	if(reload){
 		/* Re-initialise appropriate config vars to default for reload. */
-		_config_init_reload(config);
+		_config_init_reload(db, &config_reload);
+		rc = _config_read_file(&config_reload, reload, db->config_file, &cr, 0, &lineno);
+	}else{
+		rc = _config_read_file(config, reload, db->config_file, &cr, 0, &lineno);
 	}
-	rc = _config_read_file(config, reload, config->config_file, &cr, 0, &lineno);
 	if(rc){
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error found at %s:%d.", config->config_file, lineno);
+		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error found at %s:%d.", db->config_file, lineno);
 		return rc;
+	}
+
+	if(reload){
+		config__copy(&config_reload, config);
 	}
 
 #ifdef WITH_PERSISTENCE
@@ -529,7 +625,7 @@ int mqtt3_config_read(struct mqtt3_config *config, bool reload)
 	if(cr.log_dest_set){
 		config->log_dest = cr.log_dest;
 	}
-	if(config->verbose){
+	if(db->verbose){
 		config->log_type = INT_MAX;
 	}else if(cr.log_type_set){
 		config->log_type = cr.log_type;
@@ -537,10 +633,9 @@ int mqtt3_config_read(struct mqtt3_config *config, bool reload)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int _config_read_file_core(struct mqtt3_config *config, bool reload, const char *file, struct config_recurse *cr, int level, int *lineno, FILE *fptr)
+int _config_read_file_core(struct mqtt3_config *config, bool reload, const char *file, struct config_recurse *cr, int level, int *lineno, FILE *fptr, char **buf, int *buflen)
 {
 	int rc;
-	char buf[1024];
 	char *token;
 	int tmp_int;
 	char *saveptr = NULL;
@@ -569,13 +664,13 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 
 	*lineno = 0;
 
-	while(fgets(buf, 1024, fptr)){
+	while(fgets_extending(buf, buflen, fptr)){
 		(*lineno)++;
-		if(buf[0] != '#' && buf[0] != 10 && buf[0] != 13){
-			while(buf[strlen(buf)-1] == 10 || buf[strlen(buf)-1] == 13){
-				buf[strlen(buf)-1] = 0;
+		if((*buf)[0] != '#' && (*buf)[0] != 10 && (*buf)[0] != 13){
+			while((*buf)[strlen((*buf))-1] == 10 || (*buf)[strlen((*buf))-1] == 13){
+				(*buf)[strlen((*buf))-1] = 0;
 			}
-			token = strtok_r(buf, " ", &saveptr);
+			token = strtok_r((*buf), " ", &saveptr);
 			if(token){
 				if(!strcmp(token, "acl_file")){
 					if(reload){
@@ -1013,7 +1108,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 							snprintf(conf_file, len, "%s\\%s", token, find_data.cFileName);
 							conf_file[len] = '\0';
 								
-							rc = _config_read_file(config, reload, conf_file, cr, level+1, &lineno_ext);
+							rc = _config_read_file(config, reload, conf_file, cr, level+1, &lineno_ext, buf, buflen);
 							if(rc){
 								FindClose(fh);
 								_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error found at %s:%d.", conf_file, lineno_ext);
@@ -1286,6 +1381,14 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 					}else{
 						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty max_queued_messages value in configuration.");
 					}
+				}else if(!strcmp(token, "memory_limit")){
+					size_t lim;
+					if(_conf_parse_int(&token, "memory_limit", (int *)&lim, saveptr)) return MOSQ_ERR_INVAL;
+					if(lim < 0){
+						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid memory_limit value (%lu).", lim);
+						return MOSQ_ERR_INVAL;
+					}
+					memory__set_limit(lim);
 				}else if(!strcmp(token, "message_size_limit")){
 					if(_conf_parse_int(&token, "message_size_limit", (int *)&config->message_size_limit, saveptr)) return MOSQ_ERR_INVAL;
 					if(config->message_size_limit > MQTT_MAX_PAYLOAD){
@@ -1765,6 +1868,8 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 {
 	int rc;
 	FILE *fptr = NULL;
+	char *buf;
+	int buflen;
 
 	fptr = _mosquitto_fopen(file, "rt", false);
 	if(!fptr){
@@ -1772,7 +1877,15 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 		return 1;
 	}
 
-	rc = _config_read_file_core(config, reload, file, cr, level, lineno, fptr);
+	buflen = 1000;
+	buf = _mosquitto_malloc(buflen);
+	if(!buf){
+		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		return MOSQ_ERR_NOMEM;
+	}
+
+	rc = _config_read_file_core(config, reload, file, cr, level, lineno, fptr, &buf, &buflen);
+	_mosquitto_free(buf);
 	fclose(fptr);
 
 	return rc;

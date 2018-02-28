@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2014 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2018 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -214,33 +214,39 @@ int _mosquitto_socket_close(struct mosquitto *mosq)
 
 	assert(mosq);
 #ifdef WITH_TLS
-	if(mosq->ssl){
-		SSL_shutdown(mosq->ssl);
-		SSL_free(mosq->ssl);
-		mosq->ssl = NULL;
-	}
-	if(mosq->ssl_ctx){
-		SSL_CTX_free(mosq->ssl_ctx);
-		mosq->ssl_ctx = NULL;
+#ifdef WITH_WEBSOCKETS
+	if(!mosq->wsi)
+#endif
+	{
+		if(mosq->ssl){
+			SSL_shutdown(mosq->ssl);
+			SSL_free(mosq->ssl);
+			mosq->ssl = NULL;
+		}
+		if(mosq->ssl_ctx){
+			SSL_CTX_free(mosq->ssl_ctx);
+			mosq->ssl_ctx = NULL;
+		}
 	}
 #endif
 
-	if((int)mosq->sock >= 0){
-#ifdef WITH_BROKER
-		HASH_DELETE(hh_sock, db->contexts_by_sock, mosq);
-#endif
-		rc = COMPAT_CLOSE(mosq->sock);
-		mosq->sock = INVALID_SOCKET;
 #ifdef WITH_WEBSOCKETS
-	}else if(mosq->sock == WEBSOCKET_CLIENT){
+	if(mosq->wsi)
+	{
 		if(mosq->state != mosq_cs_disconnecting){
 			mosq->state = mosq_cs_disconnect_ws;
 		}
-		if(mosq->wsi){
-			libwebsocket_callback_on_writable(mosq->ws_context, mosq->wsi);
-		}
-		mosq->sock = INVALID_SOCKET;
+		libwebsocket_callback_on_writable(mosq->ws_context, mosq->wsi);
+	}else
 #endif
+	{
+		if((int)mosq->sock >= 0){
+#ifdef WITH_BROKER
+			HASH_DELETE(hh_sock, db->contexts_by_sock, mosq);
+#endif
+			rc = COMPAT_CLOSE(mosq->sock);
+			mosq->sock = INVALID_SOCKET;
+		}
 	}
 
 #ifdef WITH_BROKER
@@ -323,7 +329,6 @@ int _mosquitto_try_connect_step2(struct mosquitto *mosq, uint16_t port, mosq_soc
 
 		/* Set non-blocking */
 		if(_mosquitto_socket_nonblock(*sock)){
-			COMPAT_CLOSE(*sock);
 			continue;
 		}
 
@@ -338,7 +343,6 @@ int _mosquitto_try_connect_step2(struct mosquitto *mosq, uint16_t port, mosq_soc
 
 			/* Set non-blocking */
 			if(_mosquitto_socket_nonblock(*sock)){
-				COMPAT_CLOSE(*sock);
 				continue;
 			}
 			break;
@@ -423,7 +427,6 @@ int _mosquitto_try_connect(struct mosquitto *mosq, const char *host, uint16_t po
 		if(!blocking){
 			/* Set non-blocking */
 			if(_mosquitto_socket_nonblock(*sock)){
-				COMPAT_CLOSE(*sock);
 				continue;
 			}
 		}
@@ -440,7 +443,6 @@ int _mosquitto_try_connect(struct mosquitto *mosq, const char *host, uint16_t po
 			if(blocking){
 				/* Set non-blocking */
 				if(_mosquitto_socket_nonblock(*sock)){
-					COMPAT_CLOSE(*sock);
 					continue;
 				}
 			}
@@ -869,7 +871,11 @@ int _mosquitto_packet_write(struct mosquitto *mosq)
 	}
 	pthread_mutex_unlock(&mosq->out_packet_mutex);
 
+#if defined(WITH_TLS) && !defined(WITH_BROKER)
+	if((mosq->state == mosq_cs_connect_pending)||mosq->want_connect){
+#else
 	if(mosq->state == mosq_cs_connect_pending){
+#endif
 		pthread_mutex_unlock(&mosq->current_out_packet_mutex);
 		return MOSQ_ERR_SUCCESS;
 	}
@@ -1084,6 +1090,36 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 		 * positive. */
 		mosq->in_packet.remaining_count *= -1;
 
+#ifdef WITH_BROKER
+		/* Check packet sizes before allocating memory.
+		 * Will need modifying for MQTT v5. */
+		switch(mosq->in_packet.command & 0xF0){
+			case CONNECT:
+				if(mosq->in_packet.remaining_length > 327699){
+					return MOSQ_ERR_PROTOCOL;
+				}
+				break;
+
+			case PUBACK:
+			case PUBREC:
+			case PUBREL:
+			case PUBCOMP:
+			case UNSUBACK:
+				if(mosq->in_packet.remaining_length != 2){
+					return MOSQ_ERR_PROTOCOL;
+				}
+				break;
+
+			case PINGREQ:
+			case PINGRESP:
+			case DISCONNECT:
+				if(mosq->in_packet.remaining_length != 0){
+					return MOSQ_ERR_PROTOCOL;
+				}
+				break;
+		}
+#endif
+
 		if(mosq->in_packet.remaining_length > 0){
 			mosq->in_packet.payload = _mosquitto_malloc(mosq->in_packet.remaining_length*sizeof(uint8_t));
 			if(!mosq->in_packet.payload) return MOSQ_ERR_NOMEM;
@@ -1244,7 +1280,6 @@ int _mosquitto_socketpair(mosq_sock_t *pairR, mosq_sock_t *pairW)
 			continue;
 		}
 		if(_mosquitto_socket_nonblock(spR)){
-			COMPAT_CLOSE(spR);
 			COMPAT_CLOSE(listensock);
 			continue;
 		}
@@ -1272,7 +1307,6 @@ int _mosquitto_socketpair(mosq_sock_t *pairR, mosq_sock_t *pairW)
 
 		if(_mosquitto_socket_nonblock(spW)){
 			COMPAT_CLOSE(spR);
-			COMPAT_CLOSE(spW);
 			COMPAT_CLOSE(listensock);
 			continue;
 		}
@@ -1290,13 +1324,11 @@ int _mosquitto_socketpair(mosq_sock_t *pairR, mosq_sock_t *pairW)
 		return MOSQ_ERR_ERRNO;
 	}
 	if(_mosquitto_socket_nonblock(sv[0])){
-		COMPAT_CLOSE(sv[0]);
 		COMPAT_CLOSE(sv[1]);
 		return MOSQ_ERR_ERRNO;
 	}
 	if(_mosquitto_socket_nonblock(sv[1])){
 		COMPAT_CLOSE(sv[0]);
-		COMPAT_CLOSE(sv[1]);
 		return MOSQ_ERR_ERRNO;
 	}
 	*pairR = sv[0];
