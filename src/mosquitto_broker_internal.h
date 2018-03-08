@@ -210,6 +210,7 @@ struct mosquitto__config {
 	char *pid_file;
 	char *psk_file;
 	bool queue_qos0_messages;
+	bool per_listener_settings;
 	bool set_tcp_nodelay;
 	int sys_interval;
 	bool upgrade_outgoing_qos;

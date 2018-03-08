@@ -151,6 +151,7 @@ static void config__init_reload(struct mosquitto__config *config)
 	mosquitto__free(config->clientid_prefixes);
 	config->connection_messages = true;
 	config->clientid_prefixes = NULL;
+	config->per_listener_settings = false;
 	if(config->log_fptr){
 		fclose(config->log_fptr);
 		config->log_fptr = NULL;
@@ -1446,6 +1447,8 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 						config->password_file = NULL;
 					}
 					if(conf__parse_string(&token, "password_file", &config->password_file, saveptr)) return MOSQ_ERR_INVAL;
+				}else if(!strcmp(token, "per_listener_settings")){
+					if(conf__parse_bool(&token, "per_listener_settings", &config->per_listener_settings, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "persistence") || !strcmp(token, "retained_persistence")){
 					if(conf__parse_bool(&token, token, &config->persistence, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "persistence_file")){

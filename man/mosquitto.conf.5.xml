@@ -51,7 +51,9 @@
 			protocol. Use the password_file option to define the valid
 			usernames and passwords. Be sure to use network encryption if you
 			are using this option otherwise the username and password will be
-			vulnerable to interception.</para>
+			vulnerable to interception. Use the
+			<option>per_listener_settings</option> to control whether passwords
+			are required globally or on a per-listener basis.</para>
 		<para>When using certificate based encryption there are three options
 			that affect authentication. The first is require_certificate, which
 			may be set to true or false. If false, the SSL/TLS component of the
@@ -79,7 +81,8 @@
 			If use_identity_as_username is false, the client may still
 			authenticate using the MQTT username/password if using the
 			password_file option.</para>
-		<para>Both certificate and PSK based encryption are configured on a per-listener basis.</para>
+		<para>Both certificate and PSK based encryption are configured on a
+			per-listener basis.</para>
 		<para>Authentication plugins can be created to augment the
 			password_file, acl_file and psk_file options with e.g. SQL based
 			lookups.</para>
@@ -470,7 +473,26 @@
 						affected.</para>
 					<para>See also
 						<citerefentry><refentrytitle>mosquitto_passwd</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
-				</listitem> </varlistentry>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>per_listener_settings</option> [ true | false ]</term>
+				<listitem>
+					<para>If <replaceable>true</replaceable>, then
+						authentication and access control settings will be
+						controlled on a per-listener basis. The following
+						options are affected:</para>
+					<para><option>password_file</option>,
+						<option>acl_file</option>, <option>psk_file</option>,
+						<option>auth_plugin</option>,
+						<option>auth_opt_*</option>.</para>
+					<para>The default behaviour is for this to be set to
+						<replaceable>false</replaceable>, which maintains the
+						settings behaviour from previous versions of
+						mosquitto.</para>
+					<para>Reloaded on reload signal.</para>
+				</listitem>
+			</varlistentry>
 			<varlistentry>
 				<term><option>persistence</option> [ true | false ]</term>
 				<listitem>
