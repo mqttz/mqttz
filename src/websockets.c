@@ -402,6 +402,67 @@ static int callback_mqtt(struct libwebsocket_context *context,
 }
 
 
+static char *http__canonical_filename(
+		struct libwebsocket *wsi,
+		const char *in,
+		const char *http_dir)
+{
+	size_t inlen, slen;
+	char *filename, *filename_canonical;
+
+	inlen = strlen(in);
+	if(in[inlen-1] == '/'){
+		slen = strlen(http_dir) + inlen + strlen("/index.html") + 2;
+	}else{
+		slen = strlen(http_dir) + inlen + 2;
+	}
+	filename = mosquitto__malloc(slen);
+	if(!filename){
+		libwebsockets_return_http_status(context, wsi, HTTP_STATUS_INTERNAL_SERVER_ERROR, NULL);
+		return NULL;
+	}
+	if(((char *)in)[inlen-1] == '/'){
+		snprintf(filename, slen, "%s%sindex.html", http_dir, (char *)in);
+	}else{
+		snprintf(filename, slen, "%s%s", http_dir, (char *)in);
+	}
+
+
+	/* Get canonical path and check it is within our http_dir */
+#ifdef WIN32
+	filename_canonical = _fullpath(NULL, filename, 0);
+	mosquitto__free(filename);
+	if(!filename_canonical){
+		libwebsockets_return_http_status(context, wsi, HTTP_STATUS_INTERNAL_SERVER_ERROR, NULL);
+		return NULL;
+	}
+#else
+	filename_canonical = realpath(filename, NULL);
+	mosquitto__free(filename);
+	if(!filename_canonical){
+		if(errno == EACCES){
+			libwebsockets_return_http_status(context, wsi, HTTP_STATUS_FORBIDDEN, NULL);
+		}else if(errno == EINVAL || errno == EIO || errno == ELOOP){
+			libwebsockets_return_http_status(context, wsi, HTTP_STATUS_INTERNAL_SERVER_ERROR, NULL);
+		}else if(errno == ENAMETOOLONG){
+			libwebsockets_return_http_status(context, wsi, HTTP_STATUS_REQ_URI_TOO_LONG, NULL);
+		}else if(errno == ENOENT || errno == ENOTDIR){
+			libwebsockets_return_http_status(context, wsi, HTTP_STATUS_NOT_FOUND, NULL);
+		}
+		return NULL;
+	}
+#endif
+	if(strncmp(http_dir, filename_canonical, strlen(http_dir))){
+		/* Requested file isn't within http_dir, deny access. */
+		free(filename_canonical);
+		libwebsockets_return_http_status(context, wsi, HTTP_STATUS_FORBIDDEN, NULL);
+		return NULL;
+	}
+
+	return filename_canonical;
+}
+
+
 #if defined(LWS_LIBRARY_VERSION_NUMBER)
 static int callback_http(
 #else
@@ -416,9 +477,9 @@ static int callback_http(struct libwebsocket_context *context,
 	struct libws_http_data *u = (struct libws_http_data *)user;
 	struct libws_mqtt_hack *hack;
 	char *http_dir;
-	size_t buflen, slen;
+	size_t buflen;
 	size_t wlen;
-	char *filename, *filename_canonical;
+	char *filename_canonical;
 	unsigned char buf[4096];
 	struct stat filestat;
 	struct mosquitto_db *db = &int_db;
@@ -454,80 +515,47 @@ static int callback_http(struct libwebsocket_context *context,
 				return -1;
 			}
 
-			if(!strcmp((char *)in, "/")){
-				slen = strlen(http_dir) + strlen("/index.html") + 2;
-			}else{
-				slen = strlen(http_dir) + strlen((char *)in) + 2;
-			}
-			filename = mosquitto__malloc(slen);
-			if(!filename){
-				libwebsockets_return_http_status(context, wsi, HTTP_STATUS_INTERNAL_SERVER_ERROR, NULL);
-				return -1;
-			}
-			if(!strcmp((char *)in, "/")){
-				snprintf(filename, slen, "%s/index.html", http_dir);
-			}else{
-				snprintf(filename, slen, "%s%s", http_dir, (char *)in);
-			}
+			filename_canonical = http__canonical_filename(wsi, (char *)in, http_dir);
+			if(!filename_canonical) return -1;
 
-
-			/* Get canonical path and check it is within our http_dir */
-#ifdef WIN32
-			filename_canonical = _fullpath(NULL, filename, 0);
-			if(!filename_canonical){
-				mosquitto__free(filename);
-				libwebsockets_return_http_status(context, wsi, HTTP_STATUS_INTERNAL_SERVER_ERROR, NULL);
-				return -1;
-			}
-#else
-			filename_canonical = realpath(filename, NULL);
-			if(!filename_canonical){
-				mosquitto__free(filename);
-				if(errno == EACCES){
-					libwebsockets_return_http_status(context, wsi, HTTP_STATUS_FORBIDDEN, NULL);
-				}else if(errno == EINVAL || errno == EIO || errno == ELOOP){
-					libwebsockets_return_http_status(context, wsi, HTTP_STATUS_INTERNAL_SERVER_ERROR, NULL);
-				}else if(errno == ENAMETOOLONG){
-					libwebsockets_return_http_status(context, wsi, HTTP_STATUS_REQ_URI_TOO_LONG, NULL);
-				}else if(errno == ENOENT || errno == ENOTDIR){
-					libwebsockets_return_http_status(context, wsi, HTTP_STATUS_NOT_FOUND, NULL);
-				}
-				return -1;
-			}
-#endif
-			if(strncmp(http_dir, filename_canonical, strlen(http_dir))){
-				/* Requested file isn't within http_dir, deny access. */
-				free(filename_canonical);
-				mosquitto__free(filename);
-				libwebsockets_return_http_status(context, wsi, HTTP_STATUS_FORBIDDEN, NULL);
-				return -1;
-			}
-			free(filename_canonical);
-
-			log__printf(NULL, MOSQ_LOG_DEBUG, "http serving file \"%s\".", filename);
-			u->fptr = fopen(filename, "rb");
-			mosquitto__free(filename);
+			u->fptr = fopen(filename_canonical, "rb");
 			if(!u->fptr){
+				free(filename_canonical);
 				libwebsockets_return_http_status(context, wsi, HTTP_STATUS_NOT_FOUND, NULL);
 				return -1;
 			}
 			if(fstat(fileno(u->fptr), &filestat) < 0){
+				free(filename_canonical);
 				libwebsockets_return_http_status(context, wsi, HTTP_STATUS_INTERNAL_SERVER_ERROR, NULL);
 				fclose(u->fptr);
 				u->fptr = NULL;
 				return -1;
 			}
-#ifdef WIN32
+
+
+			if((filestat.st_mode & S_IFDIR) == S_IFDIR){
+				fclose(u->fptr);
+				u->fptr = NULL;
+				free(filename_canonical);
+
+				/* FIXME - use header functions from lws 2.x */
+				buflen = snprintf((char *)buf, 4096, "HTTP/1.0 302 OK\r\n"
+												"Location: %s/\r\n\r\n",
+												(char *)in);
+				return libwebsocket_write(wsi, buf, buflen, LWS_WRITE_HTTP);
+			}
+
 			if((filestat.st_mode & S_IFREG) != S_IFREG){
-#else
-			if(!S_ISREG(filestat.st_mode)){
-#endif
 				libwebsockets_return_http_status(context, wsi, HTTP_STATUS_FORBIDDEN, NULL);
 				fclose(u->fptr);
 				u->fptr = NULL;
+				free(filename_canonical);
 				return -1;
 			}
 
+			log__printf(NULL, MOSQ_LOG_DEBUG, "http serving file \"%s\".", filename_canonical);
+			free(filename_canonical);
+			/* FIXME - use header functions from lws 2.x */
 			buflen = snprintf((char *)buf, 4096, "HTTP/1.0 200 OK\r\n"
 												"Server: mosquitto\r\n"
 												"Content-Length: %u\r\n\r\n",
