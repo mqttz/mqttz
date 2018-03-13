@@ -24,7 +24,7 @@ Contributors:
 #include "util_mosq.h"
 
 static int aclfile__parse(struct mosquitto_db *db);
-static int unpwd__file_parse(struct mosquitto_db *db);
+static int unpwd__file_parse(struct mosquitto__unpwd **unpwd, const char *password_file);
 static int acl__cleanup(struct mosquitto_db *db, bool reload);
 static int unpwd__cleanup(struct mosquitto__unpwd **unpwd, bool reload);
 static int psk__file_parse(struct mosquitto_db *db);
@@ -41,11 +41,27 @@ int mosquitto_security_init_default(struct mosquitto_db *db, bool reload)
 	int rc;
 
 	/* Load username/password data if required. */
-	if(db->config->password_file){
-		rc = unpwd__file_parse(db);
-		if(rc){
-			log__printf(NULL, MOSQ_LOG_ERR, "Error opening password file \"%s\".", db->config->password_file);
-			return rc;
+	if(db->config->per_listener_settings){
+		for(int i=0; i<db->config->listener_count; i++){
+			char *pwf = db->config->listeners[i].security_options.password_file;
+			if(pwf){
+				rc = unpwd__file_parse(&db->config->listeners[i].unpwd, pwf);
+				if(rc){
+					log__printf(NULL, MOSQ_LOG_ERR, "Error opening password file \"%s\".", pwf);
+					return rc;
+				}
+			}
+		}
+	}else{
+		if(db->config->security_options.password_file){
+			char *pwf = db->config->security_options.password_file;
+			if(pwf){
+				rc = unpwd__file_parse(&db->unpwd, pwf);
+				if(rc){
+					log__printf(NULL, MOSQ_LOG_ERR, "Error opening password file \"%s\".", pwf);
+					return rc;
+				}
+			}
 		}
 	}
 
@@ -563,7 +579,7 @@ static int pwfile__parse(const char *file, struct mosquitto__unpwd **root)
 	return MOSQ_ERR_SUCCESS;
 }
 
-static int unpwd__file_parse(struct mosquitto_db *db)
+static int unpwd__file_parse(struct mosquitto__unpwd **unpwd, const char *password_file)
 {
 	int rc;
 #ifdef WITH_TLS
@@ -575,15 +591,15 @@ static int unpwd__file_parse(struct mosquitto_db *db)
 	unsigned int password_len;
 #endif
 
-	if(!db || !db->config) return MOSQ_ERR_INVAL;
+	if(!unpwd) return MOSQ_ERR_INVAL;
 
-	if(!db->config->password_file) return MOSQ_ERR_SUCCESS;
+	if(!password_file) return MOSQ_ERR_SUCCESS;
 
-	rc = pwfile__parse(db->config->password_file, &db->unpwd);
+	rc = pwfile__parse(password_file, unpwd);
 #ifdef WITH_TLS
 	if(rc) return rc;
 
-	HASH_ITER(hh, db->unpwd, u, tmp){
+	HASH_ITER(hh, *unpwd, u, tmp){
 		/* Need to decode password into hashed data + salt. */
 		if(u->password){
 			token = strtok(u->password, "$");
@@ -669,7 +685,7 @@ static int mosquitto__memcmp_const(const void *a, const void *b, size_t len)
 }
 
 
-int mosquitto_unpwd_check_default(struct mosquitto_db *db, const char *username, const char *password)
+int mosquitto_unpwd_check_default(struct mosquitto_db *db, struct mosquitto *context, const char *username, const char *password)
 {
 	struct mosquitto__unpwd *u, *tmp;
 #ifdef WITH_TLS
@@ -679,7 +695,12 @@ int mosquitto_unpwd_check_default(struct mosquitto_db *db, const char *username,
 #endif
 
 	if(!db) return MOSQ_ERR_INVAL;
-	if(!db->unpwd) return MOSQ_ERR_PLUGIN_DEFER;
+	if(db->config->per_listener_settings){
+		if(!context->listener) return MOSQ_ERR_INVAL;
+		if(!context->listener->unpwd) return MOSQ_ERR_PLUGIN_DEFER;
+	}else{
+		if(!db->unpwd) return MOSQ_ERR_PLUGIN_DEFER;
+	}
 	if(!username) return MOSQ_ERR_INVAL; /* Check must be made only after checking db->unpwd. */
 
 	HASH_ITER(hh, db->unpwd, u, tmp){

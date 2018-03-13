@@ -138,6 +138,21 @@ typedef union {
 
 typedef uint64_t dbid_t;
 
+struct mosquitto__auth_plugin_config
+{
+	char *path;
+	struct mosquitto_opt *options;
+	int option_count;
+	bool deny_special_chars;
+};
+
+struct mosquitto__security_options {
+	char *password_file;
+	char *psk_file;
+	struct mosquitto__auth_plugin_config *auth_plugins;
+	int auth_plugin_count;
+};
+
 struct mosquitto__listener {
 	int fd;
 	uint16_t port;
@@ -168,14 +183,8 @@ struct mosquitto__listener {
 	char *http_dir;
 	struct libwebsocket_protocols *ws_protocol;
 #endif
-};
-
-struct mosquitto__auth_plugin_config
-{
-	char *path;
-	struct mosquitto_opt *options;
-	int option_count;
-	bool deny_special_chars;
+	struct mosquitto__security_options security_options;
+	struct mosquitto__unpwd *unpwd;
 };
 
 struct mosquitto__config {
@@ -201,7 +210,6 @@ struct mosquitto__config {
 	char *log_file;
 	FILE *log_fptr;
 	uint32_t message_size_limit;
-	char *password_file;
 	bool persistence;
 	char *persistence_location;
 	char *persistence_file;
@@ -226,6 +234,7 @@ struct mosquitto__config {
 #endif
 	struct mosquitto__auth_plugin_config *auth_plugins;
 	int auth_plugin_count;
+	struct mosquitto__security_options security_options;
 };
 
 struct mosquitto__subleaf {
@@ -601,7 +610,7 @@ int mosquitto_security_init_default(struct mosquitto_db *db, bool reload);
 int mosquitto_security_apply_default(struct mosquitto_db *db);
 int mosquitto_security_cleanup_default(struct mosquitto_db *db, bool reload);
 int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int access);
-int mosquitto_unpwd_check_default(struct mosquitto_db *db, const char *username, const char *password);
+int mosquitto_unpwd_check_default(struct mosquitto_db *db, struct mosquitto *context, const char *username, const char *password);
 int mosquitto_psk_key_get_default(struct mosquitto_db *db, const char *hint, const char *identity, char *key, int max_key_len);
 
 /* ============================================================

@@ -96,6 +96,13 @@ static char *fgets_extending(char **buf, int *buflen, FILE *stream)
 }
 
 
+static void conf__set_cur_security_options(struct mosquitto__config *config, struct mosquitto__security_options **security_options)
+{
+	if(!(*security_options)){
+		(*security_options) = &config->security_options;
+	}
+}
+
 static int conf__attempt_resolve(const char *host, const char *text, int log, const char *msg)
 {
 	struct addrinfo gai_hints;
@@ -178,8 +185,8 @@ static void config__init_reload(struct mosquitto__config *config)
 	}
 #endif
 	config->log_timestamp = true;
-	mosquitto__free(config->password_file);
-	config->password_file = NULL;
+	mosquitto__free(config->security_options.password_file);
+	config->security_options.password_file = NULL;
 	config->persistence = false;
 	mosquitto__free(config->persistence_location);
 	config->persistence_location = NULL;
@@ -264,7 +271,7 @@ void config__cleanup(struct mosquitto__config *config)
 	mosquitto__free(config->auto_id_prefix);
 	mosquitto__free(config->clientid_prefixes);
 	mosquitto__free(config->config_file);
-	mosquitto__free(config->password_file);
+	mosquitto__free(config->security_options.password_file);
 	mosquitto__free(config->persistence_location);
 	mosquitto__free(config->persistence_file);
 	mosquitto__free(config->persistence_filepath);
@@ -627,6 +634,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 	int i;
 #endif
 	int lineno_ext;
+	struct mosquitto__security_options *cur_security_options = NULL;
 
 	*lineno = 0;
 
@@ -1442,13 +1450,18 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "password_file")){
+					conf__set_cur_security_options(config, &cur_security_options);
 					if(reload){
-						mosquitto__free(config->password_file);
-						config->password_file = NULL;
+						mosquitto__free(cur_security_options->password_file);
+						cur_security_options->password_file = NULL;
 					}
-					if(conf__parse_string(&token, "password_file", &config->password_file, saveptr)) return MOSQ_ERR_INVAL;
+					if(conf__parse_string(&token, "password_file", &cur_security_options->password_file, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "per_listener_settings")){
 					if(conf__parse_bool(&token, "per_listener_settings", &config->per_listener_settings, saveptr)) return MOSQ_ERR_INVAL;
+					if(cur_security_options && config->per_listener_settings){
+						log__printf(NULL, MOSQ_LOG_ERR, "Error: per_listener_settings must be set before any other security settings.");
+						return MOSQ_ERR_INVAL;
+					}
 				}else if(!strcmp(token, "persistence") || !strcmp(token, "retained_persistence")){
 					if(conf__parse_bool(&token, token, &config->persistence, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "persistence_file")){
