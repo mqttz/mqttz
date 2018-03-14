@@ -62,6 +62,7 @@ Broker:
   Closes #8.
 - Add set_tcp_nodelay option to allow Nagle's algorithm to be disabled on
   client sockets. Closes #433.
+- Maximum connections on Windows increased to 2048.
 
 Client library:
 - Outgoing messages with QoS>1 are no longer retried after a timeout period.
