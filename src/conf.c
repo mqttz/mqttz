@@ -150,7 +150,7 @@ static void config__init_reload(struct mosquitto__config *config)
 	/* Set defaults */
 	mosquitto__free(config->acl_file);
 	config->acl_file = NULL;
-	config->allow_anonymous = true;
+	config->security_options.allow_anonymous = true;
 	config->allow_duplicate_messages = false;
 	config->allow_zero_length_clientid = true;
 	config->auto_id_prefix = NULL;
@@ -696,7 +696,8 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "allow_anonymous")){
-					if(conf__parse_bool(&token, "allow_anonymous", &config->allow_anonymous, saveptr)) return MOSQ_ERR_INVAL;
+					conf__set_cur_security_options(config, cur_listener, &cur_security_options);
+					if(conf__parse_bool(&token, "allow_anonymous", &cur_security_options->allow_anonymous, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "allow_duplicate_messages")){
 					if(conf__parse_bool(&token, "allow_duplicate_messages", &config->allow_duplicate_messages, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "allow_zero_length_clientid")){
@@ -1183,6 +1184,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 						}
 						cur_listener = &config->listeners[config->listener_count-1];
 						memset(cur_listener, 0, sizeof(struct mosquitto__listener));
+						cur_listener->security_options.allow_anonymous = true;
 						cur_listener->protocol = mp_mqtt;
 						cur_listener->port = tmp_int;
 						token = strtok_r(NULL, "", &saveptr);

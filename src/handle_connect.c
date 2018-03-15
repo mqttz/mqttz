@@ -134,6 +134,10 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 
 	G_CONNECTION_COUNT_INC();
 
+	if(!context->listener){
+		return MOSQ_ERR_INVAL;
+	}
+
 	/* Don't accept multiple CONNECT commands. */
 	if(context->state != mosq_cs_new){
 		rc = MOSQ_ERR_PROTOCOL;
@@ -279,7 +283,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			goto handle_connect_error;
 		}
 
-		if(context->listener && context->listener->mount_point){
+		if(context->listener->mount_point){
 			slen = strlen(context->listener->mount_point) + strlen(will_topic) + 1;
 			will_topic_mount = mosquitto__malloc(slen+1);
 			if(!will_topic_mount){
@@ -465,10 +469,14 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			password = NULL;
 		}
 
-		if(!username_flag && db->config->allow_anonymous == false){
-			send__connack(context, 0, CONNACK_REFUSED_NOT_AUTHORIZED);
-			rc = 1;
-			goto handle_connect_error;
+		if(!username_flag){
+			if((db->config->per_listener_settings && context->listener->security_options.allow_anonymous == false)
+					|| (!db->config->per_listener_settings && db->config->security_options.allow_anonymous == false)){
+
+				send__connack(context, 0, CONNACK_REFUSED_NOT_AUTHORIZED);
+				rc = 1;
+				goto handle_connect_error;
+			}
 		}
 #ifdef WITH_TLS
 	}

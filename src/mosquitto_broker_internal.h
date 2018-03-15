@@ -151,6 +151,7 @@ struct mosquitto__security_options {
 	char *psk_file;
 	struct mosquitto__auth_plugin_config *auth_plugins;
 	int auth_plugin_count;
+	bool allow_anonymous;
 };
 
 struct mosquitto__listener {
@@ -190,7 +191,6 @@ struct mosquitto__listener {
 struct mosquitto__config {
 	char *config_file;
 	char *acl_file;
-	bool allow_anonymous;
 	bool allow_duplicate_messages;
 	bool allow_zero_length_clientid;
 	char *auto_id_prefix;
