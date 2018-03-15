@@ -101,6 +101,8 @@ Clients:
 - Connections now default to using MQTT v3.1.1.
 - Default to using port 8883 when using TLS.
 - Correctly handle empty files with "mosquitto_pub -l". Closes #676.
+- mosquitto_sub doesn't continue to keep connecting if CONNACK tells it the
+  connection was refused.
 
 Build:
 - Add WITH_STRIP option (defaulting to "no") that when set to "yes" will strip

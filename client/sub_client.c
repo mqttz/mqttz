@@ -367,6 +367,7 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 		if(result && !cfg->quiet){
 			fprintf(stderr, "%s\n", mosquitto_connack_string(result));
 		}
+		mosquitto_disconnect(mosq);
 	}
 }
 
