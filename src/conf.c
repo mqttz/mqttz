@@ -228,39 +228,10 @@ void config__init(struct mosquitto__config *config)
 	config__init_reload(config);
 	config->config_file = NULL;
 	config->daemon = false;
-	config->default_listener.host = NULL;
-	config->default_listener.port = 0;
+	memset(&config->default_listener, 0, sizeof(struct mosquitto__listener));
 	config->default_listener.max_connections = -1;
-	config->default_listener.mount_point = NULL;
-	config->default_listener.socks = NULL;
-	config->default_listener.sock_count = 0;
-	config->default_listener.client_count = 0;
 	config->default_listener.protocol = mp_mqtt;
-	config->default_listener.use_username_as_clientid = false;
-#ifdef WITH_TLS
-	config->default_listener.tls_version = NULL;
-	config->default_listener.cafile = NULL;
-	config->default_listener.capath = NULL;
-	config->default_listener.certfile = NULL;
-	config->default_listener.keyfile = NULL;
-	config->default_listener.ciphers = NULL;
-	config->default_listener.psk_hint = NULL;
-	config->default_listener.require_certificate = false;
-	config->default_listener.crlfile = NULL;
-	config->default_listener.use_identity_as_username = false;
-	config->default_listener.use_subject_as_username = false;
-#endif
-	config->listeners = NULL;
-	config->listener_count = 0;
-	config->pid_file = NULL;
-	config->user = NULL;
-#ifdef WITH_BRIDGE
-	config->bridges = NULL;
-	config->bridge_count = 0;
-#endif
-	config->auth_plugins = NULL;
-	config->verbose = false;
-	config->message_size_limit = 0;
+	config->default_listener.security_options.allow_anonymous = -1;
 }
 
 void config__cleanup(struct mosquitto__config *config)
@@ -461,7 +432,12 @@ int config__parse_args(struct mosquitto__config *config, int argc, char *argv[])
 			|| config->default_listener.port
 			|| config->default_listener.max_connections != -1
 			|| config->default_listener.mount_point
-			|| config->default_listener.protocol != mp_mqtt){
+			|| config->default_listener.protocol != mp_mqtt
+			|| config->default_listener.security_options.password_file
+			|| config->default_listener.security_options.psk_file
+			|| config->default_listener.security_options.auth_plugin_count
+			|| config->default_listener.security_options.allow_anonymous != -1
+			){
 
 		config->listener_count++;
 		config->listeners = mosquitto__realloc(config->listeners, sizeof(struct mosquitto__listener)*config->listener_count);
@@ -506,6 +482,11 @@ int config__parse_args(struct mosquitto__config *config, int argc, char *argv[])
 		config->listeners[config->listener_count-1].use_identity_as_username = config->default_listener.use_identity_as_username;
 		config->listeners[config->listener_count-1].use_subject_as_username = config->default_listener.use_subject_as_username;
 #endif
+		config->listeners[config->listener_count-1].security_options.password_file = config->default_listener.security_options.password_file;
+		config->listeners[config->listener_count-1].security_options.psk_file = config->default_listener.security_options.psk_file;
+		config->listeners[config->listener_count-1].security_options.auth_plugins = config->default_listener.security_options.auth_plugins;
+		config->listeners[config->listener_count-1].security_options.auth_plugin_count = config->default_listener.security_options.auth_plugin_count;
+		config->listeners[config->listener_count-1].security_options.allow_anonymous = config->default_listener.security_options.allow_anonymous;
 	}
 
 	/* Default to drop to mosquitto user if we are privileged and no user specified. */
