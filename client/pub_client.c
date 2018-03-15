@@ -246,7 +246,7 @@ void print_usage(void)
 	printf(" -M : the maximum inflight messages for QoS 1/2..\n");
 	printf(" -n : send a null (zero length) message.\n");
 	printf(" -p : network port to connect to. Defaults to 1883 for plain MQTT and 8883 for MQTT over TLS.\n");
-	printf(" -P : provide a password (requires MQTT 3.1 broker)\n");
+	printf(" -P : provide a password\n");
 	printf(" -q : quality of service level to use for all messages. Defaults to 0.\n");
 	printf(" -r : message should be retained.\n");
 	printf(" -s : read message from stdin, sending the entire input as a message.\n");
@@ -254,7 +254,7 @@ void print_usage(void)
 	printf(" -S : use SRV lookups to determine which host to connect to.\n");
 #endif
 	printf(" -t : mqtt topic to publish to.\n");
-	printf(" -u : provide a username (requires MQTT 3.1 broker)\n");
+	printf(" -u : provide a username\n");
 	printf(" -V : specify the version of the MQTT protocol to use when connecting.\n");
 	printf("      Can be mqttv31 or mqttv311. Defaults to mqttv311.\n");
 	printf(" --help : display this message.\n");
