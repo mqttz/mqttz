@@ -147,11 +147,15 @@ struct mosquitto__auth_plugin_config
 };
 
 struct mosquitto__security_options {
+	/* Any options that get added here also need considering
+	 * in config__read() with regards whether allow_anonymous
+	 * should be disabled when these options are set.
+	 */
 	char *password_file;
 	char *psk_file;
 	struct mosquitto__auth_plugin_config *auth_plugins;
 	int auth_plugin_count;
-	bool allow_anonymous;
+	char allow_anonymous;
 };
 
 struct mosquitto__listener {

@@ -161,8 +161,12 @@
 						connect without providing a username are allowed to
 						connect. If set to <replaceable>false</replaceable>
 						then another means of connection should be created to
-						control authenticated client access.  Defaults to
-						<replaceable>true</replaceable>.</para>
+						control authenticated client access.</para>
+					<para>Defaults to <replaceable>true</replaceable> if no
+						other security options are set. If any other
+						authentication options are set, then
+						<option>allow_anonymous</option> defaults to
+						<replaceable>false</replaceable>.</para>
 					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>

@@ -64,6 +64,12 @@ Broker:
   Closes #8.
 - Add set_tcp_nodelay option to allow Nagle's algorithm to be disabled on
   client sockets. Closes #433.
+- The behaviour of allow_anonymous has changed. In the old behaviour, the
+  default if not set was to allow anonymous access. The new behaviour is to
+  default is to allow anonymous access unless another security option is set.
+  For example, if password_file is set and allow_anonymous is not set, then
+  anonymous access will be denied. It is still possible to allow anonymous
+  access by setting it explicitly.
 
 Client library:
 - Outgoing messages with QoS>1 are no longer retried after a timeout period.

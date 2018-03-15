@@ -150,7 +150,7 @@ static void config__init_reload(struct mosquitto__config *config)
 	/* Set defaults */
 	mosquitto__free(config->acl_file);
 	config->acl_file = NULL;
-	config->security_options.allow_anonymous = true;
+	config->security_options.allow_anonymous = -1;
 	config->allow_duplicate_messages = false;
 	config->allow_zero_length_clientid = true;
 	config->auto_id_prefix = NULL;
@@ -524,9 +524,7 @@ int config__read(struct mosquitto__config *config, bool reload)
 	struct config_recurse cr;
 	int lineno = 0;
 	int len;
-#ifdef WITH_BRIDGE
 	int i;
-#endif
 
 	cr.log_dest = MQTT3_LOG_NONE;
 	cr.log_dest_set = 0;
@@ -549,6 +547,40 @@ int config__read(struct mosquitto__config *config, bool reload)
 		return rc;
 	}
 
+	/* If auth/access options are set and allow_anonymous not explicitly set, disallow anon. */
+	if(config->per_listener_settings){
+		for(i=0; i<config->listener_count; i++){
+			if(config->listeners[i].security_options.allow_anonymous == -1){
+				if(config->listeners[i].security_options.password_file
+					|| config->listeners[i].security_options.psk_file
+					|| config->listeners[i].security_options.auth_plugins){
+
+					/* allow_anonymous not set explicitly, some other security options
+					* have been set - so disable allow_anonymous
+					*/
+					config->listeners[i].security_options.allow_anonymous = false;
+				}else{
+					/* Default option if no security options set */
+					config->listeners[i].security_options.allow_anonymous = true;
+				}
+			}
+		}
+	}else{
+		if(config->security_options.allow_anonymous == -1){
+			if(config->security_options.password_file
+				 || config->security_options.psk_file
+				 || config->security_options.auth_plugins){
+
+				/* allow_anonymous not set explicitly, some other security options
+				* have been set - so disable allow_anonymous
+				*/
+				config->security_options.allow_anonymous = false;
+			}else{
+				/* Default option if no security options set */
+				config->security_options.allow_anonymous = true;
+			}
+		}
+	}
 #ifdef WITH_PERSISTENCE
 	if(config->persistence){
 		if(!config->persistence_file){
@@ -697,7 +729,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 #endif
 				}else if(!strcmp(token, "allow_anonymous")){
 					conf__set_cur_security_options(config, cur_listener, &cur_security_options);
-					if(conf__parse_bool(&token, "allow_anonymous", &cur_security_options->allow_anonymous, saveptr)) return MOSQ_ERR_INVAL;
+					if(conf__parse_bool(&token, "allow_anonymous", (bool *)&cur_security_options->allow_anonymous, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "allow_duplicate_messages")){
 					if(conf__parse_bool(&token, "allow_duplicate_messages", &config->allow_duplicate_messages, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "allow_zero_length_clientid")){
@@ -1184,7 +1216,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 						}
 						cur_listener = &config->listeners[config->listener_count-1];
 						memset(cur_listener, 0, sizeof(struct mosquitto__listener));
-						cur_listener->security_options.allow_anonymous = true;
+						cur_listener->security_options.allow_anonymous = -1;
 						cur_listener->protocol = mp_mqtt;
 						cur_listener->port = tmp_int;
 						token = strtok_r(NULL, "", &saveptr);
