@@ -91,8 +91,16 @@ int mosquitto_security_cleanup_default(struct mosquitto_db *db, bool reload)
 	int rc;
 	rc = acl__cleanup(db, reload);
 	if(rc != MOSQ_ERR_SUCCESS) return rc;
+
 	rc = unpwd__cleanup(&db->unpwd, reload);
 	if(rc != MOSQ_ERR_SUCCESS) return rc;
+
+	for(int i=0; i<db->config->listener_count; i++){
+		if(db->config->listeners[i].unpwd){
+			rc = unpwd__cleanup(&db->config->listeners[i].unpwd, reload);
+		}
+	}
+
 	return unpwd__cleanup(&db->psk_id, reload);
 }
 
