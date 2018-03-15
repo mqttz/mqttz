@@ -688,6 +688,7 @@ static int mosquitto__memcmp_const(const void *a, const void *b, size_t len)
 int mosquitto_unpwd_check_default(struct mosquitto_db *db, struct mosquitto *context, const char *username, const char *password)
 {
 	struct mosquitto__unpwd *u, *tmp;
+	struct mosquitto__unpwd *unpwd_ref;
 #ifdef WITH_TLS
 	unsigned char hash[EVP_MAX_MD_SIZE];
 	unsigned int hash_len;
@@ -698,12 +699,14 @@ int mosquitto_unpwd_check_default(struct mosquitto_db *db, struct mosquitto *con
 	if(db->config->per_listener_settings){
 		if(!context->listener) return MOSQ_ERR_INVAL;
 		if(!context->listener->unpwd) return MOSQ_ERR_PLUGIN_DEFER;
+		unpwd_ref = context->listener->unpwd;
 	}else{
 		if(!db->unpwd) return MOSQ_ERR_PLUGIN_DEFER;
+		unpwd_ref = db->unpwd;
 	}
-	if(!username) return MOSQ_ERR_INVAL; /* Check must be made only after checking db->unpwd. */
+	if(!username) return MOSQ_ERR_INVAL; /* Check must be made only after checking unpwd_ref. */
 
-	HASH_ITER(hh, db->unpwd, u, tmp){
+	HASH_ITER(hh, unpwd_ref, u, tmp){
 		if(!strcmp(u->username, username)){
 			if(u->password){
 				if(password){

@@ -96,9 +96,11 @@ static char *fgets_extending(char **buf, int *buflen, FILE *stream)
 }
 
 
-static void conf__set_cur_security_options(struct mosquitto__config *config, struct mosquitto__security_options **security_options)
+static void conf__set_cur_security_options(struct mosquitto__config *config, struct mosquitto__listener *cur_listener, struct mosquitto__security_options **security_options)
 {
-	if(!(*security_options)){
+	if(config->per_listener_settings){
+		(*security_options) = &cur_listener->security_options;
+	}else{
 		(*security_options) = &config->security_options;
 	}
 }
@@ -1450,7 +1452,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "password_file")){
-					conf__set_cur_security_options(config, &cur_security_options);
+					conf__set_cur_security_options(config, cur_listener, &cur_security_options);
 					if(reload){
 						mosquitto__free(cur_security_options->password_file);
 						cur_security_options->password_file = NULL;
