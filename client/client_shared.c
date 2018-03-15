@@ -71,7 +71,7 @@ static int check_format(struct mosq_config *cfg, const char *str)
 					// JSON output, assuming JSON payload
 				}else if(str[i+1] == 'U'){
 					// Unix time+nanoseconds
-				}else if(str[i+1] == 'x'){
+				}else if(str[i+1] == 'x' || str[i+1] == 'X'){
 					// payload in hex
 				}else{
 					fprintf(stderr, "Error: Invalid format specifier '%c'.\n", str[i+1]);

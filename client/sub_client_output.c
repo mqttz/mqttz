@@ -65,15 +65,19 @@ static int get_time(struct tm **ti, long *ns)
 }
 
 
-static void write_payload(const unsigned char *payload, int payloadlen, bool hex)
+static void write_payload(const unsigned char *payload, int payloadlen, int hex)
 {
 	int i;
 
-	if(!hex){
+	if(hex == 0){
 		(void)fwrite(payload, 1, payloadlen, stdout);
-	}else{
+	}else if(hex == 1){
 		for(i=0; i<payloadlen; i++){
 			fprintf(stdout, "%x", payload[i]);
+		}
+	}else if(hex == 2){
+		for(i=0; i<payloadlen; i++){
+			fprintf(stdout, "%X", payload[i]);
 		}
 	}
 }
@@ -108,7 +112,7 @@ static void json_print(const struct mosquitto_message *message, const struct tm 
 		fputs("\"}", stdout);
 	}else{
 		fputs("\"payload\":", stdout);
-		write_payload(message->payload, message->payloadlen, false);
+		write_payload(message->payload, message->payloadlen, 0);
 		fputs("}", stdout);
 	}
 }
@@ -175,7 +179,7 @@ static void formatted_print(const struct mosq_config *cfg, const struct mosquitt
 						break;
 
 					case 'p':
-						write_payload(message->payload, message->payloadlen, false);
+						write_payload(message->payload, message->payloadlen, 0);
 						break;
 
 					case 'q':
@@ -207,7 +211,11 @@ static void formatted_print(const struct mosq_config *cfg, const struct mosquitt
 						break;
 
 					case 'x':
-						write_payload(message->payload, message->payloadlen, true);
+						write_payload(message->payload, message->payloadlen, 1);
+						break;
+
+					case 'X':
+						write_payload(message->payload, message->payloadlen, 2);
 						break;
 				}
 			}

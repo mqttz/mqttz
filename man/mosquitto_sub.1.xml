@@ -593,7 +593,8 @@
 				<listitem><para><option>%q</option> the message QoS.</para></listitem>
 				<listitem><para><option>%r</option> the retained flag for the message.</para></listitem>
 				<listitem><para><option>%t</option> the message topic.</para></listitem>
-				<listitem><para><option>%x</option> the payload with each byte as a hexadecimal number.</para></listitem>
+				<listitem><para><option>%x</option> the payload with each byte as a hexadecimal number (lower case).</para></listitem>
+				<listitem><para><option>%X</option> the payload with each byte as a hexadecimal number (upper case).</para></listitem>
 			</itemizedlist>
 		</refsect2>
 
