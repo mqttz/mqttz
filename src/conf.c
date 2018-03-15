@@ -195,8 +195,8 @@ static void config__init_reload(struct mosquitto__config *config)
 	mosquitto__free(config->persistence_file);
 	config->persistence_file = NULL;
 	config->persistent_client_expiration = 0;
-	mosquitto__free(config->psk_file);
-	config->psk_file = NULL;
+	mosquitto__free(config->security_options.psk_file);
+	config->security_options.psk_file = NULL;
 	config->queue_qos0_messages = false;
 	config->set_tcp_nodelay = false;
 	config->sys_interval = 10;
@@ -277,7 +277,7 @@ void config__cleanup(struct mosquitto__config *config)
 	mosquitto__free(config->persistence_location);
 	mosquitto__free(config->persistence_file);
 	mosquitto__free(config->persistence_filepath);
-	mosquitto__free(config->psk_file);
+	mosquitto__free(config->security_options.psk_file);
 	mosquitto__free(config->pid_file);
 	if(config->listeners){
 		for(i=0; i<config->listener_count; i++){
@@ -1576,11 +1576,12 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 					}
 				}else if(!strcmp(token, "psk_file")){
 #ifdef REAL_WITH_TLS_PSK
+					conf__set_cur_security_options(config, cur_listener, &cur_security_options);
 					if(reload){
-						mosquitto__free(config->psk_file);
-						config->psk_file = NULL;
+						mosquitto__free(cur_security_options->psk_file);
+						cur_security_options->psk_file = NULL;
 					}
-					if(conf__parse_string(&token, "psk_file", &config->psk_file, saveptr)) return MOSQ_ERR_INVAL;
+					if(conf__parse_string(&token, "psk_file", &cur_security_options->psk_file, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS/TLS-PSK support not available.");
 #endif

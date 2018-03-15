@@ -190,6 +190,7 @@ struct mosquitto__listener {
 #endif
 	struct mosquitto__security_options security_options;
 	struct mosquitto__unpwd *unpwd;
+	struct mosquitto__unpwd *psk_id;
 };
 
 struct mosquitto__config {
@@ -220,7 +221,6 @@ struct mosquitto__config {
 	char *persistence_filepath;
 	time_t persistent_client_expiration;
 	char *pid_file;
-	char *psk_file;
 	bool queue_qos0_messages;
 	bool per_listener_settings;
 	bool set_tcp_nodelay;
@@ -615,7 +615,7 @@ int mosquitto_security_apply_default(struct mosquitto_db *db);
 int mosquitto_security_cleanup_default(struct mosquitto_db *db, bool reload);
 int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int access);
 int mosquitto_unpwd_check_default(struct mosquitto_db *db, struct mosquitto *context, const char *username, const char *password);
-int mosquitto_psk_key_get_default(struct mosquitto_db *db, const char *hint, const char *identity, char *key, int max_key_len);
+int mosquitto_psk_key_get_default(struct mosquitto_db *db, struct mosquitto *context, const char *hint, const char *identity, char *key, int max_key_len);
 
 /* ============================================================
  * Window service and signal related functions

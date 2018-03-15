@@ -27,7 +27,7 @@ static int aclfile__parse(struct mosquitto_db *db);
 static int unpwd__file_parse(struct mosquitto__unpwd **unpwd, const char *password_file);
 static int acl__cleanup(struct mosquitto_db *db, bool reload);
 static int unpwd__cleanup(struct mosquitto__unpwd **unpwd, bool reload);
-static int psk__file_parse(struct mosquitto_db *db);
+static int psk__file_parse(struct mosquitto_db *db, struct mosquitto__unpwd **psk_id, const char *psk_file);
 #ifdef WITH_TLS
 static int pw__digest(const char *password, const unsigned char *salt, unsigned int salt_len, unsigned char *hash, unsigned int *hash_len);
 static int base64__decode(char *in, unsigned char **decoded, unsigned int *decoded_len);
@@ -75,11 +75,25 @@ int mosquitto_security_init_default(struct mosquitto_db *db, bool reload)
 	}
 
 	/* Load psk data if required. */
-	if(db->config->psk_file){
-		rc = psk__file_parse(db);
-		if(rc){
-			log__printf(NULL, MOSQ_LOG_ERR, "Error opening psk file \"%s\".", db->config->psk_file);
-			return rc;
+	if(db->config->per_listener_settings){
+		for(int i=0; i<db->config->listener_count; i++){
+			char *pskf = db->config->listeners[i].security_options.psk_file;
+			if(pskf){
+				rc = psk__file_parse(db, &db->config->listeners[i].psk_id, pskf);
+				if(rc){
+					log__printf(NULL, MOSQ_LOG_ERR, "Error opening psk file \"%s\".", pskf);
+					return rc;
+				}
+			}
+		}
+	}else{
+		char *pskf = db->config->security_options.psk_file;
+		if(pskf){
+			rc = psk__file_parse(db, &db->psk_id, pskf);
+			if(rc){
+				log__printf(NULL, MOSQ_LOG_ERR, "Error opening psk file \"%s\".", pskf);
+				return rc;
+			}
 		}
 	}
 
@@ -98,10 +112,21 @@ int mosquitto_security_cleanup_default(struct mosquitto_db *db, bool reload)
 	for(int i=0; i<db->config->listener_count; i++){
 		if(db->config->listeners[i].unpwd){
 			rc = unpwd__cleanup(&db->config->listeners[i].unpwd, reload);
+			if(rc != MOSQ_ERR_SUCCESS) return rc;
 		}
 	}
 
-	return unpwd__cleanup(&db->psk_id, reload);
+	rc = unpwd__cleanup(&db->psk_id, reload);
+	if(rc != MOSQ_ERR_SUCCESS) return rc;
+
+	for(int i=0; i<db->config->listener_count; i++){
+		if(db->config->listeners[i].psk_id){
+			rc = unpwd__cleanup(&db->config->listeners[i].psk_id, reload);
+			if(rc != MOSQ_ERR_SUCCESS) return rc;
+		}
+	}
+
+	return MOSQ_ERR_SUCCESS;
 }
 
 
@@ -649,20 +674,20 @@ static int unpwd__file_parse(struct mosquitto__unpwd **unpwd, const char *passwo
 	return rc;
 }
 
-static int psk__file_parse(struct mosquitto_db *db)
+static int psk__file_parse(struct mosquitto_db *db, struct mosquitto__unpwd **psk_id, const char *psk_file)
 {
 	int rc;
 	struct mosquitto__unpwd *u, *tmp;
 
-	if(!db || !db->config) return MOSQ_ERR_INVAL;
+	if(!db || !db->config || !psk_id) return MOSQ_ERR_INVAL;
 
 	/* We haven't been asked to parse a psk file. */
-	if(!db->config->psk_file) return MOSQ_ERR_SUCCESS;
+	if(!psk_file) return MOSQ_ERR_SUCCESS;
 
-	rc = pwfile__parse(db->config->psk_file, &db->psk_id);
+	rc = pwfile__parse(psk_file, psk_id);
 	if(rc) return rc;
 
-	HASH_ITER(hh, db->psk_id, u, tmp){
+	HASH_ITER(hh, (*psk_id), u, tmp){
 		/* Check for hex only digits */
 		if(!u->password){
 			log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty psk for identity \"%s\".", u->username);
@@ -704,6 +729,7 @@ int mosquitto_unpwd_check_default(struct mosquitto_db *db, struct mosquitto *con
 #endif
 
 	if(!db) return MOSQ_ERR_INVAL;
+
 	if(db->config->per_listener_settings){
 		if(!context->listener) return MOSQ_ERR_INVAL;
 		if(!context->listener->unpwd) return MOSQ_ERR_PLUGIN_DEFER;
@@ -825,14 +851,24 @@ int mosquitto_security_apply_default(struct mosquitto_db *db)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto_psk_key_get_default(struct mosquitto_db *db, const char *hint, const char *identity, char *key, int max_key_len)
+int mosquitto_psk_key_get_default(struct mosquitto_db *db, struct mosquitto *context, const char *hint, const char *identity, char *key, int max_key_len)
 {
 	struct mosquitto__unpwd *u, *tmp;
+	struct mosquitto__unpwd *psk_id_ref = NULL;
 
 	if(!db || !hint || !identity || !key) return MOSQ_ERR_INVAL;
-	if(!db->psk_id) return MOSQ_ERR_PLUGIN_DEFER;
 
-	HASH_ITER(hh, db->psk_id, u, tmp){
+	if(db->config->per_listener_settings){
+		if(!context->listener) return MOSQ_ERR_INVAL;
+		if(!context->listener->psk_id) return MOSQ_ERR_PLUGIN_DEFER;
+		psk_id_ref = context->listener->psk_id;
+	}else{
+		if(!db->psk_id) return MOSQ_ERR_PLUGIN_DEFER;
+		psk_id_ref = db->psk_id;
+	}
+	if(!psk_id_ref) return MOSQ_ERR_PLUGIN_DEFER;
+
+	HASH_ITER(hh, psk_id_ref, u, tmp){
 		if(!strcmp(u->username, identity)){
 			strncpy(key, u->password, max_key_len);
 			return MOSQ_ERR_SUCCESS;
