@@ -240,7 +240,13 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			mosquitto__free(client_id);
 			client_id = NULL;
 
-			if(clean_session == 0 || db->config->allow_zero_length_clientid == false){
+			bool allow_zero_length_clientid;
+			if(db->config->per_listener_settings){
+				allow_zero_length_clientid = context->listener->security_options.allow_zero_length_clientid;
+			}else{
+				allow_zero_length_clientid = db->config->security_options.allow_zero_length_clientid;
+			}
+			if(clean_session == 0 || allow_zero_length_clientid == false){
 				send__connack(context, 0, CONNACK_REFUSED_IDENTIFIER_REJECTED);
 				rc = MOSQ_ERR_PROTOCOL;
 				goto handle_connect_error;
