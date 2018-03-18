@@ -153,8 +153,8 @@ static void config__init_reload(struct mosquitto__config *config)
 	config->security_options.allow_anonymous = -1;
 	config->allow_duplicate_messages = false;
 	config->allow_zero_length_clientid = true;
-	config->auto_id_prefix = NULL;
-	config->auto_id_prefix_len = 0;
+	config->security_options.auto_id_prefix = NULL;
+	config->security_options.auto_id_prefix_len = 0;
 	config->autosave_interval = 1800;
 	config->autosave_on_changes = false;
 	mosquitto__free(config->clientid_prefixes);
@@ -241,7 +241,7 @@ void config__cleanup(struct mosquitto__config *config)
 	struct mosquitto__auth_plugin_config *plug;
 
 	mosquitto__free(config->acl_file);
-	mosquitto__free(config->auto_id_prefix);
+	mosquitto__free(config->security_options.auto_id_prefix);
 	mosquitto__free(config->clientid_prefixes);
 	mosquitto__free(config->config_file);
 	mosquitto__free(config->security_options.password_file);
@@ -776,11 +776,12 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 					}
 					if(conf__parse_bool(&token, "auth_plugin_deny_special_chars", &cur_auth_plugin->deny_special_chars, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "auto_id_prefix")){
-					if(conf__parse_string(&token, "auto_id_prefix", &config->auto_id_prefix, saveptr)) return MOSQ_ERR_INVAL;
-					if(config->auto_id_prefix){
-						config->auto_id_prefix_len = strlen(config->auto_id_prefix);
+					conf__set_cur_security_options(config, cur_listener, &cur_security_options);
+					if(conf__parse_string(&token, "auto_id_prefix", &cur_security_options->auto_id_prefix, saveptr)) return MOSQ_ERR_INVAL;
+					if(cur_security_options->auto_id_prefix){
+						cur_security_options->auto_id_prefix_len = strlen(cur_security_options->auto_id_prefix);
 					}else{
-						config->auto_id_prefix_len = 0;
+						cur_security_options->auto_id_prefix_len = 0;
 					}
 				}else if(!strcmp(token, "autosave_interval")){
 					if(conf__parse_int(&token, "autosave_interval", &config->autosave_interval, saveptr)) return MOSQ_ERR_INVAL;
