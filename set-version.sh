@@ -14,3 +14,4 @@ sed -i "s/^set (VERSION .*)/set (VERSION ${MAJOR}.${MINOR}.${REVISION})/" CMakeL
 
 sed -i "s/^!define VERSION .*/!define VERSION ${MAJOR}.${MINOR}.${REVISION}/" installer/*.nsi
 
+sed -i "s/^version: .*/version: ${MAJOR}.${MINOR}.${REVISION}/" snap/snapcraft.yaml
