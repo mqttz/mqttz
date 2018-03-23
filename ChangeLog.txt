@@ -70,6 +70,7 @@ Broker:
   For example, if password_file is set and allow_anonymous is not set, then
   anonymous access will be denied. It is still possible to allow anonymous
   access by setting it explicitly.
+- Maximum connections on Windows increased to 2048.
 
 Client library:
 - Outgoing messages with QoS>1 are no longer retried after a timeout period.
@@ -97,6 +98,7 @@ Client library:
 - No need to close socket again if setting non-blocking failed. Closes #649.
 - Fix mosquitto_topic_matches_sub() not correctly matching foo/bar against
   foo/+/#. Closes #670.
+- SNI host support added.
 
 Clients:
 - Add -F to mosquitto_sub to allow the user to choose the output format.
