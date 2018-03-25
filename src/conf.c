@@ -435,7 +435,7 @@ int config__parse_args(struct mosquitto__config *config, int argc, char *argv[])
 			|| config->default_listener.protocol != mp_mqtt
 			|| config->default_listener.security_options.password_file
 			|| config->default_listener.security_options.psk_file
-			|| config->default_listener.security_options.auth_plugin_count
+			|| config->default_listener.security_options.auth_plugin_config_count
 			|| config->default_listener.security_options.allow_anonymous != -1
 			){
 
@@ -484,8 +484,8 @@ int config__parse_args(struct mosquitto__config *config, int argc, char *argv[])
 #endif
 		config->listeners[config->listener_count-1].security_options.password_file = config->default_listener.security_options.password_file;
 		config->listeners[config->listener_count-1].security_options.psk_file = config->default_listener.security_options.psk_file;
-		config->listeners[config->listener_count-1].security_options.auth_plugins = config->default_listener.security_options.auth_plugins;
-		config->listeners[config->listener_count-1].security_options.auth_plugin_count = config->default_listener.security_options.auth_plugin_count;
+		config->listeners[config->listener_count-1].security_options.auth_plugin_configs = config->default_listener.security_options.auth_plugin_configs;
+		config->listeners[config->listener_count-1].security_options.auth_plugin_config_count = config->default_listener.security_options.auth_plugin_config_count;
 		config->listeners[config->listener_count-1].security_options.allow_anonymous = config->default_listener.security_options.allow_anonymous;
 	}
 
@@ -534,7 +534,7 @@ int config__read(struct mosquitto__config *config, bool reload)
 			if(config->listeners[i].security_options.allow_anonymous == -1){
 				if(config->listeners[i].security_options.password_file
 					|| config->listeners[i].security_options.psk_file
-					|| config->listeners[i].security_options.auth_plugins){
+					|| config->listeners[i].security_options.auth_plugin_configs){
 
 					/* allow_anonymous not set explicitly, some other security options
 					* have been set - so disable allow_anonymous
@@ -550,7 +550,7 @@ int config__read(struct mosquitto__config *config, bool reload)
 		if(config->security_options.allow_anonymous == -1){
 			if(config->security_options.password_file
 				 || config->security_options.psk_file
-				 || config->security_options.auth_plugins){
+				 || config->security_options.auth_plugin_configs){
 
 				/* allow_anonymous not set explicitly, some other security options
 				* have been set - so disable allow_anonymous

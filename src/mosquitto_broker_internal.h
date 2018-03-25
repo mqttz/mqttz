@@ -153,8 +153,8 @@ struct mosquitto__security_options {
 	 */
 	char *password_file;
 	char *psk_file;
-	struct mosquitto__auth_plugin_config *auth_plugins;
-	int auth_plugin_count;
+	struct mosquitto__auth_plugin_config *auth_plugin_configs;
+	int auth_plugin_config_count;
 	char allow_anonymous;
 };
 
