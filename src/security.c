@@ -262,7 +262,7 @@ static int security__module_init_single(struct mosquitto_db *db, struct mosquitt
 
 int mosquitto_security_module_init(struct mosquitto_db *db)
 {
-	int rc;
+	int rc = MOSQ_ERR_SUCCESS;
 	int i;
 
 	if(db->config->per_listener_settings){
