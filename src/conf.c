@@ -722,6 +722,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 						return MOSQ_ERR_NOMEM;
 					}else if(STREMPTY(key)){
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid auth_opt_ config option.");
+						mosquitto__free(key);
 						return MOSQ_ERR_INVAL;
 					}
 					token += 9+strlen(key)+1;
@@ -733,6 +734,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 						cur_auth_plugin_config->options = mosquitto__realloc(cur_auth_plugin_config->options, cur_auth_plugin_config->option_count*sizeof(struct mosquitto_auth_opt));
 						if(!cur_auth_plugin_config->options){
 							log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+							mosquitto__free(key);
 							return MOSQ_ERR_NOMEM;
 						}
 						cur_auth_plugin_config->options[cur_auth_plugin_config->option_count-1].key = key;
