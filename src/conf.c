@@ -742,6 +742,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 						}
 					}else{
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty %s value in configuration.", key);
+						mosquitto__free(key);
 						return MOSQ_ERR_INVAL;
 					}
 				}else if(!strcmp(token, "auth_plugin")){
@@ -1907,6 +1908,7 @@ int config__read_file(struct mosquitto__config *config, bool reload, const char 
 	buf = mosquitto__malloc(buflen);
 	if(!buf){
 		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		fclose(fptr);
 		return MOSQ_ERR_NOMEM;
 	}
 

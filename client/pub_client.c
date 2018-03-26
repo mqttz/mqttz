@@ -298,7 +298,7 @@ int main(int argc, char *argv[])
 	struct mosquitto *mosq = NULL;
 	int rc;
 	int rc2;
-	char *buf;
+	char *buf, *buf2;
 	int buf_len = 1024;
 	int buf_len_actual;
 	int read_len;
@@ -320,6 +320,7 @@ int main(int argc, char *argv[])
 		}else{
 			fprintf(stderr, "\nUse 'mosquitto_pub --help' to see usage.\n");
 		}
+		free(buf);
 		return 1;
 	}
 
@@ -336,11 +337,13 @@ int main(int argc, char *argv[])
 	if(cfg.pub_mode == MSGMODE_STDIN_FILE){
 		if(load_stdin()){
 			fprintf(stderr, "Error loading input from stdin.\n");
+			free(buf);
 			return 1;
 		}
 	}else if(cfg.file_input){
 		if(load_file(cfg.file_input)){
 			fprintf(stderr, "Error loading input file \"%s\".\n", cfg.file_input);
+			free(buf);
 			return 1;
 		}
 	}
@@ -348,6 +351,7 @@ int main(int argc, char *argv[])
 	if(!topic || mode == MSGMODE_NONE){
 		fprintf(stderr, "Error: Both topic and message must be supplied.\n");
 		print_usage();
+		free(buf);
 		return 1;
 	}
 
@@ -355,6 +359,7 @@ int main(int argc, char *argv[])
 	mosquitto_lib_init();
 
 	if(client_id_generate(&cfg, "mosqpub")){
+		free(buf);
 		return 1;
 	}
 
@@ -369,6 +374,7 @@ int main(int argc, char *argv[])
 				break;
 		}
 		mosquitto_lib_cleanup();
+		free(buf);
 		return 1;
 	}
 	if(cfg.debug){
@@ -379,6 +385,7 @@ int main(int argc, char *argv[])
 	mosquitto_publish_callback_set(mosq, my_publish_callback);
 
 	if(client_opts_set(mosq, &cfg)){
+		free(buf);
 		return 1;
 	}
 	rc = client_connect(mosq, &cfg);
@@ -407,11 +414,13 @@ int main(int argc, char *argv[])
 						buf_len += 1024;
 						pos += 1023;
 						read_len = 1024;
-						buf = realloc(buf, buf_len);
-						if(!buf){
+						buf2 = realloc(buf, buf_len);
+						if(!buf2){
+							free(buf);
 							fprintf(stderr, "Error: Out of memory.\n");
 							return 1;
 						}
+						buf = buf2;
 					}
 				}
 				if(feof(stdin)){

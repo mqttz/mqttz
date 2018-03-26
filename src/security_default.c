@@ -337,7 +337,9 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 	}
 
 	/* Loop through all pattern ACLs. */
+	if(!context->id) return MOSQ_ERR_ACL_DENIED;
 	clen = strlen(context->id);
+
 	while(acl_root){
 		tlen = strlen(acl_root->topic);
 
