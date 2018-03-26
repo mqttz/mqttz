@@ -29,7 +29,7 @@ int mosquitto_auth_security_cleanup(void *user_data, struct mosquitto_opt *auth_
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto_auth_acl_check(void *user_data, int access, const struct mosquitto *client, struct mosquitto_acl_msg *msg)
+int mosquitto_auth_acl_check(void *user_data, int access, const struct mosquitto *client, const struct mosquitto_acl_msg *msg)
 {
 	const char *username = mosquitto_client_username(client);
 
