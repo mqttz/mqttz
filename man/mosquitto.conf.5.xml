@@ -488,8 +488,11 @@
 						options are affected:</para>
 					<para><option>password_file</option>,
 						<option>acl_file</option>, <option>psk_file</option>,
+						<option>allow_anonymous</option>,
+						<option>allow_zero_length_clientid</option>,
 						<option>auth_plugin</option>,
-						<option>auth_opt_*</option>.</para>
+						<option>auth_opt_*</option>,
+						<option>auto_id_prefix</option>.</para>
 					<para>The default behaviour is for this to be set to
 						<replaceable>false</replaceable>, which maintains the
 						settings behaviour from previous versions of

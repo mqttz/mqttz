@@ -197,6 +197,9 @@ struct mosquitto__security_options {
 	struct mosquitto__auth_plugin_config *auth_plugin_configs;
 	int auth_plugin_config_count;
 	char allow_anonymous;
+	bool allow_zero_length_clientid;
+	char *auto_id_prefix;
+	int auto_id_prefix_len;
 };
 
 struct mosquitto__listener {
@@ -238,9 +241,6 @@ struct mosquitto__config {
 	char *config_file;
 	char *acl_file;
 	bool allow_duplicate_messages;
-	bool allow_zero_length_clientid;
-	char *auto_id_prefix;
-	int auto_id_prefix_len;
 	int autosave_interval;
 	bool autosave_on_changes;
 	char *clientid_prefixes;

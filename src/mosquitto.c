@@ -232,6 +232,10 @@ int main(int argc, char *argv[])
 	srand(tv.tv_sec + tv.tv_usec);
 #endif
 
+#ifdef WIN32
+	_setmaxstdio(2048);
+#endif
+
 	memset(&int_db, 0, sizeof(struct mosquitto_db));
 
 	net__init();

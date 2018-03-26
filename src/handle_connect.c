@@ -37,7 +37,7 @@ Contributors:
 #  include <libwebsockets.h>
 #endif
 
-static char *client_id_gen(struct mosquitto_db *db, int *idlen)
+static char *client_id_gen(struct mosquitto_db *db, int *idlen, const char *auto_id_prefix, int auto_id_prefix_len)
 {
 	char *client_id;
 #ifdef WITH_UUID
@@ -47,26 +47,26 @@ static char *client_id_gen(struct mosquitto_db *db, int *idlen)
 #endif
 
 #ifdef WITH_UUID
-	*idlen = 36 + db->config->auto_id_prefix_len;
+	*idlen = 36 + auto_id_prefix_len;
 #else
-	*idlen = 64 + db->config->auto_id_prefix_len;
+	*idlen = 64 + auto_id_prefix_len;
 #endif
 
 	client_id = (char *)mosquitto__calloc((*idlen) + 1, sizeof(char));
 	if(!client_id){
 		return NULL;
 	}
-	if(db->config->auto_id_prefix){
-		memcpy(client_id, db->config->auto_id_prefix, db->config->auto_id_prefix_len);
+	if(auto_id_prefix){
+		memcpy(client_id, auto_id_prefix, auto_id_prefix_len);
 	}
 
 
 #ifdef WITH_UUID
 	uuid_generate_random(uuid);
-	uuid_unparse_lower(uuid, &client_id[db->config->auto_id_prefix_len]);
+	uuid_unparse_lower(uuid, &client_id[auto_id_prefix_len]);
 #else
 	for(i=0; i<64; i++){
-		client_id[i+db->config->auto_id_prefix_len] = (rand()%73)+48;
+		client_id[i+auto_id_prefix_len] = (rand()%73)+48;
 	}
 	client_id[i] = '\0';
 #endif
@@ -240,12 +240,22 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			mosquitto__free(client_id);
 			client_id = NULL;
 
-			if(clean_session == 0 || db->config->allow_zero_length_clientid == false){
+			bool allow_zero_length_clientid;
+			if(db->config->per_listener_settings){
+				allow_zero_length_clientid = context->listener->security_options.allow_zero_length_clientid;
+			}else{
+				allow_zero_length_clientid = db->config->security_options.allow_zero_length_clientid;
+			}
+			if(clean_session == 0 || allow_zero_length_clientid == false){
 				send__connack(context, 0, CONNACK_REFUSED_IDENTIFIER_REJECTED);
 				rc = MOSQ_ERR_PROTOCOL;
 				goto handle_connect_error;
 			}else{
-				client_id = client_id_gen(db, &slen);
+				if(db->config->per_listener_settings){
+					client_id = client_id_gen(db, &slen, context->listener->security_options.auto_id_prefix, context->listener->security_options.auto_id_prefix_len);
+				}else{
+					client_id = client_id_gen(db, &slen, db->config->security_options.auto_id_prefix, db->config->security_options.auto_id_prefix_len);
+				}
 				if(!client_id){
 					rc = MOSQ_ERR_NOMEM;
 					goto handle_connect_error;

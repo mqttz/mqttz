@@ -72,6 +72,7 @@ Broker fixes:
 - Fix upgrade_outgoing_qos for retained message. Closes #534.
 - Fix CONNACK message not being sent for unauthorised connect on websockets.
   Closes #8.
+- Maximum connections on Windows increased to 2048.
 
 Client library features:
 - Outgoing messages with QoS>1 are no longer retried after a timeout period.
@@ -101,6 +102,7 @@ Client library fixes:
 - No need to close socket again if setting non-blocking failed. Closes #649.
 - Fix mosquitto_topic_matches_sub() not correctly matching foo/bar against
   foo/+/#. Closes #670.
+- SNI host support added.
 
 Client features:
 - Add -F to mosquitto_sub to allow the user to choose the output format.
