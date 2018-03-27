@@ -368,7 +368,7 @@ void handle_sigint(int signal)
 int main(int argc, char *argv[])
 {
 	char *password_file_tmp = NULL;
-	char password_file[1024];
+	char *password_file = NULL;
 	char *username = NULL;
 	char *password_cmd = NULL;
 	bool batch_mode = false;
@@ -434,7 +434,19 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	snprintf(password_file, 1024, "%s", password_file_tmp);
+#ifdef WIN32
+	password_file = _fullpath(NULL, password_file_tmp, 0);
+	if(!password_file){
+		fprintf(stderr, "Error getting full path for password file.\n");
+		return 1;
+	}
+#else
+	password_file = realpath(password_file_tmp, NULL);
+	if(!password_file){
+		fprintf(stderr, "Error reading password file: %s\n", strerror(errno));
+		return 1;
+	}
+#endif
 
 	if(create_new){
 		rc = get_password(password, 1024);
@@ -442,8 +454,10 @@ int main(int argc, char *argv[])
 		fptr = fopen(password_file, "wt");
 		if(!fptr){
 			fprintf(stderr, "Error: Unable to open file %s for writing. %s.\n", password_file, strerror(errno));
+			free(password_file);
 			return 1;
 		}
+		free(password_file);
 		rc = output_new_password(fptr, username, password);
 		fclose(fptr);
 		return rc;
@@ -451,15 +465,19 @@ int main(int argc, char *argv[])
 		fptr = fopen(password_file, "r+t");
 		if(!fptr){
 			fprintf(stderr, "Error: Unable to open password file %s. %s.\n", password_file, strerror(errno));
+			free(password_file);
 			return 1;
 		}
 
 		backup_file = malloc(strlen(password_file)+5);
 		if(!backup_file){
 			fprintf(stderr, "Error: Out of memory.\n");
+			free(password_file);
 			return 1;
 		}
 		snprintf(backup_file, strlen(password_file)+5, "%s.tmp", password_file);
+		free(password_file);
+		password_file = NULL;
 
 		if(create_backup(backup_file, fptr)){
 			fclose(fptr);
