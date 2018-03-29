@@ -697,6 +697,9 @@ ssize_t net__write(struct mosquitto *mosq, void *buf, size_t count)
 				net__print_ssl_error(mosq);
 				errno = EPROTO;
 			}
+#ifdef WIN32
+			WSASetLastError(errno);
+#endif
 		}
 		return (ssize_t )ret;
 	}else{
