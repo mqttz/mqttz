@@ -31,15 +31,7 @@ int mosquitto_auth_security_cleanup(void *user_data, struct mosquitto_opt *auth_
 
 int mosquitto_auth_acl_check(void *user_data, int access, const struct mosquitto *client, const struct mosquitto_acl_msg *msg)
 {
-	const char *username = mosquitto_client_username(client);
-
-	if(username && !strcmp(username, "readonly") && access == MOSQ_ACL_READ){
-		return MOSQ_ERR_SUCCESS;
-	}else if(username && !strcmp(username, "readonly") && access == MOSQ_ACL_SUBSCRIBE &&!strchr(msg->topic, '#') && !strchr(msg->topic, '+')) {
-		return MOSQ_ERR_SUCCESS;
-	}else{
-		return MOSQ_ERR_ACL_DENIED;
-	}
+	return MOSQ_ERR_PLUGIN_DEFER;
 }
 
 int mosquitto_auth_unpwd_check(void *user_data, const struct mosquitto *client, const char *username, const char *password)

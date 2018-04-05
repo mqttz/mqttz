@@ -2,7 +2,7 @@
 
 CFLAGS=-I../../../lib -I../../../src -Wall -Werror
 
-all : auth_plugin.so auth_plugin_pwd.so auth_plugin_acl.so acl_plugin_v2.so 08
+all : auth_plugin.so auth_plugin_pwd.so auth_plugin_acl.so auth_plugin_v2.so 08
 
 08 : 08-tls-psk-pub.test 08-tls-psk-bridge.test
 

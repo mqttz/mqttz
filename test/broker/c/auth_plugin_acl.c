@@ -44,15 +44,7 @@ int mosquitto_auth_acl_check(void *user_data, int access, const struct mosquitto
 
 int mosquitto_auth_unpwd_check(void *user_data, const struct mosquitto *client, const char *username, const char *password)
 {
-	if(!strcmp(username, "test-username") && password && !strcmp(password, "cnwTICONIURW")){
-		return MOSQ_ERR_SUCCESS;
-	}else if(!strcmp(username, "readonly")){
-		return MOSQ_ERR_SUCCESS;
-	}else if(!strcmp(username, "test-username@v2")){
-		return MOSQ_ERR_PLUGIN_DEFER;
-	}else{
-		return MOSQ_ERR_AUTH;
-	}
+	return MOSQ_ERR_PLUGIN_DEFER;
 }
 
 int mosquitto_auth_psk_key_get(void *user_data, const struct mosquitto *client, const char *hint, const char *identity, char *key, int max_key_len)

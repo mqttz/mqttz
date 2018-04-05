@@ -491,8 +491,6 @@ int sub__remove(struct mosquitto_db *db, struct mosquitto *context, const char *
 	HASH_FIND(hh, root, UHPA_ACCESS_TOPIC(tokens), tokens->topic_len, subhier);
 	if(subhier){
 		rc = sub__remove_recurse(db, context, subhier, tokens);
-	}else{
-		printf("nope\n");
 	}
 
 	sub__topic_tokens_free(tokens);
