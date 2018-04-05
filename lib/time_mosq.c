@@ -14,6 +14,8 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
+#include "config.h"
+
 #ifdef __APPLE__
 #include <mach/mach.h>
 #include <mach/mach_time.h>

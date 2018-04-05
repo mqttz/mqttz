@@ -14,6 +14,8 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
+/* For nanosleep */
+#define _POSIX_C_SOURCE 200809L
 
 #include <errno.h>
 #include <fcntl.h>
@@ -21,7 +23,7 @@ Contributors:
 #include <stdlib.h>
 #include <string.h>
 #ifndef WIN32
-#include <unistd.h>
+#include <time.h>
 #else
 #include <process.h>
 #include <winsock2.h>
@@ -442,7 +444,10 @@ int main(int argc, char *argv[])
 #ifdef WIN32
 				Sleep(100);
 #else
-				usleep(100000);
+				struct timespec ts;
+				ts.tv_sec = 0;
+				ts.tv_nsec = 100000000;
+				nanosleep(&ts, NULL);
 #endif
 			}
 			rc = MOSQ_ERR_SUCCESS;

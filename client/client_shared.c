@@ -14,6 +14,7 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
+#define _POSIX_C_SOURCE 200809L
 
 #include <errno.h>
 #include <fcntl.h>
@@ -22,6 +23,7 @@ Contributors:
 #include <string.h>
 #ifndef WIN32
 #include <unistd.h>
+#include <strings.h>
 #else
 #include <process.h>
 #include <winsock2.h>

@@ -14,6 +14,8 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
+#include "config.h"
+
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
@@ -26,8 +28,6 @@ Contributors:
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #endif
-
-#include "config.h"
 
 #include "mosquitto.h"
 #include "mosquitto_broker_internal.h"

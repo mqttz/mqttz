@@ -14,7 +14,7 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
-#include <config.h>
+#include "config.h"
 
 #include <limits.h>
 #include <stdio.h>
@@ -25,6 +25,7 @@ Contributors:
 #ifdef WIN32
 #else
 #  include <dirent.h>
+#  include <strings.h>
 #endif
 
 #ifndef WIN32

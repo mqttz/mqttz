@@ -14,12 +14,15 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
+#include "config.h"
+
 #include <assert.h>
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
 #ifndef WIN32
+#include <strings.h>
 #include <sys/select.h>
 #include <sys/time.h>
 #include <unistd.h>
@@ -44,8 +47,6 @@ typedef int ssize_t;
 #include "tls_mosq.h"
 #include "util_mosq.h"
 #include "will_mosq.h"
-
-#include "config.h"
 
 #if !defined(WIN32) && !defined(__SYMBIAN32__)
 #define HAVE_PSELECT

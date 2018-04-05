@@ -28,6 +28,7 @@ Contributors:
 #endif
 
 #ifndef WIN32
+#  include <strings.h>
 #  include <netdb.h>
 #  include <sys/socket.h>
 #else

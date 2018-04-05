@@ -14,6 +14,8 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
+#define _POSIX_C_SOURCE 200809L
+#define _BSD_SOURCE
 
 #include <errno.h>
 #include <openssl/evp.h>

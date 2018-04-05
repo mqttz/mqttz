@@ -14,6 +14,8 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
+#define _POSIX_C_SOURCE 199309L
+
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
