@@ -152,7 +152,7 @@
 						communication.</para>
 					<para>For <option>--capath</option> to work correctly, the
 						certificate files must have ".crt" as the file ending
-						and you must run "c_rehash &lt;path to capath&gt;" each
+						and you must run "openssl rehash &lt;path to capath&gt;" each
 						time you add/remove a certificate.</para>
 					<para>See also <option>--cafile</option></para>
 				</listitem>

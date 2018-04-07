@@ -125,6 +125,9 @@ Build:
   build and install static versions of the client libraries.
 - Don't run TLS-PSK tests if TLS-PSK disabled at compile time. Closes #636.
 
+Documentation:
+- Replace mentions of deprecated 'c_rehash' with 'openssl rehash'.
+
 
 1.4.14 - 20170710
 =================

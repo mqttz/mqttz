@@ -854,7 +854,7 @@
 							that are trusted. For <option>capath</option> to
 							work correctly, the certificates files must have
 							".pem" as the file ending and you must run
-							"c_rehash &lt;path to capath&gt;" each time you
+							"openssl rehash &lt;path to capath&gt;" each time you
 							add/remove a certificate.</para>
 					</listitem>
 				</varlistentry>
@@ -1414,7 +1414,7 @@ topic clients/total in 0 test/mosquitto/org $SYS/broker/
 							certificates that have signed the certificate for
 							the remote broker. For bridge_capath to work
 							correctly, the certificate files must have ".crt"
-							as the file ending and you must run "c_rehash
+							as the file ending and you must run "openssl rehash
 							&lt;path to bridge_capath&gt;" each time you
 							add/remove a certificate.</para>
 					</listitem>
