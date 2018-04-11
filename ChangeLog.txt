@@ -121,6 +121,8 @@ Client features:
 - Add -c (clean session) to mosquitto_pub.
 - Add --retained-only to mosquitto_sub to exit after receiving all retained
   messages.
+- Add -W to allow mosquitto_sub to stop processing incoming messages after a
+  timeout.
 - Connections now default to using MQTT v3.1.1.
 - Default to using port 8883 when using TLS.
 - mosquitto_sub doesn't continue to keep connecting if CONNACK tells it the

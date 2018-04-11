@@ -50,6 +50,7 @@
 			<arg choice='opt' rep='repeat'><option>-U</option> <replaceable>unsub-topic</replaceable></arg>
 			<arg><option>-v</option></arg>
 			<arg><option>-V</option> <replaceable>protocol-version</replaceable></arg>
+			<arg><option>-W</option> <replaceable>message processing timeout</replaceable></arg>
 			<arg><option>--proxy</option> <replaceable>socks-url</replaceable></arg>
 			<arg><option>--quiet</option></arg>
 			<arg>
@@ -526,6 +527,16 @@
 						used when connecting to the rmeote broker. Can be
 						<option>mqttv311</option> or <option>mqttv31</option>.
 						Defaults to <option>mqttv311</option>.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-W</option></term>
+				<listitem>
+					<para>Provide a timeout as an integer number of seconds.
+						mosquitto_sub will stop processing messages and
+						disconnect after this number of seconds has
+						passed. The timeout starts just after the client has
+						connected to the broker.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
