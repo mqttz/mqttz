@@ -16,6 +16,8 @@ Contributors:
 
 #include "config.h"
 
+#include <string.h>
+
 #include "mosquitto.h"
 #include "mosquitto_internal.h"
 #include "memory_mosq.h"

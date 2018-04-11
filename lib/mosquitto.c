@@ -18,6 +18,8 @@ Contributors:
 
 #include <errno.h>
 #include <signal.h>
+#include <string.h>
+#include <sys/time.h>
 
 #include "mosquitto.h"
 #include "mosquitto_internal.h"

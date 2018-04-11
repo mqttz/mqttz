@@ -17,6 +17,7 @@ Contributors:
 #include "config.h"
 
 #include <errno.h>
+#include <sys/select.h>
 
 #include "mosquitto.h"
 #include "mosquitto_internal.h"
