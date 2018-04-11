@@ -263,35 +263,39 @@ static unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned
 #ifdef WITH_TLS
 static int mosquitto__tls_server_ctx(struct mosquitto__listener *listener)
 {
-	int ssl_options = 0;
 	char buf[256];
 	int rc;
 
-	if(listener->tls_version == NULL){
-		listener->ssl_ctx = SSL_CTX_new(SSLv23_server_method());
-	}else if(!strcmp(listener->tls_version, "tlsv1.2")){
-		listener->ssl_ctx = SSL_CTX_new(TLSv1_2_server_method());
-	}else if(!strcmp(listener->tls_version, "tlsv1.1")){
-		listener->ssl_ctx = SSL_CTX_new(TLSv1_1_server_method());
-	}else if(!strcmp(listener->tls_version, "tlsv1")){
-		listener->ssl_ctx = SSL_CTX_new(TLSv1_server_method());
-	}
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	listener->ssl_ctx = SSL_CTX_new(SSLv23_client_method());
+#else
+	listener->ssl_ctx = SSL_CTX_new(TLS_client_method());
+#endif
+
 	if(!listener->ssl_ctx){
 		log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create TLS context.");
 		return 1;
 	}
 
-	/* Don't accept SSLv2 or SSLv3 */
-	ssl_options = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3;
+	if(listener->tls_version == NULL){
+		SSL_CTX_set_options(listener->ssl_ctx, SSL_OP_NO_SSLv3);
+	}else if(!strcmp(listener->tls_version, "tlsv1.2")){
+		SSL_CTX_set_options(listener->ssl_ctx, SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1);
+	}else if(!strcmp(listener->tls_version, "tlsv1.1")){
+		SSL_CTX_set_options(listener->ssl_ctx, SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1_2 | SSL_OP_NO_TLSv1);
+	}else if(!strcmp(listener->tls_version, "tlsv1")){
+		SSL_CTX_set_options(listener->ssl_ctx, SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1_2 | SSL_OP_NO_TLSv1_1);
+	}
+
 #ifdef SSL_OP_NO_COMPRESSION
 	/* Disable compression */
-	ssl_options |= SSL_OP_NO_COMPRESSION;
+	SSL_CTX_set_options(listener->ssl_ctx, SSL_OP_NO_COMPRESSION);
 #endif
 #ifdef SSL_OP_CIPHER_SERVER_PREFERENCE
 	/* Server chooses cipher */
-	ssl_options |= SSL_OP_CIPHER_SERVER_PREFERENCE;
+	SSL_CTX_set_options(listener->ssl_ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
 #endif
-	SSL_CTX_set_options(listener->ssl_ctx, ssl_options);
 
 #ifdef SSL_MODE_RELEASE_BUFFERS
 	/* Use even less memory per SSL connection. */

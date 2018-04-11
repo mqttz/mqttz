@@ -135,14 +135,22 @@ int mosquitto__verify_certificate_hostname(X509 *cert, const char *hostname)
 		for(i=0; i<sk_GENERAL_NAME_num(san); i++){
 			nval = sk_GENERAL_NAME_value(san, i);
 			if(nval->type == GEN_DNS){
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 				data = ASN1_STRING_data(nval->d.dNSName);
+#else
+				data = ASN1_STRING_get0_data(nval->d.dNSName);
+#endif
 				if(data && !mosquitto__cmp_hostname_wildcard((char *)data, hostname)){
 					sk_GENERAL_NAME_pop_free(san, GENERAL_NAME_free);
 					return 1;
 				}
 				have_san_dns = true;
 			}else if(nval->type == GEN_IPADD){
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 				data = ASN1_STRING_data(nval->d.iPAddress);
+#else
+				data = ASN1_STRING_get0_data(nval->d.iPAddress);
+#endif
 				if(nval->d.iPAddress->length == 4 && ipv4_ok){
 					if(!memcmp(ipv4_addr, data, 4)){
 						sk_GENERAL_NAME_pop_free(san, GENERAL_NAME_free);

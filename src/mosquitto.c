@@ -18,7 +18,7 @@ Contributors:
 
 #ifndef WIN32
 /* For initgroups() */
-#  define _BSD_SOURCE
+#  define _DEFAULT_SOURCE
 #  include <unistd.h>
 #  include <grp.h>
 #  include <assert.h>

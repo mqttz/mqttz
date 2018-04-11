@@ -18,8 +18,6 @@ Contributors:
 #include "config.h"
 
 #ifndef WIN32
-/* For initgroups() */
-#  define _BSD_SOURCE
 #  include <unistd.h>
 #  include <grp.h>
 #  include <assert.h>
