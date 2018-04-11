@@ -1225,6 +1225,13 @@ void mosquitto_connect_callback_set(struct mosquitto *mosq, void (*on_connect)(s
 	pthread_mutex_unlock(&mosq->callback_mutex);
 }
 
+void mosquitto_connect_with_flags_callback_set(struct mosquitto *mosq, void (*on_connect)(struct mosquitto *, void *, int, int))
+{
+	pthread_mutex_lock(&mosq->callback_mutex);
+	mosq->on_connect_with_flags = on_connect;
+	pthread_mutex_unlock(&mosq->callback_mutex);
+}
+
 void mosquitto_disconnect_callback_set(struct mosquitto *mosq, void (*on_disconnect)(struct mosquitto *, void *, int))
 {
 	pthread_mutex_lock(&mosq->callback_mutex);

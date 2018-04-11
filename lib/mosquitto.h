@@ -1134,6 +1134,31 @@ libmosq_EXPORT int mosquitto_tls_psk_set(struct mosquitto *mosq, const char *psk
 libmosq_EXPORT void mosquitto_connect_callback_set(struct mosquitto *mosq, void (*on_connect)(struct mosquitto *, void *, int));
 
 /*
+ * Function: mosquitto_connect_with_flags_callback_set
+ *
+ * Set the connect callback. This is called when the broker sends a CONNACK
+ * message in response to a connection.
+ *
+ * Parameters:
+ *  mosq -       a valid mosquitto instance.
+ *  on_connect - a callback function in the following form:
+ *               void callback(struct mosquitto *mosq, void *obj, int rc)
+ *
+ * Callback Parameters:
+ *  mosq - the mosquitto instance making the callback.
+ *  obj - the user data provided in <mosquitto_new>
+ *  rc -  the return code of the connection response, one of:
+ *  flags - the connect flags.
+ *
+ * * 0 - success
+ * * 1 - connection refused (unacceptable protocol version)
+ * * 2 - connection refused (identifier rejected)
+ * * 3 - connection refused (broker unavailable)
+ * * 4-255 - reserved for future use
+ */
+libmosq_EXPORT void mosquitto_connect_with_flags_callback_set(struct mosquitto *mosq, void (*on_connect)(struct mosquitto *, void *, int, int));
+
+/*
  * Function: mosquitto_disconnect_callback_set
  *
  * Set the disconnect callback. This is called when the broker has received the

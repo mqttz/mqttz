@@ -246,6 +246,7 @@ struct mosquitto {
 	struct mosquitto_message_all *out_messages;
 	struct mosquitto_message_all *out_messages_last;
 	void (*on_connect)(struct mosquitto *, void *userdata, int rc);
+	void (*on_connect_with_flags)(struct mosquitto *, void *userdata, int rc, int flags);
 	void (*on_disconnect)(struct mosquitto *, void *userdata, int rc);
 	void (*on_publish)(struct mosquitto *, void *userdata, int mid);
 	void (*on_message)(struct mosquitto *, void *userdata, const struct mosquitto_message *message);
