@@ -32,6 +32,9 @@ include_directories(${mosquitto_SOURCE_DIR} ${mosquitto_SOURCE_DIR}/lib
 link_directories(${mosquitto_SOURCE_DIR}/lib)
 
 set(C_SRC
+	actions.c
+	callbacks.c
+	connect.c
 	handle_connack.c
 	handle_ping.c
 	handle_pubackcomp.c
@@ -42,12 +45,14 @@ set(C_SRC
 	handle_unsuback.c
 	helpers.c
 	logging_mosq.c logging_mosq.h
+	loop.c
 	memory_mosq.c memory_mosq.h
 	messages_mosq.c messages_mosq.h
 	mosquitto.c mosquitto.h
 	mosquitto_internal.h
 	mqtt3_protocol.h
 	net_mosq.c net_mosq.h
+	options.c
 	packet_mosq.c packet_mosq.h
 	read_handle.c read_handle.h
 	send_connect.c
