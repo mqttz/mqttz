@@ -26,6 +26,12 @@ static void on_connect_wrapper(struct mosquitto *mosq, void *userdata, int rc)
 	m->on_connect(rc);
 }
 
+static void on_connect_with_flags_wrapper(struct mosquitto *mosq, void *userdata, int rc, int flags)
+{
+	class mosquittopp *m = (class mosquittopp *)userdata;
+	m->on_connect_with_flags(rc, flags);
+}
+
 static void on_disconnect_wrapper(struct mosquitto *mosq, void *userdata, int rc)
 {
 	class mosquittopp *m = (class mosquittopp *)userdata;
@@ -163,6 +169,7 @@ mosquittopp::mosquittopp(const char *id, bool clean_session)
 {
 	m_mosq = mosquitto_new(id, clean_session, this);
 	mosquitto_connect_callback_set(m_mosq, on_connect_wrapper);
+	mosquitto_connect_with_flags_callback_set(m_mosq, on_connect_with_flags_wrapper);
 	mosquitto_disconnect_callback_set(m_mosq, on_disconnect_wrapper);
 	mosquitto_publish_callback_set(m_mosq, on_publish_wrapper);
 	mosquitto_message_callback_set(m_mosq, on_message_wrapper);
@@ -182,6 +189,7 @@ int mosquittopp::reinitialise(const char *id, bool clean_session)
 	rc = mosquitto_reinitialise(m_mosq, id, clean_session, this);
 	if(rc == MOSQ_ERR_SUCCESS){
 		mosquitto_connect_callback_set(m_mosq, on_connect_wrapper);
+		mosquitto_connect_with_flags_callback_set(m_mosq, on_connect_with_flags_wrapper);
 		mosquitto_disconnect_callback_set(m_mosq, on_disconnect_wrapper);
 		mosquitto_publish_callback_set(m_mosq, on_publish_wrapper);
 		mosquitto_message_callback_set(m_mosq, on_message_wrapper);
