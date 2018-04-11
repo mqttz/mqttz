@@ -315,7 +315,7 @@ void config__cleanup(struct mosquitto__config *config)
 #ifdef WITH_TLS
 			mosquitto__free(config->bridges[i].tls_version);
 			mosquitto__free(config->bridges[i].tls_cafile);
-#ifdef REAL_WITH_TLS_PSK
+#ifdef WITH_TLS_PSK
 			mosquitto__free(config->bridges[i].tls_psk_identity);
 			mosquitto__free(config->bridges[i].tls_psk);
 #endif
@@ -586,7 +586,7 @@ int config__read(struct mosquitto__config *config, bool reload)
 			log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 			return MOSQ_ERR_INVAL;
 		}
-#ifdef REAL_WITH_TLS_PSK
+#ifdef WITH_TLS_PSK
 		if(config->bridges[i].tls_psk && !config->bridges[i].tls_psk_identity){
 			log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration: missing bridge_identity.\n");
 			return MOSQ_ERR_INVAL;
@@ -809,7 +809,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 						return MOSQ_ERR_INVAL;
 					}
-#ifdef REAL_WITH_TLS_PSK
+#ifdef WITH_TLS_PSK
 					if(cur_bridge->tls_psk_identity || cur_bridge->tls_psk){
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single bridge.");
 						return MOSQ_ERR_INVAL;
@@ -826,7 +826,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 						return MOSQ_ERR_INVAL;
 					}
-#ifdef REAL_WITH_TLS_PSK
+#ifdef WITH_TLS_PSK
 					if(cur_bridge->tls_psk_identity || cur_bridge->tls_psk){
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single bridge.");
 						return MOSQ_ERR_INVAL;
@@ -843,7 +843,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 						return MOSQ_ERR_INVAL;
 					}
-#ifdef REAL_WITH_TLS_PSK
+#ifdef WITH_TLS_PSK
 					if(cur_bridge->tls_psk_identity || cur_bridge->tls_psk){
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single bridge.");
 						return MOSQ_ERR_INVAL;
@@ -854,7 +854,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or TLS support not available.");
 #endif
 				}else if(!strcmp(token, "bridge_identity")){
-#if defined(WITH_BRIDGE) && defined(REAL_WITH_TLS_PSK)
+#if defined(WITH_BRIDGE) && defined(WITH_TLS_PSK)
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
@@ -889,7 +889,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 						return MOSQ_ERR_INVAL;
 					}
-#ifdef REAL_WITH_TLS_PSK
+#ifdef WITH_TLS_PSK
 					if(cur_bridge->tls_psk_identity || cur_bridge->tls_psk){
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single bridge.");
 						return MOSQ_ERR_INVAL;
@@ -924,7 +924,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "bridge_psk")){
-#if defined(WITH_BRIDGE) && defined(REAL_WITH_TLS_PSK)
+#if defined(WITH_BRIDGE) && defined(WITH_TLS_PSK)
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
@@ -1554,7 +1554,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty protocol value in configuration.");
 					}
 				}else if(!strcmp(token, "psk_file")){
-#ifdef REAL_WITH_TLS_PSK
+#ifdef WITH_TLS_PSK
 					conf__set_cur_security_options(config, cur_listener, &cur_security_options);
 					if(reload){
 						mosquitto__free(cur_security_options->psk_file);
@@ -1565,7 +1565,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS/TLS-PSK support not available.");
 #endif
 				}else if(!strcmp(token, "psk_hint")){
-#ifdef REAL_WITH_TLS_PSK
+#ifdef WITH_TLS_PSK
 					if(reload) continue; // Listeners not valid for reloading.
 					if(conf__parse_string(&token, "psk_hint", &cur_listener->psk_hint, saveptr)) return MOSQ_ERR_INVAL;
 #else

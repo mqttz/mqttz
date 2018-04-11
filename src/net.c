@@ -209,7 +209,7 @@ static int client_certificate_verify(int preverify_ok, X509_STORE_CTX *ctx)
 }
 #endif
 
-#ifdef REAL_WITH_TLS_PSK
+#ifdef WITH_TLS_PSK
 static unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned char *psk, unsigned int max_psk_len)
 {
 	struct mosquitto_db *db;
@@ -266,13 +266,7 @@ static int mosquitto__tls_server_ctx(struct mosquitto__listener *listener)
 	int ssl_options = 0;
 	char buf[256];
 	int rc;
-#ifdef WITH_EC
-#if OPENSSL_VERSION_NUMBER >= 0x10000000L && OPENSSL_VERSION_NUMBER < 0x10002000L
-	EC_KEY *ecdh = NULL;
-#endif
-#endif
 
-#if OPENSSL_VERSION_NUMBER >= 0x10001000L
 	if(listener->tls_version == NULL){
 		listener->ssl_ctx = SSL_CTX_new(SSLv23_server_method());
 	}else if(!strcmp(listener->tls_version, "tlsv1.2")){
@@ -282,9 +276,6 @@ static int mosquitto__tls_server_ctx(struct mosquitto__listener *listener)
 	}else if(!strcmp(listener->tls_version, "tlsv1")){
 		listener->ssl_ctx = SSL_CTX_new(TLSv1_server_method());
 	}
-#else
-	listener->ssl_ctx = SSL_CTX_new(SSLv23_server_method());
-#endif
 	if(!listener->ssl_ctx){
 		log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create TLS context.");
 		return 1;
@@ -310,15 +301,6 @@ static int mosquitto__tls_server_ctx(struct mosquitto__listener *listener)
 #ifdef WITH_EC
 #if OPENSSL_VERSION_NUMBER >= 0x10002000L && OPENSSL_VERSION_NUMBER < 0x10100000L
 	SSL_CTX_set_ecdh_auto(listener->ssl_ctx, 1);
-#elif OPENSSL_VERSION_NUMBER >= 0x10000000L && OPENSSL_VERSION_NUMBER < 0x10002000L
-	ecdh = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
-	if(!ecdh){
-		log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create TLS ECDH curve.");
-		return 1;
-	}
-	SSL_CTX_set_tmp_ecdh(listener->ssl_ctx, ecdh);
-	EC_KEY_free(ecdh);
-#endif
 #endif
 
 	snprintf(buf, 256, "mosquitto-%d", listener->port);
@@ -485,7 +467,7 @@ int net__socket_listen(struct mosquitto__listener *listener)
 				X509_STORE_set_flags(store, X509_V_FLAG_CRL_CHECK);
 			}
 
-#  ifdef REAL_WITH_TLS_PSK
+#  ifdef WITH_TLS_PSK
 		}else if(listener->psk_hint){
 			if(tls_ex_index_context == -1){
 				tls_ex_index_context = SSL_get_ex_new_index(0, "client context", NULL, NULL, NULL);
@@ -507,7 +489,7 @@ int net__socket_listen(struct mosquitto__listener *listener)
 					return 1;
 				}
 			}
-#  endif /* REAL_WITH_TLS_PSK */
+#  endif /* WITH_TLS_PSK */
 		}
 #endif /* WITH_TLS */
 		return 0;

@@ -133,6 +133,8 @@ Build:
 - Add WITH_STATIC_LIBRARIES (defaulting to "no") that when set to "yes" will
   build and install static versions of the client libraries.
 - Don't run TLS-PSK tests if TLS-PSK disabled at compile time. Closes #636.
+- Support for openssl versions 1.0.0 and 1.0.1 has been removed as these are
+  no longer supported by openssl.
 
 Documentation:
 - Replace mentions of deprecated 'c_rehash' with 'openssl rehash'.

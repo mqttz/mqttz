@@ -190,7 +190,7 @@ int net__socket_close(struct mosquitto *mosq)
 }
 
 
-#ifdef REAL_WITH_TLS_PSK
+#ifdef WITH_TLS_PSK
 static unsigned int psk_client_callback(SSL *ssl, const char *hint,
 		char *identity, unsigned int max_identity_len,
 		unsigned char *psk, unsigned int max_psk_len)
@@ -458,7 +458,6 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 	}
 
 	if(mosq->tls_cafile || mosq->tls_capath || mosq->tls_psk){
-#if OPENSSL_VERSION_NUMBER >= 0x10001000L
 		if(!mosq->tls_version){
 			mosq->ssl_ctx = SSL_CTX_new(SSLv23_client_method());
 		}else if(!strcmp(mosq->tls_version, "tlsv1.2")){
@@ -472,15 +471,7 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 			COMPAT_CLOSE(mosq->sock);
 			return MOSQ_ERR_INVAL;
 		}
-#else
-		if(!mosq->tls_version || !strcmp(mosq->tls_version, "tlsv1")){
-			mosq->ssl_ctx = SSL_CTX_new(TLSv1_client_method());
-		}else{
-			log__printf(mosq, MOSQ_LOG_ERR, "Error: Protocol %s not supported.", mosq->tls_version);
-			COMPAT_CLOSE(mosq->sock);
-			return MOSQ_ERR_INVAL;
-		}
-#endif
+
 		if(!mosq->ssl_ctx){
 			log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to create TLS context.");
 			COMPAT_CLOSE(mosq->sock);
@@ -488,10 +479,9 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 			return MOSQ_ERR_TLS;
 		}
 
-#if OPENSSL_VERSION_NUMBER >= 0x10000000
 		/* Disable compression */
 		SSL_CTX_set_options(mosq->ssl_ctx, SSL_OP_NO_COMPRESSION);
-#endif
+
 #ifdef SSL_MODE_RELEASE_BUFFERS
 			/* Use even less memory per SSL connection. */
 			SSL_CTX_set_mode(mosq->ssl_ctx, SSL_MODE_RELEASE_BUFFERS);
@@ -574,7 +564,7 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 					return MOSQ_ERR_TLS;
 				}
 			}
-#ifdef REAL_WITH_TLS_PSK
+#ifdef WITH_TLS_PSK
 		}else if(mosq->tls_psk){
 			SSL_CTX_set_psk_client_callback(mosq->ssl_ctx, psk_client_callback);
 #endif

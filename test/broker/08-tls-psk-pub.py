@@ -8,10 +8,6 @@ if sys.version < '2.7':
     print("WARNING: SSL not supported on Python 2.6")
     exit(0)
 
-if ssl.OPENSSL_VERSION_NUMBER < 0x10000000:
-    print("WARNING: TLS-PSK not supported on OpenSSL < 1.0")
-    exit(0)
-
 
 import inspect, os
 # From http://stackoverflow.com/questions/279237/python-import-a-module-from-a-folder
