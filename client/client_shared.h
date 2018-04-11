@@ -84,6 +84,7 @@ struct mosq_config {
 	bool eol; /* sub */
 	int msg_count; /* sub */
 	char *format; /* sub */
+	int timeout; /* sub */
 #ifdef WITH_SOCKS
 	char *socks5_host;
 	int socks5_port;

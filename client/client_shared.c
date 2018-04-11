@@ -442,6 +442,22 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				}
 				i++;
 			}
+		}else if(!strcmp(argv[i], "-W")){
+			if(pub_or_sub == CLIENT_PUB){
+				goto unknown_option;
+			}else{
+				if(i==argc-1){
+					fprintf(stderr, "Error: -W argument given but no timeout specified.\n\n");
+					return 1;
+				}else{
+					cfg->timeout = atoi(argv[i+1]);
+					if(cfg->timeout < 1){
+						fprintf(stderr, "Error: Invalid timeout \"%d\".\n\n", cfg->msg_count);
+						return 1;
+					}
+				}
+				i++;
+			}
 		}else if(!strcmp(argv[i], "-d") || !strcmp(argv[i], "--debug")){
 			cfg->debug = true;
 		}else if(!strcmp(argv[i], "-f") || !strcmp(argv[i], "--file")){
