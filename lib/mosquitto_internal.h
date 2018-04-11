@@ -188,6 +188,7 @@ struct mosquitto {
 	char *tls_psk_identity;
 	int tls_cert_reqs;
 	bool tls_insecure;
+	bool ssl_ctx_defaults;
 #endif
 	bool want_write;
 	bool want_connect;

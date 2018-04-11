@@ -172,6 +172,7 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 	mosq->threaded = mosq_ts_none;
 #ifdef WITH_TLS
 	mosq->ssl = NULL;
+	mosq->ssl_ctx = NULL;
 	mosq->tls_cert_reqs = SSL_VERIFY_PEER;
 	mosq->tls_insecure = false;
 	mosq->want_write = false;

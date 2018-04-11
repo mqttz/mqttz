@@ -277,6 +277,20 @@ int mosquitto_opts_set(struct mosquitto *mosq, enum mosq_opt_t option, void *val
 				return MOSQ_ERR_INVAL;
 			}
 			break;
+		case MOSQ_OPT_SSL_CTX:
+#ifdef WITH_TLS
+			mosq->ssl_ctx = (SSL_CTX *)value;
+			break;
+#else
+			return MOSQ_ERR_UNSUPPORTED;
+#endif
+		case MOSQ_OPT_SSL_CTX_WITH_DEFAULTS:
+#ifdef WITH_TLS
+			mosq->ssl_ctx_defaults = true;
+			break;
+#else
+			return MOSQ_ERR_UNSUPPORTED;
+#endif
 		default:
 			return MOSQ_ERR_INVAL;
 	}

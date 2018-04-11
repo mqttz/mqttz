@@ -442,14 +442,21 @@ int net__socket_connect_tls(struct mosquitto *mosq)
 }
 #endif
 
-int net__socket_connect_step3(struct mosquitto *mosq, const char *host, uint16_t port, const char *bind_address, bool blocking)
+
+static int net__init_ssl_ctx(struct mosquitto *mosq)
 {
 #ifdef WITH_TLS
 	int ret;
-	BIO *bio;
-#endif
 
-#ifdef WITH_TLS
+	if(mosq->ssl_ctx){
+		if(!mosq->ssl_ctx_defaults){
+			return MOSQ_ERR_SUCCESS;
+		}else if(!mosq->tls_cafile && !mosq->tls_capath && !mosq->tls_psk){
+			log__printf(mosq, MOSQ_LOG_ERR, "Error: MOSQ_OPT_SSL_CTX_WITH_DEFAULTS used without specifying cafile, capath or psk.");
+			return MOSQ_ERR_INVAL;
+		}
+	}
+
 	if(mosq->tls_cafile || mosq->tls_capath || mosq->tls_psk){
 #if OPENSSL_VERSION_NUMBER >= 0x10001000L
 		if(!mosq->tls_version){
@@ -572,7 +579,22 @@ int net__socket_connect_step3(struct mosquitto *mosq, const char *host, uint16_t
 			SSL_CTX_set_psk_client_callback(mosq->ssl_ctx, psk_client_callback);
 #endif
 		}
+	}
 
+#endif
+	return MOSQ_ERR_SUCCESS;
+}
+
+
+int net__socket_connect_step3(struct mosquitto *mosq, const char *host, uint16_t port, const char *bind_address, bool blocking)
+{
+#ifdef WITH_TLS
+	BIO *bio;
+
+	int rc = net__init_ssl_ctx(mosq);
+	if(rc) return rc;
+
+	if(mosq->ssl_ctx){
 		mosq->ssl = SSL_new(mosq->ssl_ctx);
 		if(!mosq->ssl){
 			COMPAT_CLOSE(mosq->sock);
