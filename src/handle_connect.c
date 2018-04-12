@@ -390,6 +390,11 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			}
 		}
 	}
+	if(context->in_packet.pos != context->in_packet.remaining_length){
+		/* Surplus data at end of packet, this must be an error. */
+		rc = MOSQ_ERR_PROTOCOL;
+		goto handle_connect_error;
+	}
 
 #ifdef WITH_TLS
 	if(context->listener && context->listener->ssl_ctx && (context->listener->use_identity_as_username || context->listener->use_subject_as_username)){

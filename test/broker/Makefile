@@ -29,6 +29,8 @@ ifeq ($(WITH_TLS),yes)
 else
 	./01-connect-uname-password-success-no-tls.py
 endif
+	./01-connect-uname-no-flag.py
+	./01-connect-uname-pwd-no-flag.py
 
 
 02 :
