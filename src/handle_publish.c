@@ -68,6 +68,12 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 		mosquitto__free(topic);
 		return 1;
 	}
+
+	if(mosquitto_validate_utf8(topic, slen) != MOSQ_ERR_SUCCESS){
+		mosquitto__free(topic);
+		return 1;
+	}
+
 #ifdef WITH_BRIDGE
 	if(context->bridge && context->bridge->topics && context->bridge->topic_remapping){
 		for(i=0; i<context->bridge->topic_count; i++){
@@ -118,11 +124,6 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 #endif
 	if(mosquitto_pub_topic_check(topic) != MOSQ_ERR_SUCCESS){
 		/* Invalid publish topic, just swallow it. */
-		mosquitto__free(topic);
-		return 1;
-	}
-
-	if(mosquitto_validate_utf8(topic, strlen(topic)) != MOSQ_ERR_SUCCESS){
 		mosquitto__free(topic);
 		return 1;
 	}

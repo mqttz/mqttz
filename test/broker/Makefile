@@ -42,6 +42,7 @@ endif
 	./02-unsubscribe-qos1.py
 	./02-unsubscribe-qos2.py
 	./02-unsubscribe-invalid-no-topic.py
+	./02-subscribe-invalid-utf8.py
 
 03 :
 	./03-publish-qos1.py
@@ -51,6 +52,7 @@ endif
 	./03-publish-b2c-disconnect-qos2.py
 	./03-pattern-matching.py
 	./03-publish-qos1-queued-bytes.py
+	./03-publish-invalid-utf8.py
 
 04 :
 	./04-retain-qos0.py
@@ -78,6 +80,7 @@ endif
 	./07-will-qos0.py
 	./07-will-null.py
 	./07-will-null-topic.py
+	./07-will-invalid-utf8.py
 
 08 :
 ifeq ($(WITH_TLS),yes)
