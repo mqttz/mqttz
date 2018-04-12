@@ -265,18 +265,21 @@ int mosquitto_opts_set(struct mosquitto *mosq, enum mosq_opt_t option, void *val
 			}
 			break;
 		case MOSQ_OPT_SSL_CTX:
-#ifdef WITH_TLS
+#if defined(WITH_TLS) && OPENSSL_VERSION_NUMBER >= 0x10100000L
 			mosq->ssl_ctx = (SSL_CTX *)value;
+			if(mosq->ssl_ctx){
+				SSL_CTX_up_ref(mosq->ssl_ctx);
+			}
 			break;
 #else
-			return MOSQ_ERR_UNSUPPORTED;
+			return MOSQ_ERR_NOT_SUPPORTED;
 #endif
 		case MOSQ_OPT_SSL_CTX_WITH_DEFAULTS:
-#ifdef WITH_TLS
+#if defined(WITH_TLS) && OPENSSL_VERSION_NUMBER >= 0x10100000L
 			mosq->ssl_ctx_defaults = true;
 			break;
 #else
-			return MOSQ_ERR_UNSUPPORTED;
+			return MOSQ_ERR_NOT_SUPPORTED;
 #endif
 		default:
 			return MOSQ_ERR_INVAL;

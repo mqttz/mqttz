@@ -974,6 +974,7 @@ libmosq_EXPORT int mosquitto_threaded_set(struct mosquitto *mosq, bool threaded)
  *	          onus is on you to ensure that you are using secure settings.
  *	          Setting to NULL means that libmosquitto will use its own SSL_CTX
  *	          if TLS is to be used.
+ *	          This option is only available for openssl 1.1.0 and higher.
  *
  *	MOSQ_OPT_SSL_CTX_WITH_DEFAULTS
  *	          Value must be an int set to 1 or 0. If set to 1, then the user
@@ -983,6 +984,7 @@ libmosq_EXPORT int mosquitto_threaded_set(struct mosquitto *mosq, bool threaded)
  *	          option then you must configure the TLS options as normal, i.e.
  *	          you should use <mosquitto_tls_set> to configure the cafile/capath
  *	          as a minimum.
+ *	          This option is only available for openssl 1.1.0 and higher.
  */
 libmosq_EXPORT int mosquitto_opts_set(struct mosquitto *mosq, enum mosq_opt_t option, void *value);
 
