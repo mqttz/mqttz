@@ -458,17 +458,19 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 	}
 
 	if(mosq->tls_cafile || mosq->tls_capath || mosq->tls_psk){
+		if(!mosq->ssl_ctx){
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
-		mosq->ssl_ctx = SSL_CTX_new(SSLv23_client_method());
+			mosq->ssl_ctx = SSL_CTX_new(SSLv23_client_method());
 #else
-		mosq->ssl_ctx = SSL_CTX_new(TLS_client_method());
+			mosq->ssl_ctx = SSL_CTX_new(TLS_client_method());
 #endif
 
-		if(!mosq->ssl_ctx){
-			log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to create TLS context.");
-			COMPAT_CLOSE(mosq->sock);
-			net__print_ssl_error(mosq);
-			return MOSQ_ERR_TLS;
+			if(!mosq->ssl_ctx){
+				log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to create TLS context.");
+				COMPAT_CLOSE(mosq->sock);
+				net__print_ssl_error(mosq);
+				return MOSQ_ERR_TLS;
+			}
 		}
 
 		if(!mosq->tls_version){
