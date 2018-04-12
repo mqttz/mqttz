@@ -19,7 +19,9 @@ Contributors:
 #include <errno.h>
 #include <signal.h>
 #include <string.h>
+#ifndef WIN32
 #include <sys/time.h>
+#endif
 
 #include "mosquitto.h"
 #include "mosquitto_internal.h"

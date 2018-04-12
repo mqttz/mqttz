@@ -17,8 +17,8 @@ Contributors:
 #include "config.h"
 
 #include <errno.h>
-#include <sys/select.h>
 #ifndef WIN32
+#include <sys/select.h>
 #include <time.h>
 #endif
 

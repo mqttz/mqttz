@@ -610,7 +610,7 @@ int config__read(struct mosquitto__config *config, bool reload)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int config__read_file_core(struct mosquitto__config *config, bool reload, const char *file, struct config_recurse *cr, int level, int *lineno, FILE *fptr, char **buf, int *buflen)
+int config__read_file_core(struct mosquitto__config *config, bool reload, struct config_recurse *cr, int level, int *lineno, FILE *fptr, char **buf, int *buflen)
 {
 	int rc;
 	char *token;
@@ -1113,7 +1113,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, const 
 							snprintf(conf_file, len, "%s\\%s", token, find_data.cFileName);
 							conf_file[len] = '\0';
 
-							rc = config__read_file(config, reload, conf_file, cr, level+1, &lineno_ext, buf, buflen);
+							rc = config__read_file(config, reload, conf_file, cr, level+1, &lineno_ext);
 							if(rc){
 								FindClose(fh);
 								log__printf(NULL, MOSQ_LOG_ERR, "Error found at %s:%d.", conf_file, lineno_ext);
@@ -1917,7 +1917,7 @@ int config__read_file(struct mosquitto__config *config, bool reload, const char 
 		return MOSQ_ERR_NOMEM;
 	}
 
-	rc = config__read_file_core(config, reload, file, cr, level, lineno, fptr, &buf, &buflen);
+	rc = config__read_file_core(config, reload, cr, level, lineno, fptr, &buf, &buflen);
 	mosquitto__free(buf);
 	fclose(fptr);
 
