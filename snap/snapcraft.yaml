@@ -18,6 +18,14 @@ apps:
     restart-condition: always
     plugs: [network, network-bind]
 
+  pub:
+    command: usr/bin/mosquitto_pub
+    plugs: [network]
+
+  sub:
+    command: usr/bin/mosquitto_sub
+    plugs: [network]
+
 
 parts:
   script:
@@ -36,13 +44,13 @@ parts:
 
   mosquitto:
     plugin: make
+    make-parameters: ["prefix=/usr", "WITH_SRV=no"]
     source: https://github.com/eclipse/mosquitto
     source-type: git
 
     build-packages:
       - libssl-dev
       - uuid-dev
-      - libc-ares-dev
       - xsltproc
       - docbook-xsl
       - gcc
@@ -52,7 +60,10 @@ parts:
       - libuuid1
       - libc-ares2
     prime:
-      - usr/local/sbin/mosquitto
+      - usr/sbin/mosquitto
+      - usr/bin/mosquitto_pub
+      - usr/bin/mosquitto_sub
+      - usr/lib/libmosquitto.so*
       - lib/*-linux-gnu/libcrypto.so*
       - lib/*-linux-gnu/libssl.so*
       - lib/*-linux-gnu/libuuid.so*
