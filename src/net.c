@@ -268,9 +268,9 @@ static int mosquitto__tls_server_ctx(struct mosquitto__listener *listener)
 
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
-	listener->ssl_ctx = SSL_CTX_new(SSLv23_client_method());
+	listener->ssl_ctx = SSL_CTX_new(SSLv23_server_method());
 #else
-	listener->ssl_ctx = SSL_CTX_new(TLS_client_method());
+	listener->ssl_ctx = SSL_CTX_new(TLS_server_method());
 #endif
 
 	if(!listener->ssl_ctx){
