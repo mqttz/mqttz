@@ -54,6 +54,9 @@ int mosquitto_username_pw_set(struct mosquitto *mosq, const char *username, cons
 	mosq->password = NULL;
 
 	if(username){
+		if(mosquitto_validate_utf8(username, strlen(username))){
+			return MOSQ_ERR_MALFORMED_UTF8;
+		}
 		mosq->username = mosquitto__strdup(username);
 		if(!mosq->username) return MOSQ_ERR_NOMEM;
 		if(password){

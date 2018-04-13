@@ -129,6 +129,9 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 		if(STREMPTY(id)){
 			return MOSQ_ERR_INVAL;
 		}
+		if(mosquitto_validate_utf8(id, strlen(id))){
+			return MOSQ_ERR_MALFORMED_UTF8;
+		}
 		mosq->id = mosquitto__strdup(id);
 	}else{
 		mosq->id = (char *)mosquitto__calloc(24, sizeof(char));
