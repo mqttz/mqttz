@@ -22,7 +22,7 @@ keepalive = 10
 connect_packet = mosq_test.gen_connect("connect-revoked-test", keepalive=keepalive)
 connack_packet = mosq_test.gen_connack(rc=0)
 
-broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=1889)
+broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=1889, use_conf=True)
 
 try:
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

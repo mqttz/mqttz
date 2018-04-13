@@ -39,7 +39,7 @@ suback_packet = mosq_test.gen_suback(mid, 0)
 publish_packet = mosq_test.gen_publish(topic="psk/test", payload="message", qos=0)
 
 bridge_cmd = ['../../src/mosquitto', '-c', '08-tls-psk-bridge.conf2']
-broker = mosq_test.start_broker(filename=os.path.basename(__file__))
+broker = mosq_test.start_broker(filename=os.path.basename(__file__), use_conf=True)
 bridge = mosq_test.start_broker(filename=os.path.basename(__file__)+'_bridge', cmd=bridge_cmd, port=1890)
 
 pub = None

@@ -22,11 +22,11 @@ bmod[1] = bmod[1] - 2 # Reduce remaining length by two to remove final two paylo
 
 connect_packet = struct.pack("B"*len(bmod), *bmod)
 
-cmd = ['../../src/mosquitto', '-p', '1888']
-broker = mosq_test.start_broker(filename=os.path.basename(__file__), cmd=cmd)
+port = mosq_test.get_port()
+broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port)
 
 try:
-    sock = mosq_test.do_client_connect(connect_packet, "")
+    sock = mosq_test.do_client_connect(connect_packet, "", port=port)
     sock.close()
     rc = 0
 finally:

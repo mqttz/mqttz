@@ -24,11 +24,11 @@ connack_packet = mosq_test.gen_connack(rc=0)
 
 unsubscribe_packet = gen_unsubscribe_invalid_no_topic(mid)
 
-cmd = ['../../src/mosquitto', '-p', '1888']
-broker = mosq_test.start_broker(filename=os.path.basename(__file__), cmd=cmd)
+port = mosq_test.get_port()
+broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port)
 
 try:
-    sock = mosq_test.do_client_connect(connect_packet, connack_packet)
+    sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
     sock.send(unsubscribe_packet)
 
     if mosq_test.expect_packet(sock, "disconnect", ""):

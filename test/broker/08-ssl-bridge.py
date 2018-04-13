@@ -31,7 +31,7 @@ ssock.settimeout(20)
 ssock.bind(('', 1888))
 ssock.listen(5)
 
-broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=1889)
+broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=1889, use_conf=True)
 
 try:
     (bridge, address) = ssock.accept()
