@@ -52,11 +52,11 @@ def packet_matches(name, recvd, expected):
         try:
             print("Received: "+to_string(recvd))
         except struct.error:
-            print("Received (not decoded): "+recvd)
+            print("Received (not decoded, len=%d): %s" % (len(recvd), recvd))
         try:
             print("Expected: "+to_string(expected))
         except struct.error:
-            print("Expected (not decoded): "+expected)
+            print("Expected (not decoded, len=%d): %s" % (len(expected), expected))
 
         return 0
     else:

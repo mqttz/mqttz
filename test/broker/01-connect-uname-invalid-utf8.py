@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Test whether a will topic with invalid UTF-8 fails
+# Test whether a username with invalid UTF-8 fails.
 
 import time
 import inspect, os, sys
@@ -13,19 +13,20 @@ import struct
 import mosq_test
 
 rc = 1
-mid = 53
 keepalive = 60
-connect_packet = mosq_test.gen_connect("will-invalid-utf8", keepalive=keepalive, will_topic="invalid/utf8")
-
+connect_packet = mosq_test.gen_connect("connect-invalid-utf8", keepalive=keepalive, username="invalid/utf8")
 b = list(struct.unpack("B"*len(connect_packet), connect_packet))
-b[40] = 0 # Topic should never have a 0x0000
+b[43] = 0 # Username should never have a 0x0000
 connect_packet = struct.pack("B"*len(b), *b)
 
 cmd = ['../../src/mosquitto', '-p', '1888']
 broker = mosq_test.start_broker(filename=os.path.basename(__file__), cmd=cmd)
 
 try:
-    sock = mosq_test.do_client_connect(connect_packet, "", timeout=30)
+    time.sleep(0.5)
+
+    sock = mosq_test.do_client_connect(connect_packet, "")
+    # Exception occurs if connack packet returned
     rc = 0
     sock.close()
 finally:

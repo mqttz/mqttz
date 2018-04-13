@@ -21,6 +21,7 @@ test : test-compile 01 02 03 04 05 06 07 08 09 10 11
 	./01-connect-invalid-id-0-311.py
 	./01-connect-invalid-id-missing.py
 	./01-connect-invalid-reserved.py
+	./01-connect-invalid-id-utf8.py
 	./01-connect-anon-denied.py
 	./01-connect-uname-no-password-denied.py
 	./01-connect-uname-password-denied.py
@@ -31,6 +32,7 @@ else
 endif
 	./01-connect-uname-no-flag.py
 	./01-connect-uname-pwd-no-flag.py
+	./01-connect-uname-invalid-utf8.py
 
 
 02 :
@@ -83,6 +85,7 @@ endif
 	./07-will-null.py
 	./07-will-null-topic.py
 	./07-will-invalid-utf8.py
+	./07-will-no-flag.py
 
 08 :
 ifeq ($(WITH_TLS),yes)
