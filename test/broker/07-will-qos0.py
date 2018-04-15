@@ -31,8 +31,9 @@ try:
     sock.send(subscribe_packet)
 
     if mosq_test.expect_packet(sock, "suback", suback_packet):
-        will = subprocess.Popen(['./07-will-qos0-helper.py', str(port)])
+        will = subprocess.Popen(['./07-will-qos0-helper.py', str(port)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         will.wait()
+        (stdo, stde) = will.communicate()
 
         if mosq_test.expect_packet(sock, "publish", publish_packet):
             rc = 0
@@ -41,8 +42,8 @@ try:
 finally:
     broker.terminate()
     broker.wait()
+    (stdo, stde) = broker.communicate()
     if rc:
-        (stdo, stde) = broker.communicate()
         print(stde)
 
 exit(rc)

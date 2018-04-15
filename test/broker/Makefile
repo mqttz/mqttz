@@ -1,6 +1,6 @@
 include ../../config.mk
 
-.PHONY: all clean test
+.PHONY: all clean test ptest
 .NOTPARALLEL:
 
 all :
@@ -11,6 +11,9 @@ clean :
 
 test-compile : 
 	$(MAKE) -C c
+
+ptest : test-compile
+	./ptest.py
 
 test : test-compile 01 02 03 04 05 06 07 08 09 10 11
 

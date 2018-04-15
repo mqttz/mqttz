@@ -11,6 +11,15 @@ if cmd_subfolder not in sys.path:
 
 import mosq_test
 
+def write_config(filename, port):
+    with open(filename, 'w') as f:
+        f.write("port %d\n" % (port))
+        f.write("upgrade_outgoing_qos true\n")
+
+port = mosq_test.get_port()
+conf_file = os.path.basename(__file__).replace('.py', '.conf')
+write_config(conf_file, port)
+
 rc = 1
 keepalive = 60
 mid = 16
@@ -23,14 +32,14 @@ suback_packet = mosq_test.gen_suback(mid, 1)
 
 publish_packet2 = mosq_test.gen_publish("retain/qos0/test", mid=1, qos=1, payload="retained message", retain=True)
 
-broker = mosq_test.start_broker(filename=os.path.basename(__file__))
+broker = mosq_test.start_broker(filename=os.path.basename(__file__), use_conf=True, port=port)
 
 try:
-    sock = mosq_test.do_client_connect(connect_packet, connack_packet)
+    sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
     sock.send(publish_packet)
 
     #sock.close()
-    #sock = mosq_test.do_client_connect(connect_packet, connack_packet)
+    #sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
     sock.send(subscribe_packet)
 
     if mosq_test.expect_packet(sock, "suback", suback_packet):
@@ -38,10 +47,11 @@ try:
             rc = 0
     sock.close()
 finally:
+    os.remove(conf_file)
     broker.terminate()
     broker.wait()
+    (stdo, stde) = broker.communicate()
     if rc:
-        (stdo, stde) = broker.communicate()
         print(stde)
 
 exit(rc)

@@ -36,6 +36,9 @@ reallyclean :
 	$(MAKE) -C test reallyclean
 	-rm -f *.orig
 
+ptest : mosquitto
+	$(MAKE) -C test ptest
+
 test : mosquitto
 	$(MAKE) -C test test
 

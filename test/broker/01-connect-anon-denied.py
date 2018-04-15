@@ -10,12 +10,21 @@ if cmd_subfolder not in sys.path:
 
 import mosq_test
 
+def write_config(filename, port):
+    with open(filename, 'w') as f:
+        f.write("port %d\n" % (port))
+        f.write("password_file %s\n" % (filename.replace('.conf', '.pwfile')))
+        f.write("allow_anonymous false\n")
+
+port = mosq_test.get_port()
+conf_file = os.path.basename(__file__).replace('.py', '.conf')
+write_config(conf_file, port)
+
 rc = 1
 keepalive = 10
 connect_packet = mosq_test.gen_connect("connect-anon-test", keepalive=keepalive)
 connack_packet = mosq_test.gen_connack(rc=5)
 
-port = mosq_test.get_port()
 broker = mosq_test.start_broker(filename=os.path.basename(__file__), use_conf=True, port=port)
 
 try:
@@ -23,10 +32,11 @@ try:
     sock.close()
     rc = 0
 finally:
+    os.remove(conf_file)
     broker.terminate()
     broker.wait()
+    (stdo, stde) = broker.communicate()
     if rc:
-        (stdo, stde) = broker.communicate()
         print(stde)
 
 exit(rc)

@@ -27,6 +27,8 @@ def start_broker(filename, cmd=None, port=0, use_conf=False):
         cmd = ['valgrind', '--trace-children=yes', '--leak-check=full', '--show-leak-kinds=all', '--log-file='+filename+'.vglog'] + cmd
         delay = 1
 
+    #print(port)
+    #print(cmd)
     broker = subprocess.Popen(cmd, stderr=subprocess.PIPE)
     for i in range(0, 20):
         time.sleep(delay)
@@ -416,8 +418,17 @@ def pack_remaining_length(remaining_length):
             return s
 
 
-def get_port():
-    if len(sys.argv) == 2:
-        return int(sys.argv[1])
+def get_port(count=1):
+    if count == 1:
+        if len(sys.argv) == 2:
+            return int(sys.argv[1])
+        else:
+            return 1888
     else:
-        return 1888
+        if len(sys.argv) == 1+count:
+            p = ()
+            for i in range(0, count):
+                p = p + (int(sys.argv[1+i]),)
+            return p
+        else:
+            return tuple(range(1888, 1888+count))

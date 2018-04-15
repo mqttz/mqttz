@@ -39,8 +39,9 @@ try:
         sock.send(disconnect_packet)
         sock.close()
 
-        pub = subprocess.Popen(['./05-clean-session-qos1-helper.py', str(port)])
+        pub = subprocess.Popen(['./05-clean-session-qos1-helper.py', str(port)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         pub.wait()
+        (stdo, stde) = pub.communicate()
 
         # Now reconnect and expect a publish message.
         sock = mosq_test.do_client_connect(connect_packet, connack2_packet, timeout=30, port=port)
@@ -52,8 +53,8 @@ try:
 finally:
     broker.terminate()
     broker.wait()
+    (stdo, stde) = broker.communicate()
     if rc:
-        (stdo, stde) = broker.communicate()
         print(stde)
 
 exit(rc)
