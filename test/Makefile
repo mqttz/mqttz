@@ -15,7 +15,7 @@ test :
 	$(MAKE) -C broker test
 	$(MAKE) -C lib test
 
-ptest : broker-test lib-test
+ptest :
 	$(MAKE) -C broker ptest
 	$(MAKE) -C lib ptest
 
