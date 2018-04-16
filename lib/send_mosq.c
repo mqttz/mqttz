@@ -18,6 +18,13 @@ Contributors:
 #include <stdio.h>
 #include <string.h>
 
+#ifdef WITH_BROKER
+#  include "mosquitto_broker_internal.h"
+#  include "sys_tree.h"
+#else
+#  define G_PUB_BYTES_SENT_INC(A)
+#endif
+
 #include "mosquitto.h"
 #include "mosquitto_internal.h"
 #include "logging_mosq.h"
@@ -28,13 +35,6 @@ Contributors:
 #include "send_mosq.h"
 #include "time_mosq.h"
 #include "util_mosq.h"
-
-#ifdef WITH_BROKER
-#  include "mosquitto_broker_internal.h"
-#  include "sys_tree.h"
-#else
-#  define G_PUB_BYTES_SENT_INC(A)
-#endif
 
 int send__pingreq(struct mosquitto *mosq)
 {

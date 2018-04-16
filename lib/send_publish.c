@@ -15,8 +15,14 @@ Contributors:
 */
 
 #include <assert.h>
-//#include <stdio.h>
 #include <string.h>
+
+#ifdef WITH_BROKER
+#  include "mosquitto_broker_internal.h"
+#  include "sys_tree.h"
+#else
+#  define G_PUB_BYTES_SENT_INC(A)
+#endif
 
 #include "mosquitto.h"
 #include "mosquitto_internal.h"
@@ -26,15 +32,6 @@ Contributors:
 #include "net_mosq.h"
 #include "packet_mosq.h"
 #include "send_mosq.h"
-//#include "time_mosq.h"
-//#include "util_mosq.h"
-
-#ifdef WITH_BROKER
-#  include "mosquitto_broker_internal.h"
-#  include "sys_tree.h"
-#else
-#  define G_PUB_BYTES_SENT_INC(A)
-#endif
 
 
 int send__publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint32_t payloadlen, const void *payload, int qos, bool retain, bool dup)

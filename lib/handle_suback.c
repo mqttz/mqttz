@@ -16,15 +16,15 @@ Contributors:
 
 #include <assert.h>
 
+#ifdef WITH_BROKER
+#  include "mosquitto_broker_internal.h"
+#endif
+
 #include "mosquitto.h"
 #include "mosquitto_internal.h"
 #include "logging_mosq.h"
 #include "memory_mosq.h"
 #include "packet_mosq.h"
-
-#ifdef WITH_BROKER
-#  include "mosquitto_broker_internal.h"
-#endif
 
 
 int handle__suback(struct mosquitto *mosq)

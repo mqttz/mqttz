@@ -17,6 +17,10 @@ Contributors:
 #include <assert.h>
 #include <string.h>
 
+#ifdef WITH_BROKER
+#  include "mosquitto_broker_internal.h"
+#endif
+
 #include "mosquitto.h"
 #include "mosquitto_internal.h"
 #include "logging_mosq.h"
@@ -24,10 +28,6 @@ Contributors:
 #include "mqtt3_protocol.h"
 #include "packet_mosq.h"
 #include "util_mosq.h"
-
-#ifdef WITH_BROKER
-#  include "mosquitto_broker_internal.h"
-#endif
 
 
 int send__subscribe(struct mosquitto *mosq, int *mid, const char *topic, uint8_t topic_qos)

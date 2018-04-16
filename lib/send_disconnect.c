@@ -16,15 +16,15 @@ Contributors:
 
 #include <assert.h>
 
+#ifdef WITH_BROKER
+#  include "mosquitto_broker_internal.h"
+#endif
+
 #include "mosquitto.h"
 #include "mosquitto_internal.h"
 #include "logging_mosq.h"
 #include "mqtt3_protocol.h"
 #include "send_mosq.h"
-
-#ifdef WITH_BROKER
-#  include "mosquitto_broker_internal.h"
-#endif
 
 
 int send__disconnect(struct mosquitto *mosq)

@@ -27,6 +27,10 @@ Contributors:
 #endif
 
 
+#ifdef WITH_BROKER
+#include "mosquitto_broker_internal.h"
+#endif
+
 #include "mosquitto.h"
 #include "memory_mosq.h"
 #include "net_mosq.h"
@@ -34,10 +38,6 @@ Contributors:
 #include "time_mosq.h"
 #include "tls_mosq.h"
 #include "util_mosq.h"
-
-#ifdef WITH_BROKER
-#include "mosquitto_broker_internal.h"
-#endif
 
 #ifdef WITH_WEBSOCKETS
 #include <libwebsockets.h>

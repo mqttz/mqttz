@@ -17,18 +17,17 @@ Contributors:
 #include <assert.h>
 #include <string.h>
 
+#ifdef WITH_BROKER
+#  include "mosquitto_broker_internal.h"
+#endif
+
 #include "mosquitto.h"
 #include "logging_mosq.h"
 #include "memory_mosq.h"
 #include "mqtt3_protocol.h"
-//#include "net_mosq.h"
 #include "packet_mosq.h"
-//#include "send_mosq.h"
 #include "util_mosq.h"
 
-#ifdef WITH_BROKER
-#  include "mosquitto_broker_internal.h"
-#endif
 
 int send__unsubscribe(struct mosquitto *mosq, int *mid, const char *topic)
 {

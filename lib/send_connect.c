@@ -17,16 +17,16 @@ Contributors:
 #include <assert.h>
 #include <string.h>
 
+#ifdef WITH_BROKER
+#  include "mosquitto_broker_internal.h"
+#endif
+
 #include "logging_mosq.h"
 #include "memory_mosq.h"
 #include "mosquitto.h"
 #include "mosquitto_internal.h"
 #include "mqtt3_protocol.h"
 #include "packet_mosq.h"
-
-#ifdef WITH_BROKER
-#  include "mosquitto_broker_internal.h"
-#endif
 
 int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session)
 {

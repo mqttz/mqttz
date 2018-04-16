@@ -18,6 +18,10 @@ Contributors:
 #include <stdio.h>
 #include <string.h>
 
+#ifdef WITH_BROKER
+#  include "mosquitto_broker_internal.h"
+#endif
+
 #include "mosquitto.h"
 #include "logging_mosq.h"
 #include "memory_mosq.h"
@@ -28,9 +32,6 @@ Contributors:
 #include "read_handle.h"
 #include "send_mosq.h"
 #include "util_mosq.h"
-#ifdef WITH_BROKER
-#include "mosquitto_broker_internal.h"
-#endif
 
 int handle__pingreq(struct mosquitto *mosq)
 {
