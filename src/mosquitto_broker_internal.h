@@ -192,8 +192,11 @@ struct mosquitto__security_options {
 	 * in config__read() with regards whether allow_anonymous
 	 * should be disabled when these options are set.
 	 */
+	struct mosquitto__acl_user *acl_list;
+	struct mosquitto__acl *acl_patterns;
 	char *password_file;
 	char *psk_file;
+	char *acl_file;
 	struct mosquitto__auth_plugin_config *auth_plugin_configs;
 	int auth_plugin_config_count;
 	char allow_anonymous;
@@ -239,7 +242,6 @@ struct mosquitto__listener {
 
 struct mosquitto__config {
 	char *config_file;
-	char *acl_file;
 	bool allow_duplicate_messages;
 	int autosave_interval;
 	bool autosave_on_changes;
@@ -361,8 +363,6 @@ struct mosquitto_db{
 	dbid_t last_db_id;
 	struct mosquitto__subhier *subs;
 	struct mosquitto__unpwd *unpwd;
-	struct mosquitto__acl_user *acl_list;
-	struct mosquitto__acl *acl_patterns;
 	struct mosquitto__unpwd *psk_id;
 	struct mosquitto *contexts_by_id;
 	struct mosquitto *contexts_by_sock;

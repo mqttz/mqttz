@@ -4,6 +4,9 @@
 Broker features:
 - Add per_listener_settings to allow authentication and access control to be
   per listener.
+- Add limited support for reloading listener settings. This allows settings
+  for an already defined listener to be reloaded, but port numbers must not be
+  changed.
 - Add ability to deny access to SUBSCRIBE messages as well as the current
   read/write accesses. Currently for auth plugins only.
 - Reduce calls to malloc through the use of UHPA.

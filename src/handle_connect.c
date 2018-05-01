@@ -126,6 +126,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	int slen;
 	struct mosquitto__subleaf *leaf;
 	int i;
+	struct mosquitto__security_options *security_opts;
 #ifdef WITH_TLS
 	X509 *client_cert = NULL;
 	X509_NAME *name;
@@ -575,8 +576,17 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	/* Associate user with its ACL, assuming we have ACLs loaded. */
-	if(db->acl_list){
-		acl_tail = db->acl_list;
+	if(db->config->per_listener_settings){
+		if(!context->listener){
+			return 1;
+		}
+		security_opts = &context->listener->security_options;
+	}else{
+		security_opts = &db->config->security_options;
+	}
+
+	if(security_opts->acl_list){
+		acl_tail = security_opts->acl_list;
 		while(acl_tail){
 			if(context->username){
 				if(acl_tail->username && !strcmp(context->username, acl_tail->username)){
@@ -594,6 +604,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	}else{
 		context->acl_list = NULL;
 	}
+
 
 	if(will_struct){
 		context->will = will_struct;
