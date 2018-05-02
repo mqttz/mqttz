@@ -444,8 +444,16 @@ int main(int argc, char *argv[])
 #else
 	password_file = realpath(password_file_tmp, NULL);
 	if(!password_file){
-		fprintf(stderr, "Error reading password file: %s\n", strerror(errno));
-		return 1;
+		if(errno == ENOENT){
+			password_file = strdup(password_file_tmp);
+			if(!password_file){
+				fprintf(stderr, "Error: Out of memory.\n");
+				return 1;
+			}
+		}else{
+			fprintf(stderr, "Error reading password file: %s\n", strerror(errno));
+			return 1;
+		}
 	}
 #endif
 
