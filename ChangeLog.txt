@@ -82,6 +82,7 @@ Broker fixes:
 - Maximum connections on Windows increased to 2048.
 - When a client with an in-use client-id connects, if the old client has a
   will, send the will message. Closes #26.
+- Fix parsing of configuration options that end with a space. Closes #804.
 
 Client library features:
 - Outgoing messages with QoS>1 are no longer retried after a timeout period.
