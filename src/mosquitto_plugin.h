@@ -17,21 +17,40 @@ Contributors:
 #ifndef MOSQUITTO_PLUGIN_H
 #define MOSQUITTO_PLUGIN_H
 
-#define MOSQ_AUTH_PLUGIN_VERSION 2
+#define MOSQ_AUTH_PLUGIN_VERSION 3
 
 #define MOSQ_ACL_NONE 0x00
 #define MOSQ_ACL_READ 0x01
 #define MOSQ_ACL_WRITE 0x02
+#define MOSQ_ACL_SUBSCRIBE 0x04
+
+#include <stdbool.h>
+
+struct mosquitto;
+
+struct mosquitto_opt {
+	char *key;
+	char *value;
+};
 
 struct mosquitto_auth_opt {
 	char *key;
 	char *value;
 };
 
+struct mosquitto_acl_msg {
+	const char *topic;
+	const void *payload;
+	long payloadlen;
+	int qos;
+	bool retain;
+};
+
 /*
  * To create an authentication plugin you must include this file then implement
- * the functions listed below. The resulting code should then be compiled as a
- * shared library. Using gcc this can be achieved as follows:
+ * the functions listed in the "Plugin Functions" section below. The resulting
+ * code should then be compiled as a shared library. Using gcc this can be
+ * achieved as follows:
  *
  * gcc -I<path to mosquitto_plugin.h> -fPIC -shared plugin.c -o plugin.so
  *
@@ -39,40 +58,24 @@ struct mosquitto_auth_opt {
  *
  * gcc -I<path to mosquitto_plugin.h> -fPIC -shared plugin.c -undefined dynamic_lookup -o plugin.so
  *
+ * Authentication plugins can implement one or both of authentication and
+ * access control. If your plugin does not wish to handle either of
+ * authentication or access control it should return MOSQ_ERR_PLUGIN_DEFER. In
+ * this case, the next plugin will handle it. If all plugins return
+ * MOSQ_ERR_PLUGIN_DEFER, the request will be denied.
+ *
+ * For each check, the following flow happens:
+ *
+ * * The default password file and/or acl file checks are made. If either one
+ *   of these is not defined, then they are considered to be deferred. If either
+ *   one accepts the check, no further checks are made. If an error occurs, the
+ *   check is denied
+ * * The first plugin does the check, if it returns anything other than
+ *   MOSQ_ERR_PLUGIN_DEFER, then the check returns immediately. If the plugin
+ *   returns MOSQ_ERR_PLUGIN_DEFER then the next plugin runs its check.
+ * * If the final plugin returns MOSQ_ERR_PLUGIN_DEFER, then access will be
+ *   denied.
  */
-
-/* =========================================================================
- *
- * Utility Functions
- *
- * Use these functions from within your plugin.
- *
- * There are also very useful functions in libmosquitto.
- *
- * ========================================================================= */
-
-/*
- * Function: mosquitto_log_printf
- *
- * Write a log message using the broker configured logging.
- *
- * Parameters:
- * 	level -    Log message priority. Can currently be one of:
- *
- *             MOSQ_LOG_INFO
- *             MOSQ_LOG_NOTICE
- *             MOSQ_LOG_WARNING
- *             MOSQ_LOG_ERR
- *             MOSQ_LOG_DEBUG
- *             MOSQ_LOG_SUBSCRIBE (not recommended for use by plugins)
- *             MOSQ_LOG_UNSUBSCRIBE (not recommended for use by plugins)
- *
- *             These values are defined in mosquitto.h.
- *
- *	fmt, ... - printf style format and arguments.
- */
-void mosquitto_log_printf(int level, const char *fmt, ...);
-
 
 
 /* =========================================================================
@@ -92,6 +95,7 @@ void mosquitto_log_printf(int level, const char *fmt, ...);
  */
 int mosquitto_auth_plugin_version(void);
 
+
 /*
  * Function: mosquitto_auth_plugin_init
  *
@@ -103,50 +107,56 @@ int mosquitto_auth_plugin_version(void);
  *
  *	user_data :      The pointer set here will be passed to the other plugin
  *	                 functions. Use to hold connection information for example.
- *	auth_opts :      Pointer to an array of struct mosquitto_auth_opt, which
+ *	opts :           Pointer to an array of struct mosquitto_opt, which
  *	                 provides the plugin options defined in the configuration file.
- *	auth_opt_count : The number of elements in the auth_opts array.
+ *	opt_count :      The number of elements in the opts array.
  *
  * Return value:
  *	Return 0 on success
  *	Return >0 on failure.
  */
-int mosquitto_auth_plugin_init(void **user_data, struct mosquitto_auth_opt *auth_opts, int auth_opt_count);
+int mosquitto_auth_plugin_init(void **user_data, struct mosquitto_opt *opts, int opt_count);
+
 
 /*
  * Function: mosquitto_auth_plugin_cleanup
  *
- * Called when the broker is shutting down. This will only ever be called once.
+ * Called when the broker is shutting down. This will only ever be called once
+ * per plugin.
  * Note that <mosquitto_auth_security_cleanup> will be called directly before
  * this function.
  *
  * Parameters:
  *
  *	user_data :      The pointer provided in <mosquitto_auth_plugin_init>.
- *	auth_opts :      Pointer to an array of struct mosquitto_auth_opt, which
+ *	opts :           Pointer to an array of struct mosquitto_opt, which
  *	                 provides the plugin options defined in the configuration file.
- *	auth_opt_count : The number of elements in the auth_opts array.
+ *	opt_count :      The number of elements in the opts array.
  *
  * Return value:
  *	Return 0 on success
  *	Return >0 on failure.
  */
-int mosquitto_auth_plugin_cleanup(void *user_data, struct mosquitto_auth_opt *auth_opts, int auth_opt_count);
+int mosquitto_auth_plugin_cleanup(void *user_data, struct mosquitto_opt *opts, int opt_count);
+
 
 /*
  * Function: mosquitto_auth_security_init
  *
- * Called when the broker initialises the security functions when it starts up.
- * If the broker is requested to reload its configuration whilst running,
- * <mosquitto_auth_security_cleanup> will be called, followed by this function.
- * In this situation, the reload parameter will be true.
+ * This function is called in two scenarios:
+ *
+ * 1. When the broker starts up.
+ * 2. If the broker is requested to reload its configuration whilst running. In
+ *    this case, <mosquitto_auth_security_cleanup> will be called first, then
+ *    this function will be called.  In this situation, the reload parameter
+ *    will be true.
  *
  * Parameters:
  *
  *	user_data :      The pointer provided in <mosquitto_auth_plugin_init>.
- *	auth_opts :      Pointer to an array of struct mosquitto_auth_opt, which
+ *	opts :           Pointer to an array of struct mosquitto_opt, which
  *	                 provides the plugin options defined in the configuration file.
- *	auth_opt_count : The number of elements in the auth_opts array.
+ *	opt_count :      The number of elements in the opts array.
  *	reload :         If set to false, this is the first time the function has
  *	                 been called. If true, the broker has received a signal
  *	                 asking to reload its configuration.
@@ -155,22 +165,26 @@ int mosquitto_auth_plugin_cleanup(void *user_data, struct mosquitto_auth_opt *au
  *	Return 0 on success
  *	Return >0 on failure.
  */
-int mosquitto_auth_security_init(void *user_data, struct mosquitto_auth_opt *auth_opts, int auth_opt_count, bool reload);
+int mosquitto_auth_security_init(void *user_data, struct mosquitto_opt *opts, int opt_count, bool reload);
+
 
 /* 
  * Function: mosquitto_auth_security_cleanup
  *
- * Called when the broker cleans up the security functions when it shuts down.
- * If the broker is requested to reload its configuration whilst running,
- * this function will be called, followed by <mosquitto_auth_security_init>.
- * In this situation, the reload parameter will be true.
+ * This function is called in two scenarios:
+ *
+ * 1. When the broker is shutting down.
+ * 2. If the broker is requested to reload its configuration whilst running. In
+ *    this case, this function will be called, followed by
+ *    <mosquitto_auth_security_init>. In this situation, the reload parameter
+ *    will be true.
  *
  * Parameters:
  *
  *	user_data :      The pointer provided in <mosquitto_auth_plugin_init>.
- *	auth_opts :      Pointer to an array of struct mosquitto_auth_opt, which
+ *	opts :           Pointer to an array of struct mosquitto_opt, which
  *	                 provides the plugin options defined in the configuration file.
- *	auth_opt_count : The number of elements in the auth_opts array.
+ *	opt_count :      The number of elements in the opts array.
  *	reload :         If set to false, this is the first time the function has
  *	                 been called. If true, the broker has received a signal
  *	                 asking to reload its configuration.
@@ -179,27 +193,49 @@ int mosquitto_auth_security_init(void *user_data, struct mosquitto_auth_opt *aut
  *	Return 0 on success
  *	Return >0 on failure.
  */
-int mosquitto_auth_security_cleanup(void *user_data, struct mosquitto_auth_opt *auth_opts, int auth_opt_count, bool reload);
+int mosquitto_auth_security_cleanup(void *user_data, struct mosquitto_opt *opts, int opt_count, bool reload);
+
 
 /*
  * Function: mosquitto_auth_acl_check
  *
  * Called by the broker when topic access must be checked. access will be one
- * of MOSQ_ACL_READ (for subscriptions) or MOSQ_ACL_WRITE (for publish). Return
- * MOSQ_ERR_SUCCESS if access was granted, MOSQ_ERR_ACL_DENIED if access was
- * not granted, or MOSQ_ERR_UNKNOWN for an application specific error.
+ * of:
+ *  MOSQ_ACL_SUBSCRIBE when a client is asking to subscribe to a topic string.
+ *                     This differs from MOSQ_ACL_READ in that it allows you to
+ *                     deny access to topic strings rather than by pattern. For
+ *                     example, you may use MOSQ_ACL_SUBSCRIBE to deny
+ *                     subscriptions to '#', but allow all topics in
+ *                     MOSQ_ACL_READ. This allows clients to subscribe to any
+ *                     topic they want, but not discover what topics are in use
+ *                     on the server.
+ *  MOSQ_ACL_READ      when a message is about to be sent to a client (i.e. whether
+ *                     it can read that topic or not).
+ *  MOSQ_ACL_WRITE     when a message has been received from a client (i.e. whether
+ *                     it can write to that topic or not).
+ *
+ * Return:
+ *	MOSQ_ERR_SUCCESS if access was granted.
+ *	MOSQ_ERR_ACL_DENIED if access was not granted.
+ *	MOSQ_ERR_UNKNOWN for an application specific error.
+ *	MOSQ_ERR_PLUGIN_DEFER if your plugin does not wish to handle this check.
  */
-int mosquitto_auth_acl_check(void *user_data, const char *clientid, const char *username, const char *topic, int access);
+int mosquitto_auth_acl_check(void *user_data, int access, const struct mosquitto *client, const struct mosquitto_acl_msg *msg);
+
 
 /*
  * Function: mosquitto_auth_unpwd_check
  *
- * Called by the broker when a username/password must be checked. Return
- * MOSQ_ERR_SUCCESS if the user is authenticated, MOSQ_ERR_AUTH if
- * authentication failed, or MOSQ_ERR_UNKNOWN for an application specific
- * error.
+ * Called by the broker when a username/password must be checked.
+ *
+ * Return:
+ *	MOSQ_ERR_SUCCESS if the user is authenticated.
+ *	MOSQ_ERR_AUTH if authentication failed.
+ *	MOSQ_ERR_UNKNOWN for an application specific error.
+ *	MOSQ_ERR_PLUGIN_DEFER if your plugin does not wish to handle this check.
  */
-int mosquitto_auth_unpwd_check(void *user_data, const char *username, const char *password);
+int mosquitto_auth_unpwd_check(void *user_data, const struct mosquitto *client, const char *username, const char *password);
+
 
 /*
  * Function: mosquitto_psk_key_get
@@ -221,8 +257,8 @@ int mosquitto_auth_unpwd_check(void *user_data, const char *username, const char
  * Return value:
  *	Return 0 on success.
  *	Return >0 on failure.
- *	Return >0 if this function is not required.
+ *	Return MOSQ_ERR_PLUGIN_DEFER if your plugin does not wish to handle this check.
  */
-int mosquitto_auth_psk_key_get(void *user_data, const char *hint, const char *identity, char *key, int max_key_len);
+int mosquitto_auth_psk_key_get(void *user_data, const struct mosquitto *client, const char *hint, const char *identity, char *key, int max_key_len);
 
 #endif

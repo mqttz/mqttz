@@ -12,10 +12,30 @@ if cmd_subfolder not in sys.path:
 
 import mosq_test
 
+def write_config(filename, port1, port2):
+    with open(filename, 'w') as f:
+        f.write("port %d\n" % (port2))
+        f.write("\n")
+        f.write("connection bridge_sample\n")
+        f.write("address 127.0.0.1:%d\n" % (port1))
+        f.write("bridge_attempt_unsubscribe false\n")
+        f.write("topic # out 0 local/topic/ remote/topic/\n")
+        f.write("topic prefix/# out 0 local2/topic/ remote2/topic/\n")
+        f.write("topic +/value out 0 local3/topic/ remote3/topic/\n")
+        f.write("topic ic/+ out 0 local4/top remote4/tip\n")
+        f.write("# this one is invalid\n")
+        f.write("topic +/value out 0 local5/top remote5/tip\n")
+        f.write("notifications false\n")
+        f.write("restart_timeout 5\n")
+
+(port1, port2) = mosq_test.get_port(2)
+conf_file = os.path.basename(__file__).replace('.py', '.conf')
+write_config(conf_file, port1, port2)
+
 rc = 1
 keepalive = 60
 client_id = socket.gethostname()+".bridge_sample"
-connect_packet = mosq_test.gen_connect(client_id, keepalive=keepalive, clean_session=False, proto_ver=128+3)
+connect_packet = mosq_test.gen_connect(client_id, keepalive=keepalive, clean_session=False, proto_ver=128+4)
 connack_packet = mosq_test.gen_connack(rc=0)
 
 client_connect_packet = mosq_test.gen_connect("pub-test", keepalive=keepalive)
@@ -24,10 +44,10 @@ client_connack_packet = mosq_test.gen_connack(rc=0)
 ssock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 ssock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 ssock.settimeout(4)
-ssock.bind(('', 1888))
+ssock.bind(('', port1))
 ssock.listen(5)
 
-broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=1889)
+broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port2, use_conf=True)
 
 
 def test(bridge, sock):
@@ -86,7 +106,7 @@ try:
 
     sock = mosq_test.do_client_connect(
         client_connect_packet, client_connack_packet,
-        port=1889,
+        port=port2,
     )
 
     rc = test(bridge, sock)
@@ -94,6 +114,7 @@ try:
     sock.close()
     bridge.close()
 finally:
+    os.remove(conf_file)
     try:
         bridge.close()
     except NameError:
@@ -101,8 +122,8 @@ finally:
 
     broker.terminate()
     broker.wait()
+    (stdo, stde) = broker.communicate()
     if rc:
-        (stdo, stde) = broker.communicate()
         print(stde)
     ssock.close()
 

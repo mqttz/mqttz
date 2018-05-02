@@ -14,56 +14,101 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
-#include <config.h>
+#include "config.h"
 
 #include <stdio.h>
 #include <string.h>
 
-#include <mosquitto_broker.h>
-#include <memory_mosq.h>
+#include "mosquitto_broker_internal.h"
+#include "memory_mosq.h"
 #include "util_mosq.h"
 
-static int _aclfile_parse(struct mosquitto_db *db);
-static int _unpwd_file_parse(struct mosquitto_db *db);
-static int _acl_cleanup(struct mosquitto_db *db, bool reload);
-static int _unpwd_cleanup(struct _mosquitto_unpwd **unpwd, bool reload);
-static int _psk_file_parse(struct mosquitto_db *db);
+static int aclfile__parse(struct mosquitto_db *db, struct mosquitto__security_options *security_opts);
+static int unpwd__file_parse(struct mosquitto__unpwd **unpwd, const char *password_file);
+static int acl__cleanup(struct mosquitto_db *db, bool reload);
+static int unpwd__cleanup(struct mosquitto__unpwd **unpwd, bool reload);
+static int psk__file_parse(struct mosquitto_db *db, struct mosquitto__unpwd **psk_id, const char *psk_file);
 #ifdef WITH_TLS
-static int _pw_digest(const char *password, const unsigned char *salt, unsigned int salt_len, unsigned char *hash, unsigned int *hash_len);
-static int _base64_decode(char *in, unsigned char **decoded, unsigned int *decoded_len);
+static int pw__digest(const char *password, const unsigned char *salt, unsigned int salt_len, unsigned char *hash, unsigned int *hash_len);
+static int base64__decode(char *in, unsigned char **decoded, unsigned int *decoded_len);
+static int mosquitto__memcmp_const(const void *ptr1, const void *b, size_t len);
 #endif
 
-static int mosquitto__memcmp_const(const void *ptr1, const void *b, size_t len);
 
 
 int mosquitto_security_init_default(struct mosquitto_db *db, bool reload)
 {
 	int rc;
+	int i;
+	char *pwf;
+	char *pskf;
 
 	/* Load username/password data if required. */
-	if(db->config->password_file){
-		rc = _unpwd_file_parse(db);
-		if(rc){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error opening password file \"%s\".", db->config->password_file);
-			return rc;
+	if(db->config->per_listener_settings){
+		for(i=0; i<db->config->listener_count; i++){
+			pwf = db->config->listeners[i].security_options.password_file;
+			if(pwf){
+				rc = unpwd__file_parse(&db->config->listeners[i].unpwd, pwf);
+				if(rc){
+					log__printf(NULL, MOSQ_LOG_ERR, "Error opening password file \"%s\".", pwf);
+					return rc;
+				}
+			}
+		}
+	}else{
+		if(db->config->security_options.password_file){
+			pwf = db->config->security_options.password_file;
+			if(pwf){
+				rc = unpwd__file_parse(&db->unpwd, pwf);
+				if(rc){
+					log__printf(NULL, MOSQ_LOG_ERR, "Error opening password file \"%s\".", pwf);
+					return rc;
+				}
+			}
 		}
 	}
 
 	/* Load acl data if required. */
-	if(db->config->acl_file){
-		rc = _aclfile_parse(db);
-		if(rc){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error opening acl file \"%s\".", db->config->acl_file);
-			return rc;
+	if(db->config->per_listener_settings){
+		for(i=0; i<db->config->listener_count; i++){
+			if(db->config->listeners[i].security_options.acl_file){
+				rc = aclfile__parse(db, &db->config->listeners[i].security_options);
+				if(rc){
+					log__printf(NULL, MOSQ_LOG_ERR, "Error opening acl file \"%s\".", db->config->listeners[i].security_options.acl_file);
+					return rc;
+				}
+			}
+		}
+	}else{
+		if(db->config->security_options.acl_file){
+			rc = aclfile__parse(db, &db->config->security_options);
+			if(rc){
+				log__printf(NULL, MOSQ_LOG_ERR, "Error opening acl file \"%s\".", db->config->security_options.acl_file);
+				return rc;
+			}
 		}
 	}
 
 	/* Load psk data if required. */
-	if(db->config->psk_file){
-		rc = _psk_file_parse(db);
-		if(rc){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error opening psk file \"%s\".", db->config->psk_file);
-			return rc;
+	if(db->config->per_listener_settings){
+		for(i=0; i<db->config->listener_count; i++){
+			pskf = db->config->listeners[i].security_options.psk_file;
+			if(pskf){
+				rc = psk__file_parse(db, &db->config->listeners[i].psk_id, pskf);
+				if(rc){
+					log__printf(NULL, MOSQ_LOG_ERR, "Error opening psk file \"%s\".", pskf);
+					return rc;
+				}
+			}
+		}
+	}else{
+		char *pskf = db->config->security_options.psk_file;
+		if(pskf){
+			rc = psk__file_parse(db, &db->psk_id, pskf);
+			if(rc){
+				log__printf(NULL, MOSQ_LOG_ERR, "Error opening psk file \"%s\".", pskf);
+				return rc;
+			}
 		}
 	}
 
@@ -73,30 +118,51 @@ int mosquitto_security_init_default(struct mosquitto_db *db, bool reload)
 int mosquitto_security_cleanup_default(struct mosquitto_db *db, bool reload)
 {
 	int rc;
-	rc = _acl_cleanup(db, reload);
+	int i;
+
+	rc = acl__cleanup(db, reload);
 	if(rc != MOSQ_ERR_SUCCESS) return rc;
-	rc = _unpwd_cleanup(&db->unpwd, reload);
+
+	rc = unpwd__cleanup(&db->unpwd, reload);
 	if(rc != MOSQ_ERR_SUCCESS) return rc;
-	return _unpwd_cleanup(&db->psk_id, reload);
+
+	for(i=0; i<db->config->listener_count; i++){
+		if(db->config->listeners[i].unpwd){
+			rc = unpwd__cleanup(&db->config->listeners[i].unpwd, reload);
+			if(rc != MOSQ_ERR_SUCCESS) return rc;
+		}
+	}
+
+	rc = unpwd__cleanup(&db->psk_id, reload);
+	if(rc != MOSQ_ERR_SUCCESS) return rc;
+
+	for(i=0; i<db->config->listener_count; i++){
+		if(db->config->listeners[i].psk_id){
+			rc = unpwd__cleanup(&db->config->listeners[i].psk_id, reload);
+			if(rc != MOSQ_ERR_SUCCESS) return rc;
+		}
+	}
+
+	return MOSQ_ERR_SUCCESS;
 }
 
 
-int _add_acl(struct mosquitto_db *db, const char *user, const char *topic, int access)
+int add__acl(struct mosquitto__security_options *security_opts, const char *user, const char *topic, int access)
 {
-	struct _mosquitto_acl_user *acl_user=NULL, *user_tail;
-	struct _mosquitto_acl *acl, *acl_tail;
+	struct mosquitto__acl_user *acl_user=NULL, *user_tail;
+	struct mosquitto__acl *acl, *acl_tail;
 	char *local_topic;
 	bool new_user = false;
 
-	if(!db || !topic) return MOSQ_ERR_INVAL;
+	if(!security_opts || !topic) return MOSQ_ERR_INVAL;
 
-	local_topic = _mosquitto_strdup(topic);
+	local_topic = mosquitto__strdup(topic);
 	if(!local_topic){
 		return MOSQ_ERR_NOMEM;
 	}
 
-	if(db->acl_list){
-		user_tail = db->acl_list;
+	if(security_opts->acl_list){
+		user_tail = security_opts->acl_list;
 		while(user_tail){
 			if(user == NULL){
 				if(user_tail->username == NULL){
@@ -111,17 +177,17 @@ int _add_acl(struct mosquitto_db *db, const char *user, const char *topic, int a
 		}
 	}
 	if(!acl_user){
-		acl_user = _mosquitto_malloc(sizeof(struct _mosquitto_acl_user));
+		acl_user = mosquitto__malloc(sizeof(struct mosquitto__acl_user));
 		if(!acl_user){
-			_mosquitto_free(local_topic);
+			mosquitto__free(local_topic);
 			return MOSQ_ERR_NOMEM;
 		}
 		new_user = true;
 		if(user){
-			acl_user->username = _mosquitto_strdup(user);
+			acl_user->username = mosquitto__strdup(user);
 			if(!acl_user->username){
-				_mosquitto_free(local_topic);
-				_mosquitto_free(acl_user);
+				mosquitto__free(local_topic);
+				mosquitto__free(acl_user);
 				return MOSQ_ERR_NOMEM;
 			}
 		}else{
@@ -131,9 +197,11 @@ int _add_acl(struct mosquitto_db *db, const char *user, const char *topic, int a
 		acl_user->acl = NULL;
 	}
 
-	acl = _mosquitto_malloc(sizeof(struct _mosquitto_acl));
+	acl = mosquitto__malloc(sizeof(struct mosquitto__acl));
 	if(!acl){
-		_mosquitto_free(local_topic);
+		mosquitto__free(local_topic);
+		mosquitto__free(acl_user->username);
+		mosquitto__free(acl_user);
 		return MOSQ_ERR_NOMEM;
 	}
 	acl->access = access;
@@ -155,36 +223,36 @@ int _add_acl(struct mosquitto_db *db, const char *user, const char *topic, int a
 
 	if(new_user){
 		/* Add to end of list */
-		if(db->acl_list){
-			user_tail = db->acl_list;
+		if(security_opts->acl_list){
+			user_tail = security_opts->acl_list;
 			while(user_tail->next){
 				user_tail = user_tail->next;
 			}
 			user_tail->next = acl_user;
 		}else{
-			db->acl_list = acl_user;
+			security_opts->acl_list = acl_user;
 		}
 	}
 
 	return MOSQ_ERR_SUCCESS;
 }
 
-int _add_acl_pattern(struct mosquitto_db *db, const char *topic, int access)
+int add__acl_pattern(struct mosquitto__security_options *security_opts, const char *topic, int access)
 {
-	struct _mosquitto_acl *acl, *acl_tail;
+	struct mosquitto__acl *acl, *acl_tail;
 	char *local_topic;
 	char *s;
 
-	if(!db || !topic) return MOSQ_ERR_INVAL;
+	if(!security_opts| !topic) return MOSQ_ERR_INVAL;
 
-	local_topic = _mosquitto_strdup(topic);
+	local_topic = mosquitto__strdup(topic);
 	if(!local_topic){
 		return MOSQ_ERR_NOMEM;
 	}
 
-	acl = _mosquitto_malloc(sizeof(struct _mosquitto_acl));
+	acl = mosquitto__malloc(sizeof(struct mosquitto__acl));
 	if(!acl){
-		_mosquitto_free(local_topic);
+		mosquitto__free(local_topic);
 		return MOSQ_ERR_NOMEM;
 	}
 	acl->access = access;
@@ -211,14 +279,14 @@ int _add_acl_pattern(struct mosquitto_db *db, const char *topic, int access)
 		}
 	}
 
-	if(db->acl_patterns){
-		acl_tail = db->acl_patterns;
+	if(security_opts->acl_patterns){
+		acl_tail = security_opts->acl_patterns;
 		while(acl_tail->next){
 			acl_tail = acl_tail->next;
 		}
 		acl_tail->next = acl;
 	}else{
-		db->acl_patterns = acl;
+		security_opts->acl_patterns = acl;
 	}
 
 	return MOSQ_ERR_SUCCESS;
@@ -227,16 +295,28 @@ int _add_acl_pattern(struct mosquitto_db *db, const char *topic, int access)
 int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int access)
 {
 	char *local_acl;
-	struct _mosquitto_acl *acl_root;
+	struct mosquitto__acl *acl_root;
 	bool result;
 	int i;
 	int len, tlen, clen, ulen;
 	char *s;
+	struct mosquitto__security_options *security_opts = NULL;
 
 	if(!db || !context || !topic) return MOSQ_ERR_INVAL;
-	if(!db->acl_list && !db->acl_patterns) return MOSQ_ERR_SUCCESS;
+
+	if(db->config->per_listener_settings){
+		if(!context->listener) return MOSQ_ERR_ACL_DENIED;
+		security_opts = &context->listener->security_options;
+	}else{
+		security_opts = &db->config->security_options;
+	}
+	if(!security_opts->acl_list && !security_opts->acl_patterns){
+			return MOSQ_ERR_PLUGIN_DEFER;
+	}
+
 	if(context->bridge) return MOSQ_ERR_SUCCESS;
-	if(!context->acl_list && !db->acl_patterns) return MOSQ_ERR_ACL_DENIED;
+	if(access == MOSQ_ACL_SUBSCRIBE) return MOSQ_ERR_SUCCESS; /* FIXME - implement ACL subscription strings. */
+	if(!context->acl_list && !security_opts->acl_patterns) return MOSQ_ERR_ACL_DENIED;
 
 	if(context->acl_list){
 		acl_root = context->acl_list->acl;
@@ -263,7 +343,7 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 		acl_root = acl_root->next;
 	}
 
-	acl_root = db->acl_patterns;
+	acl_root = security_opts->acl_patterns;
 
 	if(acl_root){
 		/* We are using pattern based acls. Check whether the username or
@@ -274,18 +354,20 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 		 * publish or receive messages to its own place in the hierarchy).
 		 */
 		if(context->username && strpbrk(context->username, "+#")){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "ACL denying access to client with dangerous username \"%s\"", context->username);
+			log__printf(NULL, MOSQ_LOG_NOTICE, "ACL denying access to client with dangerous username \"%s\"", context->username);
 			return MOSQ_ERR_ACL_DENIED;
 		}
 
 		if(context->id && strpbrk(context->id, "+#")){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "ACL denying access to client with dangerous client id \"%s\"", context->id);
+			log__printf(NULL, MOSQ_LOG_NOTICE, "ACL denying access to client with dangerous client id \"%s\"", context->id);
 			return MOSQ_ERR_ACL_DENIED;
 		}
 	}
 
 	/* Loop through all pattern ACLs. */
+	if(!context->id) return MOSQ_ERR_ACL_DENIED;
 	clen = strlen(context->id);
+
 	while(acl_root){
 		tlen = strlen(acl_root->topic);
 
@@ -301,7 +383,7 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 			ulen = 0;
 			len = tlen + acl_root->ccount*(clen-2);
 		}
-		local_acl = _mosquitto_malloc(len+1);
+		local_acl = mosquitto__malloc(len+1);
 		if(!local_acl) return 1; // FIXME
 		s = local_acl;
 		for(i=0; i<tlen; i++){
@@ -324,7 +406,7 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 		local_acl[len] = '\0';
 
 		mosquitto_topic_matches_sub(local_acl, topic, &result);
-		_mosquitto_free(local_acl);
+		mosquitto__free(local_acl);
 		if(result){
 			if(access & acl_root->access){
 				/* And access is allowed. */
@@ -338,9 +420,10 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 	return MOSQ_ERR_ACL_DENIED;
 }
 
-static int _aclfile_parse(struct mosquitto_db *db)
+
+static int aclfile__parse(struct mosquitto_db *db, struct mosquitto__security_options *security_opts)
 {
-	FILE *aclfile;
+	FILE *aclfptr;
 	char buf[1024];
 	char *token;
 	char *user = NULL;
@@ -353,18 +436,19 @@ static int _aclfile_parse(struct mosquitto_db *db)
 	char *saveptr = NULL;
 
 	if(!db || !db->config) return MOSQ_ERR_INVAL;
-	if(!db->config->acl_file) return MOSQ_ERR_SUCCESS;
+	if(!security_opts) return MOSQ_ERR_INVAL;
+	if(!security_opts->acl_file) return MOSQ_ERR_SUCCESS;
 
-	aclfile = _mosquitto_fopen(db->config->acl_file, "rt", false);
-	if(!aclfile){
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open acl_file \"%s\".", db->config->acl_file);
+	aclfptr = mosquitto__fopen(security_opts->acl_file, "rt", false);
+	if(!aclfptr){
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open acl_file \"%s\".", security_opts->acl_file);
 		return 1;
 	}
 
 	// topic [read|write] <topic> 
 	// user <user>
 
-	while(fgets(buf, 1024, aclfile)){
+	while(fgets(buf, 1024, aclfptr)){
 		slen = strlen(buf);
 		while(slen > 0 && (buf[slen-1] == 10 || buf[slen-1] == 13)){
 			buf[slen-1] = '\0';
@@ -384,9 +468,9 @@ static int _aclfile_parse(struct mosquitto_db *db)
 
 				access_s = strtok_r(NULL, " ", &saveptr);
 				if(!access_s){
-					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty topic in acl_file.");
-					if(user) _mosquitto_free(user);
-					fclose(aclfile);
+					log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty topic in acl_file \"%s\".", security_opts->acl_file);
+					mosquitto__free(user);
+					fclose(aclfptr);
 					return MOSQ_ERR_INVAL;
 				}
 				token = strtok_r(NULL, "", &saveptr);
@@ -408,22 +492,22 @@ static int _aclfile_parse(struct mosquitto_db *db)
 					}else if(!strcmp(access_s, "readwrite")){
 						access = MOSQ_ACL_READ | MOSQ_ACL_WRITE;
 					}else{
-						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid topic access type \"%s\" in acl_file.", access_s);
-						if(user) _mosquitto_free(user);
-						fclose(aclfile);
+						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid topic access type \"%s\" in acl_file \"%s\".", access_s, security_opts->acl_file);
+						mosquitto__free(user);
+						fclose(aclfptr);
 						return MOSQ_ERR_INVAL;
 					}
 				}else{
 					access = MOSQ_ACL_READ | MOSQ_ACL_WRITE;
 				}
 				if(topic_pattern == 0){
-					rc = _add_acl(db, user, topic, access);
+					rc = add__acl(security_opts, user, topic, access);
 				}else{
-					rc = _add_acl_pattern(db, topic, access);
+					rc = add__acl_pattern(security_opts, topic, access);
 				}
 				if(rc){
-					if(user) _mosquitto_free(user);
-					fclose(aclfile);
+					mosquitto__free(user);
+					fclose(aclfptr);
 					return rc;
 				}
 			}else if(!strcmp(token, "user")){
@@ -433,52 +517,71 @@ static int _aclfile_parse(struct mosquitto_db *db)
 					while(token[0] == ' '){
 						token++;
 					}
-					if(user) _mosquitto_free(user);
-					user = _mosquitto_strdup(token);
+					mosquitto__free(user);
+					user = mosquitto__strdup(token);
 					if(!user){
-						fclose(aclfile);
+						fclose(aclfptr);
 						return MOSQ_ERR_NOMEM;
 					}
 				}else{
-					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Missing username in acl_file.");
-					if(user) _mosquitto_free(user);
-					fclose(aclfile);
+					log__printf(NULL, MOSQ_LOG_ERR, "Error: Missing username in acl_file \"%s\".", security_opts->acl_file);
+					mosquitto__free(user);
+					fclose(aclfptr);
 					return 1;
 				}
 			}
 		}
 	}
 
-	if(user) _mosquitto_free(user);
-	fclose(aclfile);
+	mosquitto__free(user);
+	fclose(aclfptr);
 
 	return MOSQ_ERR_SUCCESS;
 }
 
-static void _free_acl(struct _mosquitto_acl *acl)
+static void free__acl(struct mosquitto__acl *acl)
 {
 	if(!acl) return;
 
 	if(acl->next){
-		_free_acl(acl->next);
+		free__acl(acl->next);
 	}
-	if(acl->topic){
-		_mosquitto_free(acl->topic);
-	}
-	_mosquitto_free(acl);
+	mosquitto__free(acl->topic);
+	mosquitto__free(acl);
 }
 
-static int _acl_cleanup(struct mosquitto_db *db, bool reload)
+
+static void acl__cleanup_single(struct mosquitto__security_options *security_opts)
+{
+	struct mosquitto__acl_user *user_tail;
+
+	while(security_opts->acl_list){
+		user_tail = security_opts->acl_list->next;
+
+		free__acl(security_opts->acl_list->acl);
+		mosquitto__free(security_opts->acl_list->username);
+		mosquitto__free(security_opts->acl_list);
+
+		security_opts->acl_list = user_tail;
+	}
+
+	if(security_opts->acl_patterns){
+		free__acl(security_opts->acl_patterns);
+		security_opts->acl_patterns = NULL;
+	}
+}
+
+
+static int acl__cleanup(struct mosquitto_db *db, bool reload)
 {
 	struct mosquitto *context, *ctxt_tmp;
-	struct _mosquitto_acl_user *user_tail;
+	int i;
 
 	if(!db) return MOSQ_ERR_INVAL;
-	if(!db->acl_list) return MOSQ_ERR_SUCCESS;
 
 	/* As we're freeing ACLs, we must clear context->acl_list to ensure no
 	 * invalid memory accesses take place later.
-	 * This *requires* the ACLs to be reapplied after _acl_cleanup()
+	 * This *requires* the ACLs to be reapplied after acl__cleanup()
 	 * is called if we are reloading the config. If this is not done, all 
 	 * access will be denied to currently connected clients.
 	 */
@@ -486,37 +589,29 @@ static int _acl_cleanup(struct mosquitto_db *db, bool reload)
 		context->acl_list = NULL;
 	}
 
-	while(db->acl_list){
-		user_tail = db->acl_list->next;
-
-		_free_acl(db->acl_list->acl);
-		if(db->acl_list->username){
-			_mosquitto_free(db->acl_list->username);
+	if(db->config->per_listener_settings){
+		for(i=0; i<db->config->listener_count; i++){
+			acl__cleanup_single(&db->config->listeners[i].security_options);
 		}
-		_mosquitto_free(db->acl_list);
-		
-		db->acl_list = user_tail;
+	}else{
+		acl__cleanup_single(&db->config->security_options);
 	}
 
-	if(db->acl_patterns){
-		_free_acl(db->acl_patterns);
-		db->acl_patterns = NULL;
-	}
 	return MOSQ_ERR_SUCCESS;
 }
 
-static int _pwfile_parse(const char *file, struct _mosquitto_unpwd **root)
+static int pwfile__parse(const char *file, struct mosquitto__unpwd **root)
 {
 	FILE *pwfile;
-	struct _mosquitto_unpwd *unpwd;
+	struct mosquitto__unpwd *unpwd;
 	char buf[256];
 	char *username, *password;
 	int len;
 	char *saveptr = NULL;
 
-	pwfile = _mosquitto_fopen(file, "rt", false);
+	pwfile = mosquitto__fopen(file, "rt", false);
 	if(!pwfile){
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open pwfile \"%s\".", file);
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open pwfile \"%s\".", file);
 		return 1;
 	}
 
@@ -524,14 +619,14 @@ static int _pwfile_parse(const char *file, struct _mosquitto_unpwd **root)
 		if(fgets(buf, 256, pwfile)){
 			username = strtok_r(buf, ":", &saveptr);
 			if(username){
-				unpwd = _mosquitto_calloc(1, sizeof(struct _mosquitto_unpwd));
+				unpwd = mosquitto__calloc(1, sizeof(struct mosquitto__unpwd));
 				if(!unpwd){
 					fclose(pwfile);
 					return MOSQ_ERR_NOMEM;
 				}
-				unpwd->username = _mosquitto_strdup(username);
+				unpwd->username = mosquitto__strdup(username);
 				if(!unpwd->username){
-					_mosquitto_free(unpwd);
+					mosquitto__free(unpwd);
 					fclose(pwfile);
 					return MOSQ_ERR_NOMEM;
 				}
@@ -542,11 +637,11 @@ static int _pwfile_parse(const char *file, struct _mosquitto_unpwd **root)
 				}
 				password = strtok_r(NULL, ":", &saveptr);
 				if(password){
-					unpwd->password = _mosquitto_strdup(password);
+					unpwd->password = mosquitto__strdup(password);
 					if(!unpwd->password){
 						fclose(pwfile);
-						_mosquitto_free(unpwd->username);
-						_mosquitto_free(unpwd);
+						mosquitto__free(unpwd->username);
+						mosquitto__free(unpwd);
 						return MOSQ_ERR_NOMEM;
 					}
 					len = strlen(unpwd->password);
@@ -564,11 +659,11 @@ static int _pwfile_parse(const char *file, struct _mosquitto_unpwd **root)
 	return MOSQ_ERR_SUCCESS;
 }
 
-static int _unpwd_file_parse(struct mosquitto_db *db)
+static int unpwd__file_parse(struct mosquitto__unpwd **unpwd, const char *password_file)
 {
 	int rc;
 #ifdef WITH_TLS
-	struct _mosquitto_unpwd *u, *tmp;
+	struct mosquitto__unpwd *u, *tmp;
 	char *token;
 	unsigned char *salt;
 	unsigned int salt_len;
@@ -576,48 +671,48 @@ static int _unpwd_file_parse(struct mosquitto_db *db)
 	unsigned int password_len;
 #endif
 
-	if(!db || !db->config) return MOSQ_ERR_INVAL;
+	if(!unpwd) return MOSQ_ERR_INVAL;
 
-	if(!db->config->password_file) return MOSQ_ERR_SUCCESS;
+	if(!password_file) return MOSQ_ERR_SUCCESS;
 
-	rc = _pwfile_parse(db->config->password_file, &db->unpwd);
+	rc = pwfile__parse(password_file, unpwd);
 #ifdef WITH_TLS
 	if(rc) return rc;
 
-	HASH_ITER(hh, db->unpwd, u, tmp){
+	HASH_ITER(hh, *unpwd, u, tmp){
 		/* Need to decode password into hashed data + salt. */
 		if(u->password){
 			token = strtok(u->password, "$");
 			if(token && !strcmp(token, "6")){
 				token = strtok(NULL, "$");
 				if(token){
-					rc = _base64_decode(token, &salt, &salt_len);
+					rc = base64__decode(token, &salt, &salt_len);
 					if(rc){
-						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to decode password salt for user %s.", u->username);
+						log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to decode password salt for user %s.", u->username);
 						return MOSQ_ERR_INVAL;
 					}
 					u->salt = salt;
 					u->salt_len = salt_len;
 					token = strtok(NULL, "$");
 					if(token){
-						rc = _base64_decode(token, &password, &password_len);
+						rc = base64__decode(token, &password, &password_len);
 						if(rc){
-							_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to decode password for user %s.", u->username);
+							log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to decode password for user %s.", u->username);
 							return MOSQ_ERR_INVAL;
 						}
-						_mosquitto_free(u->password);
+						mosquitto__free(u->password);
 						u->password = (char *)password;
 						u->password_len = password_len;
 					}else{
-						_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid password hash for user %s.", u->username);
+						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid password hash for user %s.", u->username);
 						return MOSQ_ERR_INVAL;
 					}
 				}else{
-					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid password hash for user %s.", u->username);
+					log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid password hash for user %s.", u->username);
 					return MOSQ_ERR_INVAL;
 				}
 			}else{
-				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid password hash for user %s.", u->username);
+				log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid password hash for user %s.", u->username);
 				return MOSQ_ERR_INVAL;
 			}
 		}
@@ -626,27 +721,27 @@ static int _unpwd_file_parse(struct mosquitto_db *db)
 	return rc;
 }
 
-static int _psk_file_parse(struct mosquitto_db *db)
+static int psk__file_parse(struct mosquitto_db *db, struct mosquitto__unpwd **psk_id, const char *psk_file)
 {
 	int rc;
-	struct _mosquitto_unpwd *u, *tmp;
+	struct mosquitto__unpwd *u, *tmp;
 
-	if(!db || !db->config) return MOSQ_ERR_INVAL;
+	if(!db || !db->config || !psk_id) return MOSQ_ERR_INVAL;
 
 	/* We haven't been asked to parse a psk file. */
-	if(!db->config->psk_file) return MOSQ_ERR_SUCCESS;
+	if(!psk_file) return MOSQ_ERR_SUCCESS;
 
-	rc = _pwfile_parse(db->config->psk_file, &db->psk_id);
+	rc = pwfile__parse(psk_file, psk_id);
 	if(rc) return rc;
 
-	HASH_ITER(hh, db->psk_id, u, tmp){
+	HASH_ITER(hh, (*psk_id), u, tmp){
 		/* Check for hex only digits */
 		if(!u->password){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty psk for identity \"%s\".", u->username);
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty psk for identity \"%s\".", u->username);
 			return MOSQ_ERR_INVAL;
 		}
 		if(strspn(u->password, "0123456789abcdefABCDEF") < strlen(u->password)){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: psk for identity \"%s\" contains non-hexadecimal characters.", u->username);
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: psk for identity \"%s\" contains non-hexadecimal characters.", u->username);
 			return MOSQ_ERR_INVAL;
 		}
 	}
@@ -654,6 +749,7 @@ static int _psk_file_parse(struct mosquitto_db *db)
 }
 
 
+#ifdef WITH_TLS
 static int mosquitto__memcmp_const(const void *a, const void *b, size_t len)
 {
 	int i;
@@ -668,11 +764,13 @@ static int mosquitto__memcmp_const(const void *a, const void *b, size_t len)
 	}
 	return rc;
 }
+#endif
 
 
-int mosquitto_unpwd_check_default(struct mosquitto_db *db, const char *username, const char *password)
+int mosquitto_unpwd_check_default(struct mosquitto_db *db, struct mosquitto *context, const char *username, const char *password)
 {
-	struct _mosquitto_unpwd *u, *tmp;
+	struct mosquitto__unpwd *u, *tmp;
+	struct mosquitto__unpwd *unpwd_ref;
 #ifdef WITH_TLS
 	unsigned char hash[EVP_MAX_MD_SIZE];
 	unsigned int hash_len;
@@ -680,15 +778,23 @@ int mosquitto_unpwd_check_default(struct mosquitto_db *db, const char *username,
 #endif
 
 	if(!db) return MOSQ_ERR_INVAL;
-	if(!db->unpwd) return MOSQ_ERR_SUCCESS;
-	if(!username) return MOSQ_ERR_INVAL; /* Check must be made only after checking db->unpwd. */
 
-	HASH_ITER(hh, db->unpwd, u, tmp){
+	if(db->config->per_listener_settings){
+		if(!context->listener) return MOSQ_ERR_INVAL;
+		if(!context->listener->unpwd) return MOSQ_ERR_PLUGIN_DEFER;
+		unpwd_ref = context->listener->unpwd;
+	}else{
+		if(!db->unpwd) return MOSQ_ERR_PLUGIN_DEFER;
+		unpwd_ref = db->unpwd;
+	}
+	if(!username) return MOSQ_ERR_INVAL; /* Check must be made only after checking unpwd_ref. */
+
+	HASH_ITER(hh, unpwd_ref, u, tmp){
 		if(!strcmp(u->username, username)){
 			if(u->password){
 				if(password){
 #ifdef WITH_TLS
-					rc = _pw_digest(password, u->salt, u->salt_len, hash, &hash_len);
+					rc = pw__digest(password, u->salt, u->salt_len, hash, &hash_len);
 					if(rc == MOSQ_ERR_SUCCESS){
 						if(hash_len == u->password_len && !mosquitto__memcmp_const(u->password, hash, hash_len)){
 							return MOSQ_ERR_SUCCESS;
@@ -715,20 +821,20 @@ int mosquitto_unpwd_check_default(struct mosquitto_db *db, const char *username,
 	return MOSQ_ERR_AUTH;
 }
 
-static int _unpwd_cleanup(struct _mosquitto_unpwd **root, bool reload)
+static int unpwd__cleanup(struct mosquitto__unpwd **root, bool reload)
 {
-	struct _mosquitto_unpwd *u, *tmp;
+	struct mosquitto__unpwd *u, *tmp;
 
 	if(!root) return MOSQ_ERR_INVAL;
 
 	HASH_ITER(hh, *root, u, tmp){
 		HASH_DEL(*root, u);
-		if(u->password) _mosquitto_free(u->password);
-		if(u->username) _mosquitto_free(u->username);
+		mosquitto__free(u->password);
+		mosquitto__free(u->username);
 #ifdef WITH_TLS
-		if(u->salt) _mosquitto_free(u->salt);
+		mosquitto__free(u->salt);
 #endif
-		_mosquitto_free(u);
+		mosquitto__free(u);
 	}
 
 	*root = NULL;
@@ -745,29 +851,49 @@ static int _unpwd_cleanup(struct _mosquitto_unpwd **root, bool reload)
 int mosquitto_security_apply_default(struct mosquitto_db *db)
 {
 	struct mosquitto *context, *ctxt_tmp;
-	struct _mosquitto_acl_user *acl_user_tail;
+	struct mosquitto__acl_user *acl_user_tail;
 	bool allow_anonymous;
+	struct mosquitto__security_options *security_opts = NULL;
 
 	if(!db) return MOSQ_ERR_INVAL;
 
-	allow_anonymous = db->config->allow_anonymous;
 	
 	HASH_ITER(hh_id, db->contexts_by_id, context, ctxt_tmp){
 		/* Check for anonymous clients when allow_anonymous is false */
+		if(db->config->per_listener_settings){
+			allow_anonymous = context->listener->security_options.allow_anonymous;
+		}else{
+			allow_anonymous = db->config->security_options.allow_anonymous;
+		}
+
 		if(!allow_anonymous && !context->username){
 			context->state = mosq_cs_disconnecting;
 			do_disconnect(db, context);
 			continue;
 		}
 		/* Check for connected clients that are no longer authorised */
-		if(mosquitto_unpwd_check_default(db, context->username, context->password) != MOSQ_ERR_SUCCESS){
+		if(mosquitto_unpwd_check(db, context, context->username, context->password) != MOSQ_ERR_SUCCESS){
 			context->state = mosq_cs_disconnecting;
 			do_disconnect(db, context);
 			continue;
 		}
 		/* Check for ACLs and apply to user. */
-		if(db->acl_list){
-			acl_user_tail = db->acl_list;
+		if(db->config->per_listener_settings){
+			if(context->listener){
+				security_opts = &context->listener->security_options;
+			}else{
+				if(context->state != mosq_cs_connected){
+					context->state = mosq_cs_disconnecting;
+					do_disconnect(db, context);
+					continue;
+				}
+			}
+		}else{
+			security_opts = &db->config->security_options;
+		}
+
+		if(security_opts && security_opts->acl_list){
+			acl_user_tail = security_opts->acl_list;
 			while(acl_user_tail){
 				if(acl_user_tail->username){
 					if(context->username){
@@ -789,14 +915,24 @@ int mosquitto_security_apply_default(struct mosquitto_db *db)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto_psk_key_get_default(struct mosquitto_db *db, const char *hint, const char *identity, char *key, int max_key_len)
+int mosquitto_psk_key_get_default(struct mosquitto_db *db, struct mosquitto *context, const char *hint, const char *identity, char *key, int max_key_len)
 {
-	struct _mosquitto_unpwd *u, *tmp;
+	struct mosquitto__unpwd *u, *tmp;
+	struct mosquitto__unpwd *psk_id_ref = NULL;
 
 	if(!db || !hint || !identity || !key) return MOSQ_ERR_INVAL;
-	if(!db->psk_id) return MOSQ_ERR_AUTH;
 
-	HASH_ITER(hh, db->psk_id, u, tmp){
+	if(db->config->per_listener_settings){
+		if(!context->listener) return MOSQ_ERR_INVAL;
+		if(!context->listener->psk_id) return MOSQ_ERR_PLUGIN_DEFER;
+		psk_id_ref = context->listener->psk_id;
+	}else{
+		if(!db->psk_id) return MOSQ_ERR_PLUGIN_DEFER;
+		psk_id_ref = db->psk_id;
+	}
+	if(!psk_id_ref) return MOSQ_ERR_PLUGIN_DEFER;
+
+	HASH_ITER(hh, psk_id_ref, u, tmp){
 		if(!strcmp(u->username, identity)){
 			strncpy(key, u->password, max_key_len);
 			return MOSQ_ERR_SUCCESS;
@@ -807,7 +943,7 @@ int mosquitto_psk_key_get_default(struct mosquitto_db *db, const char *hint, con
 }
 
 #ifdef WITH_TLS
-int _pw_digest(const char *password, const unsigned char *salt, unsigned int salt_len, unsigned char *hash, unsigned int *hash_len)
+int pw__digest(const char *password, const unsigned char *salt, unsigned int salt_len, unsigned char *hash, unsigned int *hash_len)
 {
 	const EVP_MD *digest;
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
@@ -847,7 +983,7 @@ int _pw_digest(const char *password, const unsigned char *salt, unsigned int sal
 	return MOSQ_ERR_SUCCESS;
 }
 
-int _base64_decode(char *in, unsigned char **decoded, unsigned int *decoded_len)
+int base64__decode(char *in, unsigned char **decoded, unsigned int *decoded_len)
 {
 	BIO *bmem, *b64;
 
@@ -861,7 +997,7 @@ int _base64_decode(char *in, unsigned char **decoded, unsigned int *decoded_len)
 		BIO_free_all(b64);
 		return 1;
 	}
-	*decoded = _mosquitto_calloc(strlen(in), 1);
+	*decoded = mosquitto__calloc(strlen(in), 1);
 	*decoded_len =  BIO_read(b64, *decoded, strlen(in));
 	BIO_free_all(b64);
 

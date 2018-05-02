@@ -22,12 +22,12 @@ Contributors:
 #include <time.h>
 
 #ifndef CMAKE
-#include <config.h>
+#include "config.h"
 #endif
 
-#include <mosquitto_broker.h>
-#include <memory_mosq.h>
-#include <util_mosq.h>
+#include "mosquitto_broker_internal.h"
+#include "memory_mosq.h"
+#include "util_mosq.h"
 
 extern struct mosquitto_db int_db;
 
@@ -50,7 +50,7 @@ HANDLE syslog_h;
 static int log_destinations = MQTT3_LOG_STDERR;
 static int log_priorities = MOSQ_LOG_ERR | MOSQ_LOG_WARNING | MOSQ_LOG_NOTICE | MOSQ_LOG_INFO;
 
-int mqtt3_log_init(struct mqtt3_config *config)
+int log__init(struct mosquitto__config *config)
 {
 	int rc = 0;
 
@@ -69,11 +69,11 @@ int mqtt3_log_init(struct mqtt3_config *config)
 		if(drop_privileges(config, true)){
 			return 1;
 		}
-		config->log_fptr = _mosquitto_fopen(config->log_file, "at", true);
+		config->log_fptr = mosquitto__fopen(config->log_file, "at", true);
 		if(!config->log_fptr){
 			log_destinations = MQTT3_LOG_STDERR;
 			log_priorities = MOSQ_LOG_ERR;
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open log file %s for writing.", config->log_file);
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open log file %s for writing.", config->log_file);
 			return MOSQ_ERR_INVAL;
 		}
 		restore_privileges();
@@ -81,7 +81,7 @@ int mqtt3_log_init(struct mqtt3_config *config)
 	return rc;
 }
 
-int mqtt3_log_close(struct mqtt3_config *config)
+int log__close(struct mosquitto__config *config)
 {
 	if(log_destinations & MQTT3_LOG_SYSLOG){
 #ifndef WIN32
@@ -101,7 +101,7 @@ int mqtt3_log_close(struct mqtt3_config *config)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int _mosquitto_log_vprintf(struct mosquitto *mosq, int priority, const char *fmt, va_list va)
+int log__vprintf(int priority, const char *fmt, va_list va)
 {
 	char *s;
 	char *st;
@@ -191,7 +191,7 @@ int _mosquitto_log_vprintf(struct mosquitto *mosq, int priority, const char *fmt
 #endif
 		}
 		len = strlen(fmt) + 500;
-		s = _mosquitto_malloc(len*sizeof(char));
+		s = mosquitto__malloc(len*sizeof(char));
 		if(!s) return MOSQ_ERR_NOMEM;
 
 		vsnprintf(s, len, fmt, va);
@@ -235,34 +235,39 @@ int _mosquitto_log_vprintf(struct mosquitto *mosq, int priority, const char *fmt
 		if(log_destinations & MQTT3_LOG_TOPIC && priority != MOSQ_LOG_DEBUG){
 			if(int_db.config && int_db.config->log_timestamp){
 				len += 30;
-				st = _mosquitto_malloc(len*sizeof(char));
+				st = mosquitto__malloc(len*sizeof(char));
 				if(!st){
-					_mosquitto_free(s);
+					mosquitto__free(s);
 					return MOSQ_ERR_NOMEM;
 				}
 				snprintf(st, len, "%d: %s", (int)now, s);
-				mqtt3_db_messages_easy_queue(&int_db, NULL, topic, 2, strlen(st), st, 0);
-				_mosquitto_free(st);
+				db__messages_easy_queue(&int_db, NULL, topic, 2, strlen(st), st, 0);
+				mosquitto__free(st);
 			}else{
-				mqtt3_db_messages_easy_queue(&int_db, NULL, topic, 2, strlen(s), s, 0);
+				db__messages_easy_queue(&int_db, NULL, topic, 2, strlen(s), s, 0);
 			}
 		}
-		_mosquitto_free(s);
+		mosquitto__free(s);
 	}
 
 	return MOSQ_ERR_SUCCESS;
 }
 
-int _mosquitto_log_printf(struct mosquitto *mosq, int priority, const char *fmt, ...)
+int log__printf(struct mosquitto *mosq, int priority, const char *fmt, ...)
 {
 	va_list va;
 	int rc;
 
 	va_start(va, fmt);
-	rc = _mosquitto_log_vprintf(mosq, priority, fmt, va);
+	rc = log__vprintf(priority, fmt, va);
 	va_end(va);
 
 	return rc;
+}
+
+int mosquitto_log_vprintf(int level, const char *fmt, va_list va)
+{
+	return log__vprintf(level, fmt, va);
 }
 
 void mosquitto_log_printf(int level, const char *fmt, ...)
@@ -270,7 +275,7 @@ void mosquitto_log_printf(int level, const char *fmt, ...)
 	va_list va;
 
 	va_start(va, fmt);
-	_mosquitto_log_vprintf(NULL, level, fmt, va);
+	log__vprintf(level, fmt, va);
 	va_end(va);
 }
 

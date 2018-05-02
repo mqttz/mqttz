@@ -3,16 +3,32 @@ import os
 import socket
 import subprocess
 import struct
+import sys
 import time
 
-def start_broker(filename, cmd=None, port=1888):
+def start_broker(filename, cmd=None, port=0, use_conf=False):
     delay = 0.1
-    if cmd is None:
+
+    if use_conf == True:
         cmd = ['../../src/mosquitto', '-v', '-c', filename.replace('.py', '.conf')]
+
+        if port == 0:
+            port = 1888
+    else:
+        if cmd is None and port != 0:
+            cmd = ['../../src/mosquitto', '-v', '-p', str(port)]
+        elif cmd is None and port == 0:
+            port = 1888
+            cmd = ['../../src/mosquitto', '-v', '-c', filename.replace('.py', '.conf')]
+        elif cmd is not None and port == 0:
+            port = 1888
+            
     if os.environ.get('MOSQ_USE_VALGRIND') is not None:
-        cmd = ['valgrind', '--trace-children=yes', '-v', '--log-file='+filename+'.vglog'] + cmd
+        cmd = ['valgrind', '--trace-children=yes', '--leak-check=full', '--show-leak-kinds=all', '--log-file='+filename+'.vglog'] + cmd
         delay = 1
 
+    #print(port)
+    #print(cmd)
     broker = subprocess.Popen(cmd, stderr=subprocess.PIPE)
     for i in range(0, 20):
         time.sleep(delay)
@@ -29,12 +45,13 @@ def start_broker(filename, cmd=None, port=1888):
             return broker
     raise IOError
 
-def start_client(filename, cmd, env):
+def start_client(filename, cmd, env, port=1888):
     if cmd is None:
         raise ValueError
     if os.environ.get('MOSQ_USE_VALGRIND') is not None:
         cmd = ['valgrind', '-q', '--log-file='+filename+'.vglog'] + cmd
 
+    cmd = cmd + [str(port)]
     return subprocess.Popen(cmd, env=env)
 
 def expect_packet(sock, name, expected):
@@ -52,11 +69,11 @@ def packet_matches(name, recvd, expected):
         try:
             print("Received: "+to_string(recvd))
         except struct.error:
-            print("Received (not decoded): "+recvd)
+            print("Received (not decoded, len=%d): %s" % (len(recvd), recvd))
         try:
             print("Expected: "+to_string(expected))
         except struct.error:
-            print("Expected (not decoded): "+expected)
+            print("Expected (not decoded, len=%d): %s" % (len(expected), expected))
 
         return 0
     else:
@@ -266,7 +283,7 @@ def to_string(packet):
         # Reserved
         return "0xF0"
 
-def gen_connect(client_id, clean_session=True, keepalive=60, username=None, password=None, will_topic=None, will_qos=0, will_retain=False, will_payload="", proto_ver=3, connect_reserved=False):
+def gen_connect(client_id, clean_session=True, keepalive=60, username=None, password=None, will_topic=None, will_qos=0, will_retain=False, will_payload="", proto_ver=4, connect_reserved=False):
     if (proto_ver&0x7F) == 3 or proto_ver == 0:
         remaining_length = 12
     elif (proto_ver&0x7F) == 4:
@@ -326,7 +343,7 @@ def gen_connack(resv=0, rc=0):
 
 def gen_publish(topic, qos, payload=None, retain=False, dup=False, mid=0):
     rl = 2+len(topic)
-    pack_format = "!BBH"+str(len(topic))+"s"
+    pack_format = "H"+str(len(topic))+"s"
     if qos > 0:
         rl = rl + 2
         pack_format = pack_format + "H"
@@ -337,6 +354,7 @@ def gen_publish(topic, qos, payload=None, retain=False, dup=False, mid=0):
         payload = ""
         pack_format = pack_format + "0s"
 
+    rlpacked = pack_remaining_length(rl)
     cmd = 48 | (qos<<1)
     if retain:
         cmd = cmd + 1
@@ -344,9 +362,9 @@ def gen_publish(topic, qos, payload=None, retain=False, dup=False, mid=0):
         cmd = cmd + 8
 
     if qos > 0:
-        return struct.pack(pack_format, cmd, rl, len(topic), topic, mid, payload)
+        return struct.pack("!B" + str(len(rlpacked))+"s" + pack_format, cmd, rlpacked, len(topic), topic, mid, payload)
     else:
-        return struct.pack(pack_format, cmd, rl, len(topic), topic, payload)
+        return struct.pack("!B" + str(len(rlpacked))+"s" + pack_format, cmd, rlpacked, len(topic), topic, payload)
 
 def gen_puback(mid):
     return struct.pack('!BBH', 64, 2, mid)
@@ -399,3 +417,26 @@ def pack_remaining_length(remaining_length):
         s = s + struct.pack("!B", byte)
         if remaining_length == 0:
             return s
+
+
+def get_port(count=1):
+    if count == 1:
+        if len(sys.argv) == 2:
+            return int(sys.argv[1])
+        else:
+            return 1888
+    else:
+        if len(sys.argv) == 1+count:
+            p = ()
+            for i in range(0, count):
+                p = p + (int(sys.argv[1+i]),)
+            return p
+        else:
+            return tuple(range(1888, 1888+count))
+
+
+def get_lib_port():
+    if len(sys.argv) == 3:
+        return int(sys.argv[2])
+    else:
+        return 1888

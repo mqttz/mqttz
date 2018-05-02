@@ -4,9 +4,14 @@ DIRS=lib client src
 DOCDIRS=man
 DISTDIRS=man
 
-.PHONY : all mosquitto docs binary clean reallyclean test install uninstall dist sign copy
+.PHONY : all mosquitto api docs binary clean reallyclean test install uninstall dist sign copy
 
 all : $(MAKE_ALL)
+
+api :
+	mkdir -p api p
+	naturaldocs -o HTML api -i lib -p p
+	rm -rf p
 
 docs :
 	set -e; for d in ${DOCDIRS}; do $(MAKE) -C $${d}; done
@@ -31,6 +36,9 @@ reallyclean :
 	$(MAKE) -C test reallyclean
 	-rm -f *.orig
 
+ptest : mosquitto
+	$(MAKE) -C test ptest
+
 test : mosquitto
 	$(MAKE) -C test test
 
@@ -39,24 +47,24 @@ install : mosquitto
 ifeq ($(WITH_DOCS),yes)
 	set -e; for d in ${DOCDIRS}; do $(MAKE) -C $${d} install; done
 endif
-	$(INSTALL) -d ${DESTDIR}/etc/mosquitto
-	$(INSTALL) -m 644 mosquitto.conf ${DESTDIR}/etc/mosquitto/mosquitto.conf.example
-	$(INSTALL) -m 644 aclfile.example ${DESTDIR}/etc/mosquitto/aclfile.example
-	$(INSTALL) -m 644 pwfile.example ${DESTDIR}/etc/mosquitto/pwfile.example
-	$(INSTALL) -m 644 pskfile.example ${DESTDIR}/etc/mosquitto/pskfile.example
+	$(INSTALL) -d "${DESTDIR}/etc/mosquitto"
+	$(INSTALL) -m 644 mosquitto.conf "${DESTDIR}/etc/mosquitto/mosquitto.conf.example"
+	$(INSTALL) -m 644 aclfile.example "${DESTDIR}/etc/mosquitto/aclfile.example"
+	$(INSTALL) -m 644 pwfile.example "${DESTDIR}/etc/mosquitto/pwfile.example"
+	$(INSTALL) -m 644 pskfile.example "${DESTDIR}/etc/mosquitto/pskfile.example"
 
 uninstall :
 	set -e; for d in ${DIRS}; do $(MAKE) -C $${d} uninstall; done
-	rm -f ${DESTDIR}/etc/mosquitto/mosquitto.conf
-	rm -f ${DESTDIR}/etc/mosquitto/aclfile.example
-	rm -f ${DESTDIR}/etc/mosquitto/pwfile.example
-	rm -f ${DESTDIR}/etc/mosquitto/pskfile.example
+	rm -f "${DESTDIR}/etc/mosquitto/mosquitto.conf.example"
+	rm -f "${DESTDIR}/etc/mosquitto/aclfile.example"
+	rm -f "${DESTDIR}/etc/mosquitto/pwfile.example"
+	rm -f "${DESTDIR}/etc/mosquitto/pskfile.example"
 
 dist : reallyclean
 	set -e; for d in ${DISTDIRS}; do $(MAKE) -C $${d} dist; done
 	
 	mkdir -p dist/mosquitto-${VERSION}
-	cp -r client examples installer lib logo man misc security service src test about.html aclfile.example ChangeLog.txt CMakeLists.txt compiling.txt config.h config.mk CONTRIBUTING.md edl-v10 epl-v10 LICENSE.txt Makefile mosquitto.conf notice.html pskfile.example pwfile.example readme.md readme-windows.txt dist/mosquitto-${VERSION}/
+	cp -r client examples installer lib logo man misc security service src test about.html aclfile.example ChangeLog.txt CMakeLists.txt compiling.txt config.h config.mk CONTRIBUTING.md edl-v10 epl-v10 libmosquitto.pc.in libmosquittopp.pc.in LICENSE.txt Makefile mosquitto.conf notice.html pskfile.example pwfile.example readme.md readme-windows.txt dist/mosquitto-${VERSION}/
 	cd dist; tar -zcf mosquitto-${VERSION}.tar.gz mosquitto-${VERSION}/
 	set -e; for m in man/*.xml; \
 		do \

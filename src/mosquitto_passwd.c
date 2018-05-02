@@ -14,6 +14,7 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
+#include "config.h"
 
 #include <errno.h>
 #include <openssl/evp.h>
@@ -23,16 +24,23 @@ Contributors:
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+
 #ifdef WIN32
 #  include <windows.h>
 #  include <process.h>
 #	ifndef __cplusplus
-#		define bool char
-#		define true 1
-#		define false 0
+#		if defined(_MSC_VER) && _MSC_VER < 1900
+#			define bool char
+#			define true 1
+#			define false 0
+#		else
+#			include <stdbool.h>
+#		endif
 #	endif
 #   define snprintf sprintf_s
 #	include <io.h>
+#	include <windows.h>
 #else
 #  include <stdbool.h>
 #  include <unistd.h>
@@ -105,7 +113,7 @@ int output_new_password(FILE *fptr, const char *username, const char *password)
 
 	rc = base64_encode(salt, SALT_LEN, &salt64);
 	if(rc){
-		if(salt64) free(salt64);
+		free(salt64);
 		fprintf(stderr, "Error: Unable to encode salt.\n");
 		return 1;
 	}
@@ -113,7 +121,7 @@ int output_new_password(FILE *fptr, const char *username, const char *password)
 
 	digest = EVP_get_digestbyname("sha512");
 	if(!digest){
-		if(salt64) free(salt64);
+		free(salt64);
 		fprintf(stderr, "Error: Unable to create openssl digest.\n");
 		return 1;
 	}
@@ -136,8 +144,8 @@ int output_new_password(FILE *fptr, const char *username, const char *password)
 
 	rc = base64_encode(hash, hash_len, &hash64);
 	if(rc){
-		if(salt64) free(salt64);
-		if(hash64) free(hash64);
+		free(salt64);
+		free(hash64);
 		fprintf(stderr, "Error: Unable to encode hash.\n");
 		return 1;
 	}
@@ -225,7 +233,7 @@ int gets_quiet(char *s, int len)
 {
 #ifdef WIN32
 	HANDLE h;
-	DWORD con_orig, con_quiet;
+	DWORD con_orig, con_quiet = 0;
 	DWORD read_len = 0;
 
 	memset(s, 0, len);
@@ -362,7 +370,7 @@ void handle_sigint(int signal)
 int main(int argc, char *argv[])
 {
 	char *password_file_tmp = NULL;
-	char password_file[1024];
+	char *password_file = NULL;
 	char *username = NULL;
 	char *password_cmd = NULL;
 	bool batch_mode = false;
@@ -428,7 +436,27 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	snprintf(password_file, 1024, "%s", password_file_tmp);
+#ifdef WIN32
+	password_file = _fullpath(NULL, password_file_tmp, 0);
+	if(!password_file){
+		fprintf(stderr, "Error getting full path for password file.\n");
+		return 1;
+	}
+#else
+	password_file = realpath(password_file_tmp, NULL);
+	if(!password_file){
+		if(errno == ENOENT){
+			password_file = strdup(password_file_tmp);
+			if(!password_file){
+				fprintf(stderr, "Error: Out of memory.\n");
+				return 1;
+			}
+		}else{
+			fprintf(stderr, "Error reading password file: %s\n", strerror(errno));
+			return 1;
+		}
+	}
+#endif
 
 	if(create_new){
 		rc = get_password(password, 1024);
@@ -436,8 +464,10 @@ int main(int argc, char *argv[])
 		fptr = fopen(password_file, "wt");
 		if(!fptr){
 			fprintf(stderr, "Error: Unable to open file %s for writing. %s.\n", password_file, strerror(errno));
+			free(password_file);
 			return 1;
 		}
+		free(password_file);
 		rc = output_new_password(fptr, username, password);
 		fclose(fptr);
 		return rc;
@@ -445,11 +475,19 @@ int main(int argc, char *argv[])
 		fptr = fopen(password_file, "r+t");
 		if(!fptr){
 			fprintf(stderr, "Error: Unable to open password file %s. %s.\n", password_file, strerror(errno));
+			free(password_file);
 			return 1;
 		}
 
 		backup_file = malloc(strlen(password_file)+5);
+		if(!backup_file){
+			fprintf(stderr, "Error: Out of memory.\n");
+			free(password_file);
+			return 1;
+		}
 		snprintf(backup_file, strlen(password_file)+5, "%s.tmp", password_file);
+		free(password_file);
+		password_file = NULL;
 
 		if(create_backup(backup_file, fptr)){
 			fclose(fptr);

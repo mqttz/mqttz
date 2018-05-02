@@ -57,8 +57,12 @@ WITH_MEMORY_TRACKING:=yes
 # information about the broker state.
 WITH_SYS_TREE:=yes
 
+# Build with systemd support. If enabled, mosquitto will notify systemd after
+# initialization. See README in service/systemd/ for more information.
+WITH_SYSTEMD:=no
+
 # Build with SRV lookup support.
-WITH_SRV:=yes
+WITH_SRV:=no
 
 # Build using libuuid for clientid generation (Linux only - please report if
 # supported on your platform).
@@ -76,8 +80,17 @@ WITH_DOCS:=yes
 # Build with client support for SOCK5 proxy.
 WITH_SOCKS:=yes
 
+# Strip executables and shared libraries on install.
+WITH_STRIP:=no
+
+# Build static libraries
+WITH_STATIC_LIBRARIES:=no
+
 # Build with async dns lookup support for bridges (temporary). Requires glibc.
 #WITH_ADNS:=yes
+
+# Build with epoll support.
+WITH_EPOLL:=yes
 
 # =============================================================================
 # End of user configuration
@@ -85,9 +98,8 @@ WITH_SOCKS:=yes
 
 
 # Also bump lib/mosquitto.h, CMakeLists.txt,
-# installer/mosquitto.nsi, installer/mosquitto-cygwin.nsi
-VERSION=1.4.15
-TIMESTAMP:=$(shell date "+%F %T%z")
+# installer/mosquitto.nsi, installer/mosquitto64.nsi
+VERSION=1.5
 
 # Client library SO version. Bump if incompatible API/ABI changes are made.
 SOVERSION=1
@@ -112,10 +124,10 @@ else
 endif
 
 LIB_CFLAGS:=${CFLAGS} ${CPPFLAGS} -I. -I.. -I../lib
-LIB_CXXFLAGS:=$(LIB_CFLAGS) ${CPPFLAGS}
+LIB_CXXFLAGS:=$(CFLAGS) ${CPPFLAGS} -I. -I.. -I../lib
 LIB_LDFLAGS:=${LDFLAGS}
 
-BROKER_CFLAGS:=${LIB_CFLAGS} ${CPPFLAGS} -DVERSION="\"${VERSION}\"" -DTIMESTAMP="\"${TIMESTAMP}\"" -DWITH_BROKER
+BROKER_CFLAGS:=${LIB_CFLAGS} ${CPPFLAGS} -DVERSION="\"${VERSION}\"" -DWITH_BROKER
 CLIENT_CFLAGS:=${CFLAGS} ${CPPFLAGS} -I../lib -DVERSION="\"${VERSION}\""
 
 ifneq ($(or $(findstring $(UNAME),FreeBSD), $(findstring $(UNAME),OpenBSD)),)
@@ -218,6 +230,11 @@ ifeq ($(WITH_SYS_TREE),yes)
 	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_SYS_TREE
 endif
 
+ifeq ($(WITH_SYSTEMD),yes)
+	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_SYSTEMD
+	BROKER_LIBS:=$(BROKER_LIBS) -lsystemd
+endif
+
 ifeq ($(WITH_SRV),yes)
 	LIB_CFLAGS:=$(LIB_CFLAGS) -DWITH_SRV
 	LIB_LIBS:=$(LIB_LIBS) -lcares
@@ -253,3 +270,14 @@ prefix=/usr/local
 mandir=${prefix}/share/man
 localedir=${prefix}/share/locale
 STRIP?=strip
+
+ifeq ($(WITH_STRIP),yes)
+	STRIP_OPTS:=-s --strip-program=${CROSS_COMPILE}${STRIP}
+endif
+
+ifeq ($(WITH_EPOLL),yes)
+	ifeq ($(UNAME),Linux)
+		BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_EPOLL
+	endif
+endif
+

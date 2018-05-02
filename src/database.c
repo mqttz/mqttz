@@ -17,23 +17,92 @@ Contributors:
 #include <assert.h>
 #include <stdio.h>
 
-#include <config.h>
+#include "config.h"
 
-#include <mosquitto_broker.h>
-#include <memory_mosq.h>
-#include <send_mosq.h>
-#include <time_mosq.h>
+#include "mosquitto_broker_internal.h"
+#include "memory_mosq.h"
+#include "send_mosq.h"
+#include "sys_tree.h"
+#include "time_mosq.h"
 
 static int max_inflight = 20;
+static unsigned long max_inflight_bytes = 0;
 static int max_queued = 100;
-#ifdef WITH_SYS_TREE
-extern unsigned long g_msgs_dropped;
-#endif
+static unsigned long max_queued_bytes = 0;
 
-int mqtt3_db_open(struct mqtt3_config *config, struct mosquitto_db *db)
+/**
+ * Is this context ready to take more in flight messages right now?
+ * @param context the client context of interest
+ * @param qos qos for the packet of interest
+ * @return true if more in flight are allowed.
+ */
+static bool db__ready_for_flight(struct mosquitto *context, int qos)
 {
-	int rc = 0;
-	struct _mosquitto_subhier *child;
+	if(qos == 0 || (max_inflight == 0 && max_inflight_bytes == 0)){
+		return true;
+	}
+
+	bool valid_bytes = context->msg_bytes12 < max_inflight_bytes;
+	bool valid_count = context->msg_count12 < max_inflight;
+
+	if(max_inflight == 0){
+		return valid_bytes;
+	}
+	if(max_inflight_bytes == 0){
+		return valid_count;
+	}
+
+	return valid_bytes && valid_count;
+}
+
+
+/**
+ * For a given client context, are more messages allowed to be queued?
+ * It is assumed that inflight checks and queue_qos0 checks have already
+ * been made.
+ * @param context client of interest
+ * @param qos destination qos for the packet of interest
+ * @return true if queuing is allowed, false if should be dropped
+ */
+static bool db__ready_for_queue(struct mosquitto *context, int qos)
+{
+	if(max_queued == 0 && max_queued_bytes == 0){
+		return true;
+	}
+
+	unsigned long source_bytes = context->msg_bytes12;
+	int source_count = context->msg_count12;
+	unsigned long adjust_bytes = max_inflight_bytes;
+	int adjust_count = max_inflight;
+
+	/* nothing in flight for offline clients */
+	if(context->sock == INVALID_SOCKET){
+		adjust_bytes = 0;
+		adjust_count = 0;
+	}
+
+	if(qos == 0){
+		source_bytes = context->msg_bytes;
+		source_count = context->msg_count;
+	}
+
+	bool valid_bytes = source_bytes - adjust_bytes < max_queued_bytes;
+	bool valid_count = source_count - adjust_count < max_queued;
+
+	if(max_queued_bytes == 0){
+		return valid_count;
+	}
+	if(max_queued == 0){
+		return valid_bytes;
+	}
+
+	return valid_bytes && valid_count;
+}
+
+
+int db__open(struct mosquitto__config *config, struct mosquitto_db *db)
+{
+	struct mosquitto__subhier *subhier;
 
 	if(!config || !db) return MOSQ_ERR_INVAL;
 
@@ -50,89 +119,58 @@ int mqtt3_db_open(struct mqtt3_config *config, struct mosquitto_db *db)
 	// Initialize the hashtable
 	db->clientid_index_hash = NULL;
 
-	db->subs.next = NULL;
-	db->subs.subs = NULL;
-	db->subs.topic = "";
+	db->subs = NULL;
 
-	child = _mosquitto_malloc(sizeof(struct _mosquitto_subhier));
-	if(!child){
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-		return MOSQ_ERR_NOMEM;
-	}
-	child->parent = NULL;
-	child->next = NULL;
-	child->topic = _mosquitto_strdup("");
-	if(!child->topic){
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-		return MOSQ_ERR_NOMEM;
-	}
-	child->subs = NULL;
-	child->children = NULL;
-	child->retained = NULL;
-	db->subs.children = child;
+	subhier = sub__add_hier_entry(&db->subs, "", strlen(""));
+	if(!subhier) return MOSQ_ERR_NOMEM;
 
-	child = _mosquitto_malloc(sizeof(struct _mosquitto_subhier));
-	if(!child){
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-		return MOSQ_ERR_NOMEM;
-	}
-	child->parent = NULL;
-	child->next = NULL;
-	child->topic = _mosquitto_strdup("$SYS");
-	if(!child->topic){
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-		return MOSQ_ERR_NOMEM;
-	}
-	child->subs = NULL;
-	child->children = NULL;
-	child->retained = NULL;
-	db->subs.children->next = child;
+	subhier = sub__add_hier_entry(&db->subs, "$SYS", strlen("$SYS"));
+	if(!subhier) return MOSQ_ERR_NOMEM;
 
 	db->unpwd = NULL;
 
 #ifdef WITH_PERSISTENCE
 	if(config->persistence && config->persistence_filepath){
-		if(mqtt3_db_restore(db)) return 1;
+		if(persist__restore(db)) return 1;
 	}
 #endif
 
-	return rc;
+	return MOSQ_ERR_SUCCESS;
 }
 
-static void subhier_clean(struct mosquitto_db *db, struct _mosquitto_subhier *subhier)
+static void subhier_clean(struct mosquitto_db *db, struct mosquitto__subhier **subhier)
 {
-	struct _mosquitto_subhier *next;
-	struct _mosquitto_subleaf *leaf, *nextleaf;
+	struct mosquitto__subhier *peer, *subhier_tmp;
+	struct mosquitto__subleaf *leaf, *nextleaf;
 
-	while(subhier){
-		next = subhier->next;
-		leaf = subhier->subs;
+	HASH_ITER(hh, *subhier, peer, subhier_tmp){
+		leaf = peer->subs;
 		while(leaf){
 			nextleaf = leaf->next;
-			_mosquitto_free(leaf);
+			mosquitto__free(leaf);
 			leaf = nextleaf;
 		}
-		if(subhier->retained){
-			mosquitto__db_msg_store_deref(db, &subhier->retained);
+		if(peer->retained){
+			db__msg_store_deref(db, &peer->retained);
 		}
-		subhier_clean(db, subhier->children);
-		if(subhier->topic) _mosquitto_free(subhier->topic);
+		subhier_clean(db, &peer->children);
+		UHPA_FREE_TOPIC(peer);
 
-		_mosquitto_free(subhier);
-		subhier = next;
+		HASH_DELETE(hh, *subhier, peer);
+		mosquitto__free(peer);
 	}
 }
 
-int mqtt3_db_close(struct mosquitto_db *db)
+int db__close(struct mosquitto_db *db)
 {
-	subhier_clean(db, db->subs.children);
-	mosquitto__db_msg_store_clean(db);
+	subhier_clean(db, &db->subs);
+	db__msg_store_clean(db);
 
 	return MOSQ_ERR_SUCCESS;
 }
 
 
-void mosquitto__db_msg_store_add(struct mosquitto_db *db, struct mosquitto_msg_store *store)
+void db__msg_store_add(struct mosquitto_db *db, struct mosquitto_msg_store *store)
 {
 	store->next = db->msg_store;
 	store->prev = NULL;
@@ -143,7 +181,7 @@ void mosquitto__db_msg_store_add(struct mosquitto_db *db, struct mosquitto_msg_s
 }
 
 
-void mosquitto__db_msg_store_remove(struct mosquitto_db *db, struct mosquitto_msg_store *store)
+void db__msg_store_remove(struct mosquitto_db *db, struct mosquitto_msg_store *store)
 {
 	int i;
 
@@ -159,78 +197,119 @@ void mosquitto__db_msg_store_remove(struct mosquitto_db *db, struct mosquitto_ms
 		}
 	}
 	db->msg_store_count--;
+	db->msg_store_bytes -= store->payloadlen;
 
-	if(store->source_id) _mosquitto_free(store->source_id);
+	mosquitto__free(store->source_id);
 	if(store->dest_ids){
 		for(i=0; i<store->dest_id_count; i++){
-			if(store->dest_ids[i]) _mosquitto_free(store->dest_ids[i]);
+			mosquitto__free(store->dest_ids[i]);
 		}
-		_mosquitto_free(store->dest_ids);
+		mosquitto__free(store->dest_ids);
 	}
-	if(store->topic) _mosquitto_free(store->topic);
-	if(store->payload) _mosquitto_free(store->payload);
-	_mosquitto_free(store);
+	mosquitto__free(store->topic);
+	UHPA_FREE_PAYLOAD(store);
+	mosquitto__free(store);
 }
 
 
-void mosquitto__db_msg_store_clean(struct mosquitto_db *db)
+void db__msg_store_clean(struct mosquitto_db *db)
 {
 	struct mosquitto_msg_store *store, *next;;
 
 	store = db->msg_store;
 	while(store){
 		next = store->next;
-		mosquitto__db_msg_store_remove(db, store);
+		db__msg_store_remove(db, store);
 		store = next;
 	}
 }
 
-void mosquitto__db_msg_store_deref(struct mosquitto_db *db, struct mosquitto_msg_store **store)
+void db__msg_store_deref(struct mosquitto_db *db, struct mosquitto_msg_store **store)
 {
 	(*store)->ref_count--;
 	if((*store)->ref_count == 0){
-		mosquitto__db_msg_store_remove(db, *store);
+		db__msg_store_remove(db, *store);
 		*store = NULL;
 	}
 }
 
 
-static void _message_remove(struct mosquitto_db *db, struct mosquitto *context, struct mosquitto_client_msg **msg, struct mosquitto_client_msg *last)
+static void db__message_remove(struct mosquitto_db *db, struct mosquitto *context, struct mosquitto_client_msg **msg, struct mosquitto_client_msg *last)
 {
-	int i;
-	struct mosquitto_client_msg *tail;
-
 	if(!context || !msg || !(*msg)){
 		return;
 	}
 
 	if((*msg)->store){
-		mosquitto__db_msg_store_deref(db, &(*msg)->store);
+		context->msg_count--;
+		context->msg_bytes -= (*msg)->store->payloadlen;
+		if((*msg)->qos > 0){
+			context->msg_count12--;
+			context->msg_bytes12 -= (*msg)->store->payloadlen;
+		}
+		db__msg_store_deref(db, &(*msg)->store);
 	}
 	if(last){
 		last->next = (*msg)->next;
 		if(!last->next){
-			context->last_msg = last;
+			context->last_inflight_msg = last;
 		}
 	}else{
-		context->msgs = (*msg)->next;
-		if(!context->msgs){
-			context->last_msg = NULL;
+		context->inflight_msgs = (*msg)->next;
+		if(!context->inflight_msgs){
+			context->last_inflight_msg = NULL;
 		}
 	}
-	context->msg_count--;
-	if((*msg)->qos > 0){
-		context->msg_count12--;
-	}
-	_mosquitto_free(*msg);
+	mosquitto__free(*msg);
 	if(last){
 		*msg = last->next;
 	}else{
-		*msg = context->msgs;
+		*msg = context->inflight_msgs;
 	}
-	tail = context->msgs;
-	i = 0;
-	while(tail && tail->state == mosq_ms_queued && i<max_inflight){
+}
+
+void db__message_dequeue_first(struct mosquitto *context)
+{
+	struct mosquitto_client_msg *msg;
+
+	msg = context->queued_msgs;
+	context->queued_msgs = msg->next;
+	if (context->last_queued_msg == msg){
+		context->last_queued_msg = NULL;
+	}
+
+	if (context->last_inflight_msg){
+		context->last_inflight_msg->next = msg;
+		context->last_inflight_msg = msg;
+	}else{
+		context->inflight_msgs = msg;
+		context->last_inflight_msg = msg;
+	}
+	msg->next = NULL;
+}
+
+int db__message_delete(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir)
+{
+	struct mosquitto_client_msg *tail, *last = NULL;
+	int msg_index = 0;
+
+	if(!context) return MOSQ_ERR_INVAL;
+
+	tail = context->inflight_msgs;
+	while(tail){
+		msg_index++;
+		if(tail->mid == mid && tail->direction == dir){
+			msg_index--;
+			db__message_remove(db, context, &tail, last);
+		}else{
+			last = tail;
+			tail = tail->next;
+		}
+	}
+	while (context->queued_msgs && (max_inflight == 0 || msg_index < max_inflight)){
+		msg_index++;
+		tail = context->queued_msgs;
+		tail->timestamp = mosquitto_time();
 		if(tail->direction == mosq_md_out){
 			switch(tail->qos){
 				case 0:
@@ -243,66 +322,23 @@ static void _message_remove(struct mosquitto_db *db, struct mosquitto *context, 
 					tail->state = mosq_ms_publish_qos2;
 					break;
 			}
+			db__message_dequeue_first(context);
 		}else{
 			if(tail->qos == 2){
-				tail->state = mosq_ms_send_pubrec;
+				send__pubrec(context, tail->mid);
+				tail->state = mosq_ms_wait_for_pubrel;
+				db__message_dequeue_first(context);
 			}
-		}
-
-		tail = tail->next;
-	}
-}
-
-int mqtt3_db_message_delete(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir)
-{
-	struct mosquitto_client_msg *tail, *last = NULL;
-	int msg_index = 0;
-	bool deleted = false;
-
-	if(!context) return MOSQ_ERR_INVAL;
-
-	tail = context->msgs;
-	while(tail){
-		msg_index++;
-		if(tail->state == mosq_ms_queued && msg_index <= max_inflight){
-			tail->timestamp = mosquitto_time();
-			if(tail->direction == mosq_md_out){
-				switch(tail->qos){
-					case 0:
-						tail->state = mosq_ms_publish_qos0;
-						break;
-					case 1:
-						tail->state = mosq_ms_publish_qos1;
-						break;
-					case 2:
-						tail->state = mosq_ms_publish_qos2;
-						break;
-				}
-			}else{
-				if(tail->qos == 2){
-					tail->state = mosq_ms_wait_for_pubrel;
-				}
-			}
-		}
-		if(tail->mid == mid && tail->direction == dir){
-			msg_index--;
-			_message_remove(db, context, &tail, last);
-			deleted = true;
-		}else{
-			last = tail;
-			tail = tail->next;
-		}
-		if(msg_index > max_inflight && deleted){
-			return MOSQ_ERR_SUCCESS;
 		}
 	}
 
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, int qos, bool retain, struct mosquitto_msg_store *stored)
+int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, int qos, bool retain, struct mosquitto_msg_store *stored)
 {
 	struct mosquitto_client_msg *msg;
+	struct mosquitto_client_msg **msgs, **last_msg;
 	enum mosquitto_msg_state state = mosq_ms_invalid;
 	int rc = 0;
 	int i;
@@ -343,7 +379,7 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 	}
 
 	if(context->sock != INVALID_SOCKET){
-		if(qos == 0 || max_inflight == 0 || context->msg_count12 < max_inflight){
+		if(db__ready_for_flight(context, qos)){
 			if(dir == mosq_md_out){
 				switch(qos){
 					case 0:
@@ -363,36 +399,32 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 					return 1;
 				}
 			}
-		}else if(max_queued == 0 || context->msg_count12-max_inflight < max_queued){
+		}else if(db__ready_for_queue(context, qos)){
 			state = mosq_ms_queued;
 			rc = 2;
 		}else{
 			/* Dropping message due to full queue. */
 			if(context->is_dropping == false){
 				context->is_dropping = true;
-				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE,
+				log__printf(NULL, MOSQ_LOG_NOTICE,
 						"Outgoing messages are being dropped for client %s.",
 						context->id);
 			}
-#ifdef WITH_SYS_TREE
-			g_msgs_dropped++;
-#endif
+			G_MSGS_DROPPED_INC();
 			return 2;
 		}
 	}else{
-		if(max_queued > 0 && context->msg_count12 >= max_queued){
-#ifdef WITH_SYS_TREE
-			g_msgs_dropped++;
-#endif
+		if (db__ready_for_queue(context, qos)){
+			state = mosq_ms_queued;
+		}else{
+			G_MSGS_DROPPED_INC();
 			if(context->is_dropping == false){
 				context->is_dropping = true;
-				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE,
+				log__printf(NULL, MOSQ_LOG_NOTICE,
 						"Outgoing messages are being dropped for client %s.",
 						context->id);
 			}
 			return 2;
-		}else{
-			state = mosq_ms_queued;
 		}
 	}
 	assert(state != mosq_ms_invalid);
@@ -403,7 +435,7 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 	}
 #endif
 
-	msg = _mosquitto_malloc(sizeof(struct mosquitto_client_msg));
+	msg = mosquitto__malloc(sizeof(struct mosquitto_client_msg));
 	if(!msg) return MOSQ_ERR_NOMEM;
 	msg->next = NULL;
 	msg->store = stored;
@@ -415,16 +447,26 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 	msg->dup = false;
 	msg->qos = qos;
 	msg->retain = retain;
-	if(context->last_msg){
-		context->last_msg->next = msg;
-		context->last_msg = msg;
+
+	if (state == mosq_ms_queued){
+		msgs = &(context->queued_msgs);
+		last_msg = &(context->last_queued_msg);
 	}else{
-		context->msgs = msg;
-		context->last_msg = msg;
+		msgs = &(context->inflight_msgs);
+		last_msg = &(context->last_inflight_msg);
+	}
+	if(*last_msg){
+		(*last_msg)->next = msg;
+		(*last_msg) = msg;
+	}else{
+		*msgs = msg;
+		*last_msg = msg;
 	}
 	context->msg_count++;
+	context->msg_bytes += msg->store->payloadlen;
 	if(qos > 0){
 		context->msg_count12++;
+		context->msg_bytes12 += msg->store->payloadlen;
 	}
 
 	if(db->config->allow_duplicate_messages == false && dir == mosq_md_out && retain == false){
@@ -435,11 +477,11 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 		 * multiple times for overlapping subscriptions, although this is only the
 		 * case for SUBSCRIPTION with multiple subs in so is a minor concern.
 		 */
-		dest_ids = _mosquitto_realloc(stored->dest_ids, sizeof(char *)*(stored->dest_id_count+1));
+		dest_ids = mosquitto__realloc(stored->dest_ids, sizeof(char *)*(stored->dest_id_count+1));
 		if(dest_ids){
 			stored->dest_ids = dest_ids;
 			stored->dest_id_count++;
-			stored->dest_ids[stored->dest_id_count-1] = _mosquitto_strdup(context->id);
+			stored->dest_ids[stored->dest_id_count-1] = mosquitto__strdup(context->id);
 			if(!stored->dest_ids[stored->dest_id_count-1]){
 				return MOSQ_ERR_NOMEM;
 			}
@@ -458,7 +500,7 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 
 #ifdef WITH_WEBSOCKETS
 	if(context->wsi && rc == 0){
-		return mqtt3_db_message_write(db, context);
+		return db__message_write(db, context);
 	}else{
 		return rc;
 	}
@@ -467,11 +509,11 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 #endif
 }
 
-int mqtt3_db_message_update(struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, enum mosquitto_msg_state state)
+int db__message_update(struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, enum mosquitto_msg_state state)
 {
 	struct mosquitto_client_msg *tail;
 
-	tail = context->msgs;
+	tail = context->inflight_msgs;
 	while(tail){
 		if(tail->mid == mid && tail->direction == dir){
 			tail->state = state;
@@ -483,106 +525,117 @@ int mqtt3_db_message_update(struct mosquitto *context, uint16_t mid, enum mosqui
 	return MOSQ_ERR_NOT_FOUND;
 }
 
-int mqtt3_db_messages_delete(struct mosquitto_db *db, struct mosquitto *context)
+int db__messages_delete(struct mosquitto_db *db, struct mosquitto *context)
 {
 	struct mosquitto_client_msg *tail, *next;
 
 	if(!context) return MOSQ_ERR_INVAL;
 
-	tail = context->msgs;
+	tail = context->inflight_msgs;
 	while(tail){
-		mosquitto__db_msg_store_deref(db, &tail->store);
+		db__msg_store_deref(db, &tail->store);
 		next = tail->next;
-		_mosquitto_free(tail);
+		mosquitto__free(tail);
 		tail = next;
 	}
-	context->msgs = NULL;
-	context->last_msg = NULL;
+	context->inflight_msgs = NULL;
+	context->last_inflight_msg = NULL;
+
+	tail = context->queued_msgs;
+	while(tail){
+		db__msg_store_deref(db, &tail->store);
+		next = tail->next;
+		mosquitto__free(tail);
+		tail = next;
+	}
+	context->queued_msgs = NULL;
+	context->last_queued_msg = NULL;
+	context->msg_bytes = 0;
+	context->msg_bytes12 = 0;
 	context->msg_count = 0;
 	context->msg_count12 = 0;
 
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mqtt3_db_messages_easy_queue(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain)
+int db__messages_easy_queue(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain)
 {
 	struct mosquitto_msg_store *stored;
 	char *source_id;
+	char *topic_heap;
+	mosquitto__payload_uhpa payload_uhpa;
 
 	assert(db);
 
+	payload_uhpa.ptr = NULL;
+
 	if(!topic) return MOSQ_ERR_INVAL;
+	topic_heap = mosquitto__strdup(topic);
+	if(!topic_heap) return MOSQ_ERR_INVAL;
+
+	if(UHPA_ALLOC(payload_uhpa, payloadlen) == 0){
+		mosquitto__free(topic_heap);
+		return MOSQ_ERR_NOMEM;
+	}
+	memcpy(UHPA_ACCESS(payload_uhpa, payloadlen), payload, payloadlen);
 
 	if(context && context->id){
 		source_id = context->id;
 	}else{
 		source_id = "";
 	}
-	if(mqtt3_db_message_store(db, source_id, 0, topic, qos, payloadlen, payload, retain, &stored, 0)) return 1;
+	if(db__message_store(db, source_id, 0, topic_heap, qos, payloadlen, &payload_uhpa, retain, &stored, 0)) return 1;
 
-	return mqtt3_db_messages_queue(db, source_id, topic, qos, retain, &stored);
+	return sub__messages_queue(db, source_id, topic_heap, qos, retain, &stored);
 }
 
-int mqtt3_db_message_store(struct mosquitto_db *db, const char *source, uint16_t source_mid, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain, struct mosquitto_msg_store **stored, dbid_t store_id)
+/* This function requires topic to be allocated on the heap. Once called, it owns topic and will free it on error. Likewise payload. */
+int db__message_store(struct mosquitto_db *db, const char *source, uint16_t source_mid, char *topic, int qos, uint32_t payloadlen, mosquitto__payload_uhpa *payload, int retain, struct mosquitto_msg_store **stored, dbid_t store_id)
 {
-	struct mosquitto_msg_store *temp;
+	struct mosquitto_msg_store *temp = NULL;
+	int rc = MOSQ_ERR_SUCCESS;
 
 	assert(db);
 	assert(stored);
 
-	temp = _mosquitto_malloc(sizeof(struct mosquitto_msg_store));
-	if(!temp) return MOSQ_ERR_NOMEM;
+	temp = mosquitto__malloc(sizeof(struct mosquitto_msg_store));
+	if(!temp){
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		rc = MOSQ_ERR_NOMEM;
+		goto error;
+	}
+
+	temp->topic = NULL;
+	temp->payload.ptr = NULL;
 
 	temp->ref_count = 0;
 	if(source){
-		temp->source_id = _mosquitto_strdup(source);
+		temp->source_id = mosquitto__strdup(source);
 	}else{
-		temp->source_id = _mosquitto_strdup("");
+		temp->source_id = mosquitto__strdup("");
 	}
 	if(!temp->source_id){
-		_mosquitto_free(temp);
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-		return MOSQ_ERR_NOMEM;
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		rc = MOSQ_ERR_NOMEM;
+		goto error;
 	}
 	temp->source_mid = source_mid;
 	temp->mid = 0;
 	temp->qos = qos;
 	temp->retain = retain;
-	if(topic){
-		temp->topic = _mosquitto_strdup(topic);
-		if(!temp->topic){
-			_mosquitto_free(temp->source_id);
-			_mosquitto_free(temp);
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-			return MOSQ_ERR_NOMEM;
-		}
-	}else{
-		temp->topic = NULL;
-	}
+	temp->topic = topic;
+	topic = NULL;
 	temp->payloadlen = payloadlen;
 	if(payloadlen){
-		temp->payload = _mosquitto_malloc(sizeof(char)*payloadlen);
-		if(!temp->payload){
-			if(temp->source_id) _mosquitto_free(temp->source_id);
-			if(temp->topic) _mosquitto_free(temp->topic);
-			_mosquitto_free(temp);
-			return MOSQ_ERR_NOMEM;
-		}
-		memcpy(temp->payload, payload, sizeof(char)*payloadlen);
+		UHPA_MOVE(temp->payload, *payload, payloadlen);
 	}else{
-		temp->payload = NULL;
+		temp->payload.ptr = NULL;
 	}
 
-	if(!temp->source_id || (payloadlen && !temp->payload)){
-		if(temp->source_id) _mosquitto_free(temp->source_id);
-		if(temp->topic) _mosquitto_free(temp->topic);
-		if(temp->payload) _mosquitto_free(temp->payload);
-		_mosquitto_free(temp);
-		return 1;
-	}
 	temp->dest_ids = NULL;
 	temp->dest_id_count = 0;
 	db->msg_store_count++;
+	db->msg_store_bytes += payloadlen;
 	(*stored) = temp;
 
 	if(!store_id){
@@ -591,19 +644,27 @@ int mqtt3_db_message_store(struct mosquitto_db *db, const char *source, uint16_t
 		temp->db_id = store_id;
 	}
 
-	mosquitto__db_msg_store_add(db, temp);
+	db__msg_store_add(db, temp);
 
 	return MOSQ_ERR_SUCCESS;
+error:
+	mosquitto__free(topic);
+	if(temp){
+		mosquitto__free(temp->source_id);
+		mosquitto__free(temp->topic);
+		mosquitto__free(temp);
+	}
+	return rc;
 }
 
-int mqtt3_db_message_store_find(struct mosquitto *context, uint16_t mid, struct mosquitto_msg_store **stored)
+int db__message_store_find(struct mosquitto *context, uint16_t mid, struct mosquitto_msg_store **stored)
 {
 	struct mosquitto_client_msg *tail;
 
 	if(!context) return MOSQ_ERR_INVAL;
 
 	*stored = NULL;
-	tail = context->msgs;
+	tail = context->inflight_msgs;
 	while(tail){
 		if(tail->store->source_mid == mid && tail->direction == mosq_md_in){
 			*stored = tail->store;
@@ -617,46 +678,47 @@ int mqtt3_db_message_store_find(struct mosquitto *context, uint16_t mid, struct 
 
 /* Called on reconnect to set outgoing messages to a sensible state and force a
  * retry, and to set incoming messages to expect an appropriate retry. */
-int mqtt3_db_message_reconnect_reset(struct mosquitto_db *db, struct mosquitto *context)
+int db__message_reconnect_reset(struct mosquitto_db *db, struct mosquitto *context)
 {
 	struct mosquitto_client_msg *msg;
 	struct mosquitto_client_msg *prev = NULL;
-	int count;
 
-	msg = context->msgs;
+	msg = context->inflight_msgs;
+	context->msg_bytes = 0;
+	context->msg_bytes12 = 0;
 	context->msg_count = 0;
 	context->msg_count12 = 0;
 	while(msg){
-		context->last_msg = msg;
+		context->last_inflight_msg = msg;
 
 		context->msg_count++;
+		context->msg_bytes += msg->store->payloadlen;
 		if(msg->qos > 0){
 			context->msg_count12++;
+			context->msg_bytes12 += msg->store->payloadlen;
 		}
 
 		if(msg->direction == mosq_md_out){
-			if(msg->state != mosq_ms_queued){
-				switch(msg->qos){
-					case 0:
-						msg->state = mosq_ms_publish_qos0;
-						break;
-					case 1:
-						msg->state = mosq_ms_publish_qos1;
-						break;
-					case 2:
-						if(msg->state == mosq_ms_wait_for_pubcomp){
-							msg->state = mosq_ms_resend_pubrel;
-						}else{
-							msg->state = mosq_ms_publish_qos2;
-						}
-						break;
-				}
+			switch(msg->qos){
+				case 0:
+					msg->state = mosq_ms_publish_qos0;
+					break;
+				case 1:
+					msg->state = mosq_ms_publish_qos1;
+					break;
+				case 2:
+					if(msg->state == mosq_ms_wait_for_pubcomp){
+						msg->state = mosq_ms_resend_pubrel;
+					}else{
+						msg->state = mosq_ms_publish_qos2;
+					}
+					break;
 			}
 		}else{
 			if(msg->qos != 2){
 				/* Anything <QoS 2 can be completely retried by the client at
 				 * no harm. */
-				_message_remove(db, context, &msg, prev);
+				db__message_remove(db, context, &msg, prev);
 			}else{
 				/* Message state can be preserved here because it should match
 				 * whatever the client has got. */
@@ -671,11 +733,18 @@ int mqtt3_db_message_reconnect_reset(struct mosquitto_db *db, struct mosquitto *
 	 * get sent until the client next receives a message - and they
 	 * will be sent out of order.
 	 */
-	if(context->msgs){
-		count = 0;
-		msg = context->msgs;
-		while(msg && (max_inflight == 0 || count < max_inflight)){
-			if(msg->state == mosq_ms_queued){
+	if(context->queued_msgs){
+		msg = context->queued_msgs;
+		while(msg){
+			context->last_queued_msg = msg;
+
+			context->msg_count++;
+			context->msg_bytes += msg->store->payloadlen;
+			if(msg->qos > 0){
+				context->msg_count12++;
+				context->msg_bytes12 += msg->store->payloadlen;
+			}
+			if (db__ready_for_flight(context, msg->qos)) {
 				switch(msg->qos){
 					case 0:
 						msg->state = mosq_ms_publish_qos0;
@@ -687,59 +756,19 @@ int mqtt3_db_message_reconnect_reset(struct mosquitto_db *db, struct mosquitto *
 						msg->state = mosq_ms_publish_qos2;
 						break;
 				}
+				db__message_dequeue_first(context);
+				msg = context->queued_msgs;
+			} else {
+				msg = msg->next;
 			}
-			msg = msg->next;
-			count++;
 		}
 	}
 
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mqtt3_db_message_timeout_check(struct mosquitto_db *db, unsigned int timeout)
-{
-	time_t threshold;
-	enum mosquitto_msg_state new_state;
-	struct mosquitto *context, *ctxt_tmp;
-	struct mosquitto_client_msg *msg;
 
-	threshold = mosquitto_time() - timeout;
-
-	HASH_ITER(hh_sock, db->contexts_by_sock, context, ctxt_tmp){
-		msg = context->msgs;
-		while(msg){
-			new_state = mosq_ms_invalid;
-			if(msg->timestamp < threshold && msg->state != mosq_ms_queued){
-				switch(msg->state){
-					case mosq_ms_wait_for_puback:
-						new_state = mosq_ms_publish_qos1;
-						break;
-					case mosq_ms_wait_for_pubrec:
-						new_state = mosq_ms_publish_qos2;
-						break;
-					case mosq_ms_wait_for_pubrel:
-						new_state = mosq_ms_send_pubrec;
-						break;
-					case mosq_ms_wait_for_pubcomp:
-						new_state = mosq_ms_resend_pubrel;
-						break;
-					default:
-						break;
-				}
-				if(new_state != mosq_ms_invalid){
-					msg->timestamp = mosquitto_time();
-					msg->state = new_state;
-					msg->dup = true;
-				}
-			}
-			msg = msg->next;
-		}
-	}
-
-	return MOSQ_ERR_SUCCESS;
-}
-
-int mqtt3_db_message_release(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir)
+int db__message_release(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir)
 {
 	struct mosquitto_client_msg *tail, *last = NULL;
 	int qos;
@@ -751,30 +780,9 @@ int mqtt3_db_message_release(struct mosquitto_db *db, struct mosquitto *context,
 
 	if(!context) return MOSQ_ERR_INVAL;
 
-	tail = context->msgs;
+	tail = context->inflight_msgs;
 	while(tail){
 		msg_index++;
-		if(tail->state == mosq_ms_queued && msg_index <= max_inflight){
-			tail->timestamp = mosquitto_time();
-			if(tail->direction == mosq_md_out){
-				switch(tail->qos){
-					case 0:
-						tail->state = mosq_ms_publish_qos0;
-						break;
-					case 1:
-						tail->state = mosq_ms_publish_qos1;
-						break;
-					case 2:
-						tail->state = mosq_ms_publish_qos2;
-						break;
-				}
-			}else{
-				if(tail->qos == 2){
-					_mosquitto_send_pubrec(context, tail->mid);
-					tail->state = mosq_ms_wait_for_pubrel;
-				}
-			}
-		}
 		if(tail->mid == mid && tail->direction == dir){
 			qos = tail->store->qos;
 			topic = tail->store->topic;
@@ -785,8 +793,8 @@ int mqtt3_db_message_release(struct mosquitto_db *db, struct mosquitto *context,
 			 * denied/dropped and is being processed so the client doesn't
 			 * keep resending it. That means we don't send it to other
 			 * clients. */
-			if(!topic || !mqtt3_db_messages_queue(db, source_id, topic, qos, retain, &tail->store)){
-				_message_remove(db, context, &tail, last);
+			if(!topic || !sub__messages_queue(db, source_id, topic, qos, retain, &tail->store)){
+				db__message_remove(db, context, &tail, last);
 				deleted = true;
 			}else{
 				return 1;
@@ -795,8 +803,31 @@ int mqtt3_db_message_release(struct mosquitto_db *db, struct mosquitto *context,
 			last = tail;
 			tail = tail->next;
 		}
-		if(msg_index > max_inflight && deleted){
-			return MOSQ_ERR_SUCCESS;
+	}
+
+	while(context->queued_msgs && (max_inflight == 0 || msg_index < max_inflight)){
+		msg_index++;
+		tail = context->queued_msgs;
+		tail->timestamp = mosquitto_time();
+		if(tail->direction == mosq_md_out){
+			switch(tail->qos){
+				case 0:
+					tail->state = mosq_ms_publish_qos0;
+					break;
+				case 1:
+					tail->state = mosq_ms_publish_qos1;
+					break;
+				case 2:
+					tail->state = mosq_ms_publish_qos2;
+					break;
+			}
+			db__message_dequeue_first(context);
+		}else{
+			if(tail->qos == 2){
+				send__pubrec(context, tail->mid);
+				tail->state = mosq_ms_wait_for_pubrel;
+				db__message_dequeue_first(context);
+			}
 		}
 	}
 	if(deleted){
@@ -806,7 +837,7 @@ int mqtt3_db_message_release(struct mosquitto_db *db, struct mosquitto *context,
 	}
 }
 
-int mqtt3_db_message_write(struct mosquitto_db *db, struct mosquitto *context)
+int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 {
 	int rc;
 	struct mosquitto_client_msg *tail, *last = NULL;
@@ -828,103 +859,119 @@ int mqtt3_db_message_write(struct mosquitto_db *db, struct mosquitto *context)
 		return MOSQ_ERR_SUCCESS;
 	}
 
-	tail = context->msgs;
+	tail = context->inflight_msgs;
 	while(tail){
-		if(tail->direction == mosq_md_in){
-			msg_count++;
-		}
-		if(tail->state != mosq_ms_queued){
-			mid = tail->mid;
-			retries = tail->dup;
-			retain = tail->retain;
-			topic = tail->store->topic;
-			qos = tail->qos;
-			payloadlen = tail->store->payloadlen;
-			payload = tail->store->payload;
+		msg_count++;
+		mid = tail->mid;
+		retries = tail->dup;
+		retain = tail->retain;
+		topic = tail->store->topic;
+		qos = tail->qos;
+		payloadlen = tail->store->payloadlen;
+		payload = UHPA_ACCESS_PAYLOAD(tail->store);
 
-			switch(tail->state){
-				case mosq_ms_publish_qos0:
-					rc = _mosquitto_send_publish(context, mid, topic, payloadlen, payload, qos, retain, retries);
-					if(!rc){
-						_message_remove(db, context, &tail, last);
-					}else{
-						return rc;
-					}
-					break;
-
-				case mosq_ms_publish_qos1:
-					rc = _mosquitto_send_publish(context, mid, topic, payloadlen, payload, qos, retain, retries);
-					if(!rc){
-						tail->timestamp = mosquitto_time();
-						tail->dup = 1; /* Any retry attempts are a duplicate. */
-						tail->state = mosq_ms_wait_for_puback;
-					}else{
-						return rc;
-					}
-					last = tail;
-					tail = tail->next;
-					break;
-
-				case mosq_ms_publish_qos2:
-					rc = _mosquitto_send_publish(context, mid, topic, payloadlen, payload, qos, retain, retries);
-					if(!rc){
-						tail->timestamp = mosquitto_time();
-						tail->dup = 1; /* Any retry attempts are a duplicate. */
-						tail->state = mosq_ms_wait_for_pubrec;
-					}else{
-						return rc;
-					}
-					last = tail;
-					tail = tail->next;
-					break;
-				
-				case mosq_ms_send_pubrec:
-					rc = _mosquitto_send_pubrec(context, mid);
-					if(!rc){
-						tail->state = mosq_ms_wait_for_pubrel;
-					}else{
-						return rc;
-					}
-					last = tail;
-					tail = tail->next;
-					break;
-
-				case mosq_ms_resend_pubrel:
-					rc = _mosquitto_send_pubrel(context, mid);
-					if(!rc){
-						tail->state = mosq_ms_wait_for_pubcomp;
-					}else{
-						return rc;
-					}
-					last = tail;
-					tail = tail->next;
-					break;
-
-				case mosq_ms_resend_pubcomp:
-					rc = _mosquitto_send_pubcomp(context, mid);
-					if(!rc){
-						tail->state = mosq_ms_wait_for_pubrel;
-					}else{
-						return rc;
-					}
-					last = tail;
-					tail = tail->next;
-					break;
-
-				default:
-					last = tail;
-					tail = tail->next;
-					break;
-			}
-		}else{
-			/* state == mosq_ms_queued */
-			if(tail->direction == mosq_md_in && (max_inflight == 0 || msg_count < max_inflight)){
-				if(tail->qos == 2){
-					tail->state = mosq_ms_send_pubrec;
+		switch(tail->state){
+			case mosq_ms_publish_qos0:
+				rc = send__publish(context, mid, topic, payloadlen, payload, qos, retain, retries);
+				if(!rc){
+					db__message_remove(db, context, &tail, last);
+				}else{
+					return rc;
 				}
-			}else{
+				break;
+
+			case mosq_ms_publish_qos1:
+				rc = send__publish(context, mid, topic, payloadlen, payload, qos, retain, retries);
+				if(!rc){
+					tail->timestamp = mosquitto_time();
+					tail->dup = 1; /* Any retry attempts are a duplicate. */
+					tail->state = mosq_ms_wait_for_puback;
+				}else{
+					return rc;
+				}
 				last = tail;
 				tail = tail->next;
+				break;
+
+			case mosq_ms_publish_qos2:
+				rc = send__publish(context, mid, topic, payloadlen, payload, qos, retain, retries);
+				if(!rc){
+					tail->timestamp = mosquitto_time();
+					tail->dup = 1; /* Any retry attempts are a duplicate. */
+					tail->state = mosq_ms_wait_for_pubrec;
+				}else{
+					return rc;
+				}
+				last = tail;
+				tail = tail->next;
+				break;
+
+			case mosq_ms_send_pubrec:
+				rc = send__pubrec(context, mid);
+				if(!rc){
+					tail->state = mosq_ms_wait_for_pubrel;
+				}else{
+					return rc;
+				}
+				last = tail;
+				tail = tail->next;
+				break;
+
+			case mosq_ms_resend_pubrel:
+				rc = send__pubrel(context, mid);
+				if(!rc){
+					tail->state = mosq_ms_wait_for_pubcomp;
+				}else{
+					return rc;
+				}
+				last = tail;
+				tail = tail->next;
+				break;
+
+			case mosq_ms_resend_pubcomp:
+				rc = send__pubcomp(context, mid);
+				if(!rc){
+					tail->state = mosq_ms_wait_for_pubrel;
+				}else{
+					return rc;
+				}
+				last = tail;
+				tail = tail->next;
+				break;
+
+			default:
+				last = tail;
+				tail = tail->next;
+				break;
+		}
+	}
+
+	while(context->queued_msgs && (max_inflight == 0 || msg_count < max_inflight)){
+		msg_count++;
+		tail = context->queued_msgs;
+		if(tail->direction == mosq_md_out){
+			switch(tail->qos){
+				case 0:
+					tail->state = mosq_ms_publish_qos0;
+					break;
+				case 1:
+					tail->state = mosq_ms_publish_qos1;
+					break;
+				case 2:
+					tail->state = mosq_ms_publish_qos2;
+					break;
+			}
+			db__message_dequeue_first(context);
+		}else{
+			if(tail->qos == 2){
+				tail->state = mosq_ms_send_pubrec;
+				db__message_dequeue_first(context);
+				rc = send__pubrec(context, tail->mid);
+				if(!rc){
+					tail->state = mosq_ms_wait_for_pubrel;
+				}else{
+					return rc;
+				}
 			}
 		}
 	}
@@ -932,13 +979,15 @@ int mqtt3_db_message_write(struct mosquitto_db *db, struct mosquitto *context)
 	return MOSQ_ERR_SUCCESS;
 }
 
-void mqtt3_db_limits_set(int inflight, int queued)
+void db__limits_set(int inflight, unsigned long inflight_bytes, int queued, unsigned long queued_bytes)
 {
 	max_inflight = inflight;
+	max_inflight_bytes = inflight_bytes;
 	max_queued = queued;
+	max_queued_bytes = queued_bytes;
 }
 
-void mqtt3_db_vacuum(void)
+void db__vacuum(void)
 {
 	/* FIXME - reimplement? */
 }

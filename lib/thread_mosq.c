@@ -14,16 +14,16 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
-#include <config.h>
+#include "config.h"
 
 #ifndef WIN32
 #include <unistd.h>
 #endif
 
-#include <mosquitto_internal.h>
-#include <net_mosq.h>
+#include "mosquitto_internal.h"
+#include "net_mosq.h"
 
-void *_mosquitto_thread_main(void *obj);
+void *mosquitto__thread_main(void *obj);
 
 int mosquitto_loop_start(struct mosquitto *mosq)
 {
@@ -31,7 +31,7 @@ int mosquitto_loop_start(struct mosquitto *mosq)
 	if(!mosq || mosq->threaded != mosq_ts_none) return MOSQ_ERR_INVAL;
 
 	mosq->threaded = mosq_ts_self;
-	if(!pthread_create(&mosq->thread_id, NULL, _mosquitto_thread_main, mosq)){
+	if(!pthread_create(&mosq->thread_id, NULL, mosquitto__thread_main, mosq)){
 		return MOSQ_ERR_SUCCESS;
 	}else{
 		return MOSQ_ERR_ERRNO;
@@ -76,7 +76,7 @@ int mosquitto_loop_stop(struct mosquitto *mosq, bool force)
 }
 
 #ifdef WITH_THREADING
-void *_mosquitto_thread_main(void *obj)
+void *mosquitto__thread_main(void *obj)
 {
 	struct mosquitto *mosq = obj;
 

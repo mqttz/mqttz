@@ -1,6 +1,6 @@
 include ../../config.mk
 
-.PHONY: all clean test
+.PHONY: all clean test ptest
 .NOTPARALLEL:
 
 all :
@@ -12,7 +12,10 @@ clean :
 test-compile : 
 	$(MAKE) -C c
 
-test : test-compile 01 02 03 04 05 06 07 08 09 10
+ptest : test-compile
+	./ptest.py
+
+test : test-compile 01 02 03 04 05 06 07 08 09 10 11
 
 01 :
 	./01-connect-success.py
@@ -21,6 +24,7 @@ test : test-compile 01 02 03 04 05 06 07 08 09 10
 	./01-connect-invalid-id-0-311.py
 	./01-connect-invalid-id-missing.py
 	./01-connect-invalid-reserved.py
+	./01-connect-invalid-id-utf8.py
 	./01-connect-anon-denied.py
 	./01-connect-uname-no-password-denied.py
 	./01-connect-uname-password-denied.py
@@ -29,6 +33,9 @@ ifeq ($(WITH_TLS),yes)
 else
 	./01-connect-uname-password-success-no-tls.py
 endif
+	./01-connect-uname-no-flag.py
+	./01-connect-uname-pwd-no-flag.py
+	./01-connect-uname-invalid-utf8.py
 
 
 02 :
@@ -41,17 +48,18 @@ endif
 	./02-unsubscribe-qos0.py
 	./02-unsubscribe-qos1.py
 	./02-unsubscribe-qos2.py
+	./02-unsubscribe-invalid-no-topic.py
+	./02-subscribe-invalid-utf8.py
 
 03 :
 	./03-publish-qos1.py
 	./03-publish-qos2.py
-	./03-publish-b2c-timeout-qos1.py
 	./03-publish-b2c-disconnect-qos1.py
-	./03-publish-c2b-timeout-qos2.py
 	./03-publish-c2b-disconnect-qos2.py
-	./03-publish-b2c-timeout-qos2.py
 	./03-publish-b2c-disconnect-qos2.py
 	./03-pattern-matching.py
+	./03-publish-qos1-queued-bytes.py
+	./03-publish-invalid-utf8.py
 
 04 :
 	./04-retain-qos0.py
@@ -79,6 +87,8 @@ endif
 	./07-will-qos0.py
 	./07-will-null.py
 	./07-will-null-topic.py
+	./07-will-invalid-utf8.py
+	./07-will-no-flag.py
 
 08 :
 ifeq ($(WITH_TLS),yes)
@@ -101,7 +111,14 @@ endif
 09 :
 	./09-plugin-auth-unpwd-success.py
 	./09-plugin-auth-unpwd-fail.py
+	./09-plugin-auth-acl-sub.py
+	./09-plugin-auth-v2-unpwd-success.py
+	./09-plugin-auth-v2-unpwd-fail.py
+	./09-plugin-auth-defer-unpwd-success.py
+	./09-plugin-auth-defer-unpwd-fail.py
 
 10 :
 	./10-listener-mount-point.py
 
+11 :
+	./11-persistent-subscription.py

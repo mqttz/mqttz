@@ -11,8 +11,8 @@ import mosq_test
 rc = 1
 mid = 3265
 keepalive = 60
-connect_packet = mosq_test.gen_connect("pub-qos2-disco-test", keepalive=keepalive, clean_session=False)
-connack_packet = mosq_test.gen_connack(rc=0)
+connect_packet = mosq_test.gen_connect("pub-qos2-disco-test", keepalive=keepalive, clean_session=False, proto_ver=3)
+connack_packet = mosq_test.gen_connack(resv=0, rc=0)
 
 subscribe_packet = mosq_test.gen_subscribe(mid, "qos2/disconnect/test", 2)
 suback_packet = mosq_test.gen_suback(mid, 2)
@@ -25,21 +25,18 @@ pubrel_packet = mosq_test.gen_pubrel(mid)
 pubrel_dup_packet = mosq_test.gen_pubrel(mid, dup=True)
 pubcomp_packet = mosq_test.gen_pubcomp(mid)
 
-mid = 3266
-publish2_packet = mosq_test.gen_publish("qos1/outgoing", qos=1, mid=mid, payload="outgoing-message")
-puback2_packet = mosq_test.gen_puback(mid)
-
-broker = mosq_test.start_broker(filename=os.path.basename(__file__))
+port = mosq_test.get_port()
+broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port)
 
 try:
-    sock = mosq_test.do_client_connect(connect_packet, connack_packet)
+    sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
 
     sock.send(publish_packet)
     if mosq_test.expect_packet(sock, "pubrec", pubrec_packet):
         # We're now going to disconnect and pretend we didn't receive the pubrec.
         sock.close()
 
-        sock = mosq_test.do_client_connect(connect_packet, connack_packet)
+        sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
         sock.send(publish_dup_packet)
 
         if mosq_test.expect_packet(sock, "pubrec", pubrec_packet):
@@ -49,7 +46,7 @@ try:
                 # Again, pretend we didn't receive this pubcomp
                 sock.close()
 
-                sock = mosq_test.do_client_connect(connect_packet, connack_packet)
+                sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
                 sock.send(pubrel_dup_packet)
 
                 if mosq_test.expect_packet(sock, "pubcomp", pubcomp_packet):
@@ -59,8 +56,8 @@ try:
 finally:
     broker.terminate()
     broker.wait()
+    (stdo, stde) = broker.communicate()
     if rc:
-        (stdo, stde) = broker.communicate()
         print(stde)
 
 exit(rc)

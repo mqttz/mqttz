@@ -29,7 +29,7 @@
 
 	<refsect1>
 		<title>Description</title>
-		<para><command>mosquitto</command> is a broker for the MQTT protocol version 3.1.</para>
+		<para><command>mosquitto</command> is a broker for the MQTT protocol version 3.1.1/3.1.</para>
 	</refsect1>
 
 	<refsect1>
@@ -292,14 +292,6 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>$SYS/broker/messages/stored</option></term>
-				<listitem>
-					<para>The number of messages currently held in the message
-						store. This includes retained messages and messages
-						queued for durable clients.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
 				<term><option>$SYS/broker/publish/messages/dropped</option></term>
 				<listitem>
 					<para>The total number of publish messages that have been
@@ -328,22 +320,27 @@
 					<para>The total number of retained messages active on the broker.</para>
 				</listitem>
 			</varlistentry>
+                        <varlistentry>
+                            <term><option>$SYS/broker/store/messages/count</option></term>
+                            <term><option>$SYS/broker/messages/stored</option> (deprecated)</term>
+				<listitem>
+					<para>The number of messages currently held in the message
+						store. This includes retained messages and messages
+						queued for durable clients.</para>
+				</listitem>
+			</varlistentry>
+                        <varlistentry>
+                            <term><option>$SYS/broker/store/messages/bytes</option></term>
+				<listitem>
+					<para>The number of bytes currently held by message payloads
+                                            in the message store. This includes retained messages
+                                            and messages queued for durable clients.</para>
+				</listitem>
+			</varlistentry>
 			<varlistentry>
 				<term><option>$SYS/broker/subscriptions/count</option></term>
 				<listitem>
 					<para>The total number of subscriptions active on the broker.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>$SYS/broker/timestamp</option></term>
-				<listitem>
-					<para>The timestamp at which this particular build of the broker was made. Static.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>$SYS/broker/uptime</option></term>
-				<listitem>
-					<para>The amount of time in seconds the broker has been online.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

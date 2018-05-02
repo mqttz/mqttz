@@ -14,8 +14,8 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
-#ifndef _CLIENT_CONFIG_H
-#define _CLIENT_CONFIG_H
+#ifndef CLIENT_CONFIG_H
+#define CLIENT_CONFIG_H
 
 #include <stdio.h>
 
@@ -71,15 +71,20 @@ struct mosq_config {
 	char *psk_identity;
 #  endif
 #endif
-	bool clean_session; /* sub */
+	bool clean_session;
 	char **topics; /* sub */
 	int topic_count; /* sub */
 	bool no_retain; /* sub */
+	bool retained_only; /* sub */
 	char **filter_outs; /* sub */
 	int filter_out_count; /* sub */
+	char **unsub_topics; /* sub */
+	int unsub_topic_count; /* sub */
 	bool verbose; /* sub */
 	bool eol; /* sub */
 	int msg_count; /* sub */
+	char *format; /* sub */
+	int timeout; /* sub */
 #ifdef WITH_SOCKS
 	char *socks5_host;
 	int socks5_port;

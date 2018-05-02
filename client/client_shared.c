@@ -14,6 +14,7 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
+#define _POSIX_C_SOURCE 200809L
 
 #include <errno.h>
 #include <fcntl.h>
@@ -22,10 +23,12 @@ Contributors:
 #include <string.h>
 #ifndef WIN32
 #include <unistd.h>
+#include <strings.h>
 #else
 #include <process.h>
 #include <winsock2.h>
 #define snprintf sprintf_s
+#define strncasecmp _strnicmp
 #endif
 
 #include <mosquitto.h>
@@ -34,15 +37,96 @@ Contributors:
 static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url);
 static int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, char *argv[]);
 
+
+static int check_format(struct mosq_config *cfg, const char *str)
+{
+	int i;
+	int len;
+
+	len = strlen(str);
+	for(i=0; i<len; i++){
+		if(str[i] == '%'){
+			if(i == len-1){
+				// error
+				fprintf(stderr, "Error: Incomplete format specifier.\n");
+				return 1;
+			}else{
+				if(str[i+1] == '%'){
+					// Print %, ignore
+				}else if(str[i+1] == 'I'){
+					// ISO 8601 date+time
+				}else if(str[i+1] == 'l'){
+					// payload length
+				}else if(str[i+1] == 'm'){
+					// mid
+				}else if(str[i+1] == 'p'){
+					// payload
+				}else if(str[i+1] == 'q'){
+					// qos
+				}else if(str[i+1] == 'r'){
+					// retain
+				}else if(str[i+1] == 't'){
+					// topic
+				}else if(str[i+1] == 'j'){
+					// JSON output, escaped payload
+				}else if(str[i+1] == 'J'){
+					// JSON output, assuming JSON payload
+				}else if(str[i+1] == 'U'){
+					// Unix time+nanoseconds
+				}else if(str[i+1] == 'x' || str[i+1] == 'X'){
+					// payload in hex
+				}else{
+					fprintf(stderr, "Error: Invalid format specifier '%c'.\n", str[i+1]);
+					return 1;
+				}
+				i++;
+			}
+		}else if(str[i] == '@'){
+			if(i == len-1){
+				// error
+				fprintf(stderr, "Error: Incomplete format specifier.\n");
+				return 1;
+			}
+			i++;
+		}else if(str[i] == '\\'){
+			if(i == len-1){
+				// error
+				fprintf(stderr, "Error: Incomplete escape specifier.\n");
+				return 1;
+			}else{
+				switch(str[i+1]){
+					case '\\': // '\'
+					case '0':  // 0 (NULL)
+					case 'a':  // alert
+					case 'e':  // escape
+					case 'n':  // new line
+					case 'r':  // carriage return
+					case 't':  // horizontal tab
+					case 'v':  // vertical tab
+						break;
+
+					default:
+						fprintf(stderr, "Error: Invalid escape specifier '%c'.\n", str[i+1]);
+						return 1;
+				}
+				i++;
+			}
+		}
+	}
+
+	return 0;
+}
+
+
 void init_config(struct mosq_config *cfg)
 {
 	memset(cfg, 0, sizeof(*cfg));
-	cfg->port = 1883;
+	cfg->port = -1;
 	cfg->max_inflight = 20;
 	cfg->keepalive = 60;
 	cfg->clean_session = true;
 	cfg->eol = true;
-	cfg->protocol_version = MQTT_PROTOCOL_V31;
+	cfg->protocol_version = MQTT_PROTOCOL_V311;
 }
 
 void client_config_cleanup(struct mosq_config *cfg)
@@ -59,6 +143,7 @@ void client_config_cleanup(struct mosq_config *cfg)
 	free(cfg->password);
 	free(cfg->will_topic);
 	free(cfg->will_payload);
+	free(cfg->format);
 #ifdef WITH_TLS
 	free(cfg->cafile);
 	free(cfg->capath);
@@ -82,6 +167,12 @@ void client_config_cleanup(struct mosq_config *cfg)
 			free(cfg->filter_outs[i]);
 		}
 		free(cfg->filter_outs);
+	}
+	if(cfg->unsub_topics){
+		for(i=0; i<cfg->unsub_topic_count; i++){
+			free(cfg->unsub_topics[i]);
+		}
+		free(cfg->unsub_topics);
 	}
 #ifdef WITH_SOCKS
 	free(cfg->socks5_host);
@@ -229,11 +320,12 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 	}
 #endif
 
+	if(cfg->clean_session == false && (cfg->id_prefix || !cfg->id)){
+		if(!cfg->quiet) fprintf(stderr, "Error: You must provide a client id if you are using the -c option.\n");
+		return 1;
+	}
+
 	if(pub_or_sub == CLIENT_SUB){
-		if(cfg->clean_session == false && (cfg->id_prefix || !cfg->id)){
-			if(!cfg->quiet) fprintf(stderr, "Error: You must provide a client id if you are using the -c option.\n");
-			return 1;
-		}
 		if(cfg->topic_count == 0){
 			if(!cfg->quiet) fprintf(stderr, "Error: You must specify a topic to subscribe to.\n");
 			return 1;
@@ -244,6 +336,34 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 		cfg->host = "localhost";
 	}
 	return MOSQ_ERR_SUCCESS;
+}
+
+int cfg_add_topic(struct mosq_config *cfg, int pub_or_sub, char *topic, const char *arg)
+{
+	if(mosquitto_validate_utf8(topic, strlen(topic))){
+		fprintf(stderr, "Error: Malformed UTF-8 in %s argument.\n\n", arg);
+		return 1;
+	}
+	if(pub_or_sub == CLIENT_PUB){
+		if(mosquitto_pub_topic_check(topic) == MOSQ_ERR_INVAL){
+			fprintf(stderr, "Error: Invalid publish topic '%s', does it contain '+' or '#'?\n", topic);
+			return 1;
+		}
+		cfg->topic = strdup(topic);
+	} else {
+		if(mosquitto_sub_topic_check(topic) == MOSQ_ERR_INVAL){
+			fprintf(stderr, "Error: Invalid subscription topic '%s', are all '+' and '#' wildcards correct?\n", topic);
+			return 1;
+		}
+		cfg->topic_count++;
+		cfg->topics = realloc(cfg->topics, cfg->topic_count*sizeof(char *));
+		if(!cfg->topics){
+			fprintf(stderr, "Error: Out of memory.\n");
+			return 1;
+		}
+		cfg->topics[cfg->topic_count-1] = strdup(topic);
+	}
+	return 0;
 }
 
 /* Process a tokenised single line from a file or set of real argc/argv */
@@ -322,6 +442,22 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				}
 				i++;
 			}
+		}else if(!strcmp(argv[i], "-W")){
+			if(pub_or_sub == CLIENT_PUB){
+				goto unknown_option;
+			}else{
+				if(i==argc-1){
+					fprintf(stderr, "Error: -W argument given but no timeout specified.\n\n");
+					return 1;
+				}else{
+					cfg->timeout = atoi(argv[i+1]);
+					if(cfg->timeout < 1){
+						fprintf(stderr, "Error: Invalid timeout \"%d\".\n\n", cfg->msg_count);
+						return 1;
+					}
+				}
+				i++;
+			}
 		}else if(!strcmp(argv[i], "-d") || !strcmp(argv[i], "--debug")){
 			cfg->debug = true;
 		}else if(!strcmp(argv[i], "-f") || !strcmp(argv[i], "--file")){
@@ -337,6 +473,28 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 			}else{
 				cfg->pub_mode = MSGMODE_FILE;
 				cfg->file_input = strdup(argv[i+1]);
+				if(!cfg->file_input){
+					fprintf(stderr, "Error: Out of memory.\n");
+					return 1;
+				}
+			}
+			i++;
+		}else if(!strcmp(argv[i], "-F")){
+			if(pub_or_sub == CLIENT_PUB){
+				goto unknown_option;
+			}
+			if(i==argc-1){
+				fprintf(stderr, "Error: -F argument given but no format specified.\n\n");
+				return 1;
+			}else{
+				cfg->format = strdup(argv[i+1]);
+				if(!cfg->format){
+					fprintf(stderr, "Error: Out of memory.\n");
+					return 1;
+				}
+				if(check_format(cfg, cfg->format)){
+					return 1;
+				}
 			}
 			i++;
 		}else if(!strcmp(argv[i], "--help")){
@@ -399,6 +557,51 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 			}
 			i++;
 #endif
+		}else if(!strcmp(argv[i], "-L") || !strcmp(argv[i], "--url")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: -L argument given but no URL specified.\n\n");
+				return 1;
+			} else {
+				char *url = argv[i+1];
+				char *topic;
+				char *tmp;
+
+				if(!strncasecmp(url, "mqtt://", 7)) {
+					url += 7;
+					cfg->port = 1883;
+				} else if(!strncasecmp(url, "mqtts://", 8)) {
+					url += 8;
+					cfg->port = 8883;
+				} else {
+					fprintf(stderr, "Error: unsupported URL scheme.\n\n");
+					return 1;
+				}
+				topic = strchr(url, '/');
+				*topic++ = 0;
+
+				if(cfg_add_topic(cfg, pub_or_sub, topic, "-L topic"))
+					return 1;
+
+				tmp = strchr(url, '@');
+				if(tmp) {
+					char *colon = strchr(url, ':');
+					*tmp++ = 0;
+					if(colon) {
+						*colon = 0;
+						cfg->password = colon + 1;
+					}
+					cfg->username = url;
+					url = tmp;
+				}
+				cfg->host = url;
+
+				tmp = strchr(url, ':');
+				if(tmp) {
+					*tmp++ = 0;
+					cfg->port = atoi(tmp);
+				}
+			}
+			i++;
 		}else if(!strcmp(argv[i], "-l") || !strcmp(argv[i], "--stdin-line")){
 			if(pub_or_sub == CLIENT_SUB){
 				goto unknown_option;
@@ -507,6 +710,11 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				goto unknown_option;
 			}
 			cfg->retain = 1;
+		}else if(!strcmp(argv[i], "--retained-only")){
+			if(pub_or_sub == CLIENT_PUB){
+				goto unknown_option;
+			}
+			cfg->retained_only = true;
 		}else if(!strcmp(argv[i], "-s") || !strcmp(argv[i], "--stdin-file")){
 			if(pub_or_sub == CLIENT_SUB){
 				goto unknown_option;
@@ -526,21 +734,8 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				fprintf(stderr, "Error: -t argument given but no topic specified.\n\n");
 				return 1;
 			}else{
-				if(pub_or_sub == CLIENT_PUB){
-					if(mosquitto_pub_topic_check(argv[i+1]) == MOSQ_ERR_INVAL){
-						fprintf(stderr, "Error: Invalid publish topic '%s', does it contain '+' or '#'?\n", argv[i+1]);
-						return 1;
-					}
-					cfg->topic = strdup(argv[i+1]);
-				}else{
-					if(mosquitto_sub_topic_check(argv[i+1]) == MOSQ_ERR_INVAL){
-						fprintf(stderr, "Error: Invalid subscription topic '%s', are all '+' and '#' wildcards correct?\n", argv[i+1]);
-						return 1;
-					}
-					cfg->topic_count++;
-					cfg->topics = realloc(cfg->topics, cfg->topic_count*sizeof(char *));
-					cfg->topics[cfg->topic_count-1] = strdup(argv[i+1]);
-				}
+				if(cfg_add_topic(cfg, pub_or_sub, argv[i + 1], "-t"))
+					return 1;
 				i++;
 			}
 		}else if(!strcmp(argv[i], "-T") || !strcmp(argv[i], "--filter-out")){
@@ -551,13 +746,46 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				fprintf(stderr, "Error: -T argument given but no topic filter specified.\n\n");
 				return 1;
 			}else{
+				if(mosquitto_validate_utf8(argv[i+1], strlen(argv[i+1]))){
+					fprintf(stderr, "Error: Malformed UTF-8 in -T argument.\n\n");
+					return 1;
+				}
 				if(mosquitto_sub_topic_check(argv[i+1]) == MOSQ_ERR_INVAL){
 					fprintf(stderr, "Error: Invalid filter topic '%s', are all '+' and '#' wildcards correct?\n", argv[i+1]);
 					return 1;
 				}
 				cfg->filter_out_count++;
 				cfg->filter_outs = realloc(cfg->filter_outs, cfg->filter_out_count*sizeof(char *));
+				if(!cfg->filter_outs){
+					fprintf(stderr, "Error: Out of memory.\n");
+					return 1;
+				}
 				cfg->filter_outs[cfg->filter_out_count-1] = strdup(argv[i+1]);
+			}
+			i++;
+		}else if(!strcmp(argv[i], "-U") || !strcmp(argv[i], "--unsubscribe")){
+			if(pub_or_sub == CLIENT_PUB){
+				goto unknown_option;
+			}
+			if(i==argc-1){
+				fprintf(stderr, "Error: -U argument given but no unsubscribe topic specified.\n\n");
+				return 1;
+			}else{
+				if(mosquitto_validate_utf8(argv[i+1], strlen(argv[i+1]))){
+					fprintf(stderr, "Error: Malformed UTF-8 in -U argument.\n\n");
+					return 1;
+				}
+				if(mosquitto_sub_topic_check(argv[i+1]) == MOSQ_ERR_INVAL){
+					fprintf(stderr, "Error: Invalid unsubscribe topic '%s', are all '+' and '#' wildcards correct?\n", argv[i+1]);
+					return 1;
+				}
+				cfg->unsub_topic_count++;
+				cfg->unsub_topics = realloc(cfg->unsub_topics, cfg->unsub_topic_count*sizeof(char *));
+				if(!cfg->unsub_topics){
+					fprintf(stderr, "Error: Out of memory.\n");
+					return 1;
+				}
+				cfg->unsub_topics[cfg->unsub_topic_count-1] = strdup(argv[i+1]);
 			}
 			i++;
 #ifdef WITH_TLS
@@ -614,6 +842,10 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				fprintf(stderr, "Error: --will-topic argument given but no will topic specified.\n\n");
 				return 1;
 			}else{
+				if(mosquitto_validate_utf8(argv[i+1], strlen(argv[i+1]))){
+					fprintf(stderr, "Error: Malformed UTF-8 in --will-topic argument.\n\n");
+					return 1;
+				}
 				if(mosquitto_pub_topic_check(argv[i+1]) == MOSQ_ERR_INVAL){
 					fprintf(stderr, "Error: Invalid will topic '%s', does it contain '+' or '#'?\n", argv[i+1]);
 					return 1;
@@ -622,9 +854,6 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 			}
 			i++;
 		}else if(!strcmp(argv[i], "-c") || !strcmp(argv[i], "--disable-clean-session")){
-			if(pub_or_sub == CLIENT_PUB){
-				goto unknown_option;
-			}
 			cfg->clean_session = false;
 		}else if(!strcmp(argv[i], "-N")){
 			if(pub_or_sub == CLIENT_PUB){
@@ -747,15 +976,33 @@ int client_connect(struct mosquitto *mosq, struct mosq_config *cfg)
 {
 	char err[1024];
 	int rc;
+	int port;
+
+#ifdef WITH_TLS
+	if(cfg->port < 0){
+		if(cfg->cafile || cfg->capath
+#ifdef WITH_TLS_PSK
+				|| cfg->psk
+#endif
+				){
+			port = 8883;
+		}else{
+			port = 1883;
+		}
+	}else
+#endif
+	{
+		port = cfg->port;
+	}
 
 #ifdef WITH_SRV
 	if(cfg->use_srv){
 		rc = mosquitto_connect_srv(mosq, cfg->host, cfg->keepalive, cfg->bind_address);
 	}else{
-		rc = mosquitto_connect_bind(mosq, cfg->host, cfg->port, cfg->keepalive, cfg->bind_address);
+		rc = mosquitto_connect_bind(mosq, cfg->host, port, cfg->keepalive, cfg->bind_address);
 	}
 #else
-	rc = mosquitto_connect_bind(mosq, cfg->host, cfg->port, cfg->keepalive, cfg->bind_address);
+	rc = mosquitto_connect_bind(mosq, cfg->host, port, cfg->keepalive, cfg->bind_address);
 #endif
 	if(rc>0){
 		if(!cfg->quiet){
@@ -861,6 +1108,10 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 				}
 				len = i-start;
 				host = malloc(len + 1);
+				if(!host){
+					fprintf(stderr, "Error: Out of memory.\n");
+					goto cleanup;
+				}
 				memcpy(host, &(str[start]), len);
 				host[len] = '\0';
 				start = i+1;
@@ -870,6 +1121,10 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 				 * socks5h://username:password@host[:port] */
 				len = i-start;
 				username_or_host = malloc(len + 1);
+				if(!username_or_host){
+					fprintf(stderr, "Error: Out of memory.\n");
+					goto cleanup;
+				}
 				memcpy(username_or_host, &(str[start]), len);
 				username_or_host[len] = '\0';
 				start = i+1;
@@ -886,6 +1141,10 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 
 				len = i-start;
 				password = malloc(len + 1);
+				if(!password){
+					fprintf(stderr, "Error: Out of memory.\n");
+					goto cleanup;
+				}
 				memcpy(password, &(str[start]), len);
 				password[len] = '\0';
 				start = i+1;
@@ -898,6 +1157,10 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 				}
 				len = i-start;
 				username = malloc(len + 1);
+				if(!username){
+					fprintf(stderr, "Error: Out of memory.\n");
+					goto cleanup;
+				}
 				memcpy(username, &(str[start]), len);
 				username[len] = '\0';
 				start = i+1;
@@ -912,6 +1175,10 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 			/* Have already seen a @ , so this must be of form
 			 * socks5h://username[:password]@host:port */
 			port = malloc(len + 1);
+			if(!port){
+				fprintf(stderr, "Error: Out of memory.\n");
+				goto cleanup;
+			}
 			memcpy(port, &(str[start]), len);
 			port[len] = '\0';
 		}else if(username_or_host){
@@ -920,6 +1187,10 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 			host = username_or_host;
 			username_or_host = NULL;
 			port = malloc(len + 1);
+			if(!port){
+				fprintf(stderr, "Error: Out of memory.\n");
+				goto cleanup;
+			}
 			memcpy(port, &(str[start]), len);
 			port[len] = '\0';
 		}else{
