@@ -31,9 +31,9 @@ static int psk__file_parse(struct mosquitto_db *db, struct mosquitto__unpwd **ps
 #ifdef WITH_TLS
 static int pw__digest(const char *password, const unsigned char *salt, unsigned int salt_len, unsigned char *hash, unsigned int *hash_len);
 static int base64__decode(char *in, unsigned char **decoded, unsigned int *decoded_len);
+static int mosquitto__memcmp_const(const void *ptr1, const void *b, size_t len);
 #endif
 
-static int mosquitto__memcmp_const(const void *ptr1, const void *b, size_t len);
 
 
 int mosquitto_security_init_default(struct mosquitto_db *db, bool reload)
@@ -749,6 +749,7 @@ static int psk__file_parse(struct mosquitto_db *db, struct mosquitto__unpwd **ps
 }
 
 
+#ifdef WITH_TLS
 static int mosquitto__memcmp_const(const void *a, const void *b, size_t len)
 {
 	int i;
@@ -763,6 +764,7 @@ static int mosquitto__memcmp_const(const void *a, const void *b, size_t len)
 	}
 	return rc;
 }
+#endif
 
 
 int mosquitto_unpwd_check_default(struct mosquitto_db *db, struct mosquitto *context, const char *username, const char *password)
