@@ -565,7 +565,6 @@ int mqtt3_db_message_store(struct mosquitto_db *db, const char *source, uint16_t
 		if(!temp->payload){
 			if(temp->source_id) _mosquitto_free(temp->source_id);
 			if(temp->topic) _mosquitto_free(temp->topic);
-			if(temp->payload) _mosquitto_free(temp->payload);
 			_mosquitto_free(temp);
 			return MOSQ_ERR_NOMEM;
 		}
