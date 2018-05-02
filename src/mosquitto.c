@@ -202,6 +202,7 @@ int main(int argc, char *argv[])
 	int rc;
 #ifdef WIN32
 	SYSTEMTIME st;
+	_setmaxstdio(2048);
 #else
 	struct timeval tv;
 #endif
