@@ -1,3 +1,4 @@
+#ifndef CONFIG_H
 /* ============================================================
  * Control compile time options.
  * ============================================================
@@ -28,5 +29,7 @@
 #define uthash_malloc(sz) mosquitto__malloc(sz)
 #define uthash_free(ptr,sz) mosquitto__free(ptr)
 
-#define _BSD_SOURCE
+#define _DEFAULT_SOURCE 1
 #define _POSIX_C_SOURCE 200809L
+
+#endif

@@ -14,8 +14,7 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
-#define _POSIX_C_SOURCE 200809L
-#define _DEFAULT_SOURCE
+#include "config.h"
 
 #include <errno.h>
 #include <openssl/evp.h>
