@@ -1,6 +1,10 @@
 1.5 - 2018xxxx
 ==============
 
+Security:
+- Fix memory leak that could be caused by a malicious CONNECT packet. This
+  does not yet have a CVE assigned. Closes #533493 (on Eclipse bugtracker)
+
 Broker features:
 - Add per_listener_settings to allow authentication and access control to be
   per listener.
