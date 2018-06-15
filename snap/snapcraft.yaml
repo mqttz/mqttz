@@ -44,12 +44,11 @@ parts:
 
   mosquitto:
     plugin: make
-    make-parameters: ["prefix=/usr", "WITH_SRV=no", "WITH_WEBSOCKETS=static"]
+    make-parameters: ["prefix=/usr", "WITH_SRV=no", "WITH_WEBSOCKETS=no"]
     source: https://github.com/eclipse/mosquitto
     source-type: git
 
     build-packages:
-      - libwebsockets-dev
       - libssl-dev
       - uuid-dev
       - xsltproc
