@@ -50,6 +50,7 @@ endif
 	./02-unsubscribe-qos2.py
 	./02-unsubscribe-invalid-no-topic.py
 	./02-subscribe-invalid-utf8.py
+	./02-subscribe-persistence-flipflop.py
 
 03 :
 	./03-publish-qos1.py

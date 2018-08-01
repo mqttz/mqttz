@@ -33,6 +33,7 @@ tests = [
 	(1, './02-unsubscribe-qos2.py'),
 	(1, './02-unsubscribe-invalid-no-topic.py'),
 	(1, './02-subscribe-invalid-utf8.py'),
+    (1, './02-subscribe-persistence-flipflop.py'),
 
 	(1, './03-publish-qos1.py'),
 	(1, './03-publish-qos2.py'),
