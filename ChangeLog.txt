@@ -1,3 +1,11 @@
+1.5.1 - 2018xxxx
+================
+
+Broker:
+- Fix plugin cleanup function not being called on exit of the broker.
+  Closes #900.
+
+
 1.5 - 20180502
 ==============
 

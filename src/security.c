@@ -282,6 +282,20 @@ static void security__module_cleanup_single(struct mosquitto__security_options *
 	int i;
 
 	for(i=0; i<opts->auth_plugin_config_count; i++){
+		/* Run plugin cleanup function */
+		if(opts->auth_plugin_configs[i].plugin.version == 3){
+			opts->auth_plugin_configs[i].plugin.plugin_cleanup_v3(
+					opts->auth_plugin_configs[i].plugin.user_data,
+					opts->auth_plugin_configs[i].options,
+					opts->auth_plugin_configs[i].option_count);
+
+		}else if(opts->auth_plugin_configs[i].plugin.version == 2){
+			opts->auth_plugin_configs[i].plugin.plugin_cleanup_v2(
+					opts->auth_plugin_configs[i].plugin.user_data,
+					(struct mosquitto_auth_opt *)opts->auth_plugin_configs[i].options,
+					opts->auth_plugin_configs[i].option_count);
+		}
+
 		if(opts->auth_plugin_configs[i].plugin.lib){
 			LIB_CLOSE(opts->auth_plugin_configs[i].plugin.lib);
 		}
