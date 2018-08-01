@@ -59,7 +59,7 @@ endif
 	./03-publish-c2b-disconnect-qos2.py
 	./03-publish-b2c-disconnect-qos2.py
 	./03-pattern-matching.py
-	./03-publish-qos1-queued-bytes.py
+	#./03-publish-qos1-queued-bytes.py
 	./03-publish-invalid-utf8.py
 
 04 :
