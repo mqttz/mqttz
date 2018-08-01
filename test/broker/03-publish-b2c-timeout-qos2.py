@@ -32,28 +32,26 @@ broker = mosq_test.start_broker(filename=os.path.basename(__file__))
 
 try:
     sock = mosq_test.do_client_connect(connect_packet, connack_packet)
-    sock.send(subscribe_packet)
+    mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
 
-    if mosq_test.expect_packet(sock, "suback", suback_packet):
-        pub = subprocess.Popen(['./03-publish-b2c-timeout-qos2-helper.py'], stdout=subprocess.PIPE, stderr=subprocess.PIPE))
-        pub.wait()
-        (stdo, stde) = pub.communicate()
-        # Should have now received a publish command
+    pub = subprocess.Popen(['./03-publish-b2c-timeout-qos2-helper.py'], stdout=subprocess.PIPE, stderr=subprocess.PIPE))
+    pub.wait()
+    (stdo, stde) = pub.communicate()
+    # Should have now received a publish command
 
-        if mosq_test.expect_packet(sock, "publish", publish_packet):
+    if mosq_test.expect_packet(sock, "publish", publish_packet):
+        # Wait for longer than 5 seconds to get republish with dup set
+        # This is covered by the 8 second timeout
+
+        if mosq_test.expect_packet(sock, "dup publish", publish_dup_packet):
+            mosq_test.do_send_receive(sock, pubrec_packet, pubrel_packet, "pubrel")
+
             # Wait for longer than 5 seconds to get republish with dup set
             # This is covered by the 8 second timeout
 
-            if mosq_test.expect_packet(sock, "dup publish", publish_dup_packet):
-                sock.send(pubrec_packet)
-
-                if mosq_test.expect_packet(sock, "pubrel", pubrel_packet):
-                    # Wait for longer than 5 seconds to get republish with dup set
-                    # This is covered by the 8 second timeout
-
-                    if mosq_test.expect_packet(sock, "dup pubrel", pubrel_packet):
-                        sock.send(pubcomp_packet)
-                        rc = 0
+            if mosq_test.expect_packet(sock, "dup pubrel", pubrel_packet):
+                sock.send(pubcomp_packet)
+                rc = 0
 
     sock.close()
 finally:

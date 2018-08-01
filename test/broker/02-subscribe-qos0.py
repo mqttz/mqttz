@@ -27,10 +27,9 @@ try:
     time.sleep(0.5)
 
     sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
-    sock.send(subscribe_packet)
+    mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
 
-    if mosq_test.expect_packet(sock, "suback", suback_packet):
-        rc = 0
+    rc = 0
 
     sock.close()
 finally:

@@ -72,16 +72,17 @@ bridge = mosq_test.start_broker(filename=os.path.basename(__file__)+'_bridge', c
 pub = None
 try:
     sock = mosq_test.do_client_connect(connect_packet, connack_packet, timeout=30, port=port1)
-    sock.send(subscribe_packet)
 
-    if mosq_test.expect_packet(sock, "suback", suback_packet):
-        pub = subprocess.Popen(['./c/08-tls-psk-bridge.test', str(port3)], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if pub.wait():
-            raise ValueError
-        (stdo, stde) = pub.communicate()
+    mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
 
-        if mosq_test.expect_packet(sock, "publish", publish_packet):
-            rc = 0
+    pub = subprocess.Popen(['./c/08-tls-psk-bridge.test', str(port3)], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if pub.wait():
+        raise ValueError
+    (stdo, stde) = pub.communicate()
+
+    if mosq_test.expect_packet(sock, "publish", publish_packet):
+        rc = 0
+
     sock.close()
 finally:
     os.remove(conf_file1)

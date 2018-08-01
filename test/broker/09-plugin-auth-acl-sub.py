@@ -37,12 +37,11 @@ broker = mosq_test.start_broker(filename=os.path.basename(__file__), use_conf=Tr
 
 try:
     sock = mosq_test.do_client_connect(connect_packet, connack_packet, timeout=20, port=port)
-    sock.send(subscribe_packet)
+    mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
 
-    if mosq_test.expect_packet(sock, "suback", suback_packet):
-        sock.send(subscribe_packet_fail)
-        if mosq_test.expect_packet(sock, "suback", suback_packet_fail):
-            rc = 0
+    mosq_test.do_send_receive(sock, subscribe_packet_fail, suback_packet_fail, "suback")
+
+    rc = 0
 
     sock.close()
 finally:

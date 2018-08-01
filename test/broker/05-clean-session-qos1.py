@@ -33,23 +33,22 @@ broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port)
 
 try:
     sock = mosq_test.do_client_connect(connect_packet, connack1_packet, port=port)
-    sock.send(subscribe_packet)
+    mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
 
-    if mosq_test.expect_packet(sock, "suback", suback_packet):
-        sock.send(disconnect_packet)
-        sock.close()
+    sock.send(disconnect_packet)
+    sock.close()
 
-        pub = subprocess.Popen(['./05-clean-session-qos1-helper.py', str(port)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        pub.wait()
-        (stdo, stde) = pub.communicate()
+    pub = subprocess.Popen(['./05-clean-session-qos1-helper.py', str(port)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    pub.wait()
+    (stdo, stde) = pub.communicate()
 
-        # Now reconnect and expect a publish message.
-        sock = mosq_test.do_client_connect(connect_packet, connack2_packet, timeout=30, port=port)
-        if mosq_test.expect_packet(sock, "publish", publish_packet):
-            sock.send(puback_packet)
-            rc = 0
+    # Now reconnect and expect a publish message.
+    sock = mosq_test.do_client_connect(connect_packet, connack2_packet, timeout=30, port=port)
+    if mosq_test.expect_packet(sock, "publish", publish_packet):
+        sock.send(puback_packet)
+        rc = 0
 
-        sock.close()
+    sock.close()
 finally:
     broker.terminate()
     broker.wait()

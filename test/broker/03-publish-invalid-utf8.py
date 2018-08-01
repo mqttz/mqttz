@@ -32,10 +32,9 @@ try:
     time.sleep(0.5)
 
     sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
-    sock.send(publish_packet)
+    mosq_test.do_send_receive(sock, publish_packet, "", "puback")
 
-    if mosq_test.expect_packet(sock, "puback", ""):
-        rc = 0
+    rc = 0
 
     sock.close()
 finally:

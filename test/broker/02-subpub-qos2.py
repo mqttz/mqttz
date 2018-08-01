@@ -37,21 +37,15 @@ broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port)
 
 try:
     sock = mosq_test.do_client_connect(connect_packet, connack_packet, timeout=20, port=port)
-    sock.send(subscribe_packet)
 
-    if mosq_test.expect_packet(sock, "suback", suback_packet):
-        sock.send(publish_packet)
+    mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
+    mosq_test.do_send_receive(sock, publish_packet, pubrec_packet, "pubrec")
+    mosq_test.do_send_receive(sock, pubrel_packet, pubcomp_packet, "pubcomp")
 
-        if mosq_test.expect_packet(sock, "pubrec", pubrec_packet):
-            sock.send(pubrel_packet)
-
-            if mosq_test.expect_packet(sock, "pubcomp", pubcomp_packet):
-                if mosq_test.expect_packet(sock, "publish2", publish_packet2):
-                    sock.send(pubrec_packet2)
-
-                    if mosq_test.expect_packet(sock, "pubrel2", pubrel_packet2):
-                        # Broker side of flow complete so can quit here.
-                        rc = 0
+    if mosq_test.expect_packet(sock, "publish2", publish_packet2):
+        mosq_test.do_send_receive(sock, pubrec_packet2, pubrel_packet2, "pubrel2")
+        # Broker side of flow complete so can quit here.
+        rc = 0
 
     sock.close()
 finally:

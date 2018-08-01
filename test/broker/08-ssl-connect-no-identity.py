@@ -45,10 +45,10 @@ try:
     ssock = ssl.wrap_socket(sock, ca_certs="../ssl/test-root-ca.crt", cert_reqs=ssl.CERT_REQUIRED)
     ssock.settimeout(20)
     ssock.connect(("localhost", port1))
-    ssock.send(connect_packet)
+    
+    mosq_test.do_send_receive(ssock, connect_packet, connack_packet, "connack")
 
-    if mosq_test.expect_packet(ssock, "connack", connack_packet):
-        rc = 0
+    rc = 0
 
     ssock.close()
 finally:

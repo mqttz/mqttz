@@ -47,23 +47,20 @@ broker = mosq_test.start_broker(filename=os.path.basename(__file__), use_conf=Tr
 (stdo1, stde1) = ("", "")
 try:
     sock = mosq_test.do_client_connect(connect_packet, connack_packet, timeout=20, port=port)
-    sock.send(subscribe_packet)
+    mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
 
-    if mosq_test.expect_packet(sock, "suback", suback_packet):
-        broker.terminate()
-        broker.wait()
-        (stdo1, stde1) = broker.communicate()
-        sock.close()
-        broker = mosq_test.start_broker(filename=os.path.basename(__file__), use_conf=True, port=port)
+    broker.terminate()
+    broker.wait()
+    (stdo1, stde1) = broker.communicate()
+    sock.close()
+    broker = mosq_test.start_broker(filename=os.path.basename(__file__), use_conf=True, port=port)
 
-        sock = mosq_test.do_client_connect(connect_packet, connack_packet2, timeout=20, port=port)
+    sock = mosq_test.do_client_connect(connect_packet, connack_packet2, timeout=20, port=port)
 
-        sock.send(publish_packet)
+    mosq_test.do_send_receive(sock, publish_packet, puback_packet, "puback")
 
-        if mosq_test.expect_packet(sock, "puback", puback_packet):
-
-            if mosq_test.expect_packet(sock, "publish2", publish_packet2):
-                rc = 0
+    if mosq_test.expect_packet(sock, "publish2", publish_packet2):
+        rc = 0
 
     sock.close()
 finally:
