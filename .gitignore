@@ -1,4 +1,5 @@
 *.o
+*.so
 *.exe
 *.db
 c/*.test
