@@ -5,6 +5,7 @@ Broker:
 - Fix plugin cleanup function not being called on exit of the broker.
   Closes #900.
 - Print more OpenSSL errors when loading certificates/keys fail.
+- Use AF_UNSPEC etc. instead of PF_UNSPEC to comply with POSIX. Closes #863.
 
 
 1.5 - 20180502

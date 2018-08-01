@@ -353,7 +353,7 @@ int net__socket_listen(struct mosquitto__listener *listener)
 
 	snprintf(service, 10, "%d", listener->port);
 	memset(&hints, 0, sizeof(struct addrinfo));
-	hints.ai_family = PF_UNSPEC;
+	hints.ai_family = AF_UNSPEC;
 	hints.ai_flags = AI_PASSIVE;
 	hints.ai_socktype = SOCK_STREAM;
 

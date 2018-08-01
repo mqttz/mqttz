@@ -248,9 +248,9 @@ int net__try_connect_step2(struct mosquitto *mosq, uint16_t port, mosq_sock_t *s
 		*sock = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
 		if(*sock == INVALID_SOCKET) continue;
 
-		if(rp->ai_family == PF_INET){
+		if(rp->ai_family == AF_INET){
 			((struct sockaddr_in *)rp->ai_addr)->sin_port = htons(port);
-		}else if(rp->ai_family == PF_INET6){
+		}else if(rp->ai_family == AF_INET6){
 			((struct sockaddr_in6 *)rp->ai_addr)->sin6_port = htons(port);
 		}else{
 			COMPAT_CLOSE(*sock);
@@ -310,7 +310,7 @@ int net__try_connect(struct mosquitto *mosq, const char *host, uint16_t port, mo
 
 	*sock = INVALID_SOCKET;
 	memset(&hints, 0, sizeof(struct addrinfo));
-	hints.ai_family = PF_UNSPEC;
+	hints.ai_family = AF_UNSPEC;
 	hints.ai_flags = AI_ADDRCONFIG;
 	hints.ai_socktype = SOCK_STREAM;
 
@@ -333,9 +333,9 @@ int net__try_connect(struct mosquitto *mosq, const char *host, uint16_t port, mo
 		*sock = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
 		if(*sock == INVALID_SOCKET) continue;
 
-		if(rp->ai_family == PF_INET){
+		if(rp->ai_family == AF_INET){
 			((struct sockaddr_in *)rp->ai_addr)->sin_port = htons(port);
-		}else if(rp->ai_family == PF_INET6){
+		}else if(rp->ai_family == AF_INET6){
 			((struct sockaddr_in6 *)rp->ai_addr)->sin6_port = htons(port);
 		}else{
 			COMPAT_CLOSE(*sock);
