@@ -427,6 +427,7 @@ int net__socket_listen(struct mosquitto__listener *listener)
 				}else{
 					log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check capath \"%s\".", listener->capath);
 				}
+				net__print_error(MOSQ_LOG_ERR, "Error: %s");
 				COMPAT_CLOSE(sock);
 				return 1;
 			}
@@ -439,18 +440,21 @@ int net__socket_listen(struct mosquitto__listener *listener)
 			rc = SSL_CTX_use_certificate_chain_file(listener->ssl_ctx, listener->certfile);
 			if(rc != 1){
 				log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load server certificate \"%s\". Check certfile.", listener->certfile);
+				net__print_error(MOSQ_LOG_ERR, "Error: %s");
 				COMPAT_CLOSE(sock);
 				return 1;
 			}
 			rc = SSL_CTX_use_PrivateKey_file(listener->ssl_ctx, listener->keyfile, SSL_FILETYPE_PEM);
 			if(rc != 1){
 				log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load server key file \"%s\". Check keyfile.", listener->keyfile);
+				net__print_error(MOSQ_LOG_ERR, "Error: %s");
 				COMPAT_CLOSE(sock);
 				return 1;
 			}
 			rc = SSL_CTX_check_private_key(listener->ssl_ctx);
 			if(rc != 1){
 				log__printf(NULL, MOSQ_LOG_ERR, "Error: Server certificate/key are inconsistent.");
+				net__print_error(MOSQ_LOG_ERR, "Error: %s");
 				COMPAT_CLOSE(sock);
 				return 1;
 			}
@@ -459,6 +463,7 @@ int net__socket_listen(struct mosquitto__listener *listener)
 				store = SSL_CTX_get_cert_store(listener->ssl_ctx);
 				if(!store){
 					log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to obtain TLS store.");
+					net__print_error(MOSQ_LOG_ERR, "Error: %s");
 					COMPAT_CLOSE(sock);
 					return 1;
 				}
@@ -466,6 +471,7 @@ int net__socket_listen(struct mosquitto__listener *listener)
 				rc = X509_load_crl_file(lookup, listener->crlfile, X509_FILETYPE_PEM);
 				if(rc != 1){
 					log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load certificate revocation file \"%s\". Check crlfile.", listener->crlfile);
+					net__print_error(MOSQ_LOG_ERR, "Error: %s");
 					COMPAT_CLOSE(sock);
 					return 1;
 				}
@@ -490,6 +496,7 @@ int net__socket_listen(struct mosquitto__listener *listener)
 				rc = SSL_CTX_use_psk_identity_hint(listener->ssl_ctx, listener->psk_hint);
 				if(rc == 0){
 					log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set TLS PSK hint.");
+					net__print_error(MOSQ_LOG_ERR, "Error: %s");
 					COMPAT_CLOSE(sock);
 					return 1;
 				}

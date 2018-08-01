@@ -4,6 +4,7 @@
 Broker:
 - Fix plugin cleanup function not being called on exit of the broker.
   Closes #900.
+- Print more OpenSSL errors when loading certificates/keys fail.
 
 
 1.5 - 20180502
