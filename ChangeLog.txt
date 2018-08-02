@@ -14,6 +14,8 @@ Broker:
   just reach it. This was inconsistent in two places.
 - Fix segfault on startup if bridge CA certificates could not be read.
   Closes #851.
+- Fix problem opening listeners on Pi caused by unsigned char being default.
+  Found via #849.
 
 Library:
 - Fix some places where return codes were incorrect, including to the

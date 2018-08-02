@@ -199,7 +199,7 @@ struct mosquitto__security_options {
 	char *acl_file;
 	struct mosquitto__auth_plugin_config *auth_plugin_configs;
 	int auth_plugin_config_count;
-	char allow_anonymous;
+	int8_t allow_anonymous;
 	bool allow_zero_length_clientid;
 	char *auto_id_prefix;
 	int auto_id_prefix_len;
