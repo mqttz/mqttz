@@ -46,9 +46,6 @@ Contributors:
 #endif
 
 #ifdef __QNX__
-#ifndef AI_ADDRCONFIG
-#define AI_ADDRCONFIG 0
-#endif
 #include <net/netbyte.h>
 #include <netinet/in.h>
 #endif
@@ -311,7 +308,6 @@ int net__try_connect(struct mosquitto *mosq, const char *host, uint16_t port, mo
 	*sock = INVALID_SOCKET;
 	memset(&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = AF_UNSPEC;
-	hints.ai_flags = AI_ADDRCONFIG;
 	hints.ai_socktype = SOCK_STREAM;
 
 	s = getaddrinfo(host, NULL, &hints, &ainfo);

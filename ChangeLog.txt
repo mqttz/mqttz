@@ -6,6 +6,8 @@ Broker:
   Closes #900.
 - Print more OpenSSL errors when loading certificates/keys fail.
 - Use AF_UNSPEC etc. instead of PF_UNSPEC to comply with POSIX. Closes #863.
+- Remove use of AI_ADDRCONFIG, which means the broker can be used on systems
+  where only the loopback interface is defined. Closes #869, Closes #901.
 
 
 1.5 - 20180502

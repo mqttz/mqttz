@@ -115,7 +115,6 @@ static int conf__attempt_resolve(const char *host, const char *text, int log, co
 
 	memset(&gai_hints, 0, sizeof(struct addrinfo));
 	gai_hints.ai_family = AF_UNSPEC;
-	gai_hints.ai_flags = AI_ADDRCONFIG;
 	gai_hints.ai_socktype = SOCK_STREAM;
 	gai_res = NULL;
 	rc = getaddrinfo(host, NULL, &gai_hints, &gai_res);
