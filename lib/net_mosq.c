@@ -639,10 +639,12 @@ int net__socket_connect(struct mosquitto *mosq, const char *host, uint16_t port,
 	rc = net__try_connect(mosq, host, port, &sock, bind_address, blocking);
 	if(rc > 0) return rc;
 
-	mosq->sock = sock;
 	rc = net__socket_connect_step3(mosq, host, port, bind_address, blocking);
+	if(rc) return rc;
 
-	return rc;
+	mosq->sock = sock;
+
+	return MOSQ_ERR_SUCCESS;
 }
 
 
