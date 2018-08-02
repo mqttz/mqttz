@@ -714,6 +714,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 	int tmp_int;
 	char *saveptr = NULL;
 #ifdef WITH_BRIDGE
+	char *tmp_char;
 	struct mosquitto__bridge *cur_bridge = NULL;
 	struct mosquitto__bridge_topic *cur_topic;
 #endif
@@ -732,10 +733,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 #endif
 	int len;
 	struct mosquitto__listener *cur_listener = &config->default_listener;
-#ifdef WITH_BRIDGE
-	char *address;
 	int i;
-#endif
 	int lineno_ext;
 	struct mosquitto__security_options *cur_security_options = NULL;
 
@@ -773,22 +771,33 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						cur_bridge->addresses[cur_bridge->address_count-1].address = token;
 					}
 					for(i=0; i<cur_bridge->address_count; i++){
-						address = strtok_r(cur_bridge->addresses[i].address, ":", &saveptr);
-						if(address){
-							token = strtok_r(NULL, ":", &saveptr);
-							if(token){
-								tmp_int = atoi(token);
-								if(tmp_int < 1 || tmp_int > 65535){
-									log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid port value (%d).", tmp_int);
-									return MOSQ_ERR_INVAL;
-								}
-								cur_bridge->addresses[i].port = tmp_int;
-							}else{
-								cur_bridge->addresses[i].port = 1883;
+						/* cur_bridge->addresses[i].address is now
+						 * "address[:port]". If address is an IPv6 address,
+						 * then port is required. We must check for the :
+						 * backwards. */
+						tmp_char = strrchr(cur_bridge->addresses[i].address, ':');
+						if(tmp_char){
+							/* Remove ':', so cur_bridge->addresses[i].address
+							 * now just looks like the address. */
+							tmp_char[0] = '\0';
+
+							/* The remainder of the string */
+							tmp_int = atoi(&tmp_char[1]);
+							if(tmp_int < 1 || tmp_int > 65535){
+								log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid port value (%d).", tmp_int);
+								return MOSQ_ERR_INVAL;
 							}
-							cur_bridge->addresses[i].address = mosquitto__strdup(address);
-							conf__attempt_resolve(address, "bridge address", MOSQ_LOG_WARNING, "Warning");
+							cur_bridge->addresses[i].port = tmp_int;
+						}else{
+							cur_bridge->addresses[i].port = 1883;
 						}
+						/* This looks a bit weird, but isn't. Before this
+						 * call, cur_bridge->addresses[i].address points
+						 * to the tokenised part of the line, it will be
+						 * reused in a future parse of a config line so we
+						 * must duplicate it. */
+						cur_bridge->addresses[i].address = mosquitto__strdup(cur_bridge->addresses[i].address);
+						conf__attempt_resolve(cur_bridge->addresses[i].address, "bridge address", MOSQ_LOG_WARNING, "Warning");
 					}
 					if(cur_bridge->address_count == 0){
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty address value in configuration.");

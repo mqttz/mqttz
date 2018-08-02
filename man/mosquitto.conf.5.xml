@@ -1030,6 +1030,8 @@
 						bridge to connect to. This must be given for each
 						bridge connection. If the port is not specified, the
 						default of 1883 is used.</para>
+					<para>If you use an IPv6 address, then the port is not
+						optional.</para>
 					<para>Multiple host addresses can be specified on the
 						address config. See the <option>round_robin</option>
 						option for more details on the behaviour of bridges
