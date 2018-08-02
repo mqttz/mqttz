@@ -13,6 +13,11 @@ Broker:
 - All clients now time out if they exceed their keepalive*1.5, rather than
   just reach it. This was inconsistent in two places.
 
+Library:
+- Fix some places where return codes were incorrect, including to the
+  on_disconnect() callback. This has resulted in two new error codes,
+  MOSQ_ERR_KEEPALIVE and MOSQ_ERR_LOOKUP.
+
 
 1.5 - 20180502
 ==============

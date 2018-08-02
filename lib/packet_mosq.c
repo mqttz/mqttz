@@ -119,7 +119,7 @@ int packet__queue(struct mosquitto *mosq, struct mosquitto__packet *packet)
 #  ifdef WITH_WEBSOCKETS
 	if(mosq->wsi){
 		libwebsocket_callback_on_writable(mosq->ws_context, mosq->wsi);
-		return 0;
+		return MOSQ_ERR_SUCCESS;
 	}else{
 		return packet__write(mosq);
 	}
@@ -347,7 +347,7 @@ int packet__write(struct mosquitto *mosq)
 			pthread_mutex_lock(&mosq->callback_mutex);
 			if(mosq->on_disconnect){
 				mosq->in_callback = true;
-				mosq->on_disconnect(mosq, mosq->userdata, 0);
+				mosq->on_disconnect(mosq, mosq->userdata, MOSQ_ERR_SUCCESS);
 				mosq->in_callback = false;
 			}
 			pthread_mutex_unlock(&mosq->callback_mutex);

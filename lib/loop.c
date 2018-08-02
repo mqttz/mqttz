@@ -300,6 +300,7 @@ int mosquitto_loop_misc(struct mosquitto *mosq)
 
 	mosquitto__check_keepalive(mosq);
 	now = mosquitto_time();
+
 	if(mosq->ping_t && now - mosq->ping_t >= mosq->keepalive){
 		/* mosq->ping_t != 0 means we are waiting for a pingresp.
 		 * This hasn't happened in the keepalive time so we should disconnect.
@@ -309,7 +310,7 @@ int mosquitto_loop_misc(struct mosquitto *mosq)
 		if(mosq->state == mosq_cs_disconnecting){
 			rc = MOSQ_ERR_SUCCESS;
 		}else{
-			rc = 1;
+			rc = MOSQ_ERR_KEEPALIVE;
 		}
 		pthread_mutex_unlock(&mosq->state_mutex);
 		pthread_mutex_lock(&mosq->callback_mutex);

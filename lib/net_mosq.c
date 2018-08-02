@@ -748,21 +748,21 @@ int net__socket_nonblock(mosq_sock_t sock)
 	opt = fcntl(sock, F_GETFL, 0);
 	if(opt == -1){
 		COMPAT_CLOSE(sock);
-		return 1;
+		return MOSQ_ERR_ERRNO;
 	}
 	if(fcntl(sock, F_SETFL, opt | O_NONBLOCK) == -1){
 		/* If either fcntl fails, don't want to allow this client to connect. */
 		COMPAT_CLOSE(sock);
-		return 1;
+		return MOSQ_ERR_ERRNO;
 	}
 #else
 	unsigned long opt = 1;
 	if(ioctlsocket(sock, FIONBIO, &opt)){
 		COMPAT_CLOSE(sock);
-		return 1;
+		return MOSQ_ERR_ERRNO;
 	}
 #endif
-	return 0;
+	return MOSQ_ERR_SUCCESS;
 }
 
 

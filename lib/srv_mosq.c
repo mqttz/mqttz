@@ -44,7 +44,7 @@ static void srv_callback(void *arg, int status, int timeouts, unsigned char *abu
 		pthread_mutex_lock(&mosq->callback_mutex);
 		if(mosq->on_disconnect){
 			mosq->in_callback = true;
-			mosq->on_disconnect(mosq, mosq->userdata, 2);
+			mosq->on_disconnect(mosq, mosq->userdata, MOSQ_ERR_LOOKUP);
 			mosq->in_callback = false;
 		}
 		pthread_mutex_unlock(&mosq->callback_mutex);
