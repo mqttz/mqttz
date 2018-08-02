@@ -243,7 +243,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 				/* Local bridges never time out in this fashion. */
 				if(!(context->keepalive)
 						|| context->bridge
-						|| now - context->last_msg_in < (time_t)(context->keepalive)*3/2){
+						|| now - context->last_msg_in <= (time_t)(context->keepalive)*3/2){
 
 					if(db__message_write(db, context) == MOSQ_ERR_SUCCESS){
 #ifdef WITH_EPOLL

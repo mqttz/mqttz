@@ -10,6 +10,8 @@ Broker:
   where only the loopback interface is defined. Closes #869, Closes #901.
 - Fix IPv6 addresses not being able to be used as bridge addresses.
   Closes #886.
+- All clients now time out if they exceed their keepalive*1.5, rather than
+  just reach it. This was inconsistent in two places.
 
 
 1.5 - 20180502
