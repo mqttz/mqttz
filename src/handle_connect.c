@@ -455,6 +455,11 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 						goto handle_connect_error;
 					}
 					context->username = mosquitto__strdup((char *) ASN1_STRING_data(name_asn1));
+					if(!context->username){
+						send__connack(context, 0, CONNACK_REFUSED_SERVER_UNAVAILABLE);
+						rc = MOSQ_ERR_NOMEM;
+						goto handle_connect_error;
+					}
 					/* Make sure there isn't an embedded NUL character in the CN */
 					if ((size_t)ASN1_STRING_length(name_asn1) != strlen(context->username)) {
 						send__connack(context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
