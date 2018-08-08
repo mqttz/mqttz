@@ -107,6 +107,7 @@ enum mosquitto_client_state {
 	mosq_cs_socks5_userpass_reply = 13,
 	mosq_cs_socks5_send_userpass = 14,
 	mosq_cs_expiring = 15,
+	mosq_cs_connecting = 16,
 };
 
 enum mosquitto__protocol {

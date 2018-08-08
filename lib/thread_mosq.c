@@ -79,15 +79,27 @@ int mosquitto_loop_stop(struct mosquitto *mosq, bool force)
 void *mosquitto__thread_main(void *obj)
 {
 	struct mosquitto *mosq = obj;
+	int state;
 
 	if(!mosq) return NULL;
 
-	pthread_mutex_lock(&mosq->state_mutex);
-	if(mosq->state == mosq_cs_connect_async){
+	do{
+		pthread_mutex_lock(&mosq->state_mutex);
+		state = mosq->state;
 		pthread_mutex_unlock(&mosq->state_mutex);
+		if(state == mosq_cs_new){
+#ifdef WIN32
+			Sleep(10);
+#else
+			usleep(10000);
+#endif
+		}else{
+			break;
+		}
+	}while(1);
+
+	if(state == mosq_cs_connect_async){
 		mosquitto_reconnect(mosq);
-	}else{
-		pthread_mutex_unlock(&mosq->state_mutex);
 	}
 
 	if(!mosq->keepalive){

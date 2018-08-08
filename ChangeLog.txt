@@ -21,6 +21,8 @@ Library:
 - Fix some places where return codes were incorrect, including to the
   on_disconnect() callback. This has resulted in two new error codes,
   MOSQ_ERR_KEEPALIVE and MOSQ_ERR_LOOKUP.
+- Fix connection problems when mosquitto_loop_start() was called before
+  mosquitto_connect_async(). Closes #848.
 
 
 1.5 - 20180502

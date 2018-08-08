@@ -178,6 +178,9 @@ static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking)
 	}else
 #endif
 	{
+		pthread_mutex_lock(&mosq->state_mutex);
+		mosq->state = mosq_cs_connecting;
+		pthread_mutex_unlock(&mosq->state_mutex);
 		rc = net__socket_connect(mosq, mosq->host, mosq->port, mosq->bind_address, blocking);
 	}
 	if(rc>0){
