@@ -18,6 +18,8 @@ Broker:
   Found via #849.
 - ACL patterns that do not contain either %c or %u are now rejected. Closes
   #209.
+- Fix bridge publishing failing when per_listener_settings was true. Closes
+  #860.
 
 Library:
 - Fix some places where return codes were incorrect, including to the
