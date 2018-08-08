@@ -104,7 +104,7 @@ int net__socket_accept(struct mosquitto_db *db, mosq_sock_t listensock)
 
 	G_SOCKET_CONNECTIONS_INC();
 
-	if(net__socket_nonblock(new_sock)){
+	if(net__socket_nonblock(&new_sock)){
 		return INVALID_SOCKET;
 	}
 
@@ -391,7 +391,7 @@ int net__socket_listen(struct mosquitto__listener *listener)
 		ss_opt = 1;
 		setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, &ss_opt, sizeof(ss_opt));
 
-		if(net__socket_nonblock(sock)){
+		if(net__socket_nonblock(&sock)){
 			return 1;
 		}
 

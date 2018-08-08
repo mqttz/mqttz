@@ -62,7 +62,7 @@ int net__try_connect(struct mosquitto *mosq, const char *host, uint16_t port, mo
 int net__try_connect_step1(struct mosquitto *mosq, const char *host);
 int net__try_connect_step2(struct mosquitto *mosq, uint16_t port, mosq_sock_t *sock);
 int net__socket_connect_step3(struct mosquitto *mosq, const char *host, uint16_t port, const char *bind_address, bool blocking);
-int net__socket_nonblock(mosq_sock_t sock);
+int net__socket_nonblock(mosq_sock_t *sock);
 int net__socketpair(mosq_sock_t *sp1, mosq_sock_t *sp2);
 
 ssize_t net__read(struct mosquitto *mosq, void *buf, size_t count);
