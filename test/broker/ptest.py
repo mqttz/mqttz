@@ -62,6 +62,7 @@ tests = [
 	(2, './06-bridge-fail-persist-resend-qos2.py'),
 	(2, './06-bridge-b2br-remapping.py'),
 	(2, './06-bridge-br2b-remapping.py'),
+	(3, './06-bridge-per-listener-settings.py'),
 
 	(1, './07-will-qos0.py'),
 	(1, './07-will-null.py'),
