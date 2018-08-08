@@ -16,6 +16,8 @@ Broker:
   Closes #851.
 - Fix problem opening listeners on Pi caused by unsigned char being default.
   Found via #849.
+- ACL patterns that do not contain either %c or %u are now rejected. Closes
+  #209.
 
 Library:
 - Fix some places where return codes were incorrect, including to the

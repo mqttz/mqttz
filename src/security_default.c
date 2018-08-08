@@ -279,6 +279,14 @@ int add__acl_pattern(struct mosquitto__security_options *security_opts, const ch
 		}
 	}
 
+	if(acl->ccount == 0 && acl->ucount == 0){
+		log__printf(NULL, MOSQ_LOG_ERR,
+				"Error: ACL pattern '%s' does not contain '%%c' or '%%u'.",
+				topic);
+
+		return MOSQ_ERR_INVAL;
+	}
+
 	if(security_opts->acl_patterns){
 		acl_tail = security_opts->acl_patterns;
 		while(acl_tail->next){
