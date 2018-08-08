@@ -5,8 +5,14 @@
 	<xsl:param name="html.stylesheet">man.css</xsl:param>
 	<!-- Generate ansi style function synopses. -->
 	<xsl:param name="man.funcsynopsis.style">ansi</xsl:param>
+	<xsl:param name="funcsynopsis.style">ansi</xsl:param>
+	<xsl:param name="man-funcprototype-style">ansi</xsl:param>
 	<xsl:param name="make.clean.html" select="1"></xsl:param>
 	<xsl:param name="make.valid.html" select="1"></xsl:param>
 	<xsl:param name="html.cleanup" select="1"></xsl:param>
 	<xsl:param name="docbook.css.source"></xsl:param>
+	<xsl:param name="css.decoration" select="1"></xsl:param>
+	<xsl:param name="variablelist.as.table" select="0"></xsl:param>
+	<xsl:param name="variablelist.term.break.after">1</xsl:param>
+	<xsl:param name="citerefentry.link" select="1"></xsl:param>
 </xsl:stylesheet>
