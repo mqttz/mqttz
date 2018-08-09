@@ -385,6 +385,7 @@ int net__socket_listen(struct mosquitto__listener *listener)
 	int rc;
 	X509_STORE *store;
 	X509_LOOKUP *lookup;
+	ENGINE *engine = NULL;
 #endif
 
 	if(!listener) return MOSQ_ERR_INVAL;
@@ -469,6 +470,22 @@ int net__socket_listen(struct mosquitto__listener *listener)
 				COMPAT_CLOSE(sock);
 				return 1;
 			}
+			if(listener->tls_engine){
+				engine = ENGINE_by_id(listener->tls_engine);
+				if(!engine){
+					log__printf(NULL, MOSQ_LOG_ERR, "Error loading %s engine\n", listener->tls_engine);
+					COMPAT_CLOSE(sock);
+					return 1;
+				}
+				if(!ENGINE_init(engine)){
+					log__printf(NULL, MOSQ_LOG_ERR, "Failed engine initialisation\n");
+					ENGINE_free(engine);
+					COMPAT_CLOSE(sock);
+					return 1;
+				}
+				ENGINE_set_default(engine, ENGINE_METHOD_ALL);
+				ENGINE_free(engine); /* release the structural reference from ENGINE_by_id() */
+			}
 			/* FIXME user data? */
 			if(listener->require_certificate){
 				SSL_CTX_set_verify(listener->ssl_ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, client_certificate_verify);
@@ -480,20 +497,39 @@ int net__socket_listen(struct mosquitto__listener *listener)
 				log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load server certificate \"%s\". Check certfile.", listener->certfile);
 				net__print_error(MOSQ_LOG_ERR, "Error: %s");
 				COMPAT_CLOSE(sock);
+				ENGINE_FINISH(engine);
 				return 1;
 			}
-			rc = SSL_CTX_use_PrivateKey_file(listener->ssl_ctx, listener->keyfile, SSL_FILETYPE_PEM);
-			if(rc != 1){
-				log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load server key file \"%s\". Check keyfile.", listener->keyfile);
-				net__print_error(MOSQ_LOG_ERR, "Error: %s");
-				COMPAT_CLOSE(sock);
-				return 1;
+			if(listener->tls_keyform == mosq_k_engine){
+				EVP_PKEY *pkey = ENGINE_load_private_key(engine, listener->keyfile, net__get_ui_method(), NULL);
+				if(!pkey){
+					log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load engine private key file \"%s\".", listener->keyfile);
+					COMPAT_CLOSE(sock);
+					ENGINE_FINISH(engine);
+					return 1;
+				}
+				if(SSL_CTX_use_PrivateKey(listener->ssl_ctx, pkey) <= 0){
+					log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to use engine private key file \"%s\".", listener->keyfile);
+					COMPAT_CLOSE(sock);
+					ENGINE_FINISH(engine);
+					return 1;
+				}
+			}else{
+				rc = SSL_CTX_use_PrivateKey_file(listener->ssl_ctx, listener->keyfile, SSL_FILETYPE_PEM);
+				if(rc != 1){
+					log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load server key file \"%s\". Check keyfile.", listener->keyfile);
+					net__print_error(MOSQ_LOG_ERR, "Error: %s");
+					COMPAT_CLOSE(sock);
+					ENGINE_FINISH(engine);
+					return 1;
+				}
 			}
 			rc = SSL_CTX_check_private_key(listener->ssl_ctx);
 			if(rc != 1){
 				log__printf(NULL, MOSQ_LOG_ERR, "Error: Server certificate/key are inconsistent.");
 				net__print_error(MOSQ_LOG_ERR, "Error: %s");
 				COMPAT_CLOSE(sock);
+				ENGINE_FINISH(engine);
 				return 1;
 			}
 			/* Load CRLs if they exist. */
@@ -503,6 +539,7 @@ int net__socket_listen(struct mosquitto__listener *listener)
 					log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to obtain TLS store.");
 					net__print_error(MOSQ_LOG_ERR, "Error: %s");
 					COMPAT_CLOSE(sock);
+					ENGINE_FINISH(engine);
 					return 1;
 				}
 				lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file());
@@ -511,6 +548,7 @@ int net__socket_listen(struct mosquitto__listener *listener)
 					log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load certificate revocation file \"%s\". Check crlfile.", listener->crlfile);
 					net__print_error(MOSQ_LOG_ERR, "Error: %s");
 					COMPAT_CLOSE(sock);
+					ENGINE_FINISH(engine);
 					return 1;
 				}
 				X509_STORE_set_flags(store, X509_V_FLAG_CRL_CHECK);
@@ -527,6 +565,7 @@ int net__socket_listen(struct mosquitto__listener *listener)
 
 			if(mosquitto__tls_server_ctx(listener)){
 				COMPAT_CLOSE(sock);
+				ENGINE_FINISH(engine);
 				return 1;
 			}
 			SSL_CTX_set_psk_server_callback(listener->ssl_ctx, psk_server_callback);
@@ -536,6 +575,7 @@ int net__socket_listen(struct mosquitto__listener *listener)
 					log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set TLS PSK hint.");
 					net__print_error(MOSQ_LOG_ERR, "Error: %s");
 					COMPAT_CLOSE(sock);
+					ENGINE_FINISH(engine);
 					return 1;
 				}
 			}
