@@ -636,10 +636,7 @@ int net__socket_connect_step3(struct mosquitto *mosq, const char *host, uint16_t
 	return MOSQ_ERR_SUCCESS;
 }
 
-/* Create a socket and connect it to 'ip' on port 'port'.
- * Returns -1 on failure (ip is NULL, socket creation/connection error)
- * Returns sock number on success.
- */
+/* Create a socket and connect it to 'ip' on port 'port'.  */
 int net__socket_connect(struct mosquitto *mosq, const char *host, uint16_t port, const char *bind_address, bool blocking)
 {
 	mosq_sock_t sock = INVALID_SOCKET;
