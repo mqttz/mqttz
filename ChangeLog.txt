@@ -16,8 +16,8 @@ Broker:
   Closes #851.
 - Fix problem opening listeners on Pi caused by unsigned char being default.
   Found via #849.
-- ACL patterns that do not contain either %c or %u are now rejected. Closes
-  #209.
+- ACL patterns that do not contain either %c or %u now produce a warning in
+  the log. Closes #209.
 - Fix bridge publishing failing when per_listener_settings was true. Closes
   #860.
 - Fix `use_identity_as_username true` not working. Closes #833.
