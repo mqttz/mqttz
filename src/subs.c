@@ -314,7 +314,7 @@ static int sub__add_recurse(struct mosquitto_db *db, struct mosquitto *context, 
 		return sub__add_recurse(db, context, qos, branch, tokens->next);
 	}else{
 		/* Not found */
-		branch = sub__add_hier_entry(subhier, &subhier->children, UHPA_ACCESS_TOPIC(tokens), tokens->topic_len+1);
+		branch = sub__add_hier_entry(subhier, &subhier->children, UHPA_ACCESS_TOPIC(tokens), tokens->topic_len);
 		if(!branch) return MOSQ_ERR_NOMEM;
 
 		return sub__add_recurse(db, context, qos, branch, tokens->next);
@@ -418,7 +418,7 @@ struct mosquitto__subhier *sub__add_hier_entry(struct mosquitto__subhier *parent
 		return NULL;
 	}
 	child->parent = parent;
-	child->topic_len = strlen(topic);
+	child->topic_len = len;
 	if(UHPA_ALLOC_TOPIC(child) == 0){
 		child->topic_len = 0;
 		mosquitto__free(child);
@@ -460,7 +460,7 @@ int sub__add(struct mosquitto_db *db, struct mosquitto *context, const char *sub
 
 	HASH_FIND(hh, *root, UHPA_ACCESS_TOPIC(tokens), tokens->topic_len, subhier);
 	if(!subhier){
-		subhier = sub__add_hier_entry(NULL, root, UHPA_ACCESS_TOPIC(tokens), tokens->topic_len+1);
+		subhier = sub__add_hier_entry(NULL, root, UHPA_ACCESS_TOPIC(tokens), tokens->topic_len);
 		if(!subhier){
 			sub__topic_tokens_free(tokens);
 			log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
