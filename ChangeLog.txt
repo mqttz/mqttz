@@ -21,6 +21,7 @@ Broker:
 - Fix bridge publishing failing when per_listener_settings was true. Closes
   #860.
 - Fix `use_identity_as_username true` not working. Closes #833.
+- Fix UNSUBACK messages not being logged. Closes #903.
 
 Library:
 - Fix some places where return codes were incorrect, including to the
