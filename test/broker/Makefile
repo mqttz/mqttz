@@ -51,6 +51,7 @@ endif
 	./02-unsubscribe-invalid-no-topic.py
 	./02-subscribe-invalid-utf8.py
 	./02-subscribe-persistence-flipflop.py
+	./02-subhier-crash.py
 
 03 :
 	./03-publish-qos1.py
