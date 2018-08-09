@@ -130,7 +130,7 @@ LIB_LDFLAGS:=${LDFLAGS}
 BROKER_CFLAGS:=${LIB_CFLAGS} ${CPPFLAGS} -DVERSION="\"${VERSION}\"" -DWITH_BROKER
 CLIENT_CFLAGS:=${CFLAGS} ${CPPFLAGS} -I../lib -DVERSION="\"${VERSION}\""
 
-ifneq ($(or $(findstring $(UNAME),FreeBSD), $(findstring $(UNAME),OpenBSD)),)
+ifneq ($(or $(findstring $(UNAME),FreeBSD), $(findstring $(UNAME),OpenBSD), $(findstring $(UNAME),NetBSD)),)
 	BROKER_LIBS:=-lm
 else
 	BROKER_LIBS:=-ldl -lm
@@ -277,7 +277,7 @@ localedir=${prefix}/share/locale
 STRIP?=strip
 
 ifeq ($(WITH_STRIP),yes)
-	STRIP_OPTS:=-s --strip-program=${CROSS_COMPILE}${STRIP}
+	STRIP_OPTS?=-s --strip-program=${CROSS_COMPILE}${STRIP}
 endif
 
 ifeq ($(WITH_EPOLL),yes)

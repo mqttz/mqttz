@@ -34,4 +34,8 @@
 #  define _POSIX_C_SOURCE 200809L
 #endif
 
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__SYMBIAN32__) || defined(__QNX__)
+#  define HAVE_NETINET_IN_H
+#endif
+
 #endif

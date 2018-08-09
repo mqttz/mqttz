@@ -36,15 +36,12 @@ Contributors:
 #include <tcpd.h>
 #endif
 
-#ifdef __FreeBSD__
+#ifdef HAVE_NETINET_IN_H
 #  include <netinet/in.h>
-#  include <sys/socket.h>
 #endif
 
 #ifdef __QNX__
-#include <netinet/in.h>
 #include <net/netbyte.h>
-#include <sys/socket.h>
 #endif
 
 #include "mosquitto_broker_internal.h"

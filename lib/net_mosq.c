@@ -37,17 +37,12 @@ Contributors:
 #include <sys/endian.h>
 #endif
 
-#ifdef __FreeBSD__
+#ifdef HAVE_NETINET_IN_H
 #  include <netinet/in.h>
-#endif
-
-#ifdef __SYMBIAN32__
-#include <netinet/in.h>
 #endif
 
 #ifdef __QNX__
 #include <net/netbyte.h>
-#include <netinet/in.h>
 #endif
 
 #ifdef WITH_TLS

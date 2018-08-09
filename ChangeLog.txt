@@ -30,6 +30,9 @@ Library:
 - Fix connection problems when mosquitto_loop_start() was called before
   mosquitto_connect_async(). Closes #848.
 
+Build:
+- Fixes for building on NetBSD. Closes #258.
+
 
 1.5 - 20180502
 ==============
