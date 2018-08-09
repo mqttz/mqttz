@@ -64,6 +64,7 @@ extern SERVICE_STATUS_HANDLE service_handle;
 
 static int conf__parse_bool(char **token, const char *name, bool *value, char *saveptr);
 static int conf__parse_int(char **token, const char *name, int *value, char *saveptr);
+static int conf__parse_ssize_t(char **token, const char *name, ssize_t *value, char *saveptr);
 static int conf__parse_string(char **token, const char *name, char **value, char *saveptr);
 static int config__read_file(struct mosquitto__config *config, bool reload, const char *file, struct config_recurse *config_tmp, int level, int *lineno);
 static int config__check(struct mosquitto__config *config);
@@ -1527,7 +1528,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 					}
 				}else if(!strcmp(token, "memory_limit")){
 					ssize_t lim;
-					if(conf__parse_int(&token, "memory_limit", (int *)&lim, saveptr)) return MOSQ_ERR_INVAL;
+					if(conf__parse_ssize_t(&token, "memory_limit", &lim, saveptr)) return MOSQ_ERR_INVAL;
 					if(lim < 0){
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid memory_limit value (%ld).", lim);
 						return MOSQ_ERR_INVAL;
@@ -2138,6 +2139,19 @@ static int conf__parse_int(char **token, const char *name, int *value, char *sav
 	*token = strtok_r(NULL, " ", &saveptr);
 	if(*token){
 		*value = atoi(*token);
+	}else{
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty %s value in configuration.", name);
+		return MOSQ_ERR_INVAL;
+	}
+
+	return MOSQ_ERR_SUCCESS;
+}
+
+static int conf__parse_ssize_t(char **token, const char *name, ssize_t *value, char *saveptr)
+{
+	*token = strtok_r(NULL, " ", &saveptr);
+	if(*token){
+		*value = atol(*token);
 	}else{
 		log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty %s value in configuration.", name);
 		return MOSQ_ERR_INVAL;

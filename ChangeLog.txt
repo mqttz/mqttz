@@ -22,6 +22,7 @@ Broker:
   #860.
 - Fix `use_identity_as_username true` not working. Closes #833.
 - Fix UNSUBACK messages not being logged. Closes #903.
+- Fix possible endian issue when reading the `memory_limit` option.
 
 Library:
 - Fix some places where return codes were incorrect, including to the
