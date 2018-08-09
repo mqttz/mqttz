@@ -2,7 +2,7 @@
 
 CFLAGS=-I../../../lib -I../../../src -Wall -Werror
 
-all : auth_plugin.so auth_plugin_pwd.so auth_plugin_acl.so auth_plugin_v2.so 08
+all : auth_plugin.so auth_plugin_pwd.so auth_plugin_acl.so auth_plugin_v2.so auth_plugin_msg_params.so 08
 
 08 : 08-tls-psk-pub.test 08-tls-psk-bridge.test
 
@@ -16,6 +16,9 @@ auth_plugin_acl.so : auth_plugin_acl.c
 	$(CC) ${CFLAGS} -fPIC -shared $^ -o $@ 
 
 auth_plugin_v2.so : auth_plugin_v2.c
+	$(CC) ${CFLAGS} -fPIC -shared $^ -o $@ 
+
+auth_plugin_msg_params.so : auth_plugin_msg_params.c
 	$(CC) ${CFLAGS} -fPIC -shared $^ -o $@ 
 
 08-tls-psk-pub.test : 08-tls-psk-pub.c
