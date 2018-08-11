@@ -152,6 +152,7 @@ void client_config_cleanup(struct mosq_config *cfg)
 	free(cfg->ciphers);
 	free(cfg->tls_version);
 	free(cfg->tls_engine);
+	free(cfg->tls_engine_kpass_sha);
 	free(cfg->keyform);
 #  ifdef WITH_TLS_PSK
 	free(cfg->psk);
@@ -314,6 +315,10 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 		fprintf(stderr, "Error: keyfile must be specified if keyform is.\n");
 		return 1;
 	}
+	if((cfg->tls_engine_kpass_sha && (!cfg->keyform || !cfg->tls_engine))){
+		fprintf(stderr, "Error: when using tls-engine-kpass-sha, both tls-engine and keyform must also be provided.\n");
+		return 1;
+	}
 #endif
 #ifdef WITH_TLS_PSK
 	if((cfg->cafile || cfg->capath) && cfg->psk){
@@ -437,6 +442,14 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				return 1;
 			}else{
 				cfg->tls_engine = strdup(argv[i+1]);
+			}
+			i++;
+		}else if(!strcmp(argv[i], "--tls-engine-kpass-sha")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --tls-engine-kpass-sha argument given but no kpass sha specified.\n\n");
+				return 1;
+			}else{
+				cfg->tls_engine_kpass_sha = strdup(argv[i+1]);
 			}
 			i++;
 #endif
@@ -946,6 +959,11 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 	}
 	if(cfg->keyform && mosquitto_tls_keyform_set(mosq, cfg->keyform)){
 		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting keyform.\n");
+		mosquitto_lib_cleanup();
+		return 1;
+	}
+	if(cfg->tls_engine_kpass_sha && mosquitto_tls_engine_kpass_sha_set(mosq, cfg->tls_engine_kpass_sha)){
+		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting TLS engine key pass sha.\n");
 		mosquitto_lib_cleanup();
 		return 1;
 	}

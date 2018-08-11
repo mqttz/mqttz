@@ -501,7 +501,23 @@ int net__socket_listen(struct mosquitto__listener *listener)
 				return 1;
 			}
 			if(listener->tls_keyform == mosq_k_engine){
-				EVP_PKEY *pkey = ENGINE_load_private_key(engine, listener->keyfile, net__get_ui_method(), NULL);
+				UI_METHOD *ui_method = net__get_ui_method();
+				if(listener->tls_engine_kpass_sha){
+					if(!ENGINE_ctrl_cmd(engine, ENGINE_SECRET_MODE, ENGINE_SECRET_MODE_SHA, NULL, NULL, 0)){
+						log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set engine secret mode sha");
+						COMPAT_CLOSE(sock);
+						ENGINE_FINISH(engine);
+						return 1;
+					}
+					if(!ENGINE_ctrl_cmd(engine, ENGINE_PIN, 0, listener->tls_engine_kpass_sha, NULL, 0)){
+						log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set engine pin");
+						COMPAT_CLOSE(sock);
+						ENGINE_FINISH(engine);
+						return 1;
+					}
+					ui_method = NULL;
+				}
+				EVP_PKEY *pkey = ENGINE_load_private_key(engine, listener->keyfile, ui_method, NULL);
 				if(!pkey){
 					log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load engine private key file \"%s\".", listener->keyfile);
 					COMPAT_CLOSE(sock);

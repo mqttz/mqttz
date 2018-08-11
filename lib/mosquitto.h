@@ -1199,6 +1199,27 @@ libmosq_EXPORT int mosquitto_tls_engine_set(struct mosquitto *mosq, const char *
 libmosq_EXPORT int mosquitto_tls_keyform_set(struct mosquitto *mosq, const char *keyform);
 
 /*
+ * Function: mosquitto_tls_engine_kpass_sha_set
+ *
+ * Some SSL engines may require the usage of a password in order to being
+ * accessed, like the TPM engine. This function allows a SHA1 hash of the
+ * password to be passed on to the engine directly.
+ * Must be called before <mosquitto_connect>.
+ *
+ * Parameters:
+ *  mosq -      a valid mosquitto instance.
+ *  kpass_sha - SHA1 of the private key password.
+ *
+ * Returns:
+ *  MOSQ_ERR_SUCCESS - on success.
+ *  MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *
+ * See Also:
+ * <mosquitto_tls_set>
+ */
+libmosq_EXPORT int mosquitto_tls_engine_kpass_sha_set(struct mosquitto *mosq, const char *kpass_sha);
+
+/*
  * Function: mosquitto_connect_callback_set
  *
  * Set the connect callback. This is called when the broker sends a CONNACK

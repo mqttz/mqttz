@@ -257,6 +257,20 @@ int mosquitto_tls_keyform_set(struct mosquitto *mosq, const char *keyform)
 }
 
 
+int mosquitto_tls_engine_kpass_sha_set(struct mosquitto *mosq, const char *kpass_sha)
+{
+#ifdef WITH_TLS
+	if(!mosq) return MOSQ_ERR_INVAL;
+	char *kpass_sha_bin = NULL;
+	if(mosquitto__hex2bin_sha1(kpass_sha, (unsigned char**)&kpass_sha_bin) != MOSQ_ERR_SUCCESS) return MOSQ_ERR_INVAL;
+	mosq->tls_engine_kpass_sha = kpass_sha_bin;
+	return MOSQ_ERR_SUCCESS;
+#else
+	return MOSQ_ERR_NOT_SUPPORTED;
+#endif
+}
+
+
 int mosquitto_tls_psk_set(struct mosquitto *mosq, const char *psk, const char *identity, const char *ciphers)
 {
 #ifdef WITH_TLS_PSK

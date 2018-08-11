@@ -299,6 +299,7 @@ void config__cleanup(struct mosquitto__config *config)
 			mosquitto__free(config->listeners[i].crlfile);
 			mosquitto__free(config->listeners[i].tls_version);
 			mosquitto__free(config->listeners[i].tls_engine);
+			mosquitto__free(config->listeners[i].tls_engine_kpass_sha);
 #ifdef WITH_WEBSOCKETS
 			if(!config->listeners[i].ws_context) /* libwebsockets frees its own SSL_CTX */
 #endif
@@ -436,6 +437,7 @@ int config__parse_args(struct mosquitto_db *db, struct mosquitto__config *config
 			|| config->default_listener.keyfile
 			|| config->default_listener.tls_engine
 			|| config->default_listener.tls_keyform != mosq_k_pem
+			|| config->default_listener.tls_engine_kpass_sha
 			|| config->default_listener.ciphers
 			|| config->default_listener.psk_hint
 			|| config->default_listener.require_certificate
@@ -488,6 +490,7 @@ int config__parse_args(struct mosquitto_db *db, struct mosquitto__config *config
 		config->listeners[config->listener_count-1].tls_version = config->default_listener.tls_version;
 		config->listeners[config->listener_count-1].tls_engine = config->default_listener.tls_engine;
 		config->listeners[config->listener_count-1].tls_keyform = config->default_listener.tls_keyform;
+		config->listeners[config->listener_count-1].tls_engine_kpass_sha = config->default_listener.tls_engine_kpass_sha;
 		config->listeners[config->listener_count-1].cafile = config->default_listener.cafile;
 		config->listeners[config->listener_count-1].capath = config->default_listener.capath;
 		config->listeners[config->listener_count-1].certfile = config->default_listener.certfile;
@@ -1106,6 +1109,20 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 					cur_listener->tls_keyform = mosq_k_pem;
 					if(!strcmp(keyform, "engine")) cur_listener->tls_keyform = mosq_k_engine;
 					mosquitto__free(keyform);
+#else
+					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
+#endif
+				}else if(!strcmp(token, "tls_engine_kpass_sha")){
+#ifdef WITH_TLS
+					if(reload) continue; // Listeners not valid for reloading.
+					char *kpass_sha = NULL, *kpass_sha_bin = NULL;
+					if(conf__parse_string(&token, "tls_engine_kpass_sha", &kpass_sha, saveptr)) return MOSQ_ERR_INVAL;
+					if(mosquitto__hex2bin_sha1(kpass_sha, (unsigned char**)&kpass_sha_bin) != MOSQ_ERR_SUCCESS){
+						mosquitto__free(kpass_sha);
+						return MOSQ_ERR_INVAL;
+					}
+					cur_listener->tls_engine_kpass_sha = kpass_sha_bin;
+					mosquitto__free(kpass_sha);
 #else
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
 #endif

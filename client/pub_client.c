@@ -223,7 +223,7 @@ void print_usage(void)
 #ifdef WITH_TLS
 	printf("                     [{--cafile file | --capath dir} [--cert file] [--key file]\n");
 	printf("                      [--ciphers ciphers] [--insecure] [--tls-engine engine]\n");
-	printf("                      [--keyform keyform]]\n");
+	printf("                      [--keyform keyform] [--tls-engine-kpass-sha]]\n");
 #ifdef WITH_TLS_PSK
 	printf("                     [--psk hex-key --psk-identity identity [--ciphers ciphers]]\n");
 #endif
@@ -283,6 +283,7 @@ void print_usage(void)
 	printf("              remote host is the server you wish to connect to and so is insecure.\n");
 	printf("              Do not use this option in a production environment.\n");
 	printf(" --tls-engine : toggles the usage of a SSL engine device.\n");
+	printf(" --tls-engine-kpass-sha : SHA1 of the key password to be used with the selected SSL engine.\n");
 #  ifdef WITH_TLS_PSK
 	printf(" --psk : pre-shared-key in hexadecimal (no leading 0x) to enable TLS-PSK mode.\n");
 	printf(" --psk-identity : client identity string for TLS-PSK mode.\n");

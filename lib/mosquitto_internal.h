@@ -199,6 +199,7 @@ struct mosquitto {
 	bool tls_insecure;
 	bool ssl_ctx_defaults;
 	char *tls_engine;
+	char *tls_engine_kpass_sha;
 	enum _mosquitto_keyform tls_keyform;
 #endif
 	bool want_write;

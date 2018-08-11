@@ -911,6 +911,17 @@
 					</listitem>
 				</varlistentry>
 				<varlistentry>
+					<term><option>tls_engine_kpass_sha</option> <replaceable>engine_kpass_sha</replaceable></term>
+					<listitem>
+						<para>SHA1 of private key password when using an SSL engine.
+						Some SSL engines may require the usage of a password
+						in order to being accessed, like the TPM engine. Instead
+						of being prompted for the password, this option allows
+						a SHA1 hash of the password to be passed on to the
+						engine directly, without user interaction.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
 					<term><option>crlfile</option> <replaceable>file path</replaceable></term>
 					<listitem>
 						<para>If you have <option>require_certificate</option>

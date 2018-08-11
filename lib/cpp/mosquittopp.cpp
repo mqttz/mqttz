@@ -376,4 +376,9 @@ int mosquittopp::tls_keyform_set(const char *keyform)
    return mosquitto_tls_keyform_set(m_mosq, keyform);
 }
 
+int mosquittopp::tls_engine_kpass_sha_set(const char *kpass_sha)
+{
+   return mosquitto_tls_engine_kpass_sha_set(m_mosq, kpass_sha);
+}
+
 }

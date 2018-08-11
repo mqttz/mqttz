@@ -226,6 +226,7 @@ struct mosquitto__listener {
 	char *keyfile;
 	char *tls_engine;
 	enum _mosquitto_keyform tls_keyform;
+	char *tls_engine_kpass_sha;
 	char *ciphers;
 	char *psk_hint;
 	SSL_CTX *ssl_ctx;

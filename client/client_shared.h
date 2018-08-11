@@ -67,6 +67,7 @@ struct mosq_config {
 	bool insecure;
 	char *tls_version;
 	char *tls_engine;
+	char *tls_engine_kpass_sha;
 	char *keyform;
 #  ifdef WITH_TLS_PSK
 	char *psk;

@@ -73,6 +73,9 @@ int net__socket_apply_tls(struct mosquitto *mosq);
 int net__socket_connect_tls(struct mosquitto *mosq);
 UI_METHOD *net__get_ui_method(void);
 #define ENGINE_FINISH(e) if(e) ENGINE_finish(e)
+#define ENGINE_SECRET_MODE "SECRET_MODE"
+#define ENGINE_SECRET_MODE_SHA 0x1000
+#define ENGINE_PIN "PIN"
 #endif
 
 #endif
