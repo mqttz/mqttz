@@ -33,11 +33,14 @@ Contributors:
 #    define libwebsocket_get_socket_fd(A) lws_get_socket_fd((A))
 #    define libwebsockets_return_http_status(A, B, C, D) lws_return_http_status((B), (C), (D))
 #    define libwebsockets_get_protocol(A) lws_get_protocol((A))
-
 #    define libwebsocket_context lws_context
 #    define libwebsocket_protocols lws_protocols
 #    define libwebsocket_callback_reasons lws_callback_reasons
 #    define libwebsocket lws
+#  else
+#    define lws_pollfd pollfd
+#    define lws_service_fd(A, B) libwebsocket_service_fd((A), (B))
+#    define lws_pollargs libwebsocket_pollargs
 #  endif
 #endif
 

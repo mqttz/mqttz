@@ -80,53 +80,77 @@ struct libws_http_data {
 static struct libwebsocket_protocols protocols[] = {
 	/* first protocol must always be HTTP handler */
 	{
-		"http-only",
-		callback_http,
-		sizeof (struct libws_http_data),
-		0,
-#ifdef LWS_FEATURE_PROTOCOLS_HAS_ID_FIELD
-		0,
+		"http-only",						/* name */
+		callback_http,						/* lws_callback_function */
+		sizeof (struct libws_http_data),	/* per_session_data_size */
+		0,									/* rx_buffer_size */
+#ifndef LWS_LIBRARY_VERSION_NUMBER
+		0,									/* no_buffer_all_partial_tx v1.3 only */
 #endif
-		NULL,
-#if !defined(LWS_LIBRARY_VERSION_NUMBER)
-		0
+#ifdef LWS_FEATURE_PROTOCOLS_HAS_ID_FIELD
+		0,									/* id */
+#endif
+#ifdef LWS_LIBRARY_VERSION_NUMBER
+		NULL,								/* user v1.4 on */
+#  if LWS_LIBRARY_VERSION_NUMBER >= 2003000
+		0									/* tx_packet_size v2.3.0 */
+#  endif
 #endif
 	},
 	{
 		"mqtt",
 		callback_mqtt,
 		sizeof(struct libws_mqtt_data),
-		0,
-#ifdef LWS_FEATURE_PROTOCOLS_HAS_ID_FIELD
-		1,
+		0,									/* rx_buffer_size */
+#ifndef LWS_LIBRARY_VERSION_NUMBER
+		0,									/* no_buffer_all_partial_tx v1.3 only */
 #endif
-		NULL,
-#if !defined(LWS_LIBRARY_VERSION_NUMBER)
-		0
+#ifdef LWS_FEATURE_PROTOCOLS_HAS_ID_FIELD
+		1,									/* id */
+#endif
+#ifdef LWS_LIBRARY_VERSION_NUMBER
+		NULL,								/* user v1.4 on */
+#  if LWS_LIBRARY_VERSION_NUMBER >= 2003000
+		0									/* tx_packet_size v2.3.0 */
+#  endif
 #endif
 	},
 	{
 		"mqttv3.1",
 		callback_mqtt,
 		sizeof(struct libws_mqtt_data),
-		0,
-#ifdef LWS_FEATURE_PROTOCOLS_HAS_ID_FIELD
-		1,
+		0,									/* rx_buffer_size */
+#ifndef LWS_LIBRARY_VERSION_NUMBER
+		0,									/* no_buffer_all_partial_tx v1.3 only */
 #endif
-		NULL,
-#if !defined(LWS_LIBRARY_VERSION_NUMBER)
-		0
+#ifdef LWS_FEATURE_PROTOCOLS_HAS_ID_FIELD
+		2,									/* id */
+#endif
+#ifdef LWS_LIBRARY_VERSION_NUMBER
+		NULL,								/* user v1.4 on */
+#  if LWS_LIBRARY_VERSION_NUMBER >= 2003000
+		0									/* tx_packet_size v2.3.0 */
+#  endif
 #endif
 	},
-#ifdef LWS_FEATURE_PROTOCOLS_HAS_ID_FIELD
-#  if defined(LWS_LIBRARY_VERSION_NUMBER)
-	{ NULL, NULL, 0, 0, 0, NULL}
-#  else
-	{ NULL, NULL, 0, 0, 0, NULL, 0}
-#  endif
-#else
-	{ NULL, NULL, 0, 0, NULL, 0}
+	{
+		NULL,
+		NULL,
+		0,
+		0,									/* rx_buffer_size */
+#ifndef LWS_LIBRARY_VERSION_NUMBER
+		0,									/* no_buffer_all_partial_tx v1.3 only */
 #endif
+#ifdef LWS_FEATURE_PROTOCOLS_HAS_ID_FIELD
+		0,									/* id */
+#endif
+#ifdef LWS_LIBRARY_VERSION_NUMBER
+		NULL,								/* user v1.4 on */
+#  if LWS_LIBRARY_VERSION_NUMBER >= 2003000
+		0									/* tx_packet_size v2.3.0 */
+#  endif
+#endif
+	}
 };
 
 static void easy_address(int sock, struct mosquitto *mosq)
@@ -409,6 +433,9 @@ static int callback_mqtt(struct libwebsocket_context *context,
 
 
 static char *http__canonical_filename(
+#ifndef LWS_LIBRARY_VERSION_NUMBER
+		struct libwebsocket_context *context,
+#endif
 		struct libwebsocket *wsi,
 		const char *in,
 		const char *http_dir)
@@ -521,7 +548,11 @@ static int callback_http(struct libwebsocket_context *context,
 				return -1;
 			}
 
+#if defined(LWS_LIBRARY_VERSION_NUMBER)
 			filename_canonical = http__canonical_filename(wsi, (char *)in, http_dir);
+#else
+			filename_canonical = http__canonical_filename(context, wsi, (char *)in, http_dir);
+#endif
 			if(!filename_canonical) return -1;
 
 			u->fptr = fopen(filename_canonical, "rb");
