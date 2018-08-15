@@ -17,7 +17,7 @@ Contributors:
 #include "config.h"
 
 #ifndef WIN32
-#include <unistd.h>
+#include <time.h>
 #endif
 
 #include "mosquitto_internal.h"
@@ -80,6 +80,11 @@ void *mosquitto__thread_main(void *obj)
 {
 	struct mosquitto *mosq = obj;
 	int state;
+#ifndef WIN32
+	struct timespec ts;
+	ts.tv_sec = 0;
+	ts.tv_nsec = 10000000;
+#endif
 
 	if(!mosq) return NULL;
 
@@ -91,7 +96,7 @@ void *mosquitto__thread_main(void *obj)
 #ifdef WIN32
 			Sleep(10);
 #else
-			usleep(10000);
+			nanosleep(&ts, NULL);
 #endif
 		}else{
 			break;

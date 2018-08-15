@@ -15,6 +15,7 @@ Contributors:
 */
 
 #define _GNU_SOURCE
+#include "config.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -67,8 +68,6 @@ Contributors:
 #include "net_mosq.h"
 #include "time_mosq.h"
 #include "util_mosq.h"
-
-#include "config.h"
 
 #ifdef WITH_TLS
 int tls_ex_index_mosq = -1;
