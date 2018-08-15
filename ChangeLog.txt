@@ -35,6 +35,7 @@ Library:
 Clients:
 - When compiled using WITH_TLS=no, the default port was incorrectly being set
   to -1. This has been fixed.
+- Fix compiling on Mac OS X <10.12. Closes #813 and #240.
 
 Build:
 - Fixes for building on NetBSD. Closes #258.
