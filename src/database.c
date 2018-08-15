@@ -673,6 +673,15 @@ int db__message_store_find(struct mosquitto *context, uint16_t mid, struct mosqu
 		tail = tail->next;
 	}
 
+	tail = context->queued_msgs;
+	while(tail){
+		if(tail->store->source_mid == mid && tail->direction == mosq_md_in){
+			*stored = tail->store;
+			return MOSQ_ERR_SUCCESS;
+		}
+		tail = tail->next;
+	}
+
 	return 1;
 }
 
