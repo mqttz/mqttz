@@ -32,6 +32,10 @@ Library:
 - Fix connection problems when mosquitto_loop_start() was called before
   mosquitto_connect_async(). Closes #848.
 
+Clients:
+- When compiled using WITH_TLS=no, the default port was incorrectly being set
+  to -1. This has been fixed.
+
 Build:
 - Fixes for building on NetBSD. Closes #258.
 
