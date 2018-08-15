@@ -108,6 +108,7 @@ enum mosquitto_client_state {
 	mosq_cs_socks5_send_userpass = 14,
 	mosq_cs_expiring = 15,
 	mosq_cs_connecting = 16,
+	mosq_cs_duplicate = 17, /* client that has been taken over by another with the same id */
 };
 
 enum mosquitto__protocol {
