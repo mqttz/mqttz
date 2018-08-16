@@ -40,6 +40,7 @@ Clients:
 Build:
 - Fixes for building on NetBSD. Closes #258.
 - Fixes for building on FreeBSD.
+- Add support for compiling with static libwebsockets library.
 
 
 1.5 - 20180502

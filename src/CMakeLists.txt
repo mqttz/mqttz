@@ -98,9 +98,9 @@ if (CMAKE_SYSTEM_NAME STREQUAL Linux)
 	endif (${WITH_SYSTEMD} STREQUAL ON)
 endif (CMAKE_SYSTEM_NAME STREQUAL Linux)
 
-option(WITH_WEBSOCKETS
-	"Include websockets support?" OFF)
-if (${WITH_WEBSOCKETS} STREQUAL ON)
+option(WITH_WEBSOCKETS "Include websockets support?" OFF)
+option(STATIC_WEBSOCKETS "Use the static libwebsockets library?" OFF)
+if (${WITH_WEBSOCKETS} STREQUAL ON )
 	add_definitions("-DWITH_WEBSOCKETS")
 endif (${WITH_WEBSOCKETS} STREQUAL ON)
 
@@ -141,7 +141,11 @@ if (WIN32)
 endif (WIN32)
 
 if (${WITH_WEBSOCKETS} STREQUAL ON)
-	set (MOSQ_LIBS ${MOSQ_LIBS} websockets)
+	if (${STATIC_WEBSOCKETS} STREQUAL ON)
+		set (MOSQ_LIBS ${MOSQ_LIBS} websockets_static)
+	else (${STATIC_WEBSOCKETS} STREQUAL ON)
+		set (MOSQ_LIBS ${MOSQ_LIBS} websockets)
+	endif (${STATIC_WEBSOCKETS} STREQUAL ON)
 endif (${WITH_WEBSOCKETS} STREQUAL ON)
 
 # Simple detect libuuid
