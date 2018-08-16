@@ -336,6 +336,14 @@ int main(int argc, char *argv[])
 	password = cfg.password;
 	quiet = cfg.quiet;
 
+#ifndef WITH_THREADING
+	if(cfg.pub_mode == MSGMODE_STDIN_LINE){
+		fprintf(stderr, "Error: '-l' mode not available, threading support has not been compiled in.\n");
+		free(buf);
+		return 1;
+	}
+#endif
+
 	if(cfg.pub_mode == MSGMODE_STDIN_FILE){
 		if(load_stdin()){
 			fprintf(stderr, "Error loading input from stdin.\n");
