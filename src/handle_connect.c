@@ -497,7 +497,13 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	}else{
 #endif /* WITH_TLS */
 		if(username_flag){
+			/* FIXME - these ensure the mosquitto_client_id() and
+			 * mosquitto_client_username() functions work, but is hacky */
+			context->id = client_id;
+			context->username = username;
 			rc = mosquitto_unpwd_check(db, context, username, password);
+			context->username = NULL;
+			context->id = NULL;
 			switch(rc){
 				case MOSQ_ERR_SUCCESS:
 					break;

@@ -5,11 +5,11 @@ include ../../config.mk
 
 all :
 
-clean : 
+clean :
 	-rm -f *.vglog
 	$(MAKE) -C c clean
 
-test-compile : 
+test-compile :
 	$(MAKE) -C c
 
 ptest : test-compile
@@ -72,7 +72,7 @@ endif
 	./04-retain-upgrade-outgoing-qos.py
 
 05 :
-	./05-clean-session-qos1.py 
+	./05-clean-session-qos1.py
 
 06 :
 	./06-bridge-reconnect-local-out.py
@@ -120,6 +120,7 @@ endif
 	./09-plugin-auth-defer-unpwd-success.py
 	./09-plugin-auth-defer-unpwd-fail.py
 	./09-plugin-auth-msg-params.py
+	./09-plugin-auth-context-params.py
 
 10 :
 	./10-listener-mount-point.py
