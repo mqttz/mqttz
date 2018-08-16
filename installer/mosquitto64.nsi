@@ -8,21 +8,12 @@
 !include "WinMessages.nsh"
 !define env_hklm 'HKLM "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"'
 
-Name "mosquitto"
+Name "Eclipse Mosquitto"
 !define VERSION 1.5.0
 OutFile "mosquitto-${VERSION}-install-windows-x64.exe"
 
 !include "x64.nsh"
-# Default install location, for 32-bit files
-InstallDir "$PROGRAMFILES\mosquitto"
-
-# Override install and registry locations if this is a 64-bit install.
-function .onInit
-	${If} ${ARCH} == "x64"
-		SetRegView 64
-		StrCpy $INSTDIR "$PROGRAMFILES64\mosquitto"
-	${EndIf}
-functionEnd
+InstallDir "$PROGRAMFILES64\mosquitto"
 
 ;--------------------------------
 ; Installer pages
@@ -65,8 +56,8 @@ Section "Files" SecInstall
 	File "..\readme.md"
 	File "..\readme-windows.txt"
 	;File "C:\pthreads\Pre-built.2\dll\x64\pthreadVC2.dll"
-	;File "C:\OpenSSL-Win64\libeay32.dll"
-	;File "C:\OpenSSL-Win64\ssleay32.dll"
+	;File "C:\OpenSSL-Win64\bin\libssl_1-1-x64.dll"
+	;File "C:\OpenSSL-Win64\bin\libcrypto_1-1-x64.dll"
 	File "..\edl-v10"
 	File "..\epl-v10"
 
@@ -78,21 +69,17 @@ Section "Files" SecInstall
 	File "..\src\mosquitto_plugin.h"
 
 	WriteUninstaller "$INSTDIR\Uninstall.exe"
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Mosquitto64" "DisplayName" "Mosquitto MQTT broker (64 bit)"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Mosquitto64" "DisplayName" "Eclipse Mosquitto MQTT broker (64 bit)"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Mosquitto64" "UninstallString" "$\"$INSTDIR\Uninstall.exe$\""
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Mosquitto64" "QuietUninstallString" "$\"$INSTDIR\Uninstall.exe$\" /S"
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Mosquitto64" "HelpLink" "http://mosquitto.org/"
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Mosquitto64" "URLInfoAbout" "http://mosquitto.org/"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Mosquitto64" "HelpLink" "https://mosquitto.org/"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Mosquitto64" "URLInfoAbout" "https://mosquitto.org/"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Mosquitto64" "DisplayVersion" "${VERSION}"
 	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Mosquitto64" "NoModify" "1"
 	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Mosquitto64" "NoRepair" "1"
 
 	WriteRegExpandStr ${env_hklm} MOSQUITTO_DIR $INSTDIR
 	SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
-SectionEnd
-
-Section "Service" SecService
-	ExecWait '"$INSTDIR\mosquitto.exe" install'
 SectionEnd
 
 Section "Uninstall"
@@ -110,8 +97,8 @@ Section "Uninstall"
 	Delete "$INSTDIR\readme.txt"
 	Delete "$INSTDIR\readme-windows.txt"
 	;Delete "$INSTDIR\pthreadVC2.dll"
-	;Delete "$INSTDIR\libeay32.dll"
-	;Delete "$INSTDIR\ssleay32.dll"
+	;Delete "$INSTDIR\libssl_1-1-x64.dll"
+	;Delete "$INSTDIR\libcrypto_1-1-x64.dll"
 	Delete "$INSTDIR\edl-v10"
 	Delete "$INSTDIR\epl-v10"
 
@@ -130,10 +117,8 @@ Section "Uninstall"
 SectionEnd
 
 LangString DESC_SecInstall ${LANG_ENGLISH} "The main installation."
-LangString DESC_SecService ${LANG_ENGLISH} "Install mosquitto as a Windows service?"
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
 	!insertmacro MUI_DESCRIPTION_TEXT ${SecInstall} $(DESC_SecInstall)
-	!insertmacro MUI_DESCRIPTION_TEXT ${SecService} $(DESC_SecService)
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 Var Dialog
@@ -148,15 +133,10 @@ Function DependencyPage
 		Abort
 	${EndIf}
 
-	${NSD_CreateLabel} 0 0 100% 12u "OpenSSL - install 'Win64 OpenSSL vXXXXX Light' then copy dlls to the mosquitto directory"
+	${NSD_CreateLabel} 0 0 100% 12u "OpenSSL - install 'Win64 OpenSSL v1.1.0* Light' then copy libssl_1-1-x64.dll and libcrypto_1-1-x64.dll to the mosquitto directory"
 	${NSD_CreateLink} 13u 13u 100% 12u "http://slproweb.com/products/Win32OpenSSL.html"
 	Pop $OSSLLink
 	${NSD_OnClick} $OSSLLink OnClick_OSSL
-
-	${NSD_CreateLabel} 0 26u 100% 12u "pthreads - copy 'pthreadVC2.dll' to the mosquitto directory"
-	${NSD_CreateLink} 13u 39u 100% 12u "ftp://sources.redhat.com/pub/pthreads-win32/dll-latest/dll/x64/"
-	Pop $PTHLink
-	${NSD_OnClick} $PTHLink OnClick_PTH
 
 	!insertmacro MUI_HEADER_TEXT_PAGE "Dependencies" "This page lists packages that must be installed if not already present"
 	nsDialogs::Show
@@ -165,9 +145,4 @@ FunctionEnd
 Function OnClick_OSSL
 	Pop $0
 	ExecShell "open" "http://slproweb.com/products/Win32OpenSSL.html"
-FunctionEnd
-
-Function OnClick_PTH
-	Pop $0
-	ExecShell "open" "ftp://sources.redhat.com/pub/pthreads-win32/dll-latest/dll/x64/"
 FunctionEnd
