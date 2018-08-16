@@ -16,6 +16,8 @@ Contributors:
 
 #if defined(WIN32) || defined(__CYGWIN__)
 
+#include "config.h"
+
 #include <windows.h>
 
 #include "memory_mosq.h"

@@ -14,11 +14,11 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
+#include "config.h"
+
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
-
-#include "config.h"
 
 #include "mosquitto_broker_internal.h"
 #include "mqtt3_protocol.h"

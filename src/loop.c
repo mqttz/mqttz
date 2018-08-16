@@ -15,9 +15,7 @@ Contributors:
    Tatsuzo Osawa - Add epoll.
 */
 
-#define _GNU_SOURCE
-
-#include <config.h>
+#include "config.h"
 
 #include <assert.h>
 #ifndef WIN32

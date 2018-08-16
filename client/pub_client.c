@@ -14,8 +14,7 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
-/* For nanosleep */
-#define _POSIX_C_SOURCE 200809L
+#include "config.h"
 
 #include <errno.h>
 #include <fcntl.h>

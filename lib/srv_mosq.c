@@ -14,6 +14,8 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
+#include "config.h"
+
 #ifdef WITH_SRV
 #  include <ares.h>
 

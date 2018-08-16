@@ -13,6 +13,9 @@ and the Eclipse Distribution License is available at
 Contributors:
    Roger Light - initial implementation and documentation.
 */
+
+#include "config.h"
+
 #include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
