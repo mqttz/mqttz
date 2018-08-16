@@ -34,7 +34,6 @@ parts:
     prime:
       - default_config.conf
       - launcher.sh
-      - snapcraft.yaml
   config:
     plugin: dump
     source: .
@@ -42,10 +41,11 @@ parts:
       - mosquitto.conf
 
 
-
   mosquitto:
+    after:
+      - lws
     plugin: make
-    make-parameters: ["prefix=/usr", "WITH_SRV=no", "WITH_WEBSOCKETS=no"]
+    make-parameters: ["prefix=/usr", "WITH_WEBSOCKETS=yes", "CFLAGS=-Wall -ggdb -O2 -I$SNAPCRAFT_STAGE"]
     source: https://github.com/eclipse/mosquitto
     source-type: git
 
@@ -59,7 +59,6 @@ parts:
     stage-packages:
       - libssl1.0.0
       - libuuid1
-      - libc-ares2
     prime:
       - usr/sbin/mosquitto
       - usr/bin/mosquitto_pub
@@ -68,3 +67,14 @@ parts:
       - lib/*-linux-gnu/libcrypto.so*
       - lib/*-linux-gnu/libssl.so*
       - lib/*-linux-gnu/libuuid.so*
+
+  lws:
+    plugin: cmake
+    configflags: ["-DLWS_IPV6=ON", "-DLWS_WITHOUT_CLIENT=ON", "-DLWS_WITHOUT_EXTENSIONS=ON", "-DLWS_WITH_ZIP_FOPS=OFF", "-DLWS_WITH_ZLIB=OFF", "-DLWS_WITH_SHARED=OFF"]
+    source: https://github.com/warmcat/libwebsockets/archive/v2.4.2.tar.gz
+    source-type: tar
+    stage:
+      - include/libwebsockets.h
+      - include/lws_config.h
+      - lib/libwebsockets.a
+    prime: [-*]
