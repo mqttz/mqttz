@@ -110,8 +110,6 @@ endif (WIN32 OR CYGWIN)
 
 add_definitions (-DWITH_BROKER)
 
-add_executable(mosquitto ${MOSQ_SRCS})
-
 set (MOSQ_LIBS ${MOSQ_LIBS} ${OPENSSL_LIBRARIES})
 
 # Check for getaddrinfo_a
@@ -143,6 +141,10 @@ endif (WIN32)
 if (${WITH_WEBSOCKETS} STREQUAL ON)
 	if (${STATIC_WEBSOCKETS} STREQUAL ON)
 		set (MOSQ_LIBS ${MOSQ_LIBS} websockets_static)
+		if (WIN32)
+			set (MOSQ_LIBS ${MOSQ_LIBS} iphlpapi)
+			link_directories(${mosquitto_SOURCE_DIR})
+		endif (WIN32)
 	else (${STATIC_WEBSOCKETS} STREQUAL ON)
 		set (MOSQ_LIBS ${MOSQ_LIBS} websockets)
 	endif (${STATIC_WEBSOCKETS} STREQUAL ON)
@@ -157,6 +159,7 @@ if(NOT APPLE)
 	endif (UUID_HEADER)
 endif(NOT APPLE)
 
+add_executable(mosquitto ${MOSQ_SRCS})
 target_link_libraries(mosquitto ${MOSQ_LIBS})
 
 if (UNIX)
