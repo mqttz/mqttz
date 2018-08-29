@@ -45,7 +45,7 @@ parts:
     after:
       - lws
     plugin: make
-    make-parameters: ["prefix=/usr", "WITH_WEBSOCKETS=yes", "CFLAGS=-Wall -ggdb -O2 -I$SNAPCRAFT_STAGE"]
+    make-parameters: ["prefix=/usr", "WITH_WEBSOCKETS=yes", "WITH_ADNS=yes", "CFLAGS=-Wall -ggdb -O2 -I$SNAPCRAFT_STAGE -D_GNU_SOURCE"]
     source: https://github.com/eclipse/mosquitto
     source-type: git
 
