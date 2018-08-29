@@ -21,7 +21,7 @@ Contributors:
 
 #include "mosquitto_broker_internal.h"
 #include "memory_mosq.h"
-#include "mqtt3_protocol.h"
+#include "mqtt_protocol.h"
 #include "packet_mosq.h"
 #include "send_mosq.h"
 /*

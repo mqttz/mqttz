@@ -44,7 +44,7 @@ Contributors:
 #include "memory_mosq.h"
 #include "tls_mosq.h"
 #include "util_mosq.h"
-#include "mqtt3_protocol.h"
+#include "mqtt_protocol.h"
 
 struct config_recurse {
 	int log_dest;

@@ -44,7 +44,7 @@ Contributors:
 #include "memory_mosq.h"
 #include "tls_mosq.h"
 #include "util_mosq.h"
-#include "mqtt3_protocol.h"
+#include "mqtt_protocol.h"
 
 int strcasecmp_p(const void *p1, const void *p2)
 {

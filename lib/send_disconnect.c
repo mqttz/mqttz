@@ -25,7 +25,7 @@ Contributors:
 #include "mosquitto.h"
 #include "mosquitto_internal.h"
 #include "logging_mosq.h"
-#include "mqtt3_protocol.h"
+#include "mqtt_protocol.h"
 #include "send_mosq.h"
 
 

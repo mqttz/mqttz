@@ -64,7 +64,7 @@ Contributors:
 
 #include "logging_mosq.h"
 #include "memory_mosq.h"
-#include "mqtt3_protocol.h"
+#include "mqtt_protocol.h"
 #include "net_mosq.h"
 #include "time_mosq.h"
 #include "util_mosq.h"
