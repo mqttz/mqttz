@@ -252,6 +252,34 @@ void packet__write_uint16(struct mosquitto__packet *packet, uint16_t word)
 }
 
 
+int packet__read_uint32(struct mosquitto__packet *packet, uint32_t *word)
+{
+	uint32_t val = 0;
+	int i;
+
+	assert(packet);
+	if(packet->pos+4 > packet->remaining_length) return MOSQ_ERR_PROTOCOL;
+
+	for(i=0; i<4; i++){
+		val = (val << 8) + packet->payload[packet->pos];
+		packet->pos++;
+	}
+
+	*word = val;
+
+	return MOSQ_ERR_SUCCESS;
+}
+
+
+void packet__write_uint32(struct mosquitto__packet *packet, uint32_t word)
+{
+	packet__write_byte(packet, (word & 0xFF000000) >> 24);
+	packet__write_byte(packet, (word & 0x00FF0000) >> 16);
+	packet__write_byte(packet, (word & 0x0000FF00) >> 8);
+	packet__write_byte(packet, (word & 0x000000FF));
+}
+
+
 int packet__write(struct mosquitto *mosq)
 {
 	ssize_t write_length;
