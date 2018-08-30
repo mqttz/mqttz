@@ -17,6 +17,10 @@ Contributors:
 
 #include "config.h"
 
+#ifndef WIN32
+#  define _GNU_SOURCE
+#endif
+
 #include <assert.h>
 #ifndef WIN32
 #ifdef WITH_EPOLL
