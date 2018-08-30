@@ -3,6 +3,7 @@
 
 Broker:
 - Fix build when using WITH_ADNS=yes.
+- Fix incorrect call to setsockopt() for TCP_NODELAY. Closes #941.
 
 
 1.5.1 - 20180816
