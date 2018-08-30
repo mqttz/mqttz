@@ -45,7 +45,7 @@ int handle__pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 	int rc;
 
 	assert(mosq);
-	if(mosq->protocol == mosq_p_mqtt311){
+	if(mosq->protocol != mosq_p_mqtt31){
 		if((mosq->in_packet.command&0x0F) != 0x02){
 			return MOSQ_ERR_PROTOCOL;
 		}

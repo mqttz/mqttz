@@ -11,7 +11,7 @@
 
 	<refnamediv>
 		<refname>mosquitto_pub</refname>
-		<refpurpose>an MQTT version 3.1.1/3.1 client for publishing simple messages</refpurpose>
+		<refpurpose>an MQTT version 5/3.1.1/3.1 client for publishing simple messages</refpurpose>
 	</refnamediv>
 
 	<refsynopsisdiv>
@@ -85,7 +85,7 @@
 
 	<refsect1>
 		<title>Description</title>
-		<para><command>mosquitto_pub</command> is a simple MQTT version 3.1.1
+		<para><command>mosquitto_pub</command> is a simple MQTT version 5/3.1.1
 			client that will publish a single message on a topic and
 			exit.</para>
 	</refsect1>
@@ -429,7 +429,8 @@
 				<listitem>
 					<para>Specify which version of the MQTT protocol should be
 						used when connecting to the rmeote broker. Can be
-						<option>mqttv311</option> or <option>mqttv31</option>.
+						<option>mqttv5</option>, <option>mqttv311</option> or
+						<option>mqttv31</option>.
 						Defaults to <option>mqttv311</option>.</para>
 				</listitem>
 			</varlistentry>

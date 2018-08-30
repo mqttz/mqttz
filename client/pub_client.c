@@ -257,7 +257,7 @@ void print_usage(void)
 	printf(" -t : mqtt topic to publish to.\n");
 	printf(" -u : provide a username\n");
 	printf(" -V : specify the version of the MQTT protocol to use when connecting.\n");
-	printf("      Can be mqttv31 or mqttv311. Defaults to mqttv311.\n");
+	printf("      Can be mqttv5, mqttv311 or mqttv31. Defaults to mqttv311.\n");
 	printf(" --help : display this message.\n");
 	printf(" --quiet : don't print error messages.\n");
 	printf(" --will-payload : payload for the client Will, which is sent by the broker in case of\n");

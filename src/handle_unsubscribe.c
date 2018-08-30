@@ -40,14 +40,14 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 	if(!context) return MOSQ_ERR_INVAL;
 	log__printf(NULL, MOSQ_LOG_DEBUG, "Received UNSUBSCRIBE from %s", context->id);
 
-	if(context->protocol == mosq_p_mqtt311){
+	if(context->protocol != mosq_p_mqtt31){
 		if((context->in_packet.command&0x0F) != 0x02){
 			return MOSQ_ERR_PROTOCOL;
 		}
 	}
 	if(packet__read_uint16(&context->in_packet, &mid)) return 1;
 
-	if(context->protocol == mosq_p_mqtt311){
+	if(context->protocol == mosq_p_mqtt311 || context->protocol == mosq_p_mqtt5){
 		if(context->in_packet.pos == context->in_packet.remaining_length){
 			/* No topic specified, protocol error. */
 			return MOSQ_ERR_PROTOCOL;

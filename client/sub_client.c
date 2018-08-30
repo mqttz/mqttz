@@ -190,7 +190,7 @@ void print_usage(void)
 	printf(" -U : unsubscribe from a topic. May be repeated.\n");
 	printf(" -v : print published messages verbosely.\n");
 	printf(" -V : specify the version of the MQTT protocol to use when connecting.\n");
-	printf("      Can be mqttv31 or mqttv311. Defaults to mqttv311.\n");
+	printf("      Can be mqttv5, mqttv311 or mqttv31. Defaults to mqttv311.\n");
 #ifndef WIN32
 	printf(" -W : Specifies a timeout in seconds how long to process incoming MQTT messages.\n");
 #endif

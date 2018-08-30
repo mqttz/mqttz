@@ -101,6 +101,7 @@ enum mosq_opt_t {
 
 #define MQTT_PROTOCOL_V31 3
 #define MQTT_PROTOCOL_V311 4
+#define MQTT_PROTOCOL_V5 5
 
 struct mosquitto_message{
 	int mid;
