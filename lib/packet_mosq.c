@@ -280,6 +280,31 @@ void packet__write_uint32(struct mosquitto__packet *packet, uint32_t word)
 }
 
 
+int packet__read_varint(struct mosquitto__packet *packet, uint32_t *word)
+{
+	int i;
+	int remaining_mult = 1;
+	uint8_t byte;
+
+	*word = 0;
+
+	for(i=0; i<4; i++){
+		if(packet->pos < packet->remaining_length){
+			byte = packet->payload[packet->pos];
+			word += (byte & 127) * remaining_mult;
+			remaining_mult *= 128;
+			packet->pos++;
+			if((byte & 128) == 0){
+				return MOSQ_ERR_SUCCESS;
+			}
+		}else{
+			return MOSQ_ERR_PROTOCOL;
+		}
+	}
+	return MOSQ_ERR_PROTOCOL;
+}
+
+
 int packet__write(struct mosquitto *mosq)
 {
 	ssize_t write_length;
