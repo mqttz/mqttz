@@ -99,7 +99,7 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 	if(version == MQTT_PROTOCOL_V31){
 		packet__write_string(packet, PROTOCOL_NAME_v31, strlen(PROTOCOL_NAME_v31));
 	}else if(version == MQTT_PROTOCOL_V311){
-		packet__write_string(packet, PROTOCOL_NAME_v311, strlen(PROTOCOL_NAME_v311));
+		packet__write_string(packet, PROTOCOL_NAME, strlen(PROTOCOL_NAME));
 	}
 #if defined(WITH_BROKER) && defined(WITH_BRIDGE)
 	if(mosq->bridge && mosq->bridge->try_private && mosq->bridge->try_private_accepted){

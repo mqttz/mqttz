@@ -182,7 +182,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			goto handle_connect_error;
 		}
 		context->protocol = mosq_p_mqtt31;
-	}else if(!strcmp(protocol_name, PROTOCOL_NAME_v311)){
+	}else if(!strcmp(protocol_name, PROTOCOL_NAME)){
 		if((protocol_version&0x7F) != PROTOCOL_VERSION_v311){
 			if(db->config->connection_messages == true){
 				log__printf(NULL, MOSQ_LOG_INFO, "Invalid protocol version %d in CONNECT from %s.",

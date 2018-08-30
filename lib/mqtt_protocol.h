@@ -22,10 +22,9 @@ Contributors:
 #define PROTOCOL_NAME_v31 "MQIsdp"
 #define PROTOCOL_VERSION_v31 3
 
-#define PROTOCOL_NAME_v311 "MQTT"
-#define PROTOCOL_VERSION_v311 4
+#define PROTOCOL_NAME "MQTT"
 
-#define PROTOCOL_NAME_v5 "MQTT"
+#define PROTOCOL_VERSION_v311 4
 #define PROTOCOL_VERSION_v5 5
 
 
