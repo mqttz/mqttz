@@ -51,6 +51,11 @@ set (MOSQ_SRCS
 	../lib/will_mosq.c ../lib/will_mosq.h)
 
 
+option(WITH_BUNDLED_DEPS "Build with bundled dependencies?" ON)
+if (${WITH_BUNDLED_DEPS} STREQUAL ON)
+	include_directories(${mosquitto_SOURCE_DIR} ${mosquitto_SOURCE_DIR}/src/deps)
+endif (${WITH_BUNDLED_DEPS} STREQUAL ON)
+
 option(INC_BRIDGE_SUPPORT
 	"Include bridge support for connecting to other brokers?" ON)
 if (${INC_BRIDGE_SUPPORT} STREQUAL ON)

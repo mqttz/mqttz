@@ -92,6 +92,9 @@ WITH_STATIC_LIBRARIES:=no
 # Build with epoll support.
 WITH_EPOLL:=yes
 
+# Build with bundled uthash.h
+WITH_BUNDLED_DEPS:=yes
+
 # =============================================================================
 # End of user configuration
 # =============================================================================
@@ -287,3 +290,6 @@ ifeq ($(WITH_EPOLL),yes)
 	endif
 endif
 
+ifeq ($(WITH_BUNDLED_DEPS),yes)
+	BROKER_CFLAGS:=$(BROKER_CFLAGS) -Ideps
+endif
