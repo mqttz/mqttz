@@ -238,8 +238,7 @@ int main(int argc, char *argv[])
 
 	memset(&int_db, 0, sizeof(struct mosquitto_db));
 
-	net__init();
-	int_db.spare_sock = socket(AF_INET, SOCK_STREAM, 0);
+	net__broker_init();
 
 	config__init(&int_db, &config);
 	rc = config__parse_args(&int_db, &config, argc, argv);

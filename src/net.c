@@ -59,6 +59,15 @@ static int tls_ex_index_listener = -1;
 
 #include "sys_tree.h"
 
+/* For EMFILE handling */
+static mosq_sock_t spare_sock = INVALID_SOCKET;
+
+void net__broker_init(void)
+{
+	spare_sock = socket(AF_INET, SOCK_STREAM, 0);
+	net__init();
+}
+
 
 static void net__print_error(int log, const char *format_str)
 {
@@ -111,12 +120,12 @@ int net__socket_accept(struct mosquitto_db *db, mosq_sock_t listensock)
 			 * It would be nice to send a "server not available" connack here,
 			 * but there are lots of reasons why this would be tricky (TLS
 			 * being the big one). */
-			COMPAT_CLOSE(db->spare_sock);
+			COMPAT_CLOSE(spare_sock);
 			new_sock = accept(listensock, NULL, 0);
 			if(new_sock != INVALID_SOCKET){
 				COMPAT_CLOSE(new_sock);
 			}
-			db->spare_sock = socket(AF_INET, SOCK_STREAM, 0);
+			spare_sock = socket(AF_INET, SOCK_STREAM, 0);
 			log__printf(NULL, MOSQ_LOG_NOTICE,
 					"Unable to accept new connection, system socket count has been exceeded. Try increasing \"ulimit -n\" or equivalent.");
 		}
