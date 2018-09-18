@@ -4,9 +4,11 @@
 Broker:
 - Fix build when using WITH_ADNS=yes.
 - Fix incorrect call to setsockopt() for TCP_NODELAY. Closes #941.
+- Fix excessive CPU usage when the number of sockets exceeds the system limit.
+  Closes #948.
 
 Build:
-- Make it easier to build with bundled uthash.h using "WITH_BUNDLED_DEPS=no".
+- Make it easier to build without bundled uthash.h using "WITH_BUNDLED_DEPS=no".
 
 
 1.5.1 - 20180816

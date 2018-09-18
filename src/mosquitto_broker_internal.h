@@ -392,6 +392,7 @@ struct mosquitto_db{
 #ifdef WITH_EPOLL
 	int epollfd;
 #endif
+	mosq_sock_t spare_sock;
 };
 
 enum mosquitto__bridge_direction{

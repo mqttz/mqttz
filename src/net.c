@@ -97,7 +97,31 @@ int net__socket_accept(struct mosquitto_db *db, mosq_sock_t listensock)
 #endif
 
 	new_sock = accept(listensock, NULL, 0);
-	if(new_sock == INVALID_SOCKET) return -1;
+	if(new_sock == INVALID_SOCKET){
+#ifdef WIN32
+		errno = WSAGetLastError();
+		if(errno == WSAEMFILE){
+#else
+		if(errno == EMFILE || errno == ENFILE){
+#endif
+			/* Close the spare socket, which means we should be able to accept
+			 * this connection. Accept it, then close it immediately and create
+			 * a new spare_sock. This prevents the situation of ever properly
+			 * running out of sockets.
+			 * It would be nice to send a "server not available" connack here,
+			 * but there are lots of reasons why this would be tricky (TLS
+			 * being the big one). */
+			COMPAT_CLOSE(db->spare_sock);
+			new_sock = accept(listensock, NULL, 0);
+			if(new_sock != INVALID_SOCKET){
+				COMPAT_CLOSE(new_sock);
+			}
+			db->spare_sock = socket(AF_INET, SOCK_STREAM, 0);
+			log__printf(NULL, MOSQ_LOG_NOTICE,
+					"Unable to accept new connection, system socket count has been exceeded. Try increasing \"ulimit -n\" or equivalent.");
+		}
+		return -1;
+	}
 
 	G_SOCKET_CONNECTIONS_INC();
 
