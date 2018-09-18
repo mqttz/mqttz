@@ -7,6 +7,11 @@ Broker:
 - Fix excessive CPU usage when the number of sockets exceeds the system limit.
   Closes #948.
 
+Library:
+- Fix situation where username and password is used with SOCKS5 proxy. Closes
+  #927.
+- Fix SOCKS5 behaviour when passing IP addresses. Closes #927.
+
 Build:
 - Make it easier to build without bundled uthash.h using "WITH_BUNDLED_DEPS=no".
 

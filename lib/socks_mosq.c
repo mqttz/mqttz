@@ -97,6 +97,11 @@ int socks5__send(struct mosquitto *mosq)
 	int slen;
 	int ulen, plen;
 
+	struct in_addr addr_ipv4;
+	struct in6_addr addr_ipv6;
+	int ipv4_pton_result;
+	int ipv6_pton_result;
+
 	if(mosq->state == mosq_cs_socks5_new){
 		packet = mosquitto__calloc(1, sizeof(struct mosquitto__packet));
 		if(!packet) return MOSQ_ERR_NOMEM;
@@ -137,30 +142,33 @@ int socks5__send(struct mosquitto *mosq)
 		packet = mosquitto__calloc(1, sizeof(struct mosquitto__packet));
 		if(!packet) return MOSQ_ERR_NOMEM;
 
-		struct in_addr addr_ipv4;
-		struct in6_addr addr_ipv6;
-
-		int ipv4_pton_result = inet_pton(AF_INET, mosq->host, &addr_ipv4);
-		int ipv6_pton_result = inet_pton(AF_INET6, mosq->host, &addr_ipv6);
-
-		packet->payload[0] = 0x05;
-		packet->payload[1] = 0x01;
-		packet->payload[2] = 0x00;
+		ipv4_pton_result = inet_pton(AF_INET, mosq->host, &addr_ipv4);
+		ipv6_pton_result = inet_pton(AF_INET6, mosq->host, &addr_ipv6);
 
 		if(ipv4_pton_result == 1){
 			packet->packet_length = 10;
 			packet->payload = mosquitto__malloc(sizeof(uint8_t)*packet->packet_length);
+			if(!packet->payload){
+				mosquitto__free(packet);
+				return MOSQ_ERR_NOMEM;
+			}
 			packet->payload[3] = SOCKS_ATYPE_IP_V4;
 			memcpy(&(packet->payload[4]), (const void*)&addr_ipv4, 4);
 			packet->payload[4+4] = MOSQ_MSB(mosq->port);
 			packet->payload[4+4+1] = MOSQ_LSB(mosq->port);
+
 		}else if(ipv6_pton_result == 1){
 			packet->packet_length = 22;
 			packet->payload = mosquitto__malloc(sizeof(uint8_t)*packet->packet_length);
+			if(!packet->payload){
+				mosquitto__free(packet);
+				return MOSQ_ERR_NOMEM;
+			}
 			packet->payload[3] = SOCKS_ATYPE_IP_V6;
 			memcpy(&(packet->payload[4]), (const void*)&addr_ipv6, 16);
 			packet->payload[4+16] = MOSQ_MSB(mosq->port);
 			packet->payload[4+16+1] = MOSQ_LSB(mosq->port);
+
 		}else{
 			slen = strlen(mosq->host);
 			if(slen > UCHAR_MAX){
@@ -168,12 +176,19 @@ int socks5__send(struct mosquitto *mosq)
 			}
 			packet->packet_length = 7 + slen;
 			packet->payload = mosquitto__malloc(sizeof(uint8_t)*packet->packet_length);
+			if(!packet->payload){
+				mosquitto__free(packet);
+				return MOSQ_ERR_NOMEM;
+			}
 			packet->payload[3] = SOCKS_ATYPE_DOMAINNAME;
 			packet->payload[4] = (uint8_t)slen;
 			memcpy(&(packet->payload[5]), mosq->host, slen);
 			packet->payload[5+slen] = MOSQ_MSB(mosq->port);
 			packet->payload[6+slen] = MOSQ_LSB(mosq->port);
 		}
+		packet->payload[0] = 0x05;
+		packet->payload[1] = 0x01;
+		packet->payload[2] = 0x00;
 
 		pthread_mutex_lock(&mosq->state_mutex);
 		mosq->state = mosq_cs_socks5_request;
