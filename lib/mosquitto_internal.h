@@ -116,7 +116,7 @@ enum mosquitto__protocol {
 	mosq_p_mqtt31 = 1,
 	mosq_p_mqtt311 = 2,
 	mosq_p_mqtts = 3,
-	mosq_p_mqtt5 = 4,
+	mosq_p_mqtt5 = 5,
 };
 
 enum mosquitto__threaded_state {

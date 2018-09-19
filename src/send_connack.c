@@ -39,7 +39,12 @@ int send__connack(struct mosquitto *context, int ack, int result)
 	if(!packet) return MOSQ_ERR_NOMEM;
 
 	packet->command = CONNACK;
-	packet->remaining_length = 2;
+	if(context->protocol == mosq_p_mqtt5){
+		/* FIXME - proper property support */
+		packet->remaining_length = 3;
+	}else{
+		packet->remaining_length = 2;
+	}
 	rc = packet__alloc(packet);
 	if(rc){
 		mosquitto__free(packet);
@@ -47,6 +52,9 @@ int send__connack(struct mosquitto *context, int ack, int result)
 	}
 	packet->payload[packet->pos+0] = ack;
 	packet->payload[packet->pos+1] = result;
+	if(context->protocol == mosq_p_mqtt5){
+		packet->payload[packet->pos+2] = 0;
+	}
 
 	return packet__queue(context, packet);
 }
