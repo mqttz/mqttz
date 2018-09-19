@@ -8,6 +8,8 @@ Broker:
   Closes #948.
 - Fix for bridge connections when using WITH_ADNS=yes.
 - Fix round_robin false behaviour. Closes #481.
+- Fix segfault on HUP when bridges and security options are configured.
+  Closes #965.
 
 Library:
 - Fix situation where username and password is used with SOCKS5 proxy. Closes

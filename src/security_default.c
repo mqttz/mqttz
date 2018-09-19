@@ -786,6 +786,7 @@ int mosquitto_unpwd_check_default(struct mosquitto_db *db, struct mosquitto *con
 	if(!db) return MOSQ_ERR_INVAL;
 
 	if(db->config->per_listener_settings){
+		if(context->bridge) return MOSQ_ERR_SUCCESS;
 		if(!context->listener) return MOSQ_ERR_INVAL;
 		if(!context->listener->unpwd) return MOSQ_ERR_PLUGIN_DEFER;
 		unpwd_ref = context->listener->unpwd;
@@ -867,7 +868,12 @@ int mosquitto_security_apply_default(struct mosquitto_db *db)
 	HASH_ITER(hh_id, db->contexts_by_id, context, ctxt_tmp){
 		/* Check for anonymous clients when allow_anonymous is false */
 		if(db->config->per_listener_settings){
-			allow_anonymous = context->listener->security_options.allow_anonymous;
+			if(context->listener){
+				allow_anonymous = context->listener->security_options.allow_anonymous;
+			}else{
+				/* Client not currently connected, so defer judgement until it does connect */
+				allow_anonymous = true;
+			}
 		}else{
 			allow_anonymous = db->config->security_options.allow_anonymous;
 		}
