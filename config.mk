@@ -102,7 +102,7 @@ WITH_BUNDLED_DEPS:=yes
 
 # Also bump lib/mosquitto.h, CMakeLists.txt,
 # installer/mosquitto.nsi, installer/mosquitto64.nsi
-VERSION=1.5.1
+VERSION=1.5.2
 
 # Client library SO version. Bump if incompatible API/ABI changes are made.
 SOVERSION=1
