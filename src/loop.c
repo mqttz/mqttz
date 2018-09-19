@@ -330,10 +330,10 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 				}else{
 					if((context->bridge->start_type == bst_lazy && context->bridge->lazy_reconnect)
 							|| (context->bridge->start_type == bst_automatic && now > context->bridge->restart_t)){
-						context->bridge->restart_t = 0;
+
 #if defined(__GLIBC__) && defined(WITH_ADNS)
 						if(context->adns){
-							/* Waiting on DNS lookup */
+							/* Connection attempted, waiting on DNS lookup */
 							rc = gai_error(context->adns);
 							if(rc == EAI_INPROGRESS){
 								/* Just keep on waiting */
@@ -363,11 +363,14 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 									context->pollfd_index = pollfd_index;
 									pollfd_index++;
 #endif
+								}else if(rc == MOSQ_ERR_CONN_PENDING){
+									context->bridge->restart_t = 0;
 								}else{
 									context->bridge->cur_address++;
 									if(context->bridge->cur_address == context->bridge->address_count){
 										context->bridge->cur_address = 0;
 									}
+									context->bridge->restart_t = 0;
 								}
 							}else{
 								/* Need to retry */
@@ -376,6 +379,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 								}
 								mosquitto__free(context->adns);
 								context->adns = NULL;
+								context->bridge->restart_t = 0;
 							}
 						}else{
 							rc = bridge__connect_step1(db, context);
@@ -384,6 +388,9 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 								if(context->bridge->cur_address == context->bridge->address_count){
 									context->bridge->cur_address = 0;
 								}
+							}else{
+								/* Short wait for ADNS lookup */
+								context->bridge->restart_t = 1;
 							}
 						}
 #else
@@ -710,6 +717,12 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 				if(!getsockopt(context->sock, SOL_SOCKET, SO_ERROR, (char *)&err, &len)){
 					if(err == 0){
 						context->state = mosq_cs_new;
+#ifdef WITH_ADNS
+						if(context->bridge){
+							bridge__connect_step3(db, context);
+							continue;
+						}
+#endif
 					}
 				}else{
 					do_disconnect(db, context);

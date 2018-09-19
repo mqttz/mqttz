@@ -597,6 +597,7 @@ int bridge__new(struct mosquitto_db *db, struct mosquitto__bridge *bridge);
 int bridge__connect(struct mosquitto_db *db, struct mosquitto *context);
 int bridge__connect_step1(struct mosquitto_db *db, struct mosquitto *context);
 int bridge__connect_step2(struct mosquitto_db *db, struct mosquitto *context);
+int bridge__connect_step3(struct mosquitto_db *db, struct mosquitto *context);
 void bridge__packet_cleanup(struct mosquitto *context);
 #endif
 

@@ -6,6 +6,7 @@ Broker:
 - Fix incorrect call to setsockopt() for TCP_NODELAY. Closes #941.
 - Fix excessive CPU usage when the number of sockets exceeds the system limit.
   Closes #948.
+- Fix for bridge connections when using WITH_ADNS=yes.
 
 Library:
 - Fix situation where username and password is used with SOCKS5 proxy. Closes
