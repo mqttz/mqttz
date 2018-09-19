@@ -249,6 +249,10 @@ int bridge__connect_step3(struct mosquitto_db *db, struct mosquitto *context)
 		return rc;
 	}
 
+	if(context->bridge->round_robin == false && context->bridge->cur_address != 0){
+		context->bridge->primary_retry = mosquitto_time() + 5;
+	}
+
 	rc = send__connect(context, context->keepalive, context->clean_session);
 	if(rc == MOSQ_ERR_SUCCESS){
 		return MOSQ_ERR_SUCCESS;
@@ -270,7 +274,7 @@ int bridge__connect_step3(struct mosquitto_db *db, struct mosquitto *context)
 
 int bridge__connect(struct mosquitto_db *db, struct mosquitto *context)
 {
-	int rc;
+	int rc, rc2;
 	int i;
 	char *notification_topic;
 	int notification_topic_len;
@@ -348,7 +352,7 @@ int bridge__connect(struct mosquitto_db *db, struct mosquitto *context)
 
 	log__printf(NULL, MOSQ_LOG_NOTICE, "Connecting bridge %s (%s:%d)", context->bridge->name, context->bridge->addresses[context->bridge->cur_address].address, context->bridge->addresses[context->bridge->cur_address].port);
 	rc = net__socket_connect(context, context->bridge->addresses[context->bridge->cur_address].address, context->bridge->addresses[context->bridge->cur_address].port, NULL, false);
-	if(rc > 0 ){
+	if(rc > 0){
 		if(rc == MOSQ_ERR_TLS){
 			net__socket_close(db, context);
 			return rc; /* Error already printed */
@@ -359,28 +363,27 @@ int bridge__connect(struct mosquitto_db *db, struct mosquitto *context)
 		}
 
 		return rc;
+	}else if(rc == MOSQ_ERR_CONN_PENDING){
+		context->state = mosq_cs_connect_pending;
 	}
 
 	HASH_ADD(hh_sock, db->contexts_by_sock, sock, sizeof(context->sock), context);
 
-	if(rc == MOSQ_ERR_CONN_PENDING){
-		context->state = mosq_cs_connect_pending;
-	}
-	rc = send__connect(context, context->keepalive, context->clean_session);
-	if(rc == MOSQ_ERR_SUCCESS){
-		return MOSQ_ERR_SUCCESS;
-	}else if(rc == MOSQ_ERR_ERRNO && errno == ENOTCONN){
+	rc2 = send__connect(context, context->keepalive, context->clean_session);
+	if(rc2 == MOSQ_ERR_SUCCESS){
+		return rc;
+	}else if(rc2 == MOSQ_ERR_ERRNO && errno == ENOTCONN){
 		return MOSQ_ERR_SUCCESS;
 	}else{
-		if(rc == MOSQ_ERR_TLS){
-			return rc; /* Error already printed */
-		}else if(rc == MOSQ_ERR_ERRNO){
+		if(rc2 == MOSQ_ERR_TLS){
+			return rc2; /* Error already printed */
+		}else if(rc2 == MOSQ_ERR_ERRNO){
 			log__printf(NULL, MOSQ_LOG_ERR, "Error creating bridge: %s.", strerror(errno));
-		}else if(rc == MOSQ_ERR_EAI){
+		}else if(rc2 == MOSQ_ERR_EAI){
 			log__printf(NULL, MOSQ_LOG_ERR, "Error creating bridge: %s.", gai_strerror(errno));
 		}
 		net__socket_close(db, context);
-		return rc;
+		return rc2;
 	}
 }
 #endif

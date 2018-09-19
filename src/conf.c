@@ -1157,6 +1157,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						cur_bridge->try_private = true;
 						cur_bridge->attempt_unsubscribe = true;
 						cur_bridge->protocol_version = mosq_p_mqtt311;
+						cur_bridge->primary_retry_sock = INVALID_SOCKET;
 					}else{
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty connection value in configuration.");
 						return MOSQ_ERR_INVAL;

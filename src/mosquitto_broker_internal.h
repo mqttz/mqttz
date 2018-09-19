@@ -428,6 +428,7 @@ struct mosquitto__bridge{
 	int cur_address;
 	int address_count;
 	time_t primary_retry;
+	mosq_sock_t primary_retry_sock;
 	bool round_robin;
 	bool try_private;
 	bool try_private_accepted;

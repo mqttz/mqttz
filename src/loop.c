@@ -125,11 +125,12 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 	int pollfd_max;
 #endif
 #ifdef WITH_BRIDGE
-	mosq_sock_t bridge_sock;
 	int rc;
 #endif
 	time_t expiration_check_time = 0;
 	char *id;
+	int err;
+	socklen_t len;
 
 #ifndef WIN32
 	sigemptyset(&sigblock);
@@ -231,12 +232,40 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 					mosquitto__check_keepalive(db, context);
 					if(context->bridge->round_robin == false
 							&& context->bridge->cur_address != 0
+							&& context->bridge->primary_retry
 							&& now > context->bridge->primary_retry){
 
-						if(net__try_connect(context, context->bridge->addresses[0].address, context->bridge->addresses[0].port, &bridge_sock, NULL, false) <= 0){
-							COMPAT_CLOSE(bridge_sock);
-							net__socket_close(db, context);
-							context->bridge->cur_address = context->bridge->address_count-1;
+						if(context->bridge->primary_retry_sock == INVALID_SOCKET){
+							rc = net__try_connect(context, context->bridge->addresses[0].address,
+									context->bridge->addresses[0].port,
+									&context->bridge->primary_retry_sock, NULL, false);
+
+							if(rc == 0){
+								COMPAT_CLOSE(context->bridge->primary_retry_sock);
+								context->bridge->primary_retry_sock = INVALID_SOCKET;
+								context->bridge->primary_retry = 0;
+								net__socket_close(db, context);
+								context->bridge->cur_address = 0;
+							}
+						}else{
+							len = sizeof(int);
+							if(!getsockopt(context->bridge->primary_retry_sock, SOL_SOCKET, SO_ERROR, (char *)&err, &len)){
+								if(err == 0){
+									COMPAT_CLOSE(context->bridge->primary_retry_sock);
+									context->bridge->primary_retry_sock = INVALID_SOCKET;
+									context->bridge->primary_retry = 0;
+									net__socket_close(db, context);
+									context->bridge->cur_address = context->bridge->address_count-1;
+								}else{
+									COMPAT_CLOSE(context->bridge->primary_retry_sock);
+									context->bridge->primary_retry_sock = INVALID_SOCKET;
+									context->bridge->primary_retry = now+5;
+								}
+							}else{
+								COMPAT_CLOSE(context->bridge->primary_retry_sock);
+								context->bridge->primary_retry_sock = INVALID_SOCKET;
+								context->bridge->primary_retry = now+5;
+							}
 						}
 					}
 				}
@@ -324,9 +353,6 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 					if(context->bridge->cur_address == context->bridge->address_count){
 						context->bridge->cur_address = 0;
 					}
-					if(context->bridge->round_robin == false && context->bridge->cur_address != 0){
-						context->bridge->primary_retry = now + 5;
-					}
 				}else{
 					if((context->bridge->start_type == bst_lazy && context->bridge->lazy_reconnect)
 							|| (context->bridge->start_type == bst_automatic && now > context->bridge->restart_t)){
@@ -397,6 +423,10 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 						{
 							rc = bridge__connect(db, context);
 							if(rc == MOSQ_ERR_SUCCESS){
+								context->bridge->restart_t = 0;
+								if(context->bridge->round_robin == false && context->bridge->cur_address != 0){
+									context->bridge->primary_retry = now + 5;
+								}
 #ifdef WITH_EPOLL
 								ev.data.fd = context->sock;
 								ev.events = EPOLLIN;
