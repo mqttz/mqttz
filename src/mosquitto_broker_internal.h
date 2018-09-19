@@ -515,6 +515,7 @@ int send__suback(struct mosquitto *context, uint16_t mid, uint32_t payloadlen, c
  * Network functions
  * ============================================================ */
 void net__broker_init(void);
+void net__broker_cleanup(void);
 int net__socket_accept(struct mosquitto_db *db, mosq_sock_t listensock);
 int net__socket_listen(struct mosquitto__listener *listener);
 int net__socket_get_address(mosq_sock_t sock, char *buf, int len);

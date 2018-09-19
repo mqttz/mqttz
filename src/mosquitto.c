@@ -432,7 +432,7 @@ int main(int argc, char *argv[])
 	}
 
 	config__cleanup(int_db.config);
-	net__cleanup();
+	net__broker_cleanup();
 
 	return rc;
 }

@@ -69,6 +69,16 @@ void net__broker_init(void)
 }
 
 
+void net__broker_cleanup(void)
+{
+	if(spare_sock != INVALID_SOCKET){
+		COMPAT_CLOSE(spare_sock);
+		spare_sock = INVALID_SOCKET;
+	}
+	net__cleanup();
+}
+
+
 static void net__print_error(int log, const char *format_str)
 {
 #ifdef WIN32
