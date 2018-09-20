@@ -1,10 +1,19 @@
 #ifndef CONFIG_H
 /* ============================================================
- * Control compile time options.
- * ============================================================
- *
- * Compile time options have moved to config.mk.
- */
+ * Platform options
+ * ============================================================ */
+
+#ifdef __APPLE__
+#  define __DARWIN_C_SOURCE
+#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__SYMBIAN32__) || defined(__QNX__)
+#  define _XOPEN_SOURCE 700
+#  define __BSD_VISIBLE 1
+#  define HAVE_NETINET_IN_H
+#else
+#  define _XOPEN_SOURCE 700
+#  define _DEFAULT_SOURCE 1
+#  define _POSIX_C_SOURCE 200809L
+#endif
 
 
 /* ============================================================
@@ -26,17 +35,5 @@
 
 #define uthash_malloc(sz) mosquitto__malloc(sz)
 #define uthash_free(ptr,sz) mosquitto__free(ptr)
-
-#ifdef __APPLE__
-#  define __DARWIN_C_SOURCE
-#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__SYMBIAN32__) || defined(__QNX__)
-#  define _XOPEN_SOURCE 700
-#  define __BSD_VISIBLE 1
-#  define HAVE_NETINET_IN_H
-#else
-#  define _XOPEN_SOURCE 700
-#  define _DEFAULT_SOURCE 1
-#  define _POSIX_C_SOURCE 200809L
-#endif
 
 #endif

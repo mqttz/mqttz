@@ -275,9 +275,11 @@ ifeq ($(WITH_WEBSOCKETS),static)
 endif
 
 INSTALL?=install
-prefix=/usr/local
-mandir=${prefix}/share/man
-localedir=${prefix}/share/locale
+prefix?=/usr/local
+incdir?=${prefix}/include
+libdir?=${prefix}/lib${LIB_SUFFIX}
+localedir?=${prefix}/share/locale
+mandir?=${prefix}/share/man
 STRIP?=strip
 
 ifeq ($(WITH_STRIP),yes)

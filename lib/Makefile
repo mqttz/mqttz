@@ -48,25 +48,24 @@ all : ${ALL_DEPS}
 	$(MAKE) -C cpp
 
 install : all
-	$(INSTALL) -d "${DESTDIR}$(prefix)/lib${LIB_SUFFIX}/"
-	$(INSTALL) ${STRIP_OPTS} libmosquitto.so.${SOVERSION} "${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.so.${SOVERSION}"
-	ln -sf libmosquitto.so.${SOVERSION} "${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.so"
+	$(INSTALL) -d "${DESTDIR}${libdir}/"
+	$(INSTALL) ${STRIP_OPTS} libmosquitto.so.${SOVERSION} "${DESTDIR}${libdir}/libmosquitto.so.${SOVERSION}"
+	ln -sf libmosquitto.so.${SOVERSION} "${DESTDIR}${libdir}/libmosquitto.so"
 ifeq ($(WITH_STATIC_LIBRARIES),yes)
-	$(INSTALL) libmosquitto.a "${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.a"
-	${CROSS_COMPILE}${STRIP} -g --strip-unneeded "${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.a"
+	$(INSTALL) ${STRIP_OPTS} libmosquitto.a "${DESTDIR}${libdir}/libmosquitto.a"
 endif
-	$(INSTALL) -d "${DESTDIR}${prefix}/include/"
-	$(INSTALL) mosquitto.h "${DESTDIR}${prefix}/include/mosquitto.h"
-	$(INSTALL) -d "${DESTDIR}$(prefix)/lib${LIB_SUFFIX}/pkgconfig"
-	$(INSTALL) -m644 ../libmosquitto.pc.in "${DESTDIR}$(prefix)/lib${LIB_SUFFIX}/pkgconfig/libmosquitto.pc"
-	sed -i -e "s#@CMAKE_INSTALL_PREFIX@#$(prefix)#" -e "s#@VERSION@#$(VERSION)#" "${DESTDIR}$(prefix)/lib${LIB_SUFFIX}/pkgconfig/libmosquitto.pc"
+	$(INSTALL) -d "${DESTDIR}${incdir}/"
+	$(INSTALL) mosquitto.h "${DESTDIR}${incdir}/mosquitto.h"
+	$(INSTALL) -d "${DESTDIR}${libdir}/pkgconfig"
+	$(INSTALL) -m644 ../libmosquitto.pc.in "${DESTDIR}${libdir}/pkgconfig/libmosquitto.pc"
+	sed -i -e "s#@CMAKE_INSTALL_PREFIX@#${prefix}#" -e "s#@VERSION@#${VERSION}#" "${DESTDIR}${libdir}/pkgconfig/libmosquitto.pc"
 	$(MAKE) -C cpp install
 
 uninstall :
-	-rm -f "${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.so.${SOVERSION}"
-	-rm -f "${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.so"
-	-rm -f "${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.a"
-	-rm -f "${DESTDIR}${prefix}/include/mosquitto.h"
+	-rm -f "${DESTDIR}${libdir}/libmosquitto.so.${SOVERSION}"
+	-rm -f "${DESTDIR}${libdir}/libmosquitto.so"
+	-rm -f "${DESTDIR}${libdir}/libmosquitto.a"
+	-rm -f "${DESTDIR}${incdir}/mosquitto.h"
 
 reallyclean : clean
 
