@@ -30,7 +30,7 @@ apps:
 parts:
   script:
     plugin: dump
-    source: snap/
+    source: snap/local/
     prime:
       - default_config.conf
       - launcher.sh
