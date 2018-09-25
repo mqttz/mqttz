@@ -94,6 +94,12 @@ int drop_privileges(struct mosquitto__config *config, bool temporary)
 	char err[256];
 	int rc;
 
+	const char *snap = getenv("SNAP_NAME");
+	if(snap && !strcmp(snap, "mosquitto")){
+		/* Don't attempt to drop privileges if running as a snap */
+		return MOSQ_ERR_SUCCESS;
+	}
+
 	if(geteuid() == 0){
 		if(config->user && strcmp(config->user, "root")){
 			pwd = getpwnam(config->user);

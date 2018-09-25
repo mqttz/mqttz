@@ -19,7 +19,11 @@ Contributors:
 #include <errno.h>
 #include <string.h>
 #include <limits.h>
-#include <arpa/inet.h>
+#ifdef WIN32
+#  include <ws2tcpip.h>
+#else
+#  include <arpa/inet.h>
+#endif
 
 #include "mosquitto_internal.h"
 #include "memory_mosq.h"

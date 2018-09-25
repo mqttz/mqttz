@@ -136,7 +136,7 @@ int net__socket_accept(struct mosquitto_db *db, mosq_sock_t listensock)
 				COMPAT_CLOSE(new_sock);
 			}
 			spare_sock = socket(AF_INET, SOCK_STREAM, 0);
-			log__printf(NULL, MOSQ_LOG_NOTICE,
+			log__printf(NULL, MOSQ_LOG_WARNING,
 					"Unable to accept new connection, system socket count has been exceeded. Try increasing \"ulimit -n\" or equivalent.");
 		}
 		return -1;
