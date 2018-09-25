@@ -1208,8 +1208,8 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						snprintf(dirpath, MAX_PATH, "%s\\*.conf", token);
 						fh = FindFirstFile(dirpath, &find_data);
 						if(fh == INVALID_HANDLE_VALUE){
-							log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open include_dir '%s'.", token);
-							return 1;
+							/* No files found */
+							continue;
 						}
 
 						do{

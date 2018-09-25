@@ -9,6 +9,8 @@ Broker:
 - Documentation fixes. Closes #520, #600.
 - Fix duplicate clients being added to by_id hash before the old client was
   removed. Closes #645.
+- Fix Windows version not starting if include_dir did not contain any files.
+  Closes #566.
 
 Build:
 - Various fixes to ease building.
