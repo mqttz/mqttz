@@ -6,6 +6,7 @@ Broker:
 - Remove requirement to use `user root` in snap package config files.
 - Fix retained messages not sent by bridges on outgoing topics at the first
   connection. Closes #701.
+- Minor documentation fixes. Closes #520.
 
 Build:
 - Various fixes to ease building.

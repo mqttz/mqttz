@@ -763,7 +763,7 @@
 							client connected to a listener with mount point
 							<replaceable>example</replaceable> can only see
 							messages that are published in the topic hierarchy
-							<replaceable>example</replaceable> and above.</para>
+							<replaceable>example</replaceable> and below.</para>
 						<para>Not reloaded on reload signal.</para>
 					</listitem>
 				</varlistentry>
