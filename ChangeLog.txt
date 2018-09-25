@@ -1,5 +1,10 @@
-1.5.3 - 201810xx
+1.5.3 - 20180925
 ================
+
+Security:
+- Fix CVE-2018-12543. If a message is sent to Mosquitto with a topic that
+  begins with $, but is not $SYS, then an assert that should be unreachable is
+  triggered and Mosquitto will exit.
 
 Broker:
 - Elevate log level to warning for situation when socket limit is hit.
