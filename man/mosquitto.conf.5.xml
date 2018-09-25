@@ -196,6 +196,17 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>allow_zero_length_clientid</option> [ true | false ]</term>
+				<listitem>
+					<para>MQTT 3.1.1 allows clients to connect with a zero
+						length client id and have the broker generate a client
+						id for them. Use this option to allow/disallow this
+						behaviour. Defaults to true.</para>
+					<para>See also the <option>auto_id_prefix</option> option.</para>
+					<para>Reloaded on reload signal.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>auth_opt_*</option> <replaceable>value</replaceable></term>
 				<listitem>
 					<para>Options to be passed to the auth plugin. See the
@@ -242,6 +253,17 @@
 						to <replaceable>false</replaceable>.</para>
 					<para>Defaults to <replaceable>true</replaceable>.</para>
 					<para>Not currently reloaded on reload signal.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>auto_id_prefix</option> <replaceable>prefix</replaceable></term>
+				<listitem>
+					<para>If <option>allow_zero_length_clientid</option> is
+						<replaceable>true</replaceable>, this option allows you
+						to set a string that will be prefixed to the
+						automatically generated client ids to aid visibility in
+						logs. Defaults to no prefix.</para>
+					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
