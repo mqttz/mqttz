@@ -161,6 +161,10 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 		mosquitto__free(context->id);
 		context->id = NULL;
 	}
+	if(context->old_id){
+		mosquitto__free(context->old_id);
+		context->old_id = NULL;
+	}
 	packet__cleanup(&(context->in_packet));
 	if(context->current_out_packet){
 		packet__cleanup(context->current_out_packet);

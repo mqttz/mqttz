@@ -7,6 +7,8 @@ Broker:
 - Fix retained messages not sent by bridges on outgoing topics at the first
   connection. Closes #701.
 - Minor documentation fixes. Closes #520.
+- Fix duplicate clients being added to by_id hash before the old client was
+  removed. Closes #645.
 
 Build:
 - Various fixes to ease building.

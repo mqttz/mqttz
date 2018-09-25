@@ -638,12 +638,17 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 			context->sock = INVALID_SOCKET;
 			context->pollfd_index = -1;
 		}
+		HASH_DELETE(hh_id, db->contexts_by_id, context);
+		context->old_id = context->id;
+		context->id = NULL;
 	}else
 #endif
 	{
 		if(db->config->connection_messages == true){
 			if(context->id){
 				id = context->id;
+			}else if(context->old_id){
+				id = context->old_id;
 			}else{
 				id = "<unknown>";
 			}
