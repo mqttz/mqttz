@@ -1,9 +1,14 @@
 1.6 - 2018xxxx
 ==============
 
-Library features:
+Client library features:
 - Add mosquitto_subscribe_multiple() for sending subscriptions to multiple
   topics in one command.
+
+Client features:
+- Add -E to mosquitto_sub, which causes it to exit immediately after having
+  its subscriptions acknowledged. Use with -c to create a durable client
+  session without requiring a message to be received.
 
 
 1.5 - 20180502

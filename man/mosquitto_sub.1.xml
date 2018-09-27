@@ -36,6 +36,7 @@
 			<arg><option>-c</option></arg>
 			<arg><option>-C</option> <replaceable>msg count</replaceable></arg>
 			<arg><option>-d</option></arg>
+			<arg><option>-E</option></arg>
 			<arg><option>-i</option> <replaceable>client_id</replaceable></arg>
 			<arg><option>-I</option> <replaceable>client id prefix</replaceable></arg>
 			<arg><option>-k</option> <replaceable>keepalive time</replaceable></arg>
@@ -207,6 +208,18 @@
 				<term><option>--debug</option></term>
 				<listitem>
 					<para>Enable debug messages.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-E</option></term>
+				<listitem>
+					<para>If this option is given,
+						<command>mosquitto_sub</command> will exit immediately
+						that all of its subscriptions have been acknowledged by
+						the broker. In conjunction with <option>-c</option>
+						this allows a durable client session to be initialised
+						on the broker for future use without requiring any
+						messages to be received.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
