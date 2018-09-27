@@ -1,3 +1,11 @@
+1.6 - 2018xxxx
+==============
+
+Library features:
+- Add mosquitto_subscribe_multiple() for sending subscriptions to multiple
+  topics in one command.
+
+
 1.5 - 20180502
 ==============
 
