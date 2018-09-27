@@ -75,7 +75,7 @@ int handle__connack(struct mosquitto_db *db, struct mosquitto *context)
 				}
 				for(i=0; i<context->bridge->topic_count; i++){
 					if(context->bridge->topics[i].direction == bd_in || context->bridge->topics[i].direction == bd_both){
-						if(send__subscribe(context, NULL, context->bridge->topics[i].remote_topic, context->bridge->topics[i].qos)){
+						if(send__subscribe(context, NULL, 1, &context->bridge->topics[i].remote_topic, &context->bridge->topics[i].qos)){
 							return 1;
 						}
 					}else{
