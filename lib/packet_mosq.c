@@ -291,7 +291,7 @@ int packet__read_varint(struct mosquitto__packet *packet, uint32_t *word)
 	for(i=0; i<4; i++){
 		if(packet->pos < packet->remaining_length){
 			byte = packet->payload[packet->pos];
-			word += (byte & 127) * remaining_mult;
+			*word += (byte & 127) * remaining_mult;
 			remaining_mult *= 128;
 			packet->pos++;
 			if((byte & 128) == 0){
