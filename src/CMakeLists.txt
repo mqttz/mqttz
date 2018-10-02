@@ -29,6 +29,7 @@ set (MOSQ_SRCS
 	../lib/packet_mosq.c ../lib/packet_mosq.h
 	persist.c persist.h
 	plugin.c
+	../lib/property_mosq.c ../lib/property_mosq.h
 	read_handle.c
 	../lib/read_handle.h
 	subs.c

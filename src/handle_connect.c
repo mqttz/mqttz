@@ -23,6 +23,7 @@ Contributors:
 #include "mqtt_protocol.h"
 #include "memory_mosq.h"
 #include "packet_mosq.h"
+#include "property_mosq.h"
 #include "send_mosq.h"
 #include "sys_tree.h"
 #include "time_mosq.h"
@@ -240,17 +241,8 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	if(protocol_version == PROTOCOL_VERSION_v5){
-		/* FIXME */
-		uint32_t property_len;
-		if(packet__read_varint(&context->in_packet, &property_len)){
-			rc = 1;
-			goto handle_connect_error;
-		}
-		if(property_len != 0){
-			/* FIXME Temporary fudge because of no property support */
-			rc = 1;
-			goto handle_connect_error;
-		}
+		rc = property__read_all(&context->in_packet);
+		if(rc) return rc;
 	}
 
 	if(packet__read_string(&context->in_packet, &client_id, &slen)){

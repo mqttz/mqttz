@@ -280,16 +280,18 @@ void packet__write_uint32(struct mosquitto__packet *packet, uint32_t word)
 }
 
 
-int packet__read_varint(struct mosquitto__packet *packet, uint32_t *word)
+int packet__read_varint(struct mosquitto__packet *packet, int32_t *word, uint8_t *bytes)
 {
 	int i;
 	int remaining_mult = 1;
 	uint8_t byte;
 
 	*word = 0;
+	if(bytes) (*bytes) = 0;
 
 	for(i=0; i<4; i++){
 		if(packet->pos < packet->remaining_length){
+			if(bytes) (*bytes)++;
 			byte = packet->payload[packet->pos];
 			*word += (byte & 127) * remaining_mult;
 			remaining_mult *= 128;

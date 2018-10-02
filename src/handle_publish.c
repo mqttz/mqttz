@@ -24,6 +24,7 @@ Contributors:
 #include "mqtt_protocol.h"
 #include "memory_mosq.h"
 #include "packet_mosq.h"
+#include "property_mosq.h"
 #include "read_handle.h"
 #include "send_mosq.h"
 #include "sys_tree.h"
@@ -133,6 +134,11 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 			mosquitto__free(topic);
 			return 1;
 		}
+	}
+
+	if(context->protocol == mosq_p_mqtt5){
+		rc = property__read_all(&context->in_packet);
+		if(rc) return rc;
 	}
 
 	payloadlen = context->in_packet.remaining_length - context->in_packet.pos;
