@@ -26,6 +26,9 @@ apps:
     command: usr/bin/mosquitto_sub
     plugs: [network]
 
+  passwd:
+    command: usr/bin/mosquitto_passwd
+
 
 parts:
   script:
