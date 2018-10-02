@@ -64,6 +64,7 @@ extern SERVICE_STATUS_HANDLE service_handle;
 
 static int conf__parse_bool(char **token, const char *name, bool *value, char *saveptr);
 static int conf__parse_int(char **token, const char *name, int *value, char *saveptr);
+static int conf__parse_ssize_t(char **token, const char *name, ssize_t *value, char *saveptr);
 static int conf__parse_string(char **token, const char *name, char **value, char *saveptr);
 static int config__read_file(struct mosquitto__config *config, bool reload, const char *file, struct config_recurse *config_tmp, int level, int *lineno);
 static int config__check(struct mosquitto__config *config);
@@ -114,8 +115,7 @@ static int conf__attempt_resolve(const char *host, const char *text, int log, co
 	int rc;
 
 	memset(&gai_hints, 0, sizeof(struct addrinfo));
-	gai_hints.ai_family = PF_UNSPEC;
-	gai_hints.ai_flags = AI_ADDRCONFIG;
+	gai_hints.ai_family = AF_UNSPEC;
 	gai_hints.ai_socktype = SOCK_STREAM;
 	gai_res = NULL;
 	rc = getaddrinfo(host, NULL, &gai_hints, &gai_res);
@@ -715,6 +715,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 	int tmp_int;
 	char *saveptr = NULL;
 #ifdef WITH_BRIDGE
+	char *tmp_char;
 	struct mosquitto__bridge *cur_bridge = NULL;
 	struct mosquitto__bridge_topic *cur_topic;
 #endif
@@ -733,10 +734,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 #endif
 	int len;
 	struct mosquitto__listener *cur_listener = &config->default_listener;
-#ifdef WITH_BRIDGE
-	char *address;
 	int i;
-#endif
 	int lineno_ext;
 	struct mosquitto__security_options *cur_security_options = NULL;
 
@@ -774,22 +772,33 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						cur_bridge->addresses[cur_bridge->address_count-1].address = token;
 					}
 					for(i=0; i<cur_bridge->address_count; i++){
-						address = strtok_r(cur_bridge->addresses[i].address, ":", &saveptr);
-						if(address){
-							token = strtok_r(NULL, ":", &saveptr);
-							if(token){
-								tmp_int = atoi(token);
-								if(tmp_int < 1 || tmp_int > 65535){
-									log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid port value (%d).", tmp_int);
-									return MOSQ_ERR_INVAL;
-								}
-								cur_bridge->addresses[i].port = tmp_int;
-							}else{
-								cur_bridge->addresses[i].port = 1883;
+						/* cur_bridge->addresses[i].address is now
+						 * "address[:port]". If address is an IPv6 address,
+						 * then port is required. We must check for the :
+						 * backwards. */
+						tmp_char = strrchr(cur_bridge->addresses[i].address, ':');
+						if(tmp_char){
+							/* Remove ':', so cur_bridge->addresses[i].address
+							 * now just looks like the address. */
+							tmp_char[0] = '\0';
+
+							/* The remainder of the string */
+							tmp_int = atoi(&tmp_char[1]);
+							if(tmp_int < 1 || tmp_int > 65535){
+								log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid port value (%d).", tmp_int);
+								return MOSQ_ERR_INVAL;
 							}
-							cur_bridge->addresses[i].address = mosquitto__strdup(address);
-							conf__attempt_resolve(address, "bridge address", MOSQ_LOG_WARNING, "Warning");
+							cur_bridge->addresses[i].port = tmp_int;
+						}else{
+							cur_bridge->addresses[i].port = 1883;
 						}
+						/* This looks a bit weird, but isn't. Before this
+						 * call, cur_bridge->addresses[i].address points
+						 * to the tokenised part of the line, it will be
+						 * reused in a future parse of a config line so we
+						 * must duplicate it. */
+						cur_bridge->addresses[i].address = mosquitto__strdup(cur_bridge->addresses[i].address);
+						conf__attempt_resolve(cur_bridge->addresses[i].address, "bridge address", MOSQ_LOG_WARNING, "Warning");
 					}
 					if(cur_bridge->address_count == 0){
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty address value in configuration.");
@@ -1148,6 +1157,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						cur_bridge->try_private = true;
 						cur_bridge->attempt_unsubscribe = true;
 						cur_bridge->protocol_version = mosq_p_mqtt311;
+						cur_bridge->primary_retry_sock = INVALID_SOCKET;
 					}else{
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty connection value in configuration.");
 						return MOSQ_ERR_INVAL;
@@ -1198,8 +1208,8 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						snprintf(dirpath, MAX_PATH, "%s\\*.conf", token);
 						fh = FindFirstFile(dirpath, &find_data);
 						if(fh == INVALID_HANDLE_VALUE){
-							log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open include_dir '%s'.", token);
-							return 1;
+							/* No files found */
+							continue;
 						}
 
 						do{
@@ -1519,7 +1529,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 					}
 				}else if(!strcmp(token, "memory_limit")){
 					ssize_t lim;
-					if(conf__parse_int(&token, "memory_limit", (int *)&lim, saveptr)) return MOSQ_ERR_INVAL;
+					if(conf__parse_ssize_t(&token, "memory_limit", &lim, saveptr)) return MOSQ_ERR_INVAL;
 					if(lim < 0){
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid memory_limit value (%ld).", lim);
 						return MOSQ_ERR_INVAL;
@@ -2130,6 +2140,19 @@ static int conf__parse_int(char **token, const char *name, int *value, char *sav
 	*token = strtok_r(NULL, " ", &saveptr);
 	if(*token){
 		*value = atoi(*token);
+	}else{
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty %s value in configuration.", name);
+		return MOSQ_ERR_INVAL;
+	}
+
+	return MOSQ_ERR_SUCCESS;
+}
+
+static int conf__parse_ssize_t(char **token, const char *name, ssize_t *value, char *saveptr)
+{
+	*token = strtok_r(NULL, " ", &saveptr);
+	if(*token){
+		*value = atol(*token);
 	}else{
 		log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty %s value in configuration.", name);
 		return MOSQ_ERR_INVAL;

@@ -1,70 +1,63 @@
 Mosquitto for Windows
 =====================
 
-Mosquitto for Windows comes in two flavours, win32 or Cygwin. The win32 version is only
-supported on Windows Vista or later.
+Mosquitto for Windows comes in 32-bit and 64-bit flavours.
 
-In all cases, the dependencies are not provided in this installer and must be installed
-separately in the case that they are not already available.
+In both cases, the dependencies are not provided in this installer and must be
+installed separately in the case that they are not already available.
 
 
 Capabilities
 ------------
 
 Some versions of Windows have limitations on the number of concurrent
-connections. Non-server versions have been reported to be limited to
-approximately 1024 connections.
+connections, set at approximately 2048 connections depending on the version of
+Windows you are using.
 
 
 Websockets
 ----------
 
-The broker executables provided in the installers do not have Websockets support enabled.
-If you wish to have a version of the broker with Websockets support, you will need to compile
-libwebsockets version v1.7 onwards because no Windows binaries are provided.
+The broker executables provided in the installers have Websockets support
+through a statically compiled version of libwebsockets and is being distributed
+under the Static Linking Exception (Section 2) of the License. As a result, the
+content is not subject to the LGPL 2.1.
 
 Please note that on Windows, libwebsockets limits connections to a maximum of 64 clients.
 
+Library Thread Support
+----------------------
 
-Dependencies - win32
---------------------
+libmosquitto on Windows is currently compiled without thread support, so
+neither of mosquitto_loop_start() nor "mosquitto_pub -l" are available.
+
+A better solution that the old pthreads-win32 is being looked into, so support
+will return in the future. If you need thread support, the code still supports
+it just fine. Support has been dropped to simplify installation.
+
+Dependencies
+------------
 
 * OpenSSL
     Link: http://slproweb.com/products/Win32OpenSSL.html
-    Install "Win32 OpenSSL <version>"
-    Required DLLs: libeay32.dll ssleay32.dll
-* pthreads
-    Link: ftp://sourceware.org/pub/pthreads-win32
-    Install "pthreads-w32-<version>-release.zip
-    Required DLLs: pthreadVC2.dll
+    Install "Win32 OpenSSL 1.1.0* Light" or "Win64 OpenSSL 1.1.0* Light"
+    Required DLLs: libssl-1_1.dll, libcrypto-1_1.dll or libssl-1_1-x64.dll, libcrypto-1_1-x64.dll
 
 Please ensure that the required DLLs are on the system path, or are in the same directory as
-the mosquitto executable.
-
-
-Dependencies - Cygwin
----------------------
-
-* OpenSSL
-    Link: http://slproweb.com/products/Win32OpenSSL.html
-    Install "Win32 OpenSSL <version>"
-* pthreads
-    Link: ftp://sourceware.org/pub/pthreads-win32
-    Install "pthreads-w32-<version>-release.zip
-* Cygwin
-    Link: https://www.cygwin.com/setup-x86.exe
-    Required packages: libgcc1, openssl, zlib0
-
+the mosquitto executable - usually C:\Program Files (x86)\mosquitto or C:\Program Files\mosquitto.
 
 Windows Service
 ---------------
 
-If all dependencies are installed prior to the installer being run, the broker can be
-installed as a Windows service.
-
-You can start/stop it from
- the control panel as well as running it as a normal
+If you wish, mosquitto can be installed as a Windows service so you can
+start/stop it from the control panel as well as running it as a normal
 executable.
 
-When running as a service, the configuration in mosquitto.conf in the
-installation directory is used so modify this to your needs.
+When running as a service, the configuration file used is mosquitto.conf in the
+directory that you installed to.
+
+If you want to install/uninstall mosquitto as a Windows service run from the
+command line as follows:
+
+C:\Program Files\mosquitto\mosquitto install
+C:\Program Files\mosquitto\mosquitto uninstall

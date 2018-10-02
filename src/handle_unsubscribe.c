@@ -14,10 +14,10 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
+#include "config.h"
+
 #include <stdio.h>
 #include <string.h>
-
-#include "config.h"
 
 #include "mosquitto_broker_internal.h"
 #include "memory_mosq.h"
@@ -91,6 +91,8 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 #ifdef WITH_PERSISTENCE
 	db->persistence_changes++;
 #endif
+
+	log__printf(NULL, MOSQ_LOG_DEBUG, "Sending UNSUBACK to %s", context->id);
 
 	return send__command_with_mid(context, UNSUBACK, mid, false);
 }

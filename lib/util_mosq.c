@@ -14,6 +14,8 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
+#include "config.h"
+
 #include <assert.h>
 #include <string.h>
 
@@ -96,7 +98,7 @@ void mosquitto__check_keepalive(struct mosquitto *mosq)
 			if(mosq->state == mosq_cs_disconnecting){
 				rc = MOSQ_ERR_SUCCESS;
 			}else{
-				rc = 1;
+				rc = MOSQ_ERR_KEEPALIVE;
 			}
 			pthread_mutex_unlock(&mosq->state_mutex);
 			pthread_mutex_lock(&mosq->callback_mutex);

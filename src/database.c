@@ -14,10 +14,10 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
+#include "config.h"
+
 #include <assert.h>
 #include <stdio.h>
-
-#include "config.h"
 
 #include "mosquitto_broker_internal.h"
 #include "memory_mosq.h"
@@ -121,10 +121,10 @@ int db__open(struct mosquitto__config *config, struct mosquitto_db *db)
 
 	db->subs = NULL;
 
-	subhier = sub__add_hier_entry(&db->subs, "", strlen(""));
+	subhier = sub__add_hier_entry(NULL, &db->subs, "", strlen(""));
 	if(!subhier) return MOSQ_ERR_NOMEM;
 
-	subhier = sub__add_hier_entry(&db->subs, "$SYS", strlen("$SYS"));
+	subhier = sub__add_hier_entry(NULL, &db->subs, "$SYS", strlen("$SYS"));
 	if(!subhier) return MOSQ_ERR_NOMEM;
 
 	db->unpwd = NULL;
@@ -665,6 +665,15 @@ int db__message_store_find(struct mosquitto *context, uint16_t mid, struct mosqu
 
 	*stored = NULL;
 	tail = context->inflight_msgs;
+	while(tail){
+		if(tail->store->source_mid == mid && tail->direction == mosq_md_in){
+			*stored = tail->store;
+			return MOSQ_ERR_SUCCESS;
+		}
+		tail = tail->next;
+	}
+
+	tail = context->queued_msgs;
 	while(tail){
 		if(tail->store->source_mid == mid && tail->direction == mosq_md_in){
 			*stored = tail->store;

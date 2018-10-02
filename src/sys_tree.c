@@ -16,10 +16,10 @@ Contributors:
 
 #ifdef WITH_SYS_TREE
 
+#include "config.h"
+
 #include <math.h>
 #include <stdio.h>
-
-#include "config.h"
 
 #include "mosquitto_broker_internal.h"
 #include "memory_mosq.h"

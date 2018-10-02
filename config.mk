@@ -28,7 +28,7 @@ WITH_TLS:=yes
 # This must be disabled if using openssl < 1.0.
 WITH_TLS_PSK:=yes
 
-# Comment out to disable client client threading support.
+# Comment out to disable client threading support.
 WITH_THREADING:=yes
 
 # Comment out to remove bridge support from the broker. This allow the broker
@@ -92,6 +92,9 @@ WITH_STATIC_LIBRARIES:=no
 # Build with epoll support.
 WITH_EPOLL:=yes
 
+# Build with bundled uthash.h
+WITH_BUNDLED_DEPS:=yes
+
 # =============================================================================
 # End of user configuration
 # =============================================================================
@@ -99,7 +102,7 @@ WITH_EPOLL:=yes
 
 # Also bump lib/mosquitto.h, CMakeLists.txt,
 # installer/mosquitto.nsi, installer/mosquitto64.nsi
-VERSION=1.5
+VERSION=1.5.3
 
 # Client library SO version. Bump if incompatible API/ABI changes are made.
 SOVERSION=1
@@ -128,9 +131,9 @@ LIB_CXXFLAGS:=$(CFLAGS) ${CPPFLAGS} -I. -I.. -I../lib
 LIB_LDFLAGS:=${LDFLAGS}
 
 BROKER_CFLAGS:=${LIB_CFLAGS} ${CPPFLAGS} -DVERSION="\"${VERSION}\"" -DWITH_BROKER
-CLIENT_CFLAGS:=${CFLAGS} ${CPPFLAGS} -I../lib -DVERSION="\"${VERSION}\""
+CLIENT_CFLAGS:=${CFLAGS} ${CPPFLAGS} -I.. -I../lib -DVERSION="\"${VERSION}\""
 
-ifneq ($(or $(findstring $(UNAME),FreeBSD), $(findstring $(UNAME),OpenBSD)),)
+ifneq ($(or $(findstring $(UNAME),FreeBSD), $(findstring $(UNAME),OpenBSD), $(findstring $(UNAME),NetBSD)),)
 	BROKER_LIBS:=-lm
 else
 	BROKER_LIBS:=-ldl -lm
@@ -194,6 +197,7 @@ endif
 ifeq ($(WITH_THREADING),yes)
 	LIB_LIBS:=$(LIB_LIBS) -lpthread
 	LIB_CFLAGS:=$(LIB_CFLAGS) -DWITH_THREADING
+	CLIENT_CFLAGS:=$(CLIENT_CFLAGS) -DWITH_THREADING
 endif
 
 ifeq ($(WITH_SOCKS),yes)
@@ -271,13 +275,15 @@ ifeq ($(WITH_WEBSOCKETS),static)
 endif
 
 INSTALL?=install
-prefix=/usr/local
-mandir=${prefix}/share/man
-localedir=${prefix}/share/locale
+prefix?=/usr/local
+incdir?=${prefix}/include
+libdir?=${prefix}/lib${LIB_SUFFIX}
+localedir?=${prefix}/share/locale
+mandir?=${prefix}/share/man
 STRIP?=strip
 
 ifeq ($(WITH_STRIP),yes)
-	STRIP_OPTS:=-s --strip-program=${CROSS_COMPILE}${STRIP}
+	STRIP_OPTS?=-s --strip-program=${CROSS_COMPILE}${STRIP}
 endif
 
 ifeq ($(WITH_EPOLL),yes)
@@ -286,3 +292,6 @@ ifeq ($(WITH_EPOLL),yes)
 	endif
 endif
 
+ifeq ($(WITH_BUNDLED_DEPS),yes)
+	BROKER_CFLAGS:=$(BROKER_CFLAGS) -Ideps
+endif

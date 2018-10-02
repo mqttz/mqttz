@@ -27,15 +27,14 @@ broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port)
 
 try:
     sock = mosq_test.do_client_connect(connect_packet, connack_packet, timeout=30, port=port)
-    sock.send(subscribe_packet)
+    mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
 
-    if mosq_test.expect_packet(sock, "suback", suback_packet):
-        will = subprocess.Popen(['./07-will-null-helper.py', str(port)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        will.wait()
-        (stdo, stde) = will.communicate()
+    will = subprocess.Popen(['./07-will-null-helper.py', str(port)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    will.wait()
+    (stdo, stde) = will.communicate()
 
-        if mosq_test.expect_packet(sock, "publish", publish_packet):
-            rc = 0
+    if mosq_test.expect_packet(sock, "publish", publish_packet):
+        rc = 0
 
     sock.close()
 finally:

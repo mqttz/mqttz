@@ -31,28 +31,26 @@ broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port)
 try:
     sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
 
-    sock.send(publish_packet)
+    mosq_test.do_send_receive(sock, publish_packet, pubrec_packet, "pubrec")
+
+    # We're now going to disconnect and pretend we didn't receive the pubrec.
+    sock.close()
+
+    sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
+    sock.send(publish_dup_packet)
+
     if mosq_test.expect_packet(sock, "pubrec", pubrec_packet):
-        # We're now going to disconnect and pretend we didn't receive the pubrec.
+        mosq_test.do_send_receive(sock, pubrel_packet, pubcomp_packet, "pubcomp")
+
+        # Again, pretend we didn't receive this pubcomp
         sock.close()
 
         sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
-        sock.send(publish_dup_packet)
+        mosq_test.do_send_receive(sock, pubrel_dup_packet, pubcomp_packet, "pubcomp")
 
-        if mosq_test.expect_packet(sock, "pubrec", pubrec_packet):
-            sock.send(pubrel_packet)
+        rc = 0
 
-            if mosq_test.expect_packet(sock, "pubcomp", pubcomp_packet):
-                # Again, pretend we didn't receive this pubcomp
-                sock.close()
-
-                sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
-                sock.send(pubrel_dup_packet)
-
-                if mosq_test.expect_packet(sock, "pubcomp", pubcomp_packet):
-                    rc = 0
-
-                sock.close()
+        sock.close()
 finally:
     broker.terminate()
     broker.wait()

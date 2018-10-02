@@ -279,6 +279,12 @@ int add__acl_pattern(struct mosquitto__security_options *security_opts, const ch
 		}
 	}
 
+	if(acl->ccount == 0 && acl->ucount == 0){
+		log__printf(NULL, MOSQ_LOG_WARNING,
+				"Warning: ACL pattern '%s' does not contain '%%c' or '%%u'.",
+				topic);
+	}
+
 	if(security_opts->acl_patterns){
 		acl_tail = security_opts->acl_patterns;
 		while(acl_tail->next){
@@ -303,6 +309,7 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 	struct mosquitto__security_options *security_opts = NULL;
 
 	if(!db || !context || !topic) return MOSQ_ERR_INVAL;
+	if(context->bridge) return MOSQ_ERR_SUCCESS;
 
 	if(db->config->per_listener_settings){
 		if(!context->listener) return MOSQ_ERR_ACL_DENIED;
@@ -314,7 +321,6 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 			return MOSQ_ERR_PLUGIN_DEFER;
 	}
 
-	if(context->bridge) return MOSQ_ERR_SUCCESS;
 	if(access == MOSQ_ACL_SUBSCRIBE) return MOSQ_ERR_SUCCESS; /* FIXME - implement ACL subscription strings. */
 	if(!context->acl_list && !security_opts->acl_patterns) return MOSQ_ERR_ACL_DENIED;
 
@@ -780,6 +786,7 @@ int mosquitto_unpwd_check_default(struct mosquitto_db *db, struct mosquitto *con
 	if(!db) return MOSQ_ERR_INVAL;
 
 	if(db->config->per_listener_settings){
+		if(context->bridge) return MOSQ_ERR_SUCCESS;
 		if(!context->listener) return MOSQ_ERR_INVAL;
 		if(!context->listener->unpwd) return MOSQ_ERR_PLUGIN_DEFER;
 		unpwd_ref = context->listener->unpwd;
@@ -861,7 +868,12 @@ int mosquitto_security_apply_default(struct mosquitto_db *db)
 	HASH_ITER(hh_id, db->contexts_by_id, context, ctxt_tmp){
 		/* Check for anonymous clients when allow_anonymous is false */
 		if(db->config->per_listener_settings){
-			allow_anonymous = context->listener->security_options.allow_anonymous;
+			if(context->listener){
+				allow_anonymous = context->listener->security_options.allow_anonymous;
+			}else{
+				/* Client not currently connected, so defer judgement until it does connect */
+				allow_anonymous = true;
+			}
 		}else{
 			allow_anonymous = db->config->security_options.allow_anonymous;
 		}

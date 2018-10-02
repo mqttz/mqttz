@@ -24,10 +24,9 @@ broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port)
 
 try:
     sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
-    sock.send(unsubscribe_packet)
+    mosq_test.do_send_receive(sock, unsubscribe_packet, unsuback_packet, "unsuback")
 
-    if mosq_test.expect_packet(sock, "unsuback", unsuback_packet):
-        rc = 0
+    rc = 0
 
     sock.close()
 finally:

@@ -67,19 +67,17 @@ else:
 pub = None
 try:
     sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port1)
-    sock.send(subscribe_packet)
+    mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
+    mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
 
-    if mosq_test.expect_packet(sock, "suback", suback_packet):
-        sock.send(subscribe_packet)
+    pub = subprocess.Popen(['./06-bridge-reconnect-local-out-helper.py', str(port2)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    pub.wait()
+    (stdo, stde) = pub.communicate()
+    # Should have now received a publish command
 
-        if mosq_test.expect_packet(sock, "suback", suback_packet):
-            pub = subprocess.Popen(['./06-bridge-reconnect-local-out-helper.py', str(port2)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            pub.wait()
-            (stdo, stde) = pub.communicate()
-            # Should have now received a publish command
+    if mosq_test.expect_packet(sock, "publish", publish_packet):
+        rc = 0
 
-            if mosq_test.expect_packet(sock, "publish", publish_packet):
-                rc = 0
     sock.close()
 finally:
     os.remove(conf_file)

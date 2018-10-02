@@ -17,7 +17,7 @@ Contributors:
 #include "config.h"
 
 #ifndef WIN32
-#include <unistd.h>
+#include <time.h>
 #endif
 
 #include "mosquitto_internal.h"
@@ -79,15 +79,32 @@ int mosquitto_loop_stop(struct mosquitto *mosq, bool force)
 void *mosquitto__thread_main(void *obj)
 {
 	struct mosquitto *mosq = obj;
+	int state;
+#ifndef WIN32
+	struct timespec ts;
+	ts.tv_sec = 0;
+	ts.tv_nsec = 10000000;
+#endif
 
 	if(!mosq) return NULL;
 
-	pthread_mutex_lock(&mosq->state_mutex);
-	if(mosq->state == mosq_cs_connect_async){
+	do{
+		pthread_mutex_lock(&mosq->state_mutex);
+		state = mosq->state;
 		pthread_mutex_unlock(&mosq->state_mutex);
+		if(state == mosq_cs_new){
+#ifdef WIN32
+			Sleep(10);
+#else
+			nanosleep(&ts, NULL);
+#endif
+		}else{
+			break;
+		}
+	}while(1);
+
+	if(state == mosq_cs_connect_async){
 		mosquitto_reconnect(mosq);
-	}else{
-		pthread_mutex_unlock(&mosq->state_mutex);
 	}
 
 	if(!mosq->keepalive){

@@ -14,10 +14,10 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
+#include "config.h"
+
 #include <stdio.h>
 #include <string.h>
-
-#include "config.h"
 
 #include "mosquitto_broker_internal.h"
 #include "mqtt3_protocol.h"
@@ -83,7 +83,9 @@ void connection_check_acl(struct mosquitto_db *db, struct mosquitto *context, st
 	msg_prev = NULL;
 	while(msg_tail){
 		if(msg_tail->direction == mosq_md_out){
-			if(mosquitto_acl_check(db, context, msg_tail->store->topic, MOSQ_ACL_READ) != MOSQ_ERR_SUCCESS){
+			if(mosquitto_acl_check(db, context, msg_tail->store->topic,
+								   msg_tail->store->payloadlen, UHPA_ACCESS(msg_tail->store->payload, msg_tail->store->payloadlen),
+								   msg_tail->store->qos, msg_tail->store->retain, MOSQ_ACL_READ) != MOSQ_ERR_SUCCESS){
 				db__msg_store_deref(db, &msg_tail->store);
 				if(msg_prev){
 					msg_prev->next = msg_tail->next;
@@ -132,6 +134,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	X509 *client_cert = NULL;
 	X509_NAME *name;
 	X509_NAME_ENTRY *name_entry;
+	ASN1_STRING *name_asn1 = NULL;
 #endif
 
 	G_CONNECTION_COUNT_INC();
@@ -447,7 +450,24 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 				}
 				name_entry = X509_NAME_get_entry(name, i);
 				if(name_entry){
-					context->username = mosquitto__strdup((char *)X509_NAME_ENTRY_get_data(name_entry));
+					name_asn1 = X509_NAME_ENTRY_get_data(name_entry);
+					if (name_asn1 == NULL) {
+						send__connack(context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
+						rc = 1;
+						goto handle_connect_error;
+					}
+					context->username = mosquitto__strdup((char *) ASN1_STRING_data(name_asn1));
+					if(!context->username){
+						send__connack(context, 0, CONNACK_REFUSED_SERVER_UNAVAILABLE);
+						rc = MOSQ_ERR_NOMEM;
+						goto handle_connect_error;
+					}
+					/* Make sure there isn't an embedded NUL character in the CN */
+					if ((size_t)ASN1_STRING_length(name_asn1) != strlen(context->username)) {
+						send__connack(context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
+						rc = 1;
+						goto handle_connect_error;
+					}
 				}
 			} else { // use_subject_as_username
 				BIO *subject_bio = BIO_new(BIO_s_mem());
@@ -477,7 +497,13 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	}else{
 #endif /* WITH_TLS */
 		if(username_flag){
+			/* FIXME - these ensure the mosquitto_client_id() and
+			 * mosquitto_client_username() functions work, but is hacky */
+			context->id = client_id;
+			context->username = username;
 			rc = mosquitto_unpwd_check(db, context, username, password);
+			context->username = NULL;
+			context->id = NULL;
 			switch(rc){
 				case MOSQ_ERR_SUCCESS:
 					break;
@@ -578,6 +604,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		}
 
 		found_context->clean_session = true;
+		found_context->state = mosq_cs_duplicate;
 		do_disconnect(db, found_context);
 	}
 

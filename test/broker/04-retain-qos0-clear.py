@@ -36,29 +36,26 @@ try:
     # Send retained message
     sock.send(publish_packet)
     # Subscribe to topic, we should get the retained message back.
-    sock.send(subscribe_packet)
+    mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
 
-    if mosq_test.expect_packet(sock, "suback", suback_packet):
-        if mosq_test.expect_packet(sock, "publish", publish_packet):
-            # Now unsubscribe from the topic before we clear the retained
-            # message.
-            sock.send(unsubscribe_packet)
+    if mosq_test.expect_packet(sock, "publish", publish_packet):
+        # Now unsubscribe from the topic before we clear the retained
+        # message.
+        mosq_test.do_send_receive(sock, unsubscribe_packet, unsuback_packet, "unsuback")
 
-            if mosq_test.expect_packet(sock, "unsuback", unsuback_packet):
-                # Now clear the retained message.
-                sock.send(retain_clear_packet)
+        # Now clear the retained message.
+        sock.send(retain_clear_packet)
 
-                # Subscribe to topic, we shouldn't get anything back apart
-                # from the SUBACK.
-                sock.send(subscribe_packet)
-                if mosq_test.expect_packet(sock, "suback", suback_packet):
-                    try:
-                        retain_clear = sock.recv(256)
-                    except socket.timeout:
-                        # This is the expected event
-                        rc = 0
-                    else:
-                        print("FAIL: Received unexpected message.")
+        # Subscribe to topic, we shouldn't get anything back apart
+        # from the SUBACK.
+        mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
+        try:
+            retain_clear = sock.recv(256)
+        except socket.timeout:
+            # This is the expected event
+            rc = 0
+        else:
+            print("FAIL: Received unexpected message.")
 
     sock.close()
 finally:

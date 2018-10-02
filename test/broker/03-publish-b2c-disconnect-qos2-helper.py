@@ -24,13 +24,11 @@ pubrel_packet = mosq_test.gen_pubrel(mid)
 pubcomp_packet = mosq_test.gen_pubcomp(mid)
 
 sock = mosq_test.do_client_connect(connect_packet, connack_packet, connack_error="helper connack", port=port)
-sock.send(publish_packet)
 
-if mosq_test.expect_packet(sock, "helper pubrec", pubrec_packet):
-    sock.send(pubrel_packet)
+mosq_test.do_send_receive(sock, publish_packet, pubrec_packet, "helper pubrec")
+mosq_test.do_send_receive(sock, pubrel_packet, pubcomp_packet, "helper pubcomp")
 
-    if mosq_test.expect_packet(sock, "helper pubcomp", pubcomp_packet):
-        rc = 0
+rc = 0
 
 sock.close()
 

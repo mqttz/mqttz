@@ -14,8 +14,7 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
-/* For nanosleep */
-#define _POSIX_C_SOURCE 200809L
+#include "config.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -335,6 +334,14 @@ int main(int argc, char *argv[])
 	username = cfg.username;
 	password = cfg.password;
 	quiet = cfg.quiet;
+
+#ifndef WITH_THREADING
+	if(cfg.pub_mode == MSGMODE_STDIN_LINE){
+		fprintf(stderr, "Error: '-l' mode not available, threading support has not been compiled in.\n");
+		free(buf);
+		return 1;
+	}
+#endif
 
 	if(cfg.pub_mode == MSGMODE_STDIN_FILE){
 		if(load_stdin()){

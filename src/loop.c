@@ -15,9 +15,11 @@ Contributors:
    Tatsuzo Osawa - Add epoll.
 */
 
-#define _GNU_SOURCE
+#include "config.h"
 
-#include <config.h>
+#ifndef WIN32
+#  define _GNU_SOURCE
+#endif
 
 #include <assert.h>
 #ifndef WIN32
@@ -123,11 +125,12 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 	int pollfd_max;
 #endif
 #ifdef WITH_BRIDGE
-	mosq_sock_t bridge_sock;
 	int rc;
 #endif
 	time_t expiration_check_time = 0;
 	char *id;
+	int err;
+	socklen_t len;
 
 #ifndef WIN32
 	sigemptyset(&sigblock);
@@ -229,12 +232,40 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 					mosquitto__check_keepalive(db, context);
 					if(context->bridge->round_robin == false
 							&& context->bridge->cur_address != 0
+							&& context->bridge->primary_retry
 							&& now > context->bridge->primary_retry){
 
-						if(net__try_connect(context, context->bridge->addresses[0].address, context->bridge->addresses[0].port, &bridge_sock, NULL, false) <= 0){
-							COMPAT_CLOSE(bridge_sock);
-							net__socket_close(db, context);
-							context->bridge->cur_address = context->bridge->address_count-1;
+						if(context->bridge->primary_retry_sock == INVALID_SOCKET){
+							rc = net__try_connect(context, context->bridge->addresses[0].address,
+									context->bridge->addresses[0].port,
+									&context->bridge->primary_retry_sock, NULL, false);
+
+							if(rc == 0){
+								COMPAT_CLOSE(context->bridge->primary_retry_sock);
+								context->bridge->primary_retry_sock = INVALID_SOCKET;
+								context->bridge->primary_retry = 0;
+								net__socket_close(db, context);
+								context->bridge->cur_address = 0;
+							}
+						}else{
+							len = sizeof(int);
+							if(!getsockopt(context->bridge->primary_retry_sock, SOL_SOCKET, SO_ERROR, (char *)&err, &len)){
+								if(err == 0){
+									COMPAT_CLOSE(context->bridge->primary_retry_sock);
+									context->bridge->primary_retry_sock = INVALID_SOCKET;
+									context->bridge->primary_retry = 0;
+									net__socket_close(db, context);
+									context->bridge->cur_address = context->bridge->address_count-1;
+								}else{
+									COMPAT_CLOSE(context->bridge->primary_retry_sock);
+									context->bridge->primary_retry_sock = INVALID_SOCKET;
+									context->bridge->primary_retry = now+5;
+								}
+							}else{
+								COMPAT_CLOSE(context->bridge->primary_retry_sock);
+								context->bridge->primary_retry_sock = INVALID_SOCKET;
+								context->bridge->primary_retry = now+5;
+							}
 						}
 					}
 				}
@@ -243,7 +274,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 				/* Local bridges never time out in this fashion. */
 				if(!(context->keepalive)
 						|| context->bridge
-						|| now - context->last_msg_in < (time_t)(context->keepalive)*3/2){
+						|| now - context->last_msg_in <= (time_t)(context->keepalive)*3/2){
 
 					if(db__message_write(db, context) == MOSQ_ERR_SUCCESS){
 #ifdef WITH_EPOLL
@@ -322,16 +353,13 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 					if(context->bridge->cur_address == context->bridge->address_count){
 						context->bridge->cur_address = 0;
 					}
-					if(context->bridge->round_robin == false && context->bridge->cur_address != 0){
-						context->bridge->primary_retry = now + 5;
-					}
 				}else{
 					if((context->bridge->start_type == bst_lazy && context->bridge->lazy_reconnect)
 							|| (context->bridge->start_type == bst_automatic && now > context->bridge->restart_t)){
-						context->bridge->restart_t = 0;
+
 #if defined(__GLIBC__) && defined(WITH_ADNS)
 						if(context->adns){
-							/* Waiting on DNS lookup */
+							/* Connection attempted, waiting on DNS lookup */
 							rc = gai_error(context->adns);
 							if(rc == EAI_INPROGRESS){
 								/* Just keep on waiting */
@@ -361,11 +389,14 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 									context->pollfd_index = pollfd_index;
 									pollfd_index++;
 #endif
+								}else if(rc == MOSQ_ERR_CONN_PENDING){
+									context->bridge->restart_t = 0;
 								}else{
 									context->bridge->cur_address++;
 									if(context->bridge->cur_address == context->bridge->address_count){
 										context->bridge->cur_address = 0;
 									}
+									context->bridge->restart_t = 0;
 								}
 							}else{
 								/* Need to retry */
@@ -374,6 +405,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 								}
 								mosquitto__free(context->adns);
 								context->adns = NULL;
+								context->bridge->restart_t = 0;
 							}
 						}else{
 							rc = bridge__connect_step1(db, context);
@@ -382,12 +414,19 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 								if(context->bridge->cur_address == context->bridge->address_count){
 									context->bridge->cur_address = 0;
 								}
+							}else{
+								/* Short wait for ADNS lookup */
+								context->bridge->restart_t = 1;
 							}
 						}
 #else
 						{
 							rc = bridge__connect(db, context);
 							if(rc == MOSQ_ERR_SUCCESS){
+								context->bridge->restart_t = 0;
+								if(context->bridge->round_robin == false && context->bridge->cur_address != 0){
+									context->bridge->primary_retry = now + 5;
+								}
 #ifdef WITH_EPOLL
 								ev.data.fd = context->sock;
 								ev.events = EPOLLIN;
@@ -599,12 +638,17 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 			context->sock = INVALID_SOCKET;
 			context->pollfd_index = -1;
 		}
+		HASH_DELETE(hh_id, db->contexts_by_id, context);
+		context->old_id = context->id;
+		context->id = NULL;
 	}else
 #endif
 	{
 		if(db->config->connection_messages == true){
 			if(context->id){
 				id = context->id;
+			}else if(context->old_id){
+				id = context->old_id;
 			}else{
 				id = "<unknown>";
 			}
@@ -679,7 +723,11 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 			wspoll.events = pollfds[context->pollfd_index].events;
 			wspoll.revents = pollfds[context->pollfd_index].revents;
 #endif
+#ifdef LWS_LIBRARY_VERSION_NUMBER
 			lws_service_fd(lws_get_context(context->wsi), &wspoll);
+#else
+			lws_service_fd(context->ws_context, &wspoll);
+#endif
 			continue;
 		}
 #endif
@@ -704,6 +752,12 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 				if(!getsockopt(context->sock, SOL_SOCKET, SO_ERROR, (char *)&err, &len)){
 					if(err == 0){
 						context->state = mosq_cs_new;
+#ifdef WITH_ADNS
+						if(context->bridge){
+							bridge__connect_step3(db, context);
+							continue;
+						}
+#endif
 					}
 				}else{
 					do_disconnect(db, context);

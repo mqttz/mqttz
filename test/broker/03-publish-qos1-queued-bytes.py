@@ -27,16 +27,18 @@ import mosq_test
 
 rc = 1
 
+port = mosq_test.get_port()
+
 def registerOfflineSubscriber():
     """Just a durable client to trigger queuing"""
     client = paho.mqtt.client.Client("sub-qos1-offline", clean_session=False)
-    client.connect("localhost", port=1888)
+    client.connect("localhost", port=port)
     client.subscribe("test/publish/queueing/#", 1)
     client.loop()
     client.disconnect()
 
 
-broker = mosq_test.start_broker(filename=os.path.basename(__file__))
+broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port)
 
 class BrokerMonitor(threading.Thread):
     def __init__(self, group=None, target=None, name=None, args=(), kwargs=None, verbose=None):
@@ -57,7 +59,7 @@ class BrokerMonitor(threading.Thread):
 
     def run(self):
         client = paho.mqtt.client.Client("broker-monitor")
-        client.connect("localhost", port=1888)
+        client.connect("localhost", port=port)
         client.message_callback_add("$SYS/broker/store/messages/count", self.store_count)
         client.message_callback_add("$SYS/broker/store/messages/bytes", self.store_bytes)
         client.message_callback_add("$SYS/broker/publish/messages/dropped", self.publish_dropped)
@@ -126,7 +128,7 @@ try:
     msgs_short10 = [("test/publish/queueing/%d" % x,
              ''.join(random.choice(string.hexdigits) for _ in range(10)),
              1, False) for x in range(1, 10 + 1)]
-    paho.mqtt.publish.multiple(msgs_short10, port=1888)
+    paho.mqtt.publish.multiple(msgs_short10, port=port)
     counts.update(rq.get())  # Initial start
     print("rq.get (short) gave us: ", counts)
     rq.task_done()
@@ -141,7 +143,7 @@ try:
     msgs_medium10 = [("test/publish/queueing/%d" % x,
              ''.join(random.choice(string.hexdigits) for _ in range(40)),
              1, False) for x in range(1, 10 + 1)]
-    paho.mqtt.publish.multiple(msgs_medium10, port=1888)
+    paho.mqtt.publish.multiple(msgs_medium10, port=port)
     counts.update(rq.get())  # Initial start
     print("rq.get (medium) gave us: ", counts)
     rq.task_done()

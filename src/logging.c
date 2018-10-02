@@ -13,6 +13,8 @@ and the Eclipse Distribution License is available at
 Contributors:
    Roger Light - initial implementation and documentation.
 */
+#include "config.h"
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -20,10 +22,6 @@ Contributors:
 #include <syslog.h>
 #endif
 #include <time.h>
-
-#ifndef CMAKE
-#include "config.h"
-#endif
 
 #include "mosquitto_broker_internal.h"
 #include "memory_mosq.h"

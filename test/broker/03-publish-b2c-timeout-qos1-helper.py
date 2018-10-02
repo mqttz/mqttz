@@ -20,10 +20,9 @@ publish_packet = mosq_test.gen_publish("qos1/timeout/test", qos=1, mid=mid, payl
 puback_packet = mosq_test.gen_puback(mid)
 
 sock = mosq_test.do_client_connect(connect_packet, connack_packet, connack_error="helper connack")
-sock.send(publish_packet)
+mosq_test.do_send_receive(sock, publish_packet, puback_packet, "helper puback")
 
-if mosq_test.expect_packet(sock, "helper puback", puback_packet):
-    rc = 0
+rc = 0
 
 sock.close()
 

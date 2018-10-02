@@ -38,13 +38,11 @@ try:
     sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
     sock.send(publish_packet)
 
-    #sock.close()
-    #sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
-    sock.send(subscribe_packet)
+    mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
 
-    if mosq_test.expect_packet(sock, "suback", suback_packet):
-        if mosq_test.expect_packet(sock, "publish", publish_packet2):
-            rc = 0
+    if mosq_test.expect_packet(sock, "publish", publish_packet2):
+        rc = 0
+
     sock.close()
 finally:
     os.remove(conf_file)

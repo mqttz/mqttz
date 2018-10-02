@@ -5,11 +5,11 @@ include ../../config.mk
 
 all :
 
-clean : 
+clean :
 	-rm -f *.vglog
 	$(MAKE) -C c clean
 
-test-compile : 
+test-compile :
 	$(MAKE) -C c
 
 ptest : test-compile
@@ -50,6 +50,8 @@ endif
 	./02-unsubscribe-qos2.py
 	./02-unsubscribe-invalid-no-topic.py
 	./02-subscribe-invalid-utf8.py
+	./02-subscribe-persistence-flipflop.py
+	./02-subhier-crash.py
 
 03 :
 	./03-publish-qos1.py
@@ -58,8 +60,9 @@ endif
 	./03-publish-c2b-disconnect-qos2.py
 	./03-publish-b2c-disconnect-qos2.py
 	./03-pattern-matching.py
-	./03-publish-qos1-queued-bytes.py
+	#./03-publish-qos1-queued-bytes.py
 	./03-publish-invalid-utf8.py
+	./03-publish-dollar.py
 
 04 :
 	./04-retain-qos0.py
@@ -70,7 +73,7 @@ endif
 	./04-retain-upgrade-outgoing-qos.py
 
 05 :
-	./05-clean-session-qos1.py 
+	./05-clean-session-qos1.py
 
 06 :
 	./06-bridge-reconnect-local-out.py
@@ -82,6 +85,7 @@ endif
 	./06-bridge-fail-persist-resend-qos2.py
 	./06-bridge-b2br-remapping.py
 	./06-bridge-br2b-remapping.py
+	./06-bridge-per-listener-settings.py
 
 07 :
 	./07-will-qos0.py
@@ -116,6 +120,8 @@ endif
 	./09-plugin-auth-v2-unpwd-fail.py
 	./09-plugin-auth-defer-unpwd-success.py
 	./09-plugin-auth-defer-unpwd-fail.py
+	./09-plugin-auth-msg-params.py
+	./09-plugin-auth-context-params.py
 
 10 :
 	./10-listener-mount-point.py

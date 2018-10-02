@@ -1,8 +1,7 @@
 The following packages can be used to add features to mosquitto. All of them
 are optional.
 
-<<<<<<< HEAD
-* openssl (version 1.0.0 or greater if TLS-PSK support is needed)
+* openssl
 * c-ares (for DNS-SRV support, disabled by default)
 * libuuid (from util-linux, can be disabled)
 * tcp-wrappers (optional, package name libwrap0-dev)

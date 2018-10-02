@@ -14,7 +14,7 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
-#define _POSIX_C_SOURCE 200809L
+#include "config.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -983,20 +983,20 @@ int client_connect(struct mosquitto *mosq, struct mosq_config *cfg)
 	int rc;
 	int port;
 
-#ifdef WITH_TLS
 	if(cfg->port < 0){
+#ifdef WITH_TLS
 		if(cfg->cafile || cfg->capath
-#ifdef WITH_TLS_PSK
+#  ifdef WITH_TLS_PSK
 				|| cfg->psk
-#endif
+#  endif
 				){
 			port = 8883;
-		}else{
+		}else
+#endif
+		{
 			port = 1883;
 		}
-	}else
-#endif
-	{
+	}else{
 		port = cfg->port;
 	}
 

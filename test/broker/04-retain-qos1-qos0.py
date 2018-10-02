@@ -30,14 +30,12 @@ broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port)
 
 try:
     sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
-    sock.send(publish_packet)
+    mosq_test.do_send_receive(sock, publish_packet, puback_packet, "puback")
+    mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
 
-    if mosq_test.expect_packet(sock, "puback", puback_packet):
-        sock.send(subscribe_packet)
+    if mosq_test.expect_packet(sock, "publish0", publish0_packet):
+        rc = 0
 
-        if mosq_test.expect_packet(sock, "suback", suback_packet):
-            if mosq_test.expect_packet(sock, "publish0", publish0_packet):
-                rc = 0
     sock.close()
 finally:
     broker.terminate()
