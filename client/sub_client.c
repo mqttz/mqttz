@@ -96,9 +96,8 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 	cfg = (struct mosq_config *)obj;
 
 	if(!result){
-		for(i=0; i<cfg->topic_count; i++){
-			mosquitto_subscribe(mosq, NULL, cfg->topics[i], cfg->qos);
-		}
+		mosquitto_subscribe_multiple(mosq, NULL, cfg->topic_count, (const char **)cfg->topics, cfg->qos);
+
 		for(i=0; i<cfg->unsub_topic_count; i++){
 			mosquitto_unsubscribe(mosq, NULL, cfg->unsub_topics[i]);
 		}
@@ -123,6 +122,10 @@ void my_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_c
 		if(!cfg->quiet) printf(", %d", granted_qos[i]);
 	}
 	if(!cfg->quiet) printf("\n");
+
+	if(cfg->exit_after_sub){
+		mosquitto_disconnect(mosq);
+	}
 }
 
 void my_log_callback(struct mosquitto *mosq, void *obj, int level, const char *str)
@@ -139,7 +142,7 @@ void print_usage(void)
 	printf("mosquitto_sub version %s running on libmosquitto %d.%d.%d.\n\n", VERSION, major, minor, revision);
 	printf("Usage: mosquitto_sub {[-h host] [-p port] [-u username [-P password]] -t topic | -L URL [-t topic]}\n");
 	printf("                     [-c] [-k keepalive] [-q qos]\n");
-	printf("                     [-C msg_count] [-R] [--retained-only] [-T filter_out] [-U topic ...]\n");
+	printf("                     [-C msg_count] [-E] [-R] [--retained-only] [-T filter_out] [-U topic ...]\n");
 	printf("                     [-F format]\n");
 #ifndef WIN32
 	printf("                     [-W timeout_secs]\n");
@@ -168,6 +171,7 @@ void print_usage(void)
 	printf(" -c : disable 'clean session' (store subscription and pending messages when client disconnects).\n");
 	printf(" -C : disconnect and exit after receiving the 'msg_count' messages.\n");
 	printf(" -d : enable debug messages.\n");
+	printf(" -E : Exit once all subscriptions have been acknowledged by the broker.\n");
 	printf(" -F : output format.\n");
 	printf(" -h : mqtt host to connect to. Defaults to localhost.\n");
 	printf(" -i : id to use for this client. Defaults to mosquitto_sub_ appended with the process id.\n");

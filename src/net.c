@@ -59,6 +59,25 @@ static int tls_ex_index_listener = -1;
 
 #include "sys_tree.h"
 
+/* For EMFILE handling */
+static mosq_sock_t spare_sock = INVALID_SOCKET;
+
+void net__broker_init(void)
+{
+	spare_sock = socket(AF_INET, SOCK_STREAM, 0);
+	net__init();
+}
+
+
+void net__broker_cleanup(void)
+{
+	if(spare_sock != INVALID_SOCKET){
+		COMPAT_CLOSE(spare_sock);
+		spare_sock = INVALID_SOCKET;
+	}
+	net__cleanup();
+}
+
 
 static void net__print_error(int log, const char *format_str)
 {
@@ -97,7 +116,31 @@ int net__socket_accept(struct mosquitto_db *db, mosq_sock_t listensock)
 #endif
 
 	new_sock = accept(listensock, NULL, 0);
-	if(new_sock == INVALID_SOCKET) return -1;
+	if(new_sock == INVALID_SOCKET){
+#ifdef WIN32
+		errno = WSAGetLastError();
+		if(errno == WSAEMFILE){
+#else
+		if(errno == EMFILE || errno == ENFILE){
+#endif
+			/* Close the spare socket, which means we should be able to accept
+			 * this connection. Accept it, then close it immediately and create
+			 * a new spare_sock. This prevents the situation of ever properly
+			 * running out of sockets.
+			 * It would be nice to send a "server not available" connack here,
+			 * but there are lots of reasons why this would be tricky (TLS
+			 * being the big one). */
+			COMPAT_CLOSE(spare_sock);
+			new_sock = accept(listensock, NULL, 0);
+			if(new_sock != INVALID_SOCKET){
+				COMPAT_CLOSE(new_sock);
+			}
+			spare_sock = socket(AF_INET, SOCK_STREAM, 0);
+			log__printf(NULL, MOSQ_LOG_WARNING,
+					"Unable to accept new connection, system socket count has been exceeded. Try increasing \"ulimit -n\" or equivalent.");
+		}
+		return -1;
+	}
 
 	G_SOCKET_CONNECTIONS_INC();
 
@@ -121,7 +164,7 @@ int net__socket_accept(struct mosquitto_db *db, mosq_sock_t listensock)
 
 	if(db->config->set_tcp_nodelay){
 		int flag = 1;
-		if(setsockopt(new_sock, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(int) != 0)){
+		if(setsockopt(new_sock, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(int)) != 0){
 			log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Unable to set TCP_NODELAY.");
 		}
 	}

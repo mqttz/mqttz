@@ -479,6 +479,11 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				}
 			}
 			i++;
+		}else if(!strcmp(argv[i], "-E")){
+			if(pub_or_sub == CLIENT_PUB){
+				goto unknown_option;
+			}
+			cfg->exit_after_sub = true;
 		}else if(!strcmp(argv[i], "-F")){
 			if(pub_or_sub == CLIENT_PUB){
 				goto unknown_option;

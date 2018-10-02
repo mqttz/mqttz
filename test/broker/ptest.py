@@ -44,6 +44,7 @@ tests = [
     (1, './03-pattern-matching.py'),
     #(1, './03-publish-qos1-queued-bytes.py'),
     (1, './03-publish-invalid-utf8.py'),
+    (1, './03-publish-dollar.py'),
 
     (1, './04-retain-qos0.py'),
     (1, './04-retain-qos0-fresh.py'),

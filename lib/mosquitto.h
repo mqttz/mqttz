@@ -47,7 +47,7 @@ extern "C" {
 
 #define LIBMOSQUITTO_MAJOR 1
 #define LIBMOSQUITTO_MINOR 5
-#define LIBMOSQUITTO_REVISION 1
+#define LIBMOSQUITTO_REVISION 3
 /* LIBMOSQUITTO_VERSION_NUMBER looks like 1002001 for e.g. version 1.2.1. */
 #define LIBMOSQUITTO_VERSION_NUMBER (LIBMOSQUITTO_MAJOR*1000000+LIBMOSQUITTO_MINOR*1000+LIBMOSQUITTO_REVISION)
 
@@ -632,6 +632,30 @@ libmosq_EXPORT int mosquitto_publish(struct mosquitto *mosq, int *mid, const cha
  * 	MOSQ_ERR_MALFORMED_UTF8 - if the topic is not valid UTF-8
  */
 libmosq_EXPORT int mosquitto_subscribe(struct mosquitto *mosq, int *mid, const char *sub, int qos);
+
+/*
+ * Function: mosquitto_subscribe_multiple
+ *
+ * Subscribe to multiple topics.
+ *
+ * Parameters:
+ *	mosq - a valid mosquitto instance.
+ *	mid -  a pointer to an int. If not NULL, the function will set this to
+ *	       the message id of this particular message. This can be then used
+ *	       with the subscribe callback to determine when the message has been
+ *	       sent.
+ *  sub_count - the count of subscriptions to be made
+ *	sub -  array of sub_count pointers, each pointing to a subscription string.
+ *	qos -  the requested Quality of Service for each subscription.
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS -        on success.
+ * 	MOSQ_ERR_INVAL -          if the input parameters were invalid.
+ * 	MOSQ_ERR_NOMEM -          if an out of memory condition occurred.
+ * 	MOSQ_ERR_NO_CONN -        if the client isn't connected to a broker.
+ * 	MOSQ_ERR_MALFORMED_UTF8 - if a topic is not valid UTF-8
+ */
+int mosquitto_subscribe_multiple(struct mosquitto *mosq, int *mid, int sub_count, const char **sub, int qos);
 
 /*
  * Function: mosquitto_unsubscribe

@@ -1,3 +1,62 @@
+1.6 - 2018xxxx
+==============
+
+Client library features:
+- Add mosquitto_subscribe_multiple() for sending subscriptions to multiple
+  topics in one command.
+
+Client features:
+- Add -E to mosquitto_sub, which causes it to exit immediately after having
+  its subscriptions acknowledged. Use with -c to create a durable client
+  session without requiring a message to be received.
+
+
+1.5.3 - 20180925
+================
+
+Security:
+- Fix CVE-2018-12543. If a message is sent to Mosquitto with a topic that
+  begins with $, but is not $SYS, then an assert that should be unreachable is
+  triggered and Mosquitto will exit.
+
+Broker:
+- Elevate log level to warning for situation when socket limit is hit.
+- Remove requirement to use `user root` in snap package config files.
+- Fix retained messages not sent by bridges on outgoing topics at the first
+  connection. Closes #701.
+- Documentation fixes. Closes #520, #600.
+- Fix duplicate clients being added to by_id hash before the old client was
+  removed. Closes #645.
+- Fix Windows version not starting if include_dir did not contain any files.
+  Closes #566.
+
+Build:
+- Various fixes to ease building.
+
+
+1.5.2 - 20180919
+================
+
+Broker:
+- Fix build when using WITH_ADNS=yes.
+- Fix incorrect call to setsockopt() for TCP_NODELAY. Closes #941.
+- Fix excessive CPU usage when the number of sockets exceeds the system limit.
+  Closes #948.
+- Fix for bridge connections when using WITH_ADNS=yes.
+- Fix round_robin false behaviour. Closes #481.
+- Fix segfault on HUP when bridges and security options are configured.
+  Closes #965.
+
+Library:
+- Fix situation where username and password is used with SOCKS5 proxy. Closes
+  #927.
+- Fix SOCKS5 behaviour when passing IP addresses. Closes #927.
+
+Build:
+- Make it easier to build without bundled uthash.h using "WITH_BUNDLED_DEPS=no".
+- Fix build with OPENSSL_NO_ENGINE. Closes #932.
+
+
 1.5.1 - 20180816
 ================
 
