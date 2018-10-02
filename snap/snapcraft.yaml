@@ -70,6 +70,9 @@ parts:
       - lib/*-linux-gnu/libcrypto.so*
       - lib/*-linux-gnu/libssl.so*
       - lib/*-linux-gnu/libuuid.so*
+      - usr/include/mosquitto.h
+      - usr/include/mosquitto_broker.h
+      - usr/include/mosquitto_plugin.h
 
   lws:
     plugin: cmake
