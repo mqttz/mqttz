@@ -53,6 +53,7 @@ set(C_SRC
 	mqtt_protocol.h
 	net_mosq.c net_mosq.h
 	options.c
+	packet_datatypes.c
 	packet_mosq.c packet_mosq.h
 	read_handle.c read_handle.h
 	send_connect.c
