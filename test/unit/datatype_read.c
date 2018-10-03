@@ -632,11 +632,11 @@ static void TEST_string_read_mqtt_1_5_4_3(void)
  * TEST SUITE SETUP
  * ======================================================================== */
 
-int init_datatype_tests(void)
+int init_datatype_read_tests(void)
 {
 	CU_pSuite test_suite = NULL;
 
-	test_suite = CU_add_suite("datatypes", NULL, NULL);
+	test_suite = CU_add_suite("Datatype read", NULL, NULL);
 	if(!test_suite){
 		printf("Error adding CUnit test suite.\n");
 		return 1;

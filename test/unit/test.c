@@ -3,7 +3,7 @@
 #include <CUnit/CUnit.h>
 #include <CUnit/Basic.h>
 
-int init_datatype_tests(void);
+int init_datatype_read_tests(void);
 int init_utf8_tests(void);
 
 int main(int argc, char *argv[])
@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    if(init_datatype_tests()){
+    if(init_datatype_read_tests()){
         CU_cleanup_registry();
         return 1;
     }

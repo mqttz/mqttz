@@ -7,7 +7,7 @@ TEST_LDFLAGS=-lcunit -coverage
 
 all : test
 
-mosq_test : test.o datatypes.o utf8.o memory_mosq.o packet_datatypes.o utf8_mosq.o
+mosq_test : test.o datatype_read.o utf8.o memory_mosq.o packet_datatypes.o utf8_mosq.o
 	$(CROSS_COMPILE)$(CC) -o $@ $^ ${TEST_LDFLAGS}
 
 memory_mosq.o : ../../lib/memory_mosq.c
@@ -23,7 +23,7 @@ test : mosq_test
 	./mosq_test
 
 clean : 
-	-rm -f test *.o
+	-rm -rf mosq_test *.o *.gcda *.gcno coverage.info out/
 
 coverage :
 	lcov --capture --directory . --output-file coverage.info
