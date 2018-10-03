@@ -3,6 +3,25 @@
 
 #include "packet_mosq.h"
 
+static void byte_read_helper(
+		uint8_t *payload,
+		int remaining_length,
+		int rc_expected,
+		uint8_t value_expected)
+{
+	struct mosquitto__packet packet;
+	uint8_t value = 0;
+	int rc;
+
+	memset(&packet, 0, sizeof(struct mosquitto__packet));
+	packet.payload = payload;
+	packet.remaining_length = remaining_length;
+	rc = packet__read_byte(&packet, &value);
+	CU_ASSERT_EQUAL(rc, rc_expected);
+	CU_ASSERT_EQUAL(value, value_expected);
+}
+
+
 static void uint16_read_helper(
 		uint8_t *payload,
 		int remaining_length,
@@ -64,6 +83,51 @@ static void varint_read_helper(
 
 
 /* ========================================================================
+ * BYTE INTEGER TESTS
+ * ======================================================================== */
+
+/* This tests reading a Byte from an incoming packet.
+ *
+ * It tests:
+ *  * Empty packets
+ */
+static void TEST_byte_read_empty(void)
+{
+	/* Empty packet */
+	byte_read_helper(NULL, 0, MOSQ_ERR_PROTOCOL, 0);
+}
+
+
+/* This tests reading a Byte from an incoming packet.
+ *
+ * It tests:
+ *  * Success at boundaries
+ */
+static void TEST_byte_read_success(void)
+{
+	struct mosquitto__packet packet;
+	uint8_t payload[20];
+	int rc;
+
+	/* 0 value */
+	memset(payload, 0, sizeof(payload));
+	payload[0] = 0x00;
+	byte_read_helper(payload, 1, MOSQ_ERR_SUCCESS, 0x00);
+
+	/* Middle */
+	memset(payload, 0, sizeof(payload));
+	payload[0] = 0x1F;
+	byte_read_helper(payload, 1, MOSQ_ERR_SUCCESS, 0x1F);
+
+	/* 65,535 value */
+	memset(payload, 0, sizeof(payload));
+	payload[0] = 0xFF;
+	byte_read_helper(payload, 1, MOSQ_ERR_SUCCESS, 0xFF);
+
+}
+
+
+/* ========================================================================
  * TWO BYTE INTEGER TESTS
  * ======================================================================== */
 
@@ -75,7 +139,6 @@ static void varint_read_helper(
 static void TEST_uint16_read_empty(void)
 {
 	struct mosquitto__packet packet;
-	uint8_t payload[20];
 	int rc;
 
 	/* Empty packet */
@@ -134,8 +197,6 @@ static void TEST_uint16_read_success(void)
 }
 
 
-
-
 /* ========================================================================
  * FOUR BYTE INTEGER TESTS
  * ======================================================================== */
@@ -148,7 +209,6 @@ static void TEST_uint16_read_success(void)
 static void TEST_uint32_read_empty(void)
 {
 	struct mosquitto__packet packet;
-	uint8_t payload[20];
 	int rc;
 
 	/* Empty packet */
@@ -453,6 +513,8 @@ int init_datatype_tests(void)
 	}
 
 	if(0
+			|| !CU_add_test(test_suite, "Byte read (empty packet)", TEST_byte_read_empty)
+			|| !CU_add_test(test_suite, "Byte read (success values)", TEST_byte_read_success)
 			|| !CU_add_test(test_suite, "Two Byte Integer read (empty packet)", TEST_uint16_read_empty)
 			|| !CU_add_test(test_suite, "Two Byte Integer read (truncated packet)", TEST_uint16_read_truncated)
 			|| !CU_add_test(test_suite, "Two Byte Integer read (success values)", TEST_uint16_read_success)
