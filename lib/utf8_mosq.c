@@ -80,9 +80,13 @@ int mosquitto_validate_utf8(const char *str, int len)
 		}
 
 		/* Check for overlong or out of range encodings */
-		if(codelen == 2 && codepoint < 0x0080){
-			return MOSQ_ERR_MALFORMED_UTF8;
-		}else if(codelen == 3 && codepoint < 0x0800){
+		/* Checking codelen == 2 isn't necessary here, because it is already
+		 * covered above in the C0 and C1 checks.
+		 * if(codelen == 2 && codepoint < 0x0080){
+		 *	 return MOSQ_ERR_MALFORMED_UTF8;
+		 * }else
+		*/
+		if(codelen == 3 && codepoint < 0x0800){
 			return MOSQ_ERR_MALFORMED_UTF8;
 		}else if(codelen == 4 && (codepoint < 0x10000 || codepoint > 0x10FFFF)){
 			return MOSQ_ERR_MALFORMED_UTF8;

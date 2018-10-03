@@ -35,6 +35,22 @@ static void TEST_utf8_valid(void)
 }
 
 
+static void TEST_utf8_truncated(void)
+{
+	char buf[4];
+
+	/* As per boundary condition tests, but less one character */
+	buf[0] = 0xC2; buf[1] = 0;
+	utf8_helper(buf, MOSQ_ERR_MALFORMED_UTF8);
+
+	buf[0] = 0xE0; buf[1] = 0xA0; buf[2] = 0;
+	utf8_helper(buf, MOSQ_ERR_MALFORMED_UTF8);
+
+	buf[0] = 0xF0; buf[1] = 0x90; buf[2] = 0x80; buf[3] = 0;
+	utf8_helper(buf, MOSQ_ERR_MALFORMED_UTF8);
+}
+
+
 static void TEST_utf8_boundary_conditions(void)
 {
 	/* 2  Boundary condition test cases */
@@ -285,6 +301,7 @@ int init_utf8_tests(void)
 	if(0
 			|| !CU_add_test(test_suite, "UTF-8 empty", TEST_utf8_empty)
 			|| !CU_add_test(test_suite, "UTF-8 valid", TEST_utf8_valid)
+			|| !CU_add_test(test_suite, "UTF-8 truncated", TEST_utf8_truncated)
 			|| !CU_add_test(test_suite, "UTF-8 boundary conditions", TEST_utf8_boundary_conditions)
 			|| !CU_add_test(test_suite, "UTF-8 malformed sequences", TEST_utf8_malformed_sequences)
 			|| !CU_add_test(test_suite, "UTF-8 overlong encoding", TEST_utf8_overlong_encoding)
