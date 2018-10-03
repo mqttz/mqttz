@@ -96,6 +96,36 @@ static void TEST_uint32_write(void)
 
 
 /* ========================================================================
+ * UTF-8 STRING TESTS
+ * ======================================================================== */
+
+/* This tests writing a UTF-8 String to an incoming packet.  */
+static void TEST_string_write(void)
+{
+	uint8_t payload[100];
+	struct mosquitto__packet packet;
+	int i;
+
+	memset(&packet, 0, sizeof(struct mosquitto__packet));
+	memset(payload, 0, 100);
+
+	packet.payload = payload;
+	packet.packet_length = 100;
+
+	packet__write_string(&packet, "first test", strlen("first test"));
+	packet__write_string(&packet, "second test", strlen("second test"));
+
+	CU_ASSERT_EQUAL(packet.pos, 2+10+2+11);
+	CU_ASSERT_EQUAL(payload[0], 0);
+	CU_ASSERT_EQUAL(payload[1], 10);
+	CU_ASSERT_NSTRING_EQUAL(payload+2, "first test", 10);
+	CU_ASSERT_EQUAL(payload[2+10+0], 0);
+	CU_ASSERT_EQUAL(payload[2+10+1], 11);
+	CU_ASSERT_NSTRING_EQUAL(payload+2+10+2, "second test", 11);
+}
+
+
+/* ========================================================================
  * TEST SUITE SETUP
  * ======================================================================== */
 
@@ -113,6 +143,7 @@ int init_datatype_write_tests(void)
 			|| !CU_add_test(test_suite, "Byte write)", TEST_byte_write)
 			|| !CU_add_test(test_suite, "Two Byte Integer write", TEST_uint16_write)
 			|| !CU_add_test(test_suite, "Four Byte Integer write", TEST_uint32_write)
+			|| !CU_add_test(test_suite, "UTF-8 String write", TEST_string_write)
 			){
 
 		printf("Error adding Datatype write CUnit tests.\n");
