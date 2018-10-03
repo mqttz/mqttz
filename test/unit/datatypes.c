@@ -22,6 +22,25 @@ static void uint16_read_helper(
 }
 
 
+static void uint32_read_helper(
+		uint8_t *payload,
+		int remaining_length,
+		int rc_expected,
+		uint32_t value_expected)
+{
+	struct mosquitto__packet packet;
+	uint32_t value = 0;
+	int rc;
+
+	memset(&packet, 0, sizeof(struct mosquitto__packet));
+	packet.payload = payload;
+	packet.remaining_length = remaining_length;
+	rc = packet__read_uint32(&packet, &value);
+	CU_ASSERT_EQUAL(rc, rc_expected);
+	CU_ASSERT_EQUAL(value, value_expected);
+}
+
+
 static void varint_read_helper(
 		uint8_t *payload,
 		int remaining_length,
@@ -52,8 +71,6 @@ static void varint_read_helper(
  *
  * It tests:
  *  * Empty packets
- *  * Truncated packets
- *  * Success at boundaries
  */
 static void TEST_uint16_read_empty(void)
 {
@@ -69,9 +86,7 @@ static void TEST_uint16_read_empty(void)
 /* This tests reading a Two Byte Integer from an incoming packet.
  *
  * It tests:
- *  * Empty packets
  *  * Truncated packets
- *  * Success at boundaries
  */
 static void TEST_uint16_read_truncated(void)
 {
@@ -89,9 +104,8 @@ static void TEST_uint16_read_truncated(void)
 /* This tests reading a Two Byte Integer from an incoming packet.
  *
  * It tests:
- *  * Empty packets
- *  * Truncated packets
  *  * Success at boundaries
+ *  * Endianness
  */
 static void TEST_uint16_read_success(void)
 {
@@ -116,6 +130,98 @@ static void TEST_uint16_read_success(void)
 	payload[0] = 0xFF;
 	payload[1] = 0xFF;
 	uint16_read_helper(payload, 2, MOSQ_ERR_SUCCESS, 0xFFFF);
+
+}
+
+
+
+
+/* ========================================================================
+ * FOUR BYTE INTEGER TESTS
+ * ======================================================================== */
+
+/* This tests reading a Four Byte Integer from an incoming packet.
+ *
+ * It tests:
+ *  * Empty packets
+ */
+static void TEST_uint32_read_empty(void)
+{
+	struct mosquitto__packet packet;
+	uint8_t payload[20];
+	int rc;
+
+	/* Empty packet */
+	uint32_read_helper(NULL, 0, MOSQ_ERR_PROTOCOL, 0);
+}
+
+
+/* This tests reading a Four Byte Integer from an incoming packet.
+ *
+ * It tests:
+ *  * Truncated packets
+ */
+static void TEST_uint32_read_truncated(void)
+{
+	struct mosquitto__packet packet;
+	uint8_t payload[20];
+	int rc;
+
+	/* 1 byte packet */
+	memset(payload, 0, sizeof(payload));
+	payload[0] = 0x38;
+	uint32_read_helper(payload, 1, MOSQ_ERR_PROTOCOL, 0);
+
+	/* 2 byte packet */
+	memset(payload, 0, sizeof(payload));
+	payload[0] = 0x38;
+	payload[1] = 0x38;
+	uint32_read_helper(payload, 2, MOSQ_ERR_PROTOCOL, 0);
+
+	/* 3 byte packet */
+	memset(payload, 0, sizeof(payload));
+	payload[0] = 0x38;
+	payload[1] = 0x38;
+	payload[2] = 0x38;
+	uint32_read_helper(payload, 3, MOSQ_ERR_PROTOCOL, 0);
+}
+
+
+/* This tests reading a Four Byte Integer from an incoming packet.
+ *
+ * It tests:
+ *  * Success at boundaries
+ *  * Endianness
+ */
+static void TEST_uint32_read_success(void)
+{
+	struct mosquitto__packet packet;
+	uint8_t payload[20];
+	int rc;
+
+	/* 0 value */
+	memset(payload, 0, sizeof(payload));
+	payload[0] = 0x00;
+	payload[1] = 0x00;
+	payload[2] = 0x00;
+	payload[3] = 0x00;
+	uint32_read_helper(payload, 4, MOSQ_ERR_SUCCESS, 0x00000000);
+
+	/* Endian check */
+	memset(payload, 0, sizeof(payload));
+	payload[0] = 0x12;
+	payload[1] = 0x34;
+	payload[2] = 0x56;
+	payload[3] = 0x78;
+	uint32_read_helper(payload, 4, MOSQ_ERR_SUCCESS, 0x12345678);
+
+	/* Biggest value */
+	memset(payload, 0, sizeof(payload));
+	payload[0] = 0xFF;
+	payload[1] = 0xFF;
+	payload[2] = 0xFF;
+	payload[3] = 0xFF;
+	uint32_read_helper(payload, 4, MOSQ_ERR_SUCCESS, 0xFFFFFFFF);
 
 }
 
@@ -350,6 +456,9 @@ int init_datatype_tests(void)
 			|| !CU_add_test(test_suite, "Two Byte Integer read (empty packet)", TEST_uint16_read_empty)
 			|| !CU_add_test(test_suite, "Two Byte Integer read (truncated packet)", TEST_uint16_read_truncated)
 			|| !CU_add_test(test_suite, "Two Byte Integer read (success values)", TEST_uint16_read_success)
+			|| !CU_add_test(test_suite, "Four Byte Integer read (empty packet)", TEST_uint32_read_empty)
+			|| !CU_add_test(test_suite, "Four Byte Integer read (truncated packet)", TEST_uint32_read_truncated)
+			|| !CU_add_test(test_suite, "Four Byte Integer read (success values)", TEST_uint32_read_success)
 			|| !CU_add_test(test_suite, "Variable Byte Integer read (empty packet)", TEST_varint_read_empty)
 			|| !CU_add_test(test_suite, "Variable Byte Integer read (truncated packets)", TEST_varint_read_truncated)
 			|| !CU_add_test(test_suite, "Variable Byte Integer read (encoding boundaries)", TEST_varint_read_boundaries)
