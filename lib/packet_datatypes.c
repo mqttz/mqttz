@@ -174,24 +174,30 @@ void packet__write_uint32(struct mosquitto__packet *packet, uint32_t word)
 }
 
 
-int packet__read_varint(struct mosquitto__packet *packet, int32_t *word, uint8_t *bytes)
+int packet__read_varint(struct mosquitto__packet *packet, int32_t *word, int8_t *bytes)
 {
 	int i;
-	int remaining_mult = 1;
 	uint8_t byte;
-
-	*word = 0;
-	if(bytes) (*bytes) = 0;
+	int remaining_mult = 1;
+	int32_t lword = 0;
+	uint8_t lbytes = 0;
 
 	for(i=0; i<4; i++){
 		if(packet->pos < packet->remaining_length){
-			if(bytes) (*bytes)++;
+			lbytes++;
 			byte = packet->payload[packet->pos];
-			*word += (byte & 127) * remaining_mult;
+			lword += (byte & 127) * remaining_mult;
 			remaining_mult *= 128;
 			packet->pos++;
 			if((byte & 128) == 0){
-				return MOSQ_ERR_SUCCESS;
+				if(lbytes > 1 && byte == 0){
+					/* Catch overlong encodings */
+					return MOSQ_ERR_PROTOCOL;
+				}else{
+					*word = lword;
+					if(bytes) (*bytes) = lbytes;
+					return MOSQ_ERR_SUCCESS;
+				}
 			}
 		}else{
 			return MOSQ_ERR_PROTOCOL;
