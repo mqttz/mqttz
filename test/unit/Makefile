@@ -2,19 +2,22 @@ include ../../config.mk
 
 .PHONY: all test clean coverage
 
-CFLAGS=-I../.. -I../../lib -coverage
+CFLAGS=-I../.. -I../../lib -coverage -Wall
 TEST_LDFLAGS=-lcunit -coverage
 
 all : test
 
-packet_datatypes.o : ../../lib/packet_datatypes.c
-	$(CROSS_COMPILE)$(CC) $(CFLAGS) -c -o $@ $^
+mosq_test : test.o datatypes.o memory_mosq.o packet_datatypes.o utf8_mosq.o
+	$(CROSS_COMPILE)$(CC) -o $@ $^ ${TEST_LDFLAGS}
 
 memory_mosq.o : ../../lib/memory_mosq.c
 	$(CROSS_COMPILE)$(CC) $(CFLAGS) -c -o $@ $^
 
-mosq_test : test.o datatypes.o memory_mosq.o packet_datatypes.o
-	$(CROSS_COMPILE)$(CC) -o $@ $^ ${TEST_LDFLAGS}
+packet_datatypes.o : ../../lib/packet_datatypes.c
+	$(CROSS_COMPILE)$(CC) $(CFLAGS) -c -o $@ $^
+
+utf8_mosq.o : ../../lib/utf8_mosq.c
+	$(CROSS_COMPILE)$(CC) $(CFLAGS) -c -o $@ $^
 
 test : mosq_test
 	./mosq_test
