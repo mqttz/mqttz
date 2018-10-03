@@ -14,12 +14,12 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    if(init_utf8_tests()){
-        CU_cleanup_registry();
-        return 1;
-    }
+    if(0
+			|| init_utf8_tests()
+			|| init_datatype_read_tests()
+			|| init_datatype_write_tests()
+			){
 
-    if(init_datatype_read_tests()){
         CU_cleanup_registry();
         return 1;
     }

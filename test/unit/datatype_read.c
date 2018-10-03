@@ -172,7 +172,7 @@ static void TEST_byte_read_success(void)
 	payload[0] = 0x1F;
 	byte_read_helper(payload, 1, MOSQ_ERR_SUCCESS, 0x1F);
 
-	/* 65,535 value */
+	/* 255 value */
 	memset(payload, 0, sizeof(payload));
 	payload[0] = 0xFF;
 	byte_read_helper(payload, 1, MOSQ_ERR_SUCCESS, 0xFF);
@@ -746,7 +746,7 @@ int init_datatype_read_tests(void)
 			|| !CU_add_test(test_suite, "Binary Data read (truncated packet)", TEST_binary_data_read_truncated)
 			){
 
-		printf("Error adding datatypes CUnit tests.\n");
+		printf("Error adding Datatype read CUnit tests.\n");
 		return 1;
 	}
 
