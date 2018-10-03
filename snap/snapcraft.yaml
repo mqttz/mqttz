@@ -66,6 +66,7 @@ parts:
       - usr/sbin/mosquitto
       - usr/bin/mosquitto_pub
       - usr/bin/mosquitto_sub
+      - usr/bin/mosquitto_passwd
       - usr/lib/libmosquitto.so*
       - lib/*-linux-gnu/libcrypto.so*
       - lib/*-linux-gnu/libssl.so*
