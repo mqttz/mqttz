@@ -74,13 +74,6 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 				mosquitto__free(sub);
 				return 1;
 			}
-			if(mosquitto_validate_utf8(sub, slen)){
-				log__printf(NULL, MOSQ_LOG_INFO,
-						"Malformed UTF-8 in unsubscription string from %s, disconnecting.",
-						context->id);
-				mosquitto__free(sub);
-				return 1;
-			}
 
 			log__printf(NULL, MOSQ_LOG_DEBUG, "\t%s", sub);
 			sub__remove(db, context, sub, db->subs);

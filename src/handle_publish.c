@@ -70,11 +70,6 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 		return 1;
 	}
 
-	if(mosquitto_validate_utf8(topic, slen) != MOSQ_ERR_SUCCESS){
-		mosquitto__free(topic);
-		return 1;
-	}
-
 #ifdef WITH_BRIDGE
 	if(context->bridge && context->bridge->topics && context->bridge->topic_remapping){
 		for(i=0; i<context->bridge->topic_count; i++){

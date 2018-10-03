@@ -73,13 +73,6 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 				mosquitto__free(payload);
 				return 1;
 			}
-			if(mosquitto_validate_utf8(sub, slen)){
-				log__printf(NULL, MOSQ_LOG_INFO,
-						"Malformed UTF-8 in subscription string from %s, disconnecting.",
-						context->id);
-				mosquitto__free(sub);
-				return 1;
-			}
 
 			if(packet__read_byte(&context->in_packet, &qos)){
 				mosquitto__free(sub);

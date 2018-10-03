@@ -292,11 +292,6 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		}
 	}
 
-	if(mosquitto_validate_utf8(client_id, slen) != MOSQ_ERR_SUCCESS){
-		rc = 1;
-		goto handle_connect_error;
-	}
-
 	if(will){
 		will_struct = mosquitto__calloc(1, sizeof(struct mosquitto_message));
 		if(!will_struct){
@@ -308,14 +303,6 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			goto handle_connect_error;
 		}
 		if(!slen){
-			rc = 1;
-			goto handle_connect_error;
-		}
-		if(mosquitto_validate_utf8(will_topic, slen)){
-			log__printf(NULL, MOSQ_LOG_INFO,
-					"Malformed UTF-8 in will topic string from %s, disconnecting.",
-					client_id);
-
 			rc = 1;
 			goto handle_connect_error;
 		}
@@ -368,12 +355,8 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	if(username_flag){
 		rc = packet__read_string(&context->in_packet, &username, &slen);
 		if(rc == MOSQ_ERR_SUCCESS){
-			if(mosquitto_validate_utf8(username, slen) != MOSQ_ERR_SUCCESS){
-				rc = MOSQ_ERR_PROTOCOL;
-				goto handle_connect_error;
-			}
-
 			if(password_flag){
+				/* FIXME - MQTT 5 this is binary data */
 				rc = packet__read_string(&context->in_packet, &password, &slen);
 				if(rc == MOSQ_ERR_NOMEM){
 					rc = MOSQ_ERR_NOMEM;

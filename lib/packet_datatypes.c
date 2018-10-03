@@ -108,6 +108,12 @@ int packet__read_string(struct mosquitto__packet *packet, char **str, int *lengt
 		return MOSQ_ERR_NOMEM;
 	}
 
+	if(mosquitto_validate_utf8(*str, slen)){
+		mosquitto__free(*str);
+		*str = NULL;
+		return MOSQ_ERR_MALFORMED_UTF8;
+	}
+
 	*length = slen;
 	return MOSQ_ERR_SUCCESS;
 }
