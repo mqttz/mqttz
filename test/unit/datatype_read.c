@@ -86,18 +86,18 @@ static void string_read_helper(
 		uint8_t *payload,
 		int remaining_length,
 		int rc_expected,
-		const char *value_expected,
+		const uint8_t *value_expected,
 		int length_expected)
 {
 	struct mosquitto__packet packet;
-	char *value = NULL;
+	uint8_t *value = NULL;
 	int length = -1;
 	int rc;
 
 	memset(&packet, 0, sizeof(struct mosquitto__packet));
 	packet.payload = payload;
 	packet.remaining_length = remaining_length;
-	rc = packet__read_string(&packet, &value, &length);
+	rc = packet__read_string(&packet, (char **)&value, &length);
 	CU_ASSERT_EQUAL(rc, rc_expected);
 	if(value_expected){
 		CU_ASSERT_NSTRING_EQUAL(value, value_expected, length_expected);
@@ -548,7 +548,7 @@ static void TEST_string_read_empty_string(void)
 	memset(payload, 0, sizeof(payload));
 	payload[0] = 0x00;
 	payload[1] = 0x00;
-	string_read_helper(payload, 2, MOSQ_ERR_SUCCESS, "", 0);
+	string_read_helper(payload, 2, MOSQ_ERR_SUCCESS, (const uint8_t *)"", 0);
 }
 
 /* This tests reading a UTF-8 Encoded String from an incoming packet.
@@ -574,7 +574,7 @@ static void TEST_string_read_valid_string(void)
 	payload[10] = 'i';
 	payload[11] = 'n';
 	payload[12] = 'g';
-	string_read_helper(payload, 13, MOSQ_ERR_SUCCESS, "test string", 11);
+	string_read_helper(payload, 13, MOSQ_ERR_SUCCESS, (const uint8_t *)"test string", 11);
 }
 
 
