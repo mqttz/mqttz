@@ -82,6 +82,34 @@ static void varint_read_helper(
 }
 
 
+static void binary_read_helper(
+		uint8_t *payload,
+		int remaining_length,
+		int rc_expected,
+		const uint8_t *value_expected,
+		int length_expected)
+{
+	struct mosquitto__packet packet;
+	uint8_t *value = NULL;
+	int length = -1;
+	int rc;
+
+	memset(&packet, 0, sizeof(struct mosquitto__packet));
+	packet.payload = payload;
+	packet.remaining_length = remaining_length;
+	rc = packet__read_binary(&packet, (void **)&value, &length);
+	CU_ASSERT_EQUAL(rc, rc_expected);
+	if(value_expected){
+		/* FIXME - this should be a memcmp */
+		CU_ASSERT_NSTRING_EQUAL(value, value_expected, length_expected);
+	}else{
+		CU_ASSERT_EQUAL(value, NULL);
+	}
+	CU_ASSERT_EQUAL(length, length_expected);
+	free(value);
+}
+
+
 static void string_read_helper(
 		uint8_t *payload,
 		int remaining_length,
@@ -629,6 +657,58 @@ static void TEST_string_read_mqtt_1_5_4_3(void)
 
 
 /* ========================================================================
+ * BINARY DATA TESTS
+ * ======================================================================== */
+
+/* This tests reading Binary Data from an incoming packet.
+ *
+ * It tests:
+ *  * Empty packet
+ */
+static void TEST_binary_data_read_empty(void)
+{
+	binary_read_helper(NULL, 0, MOSQ_ERR_PROTOCOL, NULL, -1);
+}
+
+
+/* This tests reading Binary Data from an incoming packet.
+ *
+ * It tests:
+ *  * Truncated packets
+ */
+static void TEST_binary_data_read_truncated(void)
+{
+	uint8_t payload[20];
+
+	/* 1 byte packet */
+	memset(payload, 0, sizeof(payload));
+	payload[0] = 0x02;
+	binary_read_helper(payload, 1, MOSQ_ERR_PROTOCOL, NULL, -1);
+
+	/* 2 byte packet */
+	memset(payload, 0, sizeof(payload));
+	payload[0] = 0x02;
+	payload[1] = 0x02;
+	binary_read_helper(payload, 2, MOSQ_ERR_PROTOCOL, NULL, -1);
+
+	/* 3 byte packet */
+	memset(payload, 0, sizeof(payload));
+	payload[0] = 0x00;
+	payload[1] = 0x02;
+	payload[2] = 'a';
+	binary_read_helper(payload, 3, MOSQ_ERR_PROTOCOL, NULL, -1);
+
+	/* 3 byte packet */
+	memset(payload, 0, sizeof(payload));
+	payload[0] = 0x00;
+	payload[1] = 0x03;
+	payload[2] = 'a';
+	payload[3] = 'b';
+	binary_read_helper(payload, 4, MOSQ_ERR_PROTOCOL, NULL, -1);
+}
+
+
+/* ========================================================================
  * TEST SUITE SETUP
  * ======================================================================== */
 
@@ -662,6 +742,8 @@ int init_datatype_read_tests(void)
 			|| !CU_add_test(test_suite, "UTF-8 string read (valid string)", TEST_string_read_valid_string)
 			|| !CU_add_test(test_suite, "UTF-8 string read (malformed string)", TEST_string_read_malformed_string)
 			|| !CU_add_test(test_suite, "UTF-8 string read (MQTT-1.5.4-3)", TEST_string_read_mqtt_1_5_4_3)
+			|| !CU_add_test(test_suite, "Binary Data read (empty packet)", TEST_binary_data_read_empty)
+			|| !CU_add_test(test_suite, "Binary Data read (truncated packet)", TEST_binary_data_read_truncated)
 			){
 
 		printf("Error adding datatypes CUnit tests.\n");

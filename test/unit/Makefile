@@ -2,7 +2,7 @@ include ../../config.mk
 
 .PHONY: all test clean coverage
 
-CFLAGS=-I../.. -I../../lib -coverage -Wall
+CFLAGS=-I../.. -I../../lib -coverage -Wall -ggdb
 TEST_LDFLAGS=-lcunit -coverage
 
 all : test

@@ -88,7 +88,7 @@ void packet__write_bytes(struct mosquitto__packet *packet, const void *bytes, ui
 }
 
 
-int packet__read_string(struct mosquitto__packet *packet, char **str, int *length)
+int packet__read_binary(struct mosquitto__packet *packet, void **data, int *length)
 {
 	uint16_t slen;
 	int rc;
@@ -99,22 +99,35 @@ int packet__read_string(struct mosquitto__packet *packet, char **str, int *lengt
 
 	if(packet->pos+slen > packet->remaining_length) return MOSQ_ERR_PROTOCOL;
 
-	*str = mosquitto__malloc(slen+1);
-	if(*str){
-		memcpy(*str, &(packet->payload[packet->pos]), slen);
-		(*str)[slen] = '\0';
+	*data = mosquitto__malloc(slen+1);
+	if(*data){
+		memcpy(*data, &(packet->payload[packet->pos]), slen);
+		((uint8_t *)(*data))[slen] = '\0';
 		packet->pos += slen;
 	}else{
 		return MOSQ_ERR_NOMEM;
 	}
 
-	if(mosquitto_validate_utf8(*str, slen)){
+	*length = slen;
+	return MOSQ_ERR_SUCCESS;
+}
+
+
+int packet__read_string(struct mosquitto__packet *packet, char **str, int *length)
+{
+	int rc;
+	int len;
+
+	rc = packet__read_binary(packet, (void **)str, &len);
+	if(rc) return rc;
+
+	if(mosquitto_validate_utf8(*str, len)){
 		mosquitto__free(*str);
 		*str = NULL;
 		return MOSQ_ERR_MALFORMED_UTF8;
 	}
 
-	*length = slen;
+	*length = len;
 	return MOSQ_ERR_SUCCESS;
 }
 
