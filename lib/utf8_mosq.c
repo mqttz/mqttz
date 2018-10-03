@@ -87,6 +87,14 @@ int mosquitto_validate_utf8(const char *str, int len)
 		}else if(codelen == 4 && (codepoint < 0x10000 || codepoint > 0x10FFFF)){
 			return MOSQ_ERR_MALFORMED_UTF8;
 		}
+
+		/* Check for non-characters */
+		if(codepoint >= 0xFDD0 && codepoint <= 0xFDEF){
+			return MOSQ_ERR_MALFORMED_UTF8;
+		}
+		if((codepoint & 0xFFFF) == 0xFFFE || (codepoint & 0xFFFF) == 0xFFFF){
+			return MOSQ_ERR_MALFORMED_UTF8;
+		}
 	}
 	return MOSQ_ERR_SUCCESS;
 }

@@ -4,12 +4,18 @@
 #include <CUnit/Basic.h>
 
 int init_datatype_tests(void);
+int init_utf8_tests(void);
 
 int main(int argc, char *argv[])
 {
 
     if(CU_initialize_registry() != CUE_SUCCESS){
         printf("Error initializing CUnit registry.\n");
+        return 1;
+    }
+
+    if(init_utf8_tests()){
+        CU_cleanup_registry();
         return 1;
     }
 
