@@ -3,6 +3,25 @@
 
 #include "packet_mosq.h"
 
+static void uint16_read_helper(
+		uint8_t *payload,
+		int remaining_length,
+		int rc_expected,
+		uint16_t value_expected)
+{
+	struct mosquitto__packet packet;
+	uint16_t value = 0;
+	int rc;
+
+	memset(&packet, 0, sizeof(struct mosquitto__packet));
+	packet.payload = payload;
+	packet.remaining_length = remaining_length;
+	rc = packet__read_uint16(&packet, &value);
+	CU_ASSERT_EQUAL(rc, rc_expected);
+	CU_ASSERT_EQUAL(value, value_expected);
+}
+
+
 static void varint_read_helper(
 		uint8_t *payload,
 		int remaining_length,
@@ -24,6 +43,86 @@ static void varint_read_helper(
 	CU_ASSERT_EQUAL(bytes, bytes_expected);
 }
 
+
+/* ========================================================================
+ * TWO BYTE INTEGER TESTS
+ * ======================================================================== */
+
+/* This tests reading a Two Byte Integer from an incoming packet.
+ *
+ * It tests:
+ *  * Empty packets
+ *  * Truncated packets
+ *  * Success at boundaries
+ */
+static void TEST_uint16_read_empty(void)
+{
+	struct mosquitto__packet packet;
+	uint8_t payload[20];
+	int rc;
+
+	/* Empty packet */
+	uint16_read_helper(NULL, 0, MOSQ_ERR_PROTOCOL, 0);
+}
+
+
+/* This tests reading a Two Byte Integer from an incoming packet.
+ *
+ * It tests:
+ *  * Empty packets
+ *  * Truncated packets
+ *  * Success at boundaries
+ */
+static void TEST_uint16_read_truncated(void)
+{
+	struct mosquitto__packet packet;
+	uint8_t payload[20];
+	int rc;
+
+	/* 1 byte packet */
+	memset(payload, 0, sizeof(payload));
+	payload[0] = 0x38;
+	uint16_read_helper(payload, 1, MOSQ_ERR_PROTOCOL, 0);
+}
+
+
+/* This tests reading a Two Byte Integer from an incoming packet.
+ *
+ * It tests:
+ *  * Empty packets
+ *  * Truncated packets
+ *  * Success at boundaries
+ */
+static void TEST_uint16_read_success(void)
+{
+	struct mosquitto__packet packet;
+	uint8_t payload[20];
+	int rc;
+
+	/* 0 value */
+	memset(payload, 0, sizeof(payload));
+	payload[0] = 0x00;
+	payload[1] = 0x00;
+	uint16_read_helper(payload, 2, MOSQ_ERR_SUCCESS, 0x0000);
+
+	/* Endian check */
+	memset(payload, 0, sizeof(payload));
+	payload[0] = 0x38;
+	payload[1] = 0xF3;
+	uint16_read_helper(payload, 2, MOSQ_ERR_SUCCESS, 0x38F3);
+
+	/* 65,535 value */
+	memset(payload, 0, sizeof(payload));
+	payload[0] = 0xFF;
+	payload[1] = 0xFF;
+	uint16_read_helper(payload, 2, MOSQ_ERR_SUCCESS, 0xFFFF);
+
+}
+
+
+/* ========================================================================
+ * VARIABLE BYTE INTEGER TESTS
+ * ======================================================================== */
 
 /* This tests reading a Variable Byte Integer from an incoming packet.
  *
@@ -233,6 +332,10 @@ static void TEST_varint_read_overlong_encoding(void)
 }
 
 
+/* ========================================================================
+ * TEST SUITE SETUP
+ * ======================================================================== */
+
 int init_datatype_tests(void)
 {
 	CU_pSuite test_suite = NULL;
@@ -244,6 +347,9 @@ int init_datatype_tests(void)
 	}
 
 	if(0
+			|| !CU_add_test(test_suite, "Two Byte Integer read (empty packet)", TEST_uint16_read_empty)
+			|| !CU_add_test(test_suite, "Two Byte Integer read (truncated packet)", TEST_uint16_read_truncated)
+			|| !CU_add_test(test_suite, "Two Byte Integer read (success values)", TEST_uint16_read_success)
 			|| !CU_add_test(test_suite, "Variable Byte Integer read (empty packet)", TEST_varint_read_empty)
 			|| !CU_add_test(test_suite, "Variable Byte Integer read (truncated packets)", TEST_varint_read_truncated)
 			|| !CU_add_test(test_suite, "Variable Byte Integer read (encoding boundaries)", TEST_varint_read_boundaries)
