@@ -62,6 +62,40 @@ static void TEST_uint16_write(void)
 
 
 /* ========================================================================
+ * FOUR BYTE INTEGER TESTS
+ * ======================================================================== */
+
+/* This tests writing a Four Byte Integer to an incoming packet.  */
+static void TEST_uint32_write(void)
+{
+	uint8_t *payload;
+	uint32_t *payload32;
+	struct mosquitto__packet packet;
+	int i;
+
+	payload = calloc(42000, sizeof(uint32_t));
+	if(!payload){
+		CU_FAIL_FATAL("Out of memory");
+	}
+
+	memset(&packet, 0, sizeof(struct mosquitto__packet));
+	packet.payload = payload;
+	packet.packet_length = 42000;
+
+	for(i=0; i<10500; i++){
+		packet__write_uint32(&packet, 1000*i);
+	}
+
+	CU_ASSERT_EQUAL(packet.pos, 42000);
+	payload32 = (uint32_t *)payload;
+	for(i=0; i<10500; i++){
+		CU_ASSERT_EQUAL(payload32[i], htonl(1000*i));
+	}
+	free(payload);
+}
+
+
+/* ========================================================================
  * TEST SUITE SETUP
  * ======================================================================== */
 
@@ -78,6 +112,7 @@ int init_datatype_write_tests(void)
 	if(0
 			|| !CU_add_test(test_suite, "Byte write)", TEST_byte_write)
 			|| !CU_add_test(test_suite, "Two Byte Integer write", TEST_uint16_write)
+			|| !CU_add_test(test_suite, "Four Byte Integer write", TEST_uint32_write)
 			){
 
 		printf("Error adding Datatype write CUnit tests.\n");
