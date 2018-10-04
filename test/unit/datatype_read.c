@@ -137,6 +137,34 @@ static void string_read_helper(
 }
 
 
+static void bytes_read_helper(
+		uint8_t *payload,
+		int remaining_length,
+		int rc_expected,
+		const uint8_t *value_expected,
+		int count)
+{
+	struct mosquitto__packet packet;
+	uint8_t value[count];
+	int rc;
+	int i;
+
+	memset(&packet, 0, sizeof(struct mosquitto__packet));
+	packet.payload = payload;
+	packet.remaining_length = remaining_length;
+	rc = packet__read_bytes(&packet, value, count);
+	CU_ASSERT_EQUAL(rc, rc_expected);
+	if(rc == MOSQ_ERR_SUCCESS){
+		CU_ASSERT_EQUAL(packet.pos, count);
+	}
+	if(value_expected){
+		for(i=0; i<count; i++){
+			CU_ASSERT_EQUAL(value[i], value_expected[i]);
+		}
+	}
+}
+
+
 /* ========================================================================
  * BYTE INTEGER TESTS
  * ======================================================================== */
@@ -709,6 +737,48 @@ static void TEST_binary_data_read_truncated(void)
 
 
 /* ========================================================================
+ * MULTIPLE BYTE TESTS
+ * ======================================================================== */
+
+/* This tests reading multiple bytes (payload) from an incoming packet.
+ *
+ * It tests:
+ *  * Empty packets
+ */
+static void TEST_bytes_read_empty(void)
+{
+	/* Empty packet */
+	bytes_read_helper(NULL, 0, MOSQ_ERR_SUCCESS, NULL, 0);
+}
+
+/* This tests reading multiple bytes (payload) from an incoming packet.
+ *
+ * It tests:
+ *  * Truncated packets
+ */
+static void TEST_bytes_read_truncated(void)
+{
+	bytes_read_helper(NULL, 0, MOSQ_ERR_PROTOCOL, NULL, 1);
+}
+
+/* This tests reading multiple bytes from an incoming packet.
+ *
+ * It tests:
+ *  * Success
+ */
+static void TEST_bytes_read_success(void)
+{
+	uint8_t payload[20];
+	int i;
+
+	for(i=0; i<20; i++){
+		payload[i] = i*2;
+	}
+	bytes_read_helper(payload, 20, MOSQ_ERR_SUCCESS, payload, 20);
+}
+
+
+/* ========================================================================
  * TEST SUITE SETUP
  * ======================================================================== */
 
@@ -744,6 +814,9 @@ int init_datatype_read_tests(void)
 			|| !CU_add_test(test_suite, "UTF-8 string read (MQTT-1.5.4-3)", TEST_string_read_mqtt_1_5_4_3)
 			|| !CU_add_test(test_suite, "Binary Data read (empty packet)", TEST_binary_data_read_empty)
 			|| !CU_add_test(test_suite, "Binary Data read (truncated packet)", TEST_binary_data_read_truncated)
+			|| !CU_add_test(test_suite, "Bytes read (empty packet)", TEST_bytes_read_empty)
+			|| !CU_add_test(test_suite, "Bytes read (truncated packet)", TEST_bytes_read_truncated)
+			|| !CU_add_test(test_suite, "Bytes read (success)", TEST_bytes_read_success)
 			){
 
 		printf("Error adding Datatype read CUnit tests.\n");

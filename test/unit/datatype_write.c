@@ -140,7 +140,7 @@ int init_datatype_write_tests(void)
 	}
 
 	if(0
-			|| !CU_add_test(test_suite, "Byte write)", TEST_byte_write)
+			|| !CU_add_test(test_suite, "Byte write", TEST_byte_write)
 			|| !CU_add_test(test_suite, "Two Byte Integer write", TEST_uint16_write)
 			|| !CU_add_test(test_suite, "Four Byte Integer write", TEST_uint32_write)
 			|| !CU_add_test(test_suite, "UTF-8 String write", TEST_string_write)
