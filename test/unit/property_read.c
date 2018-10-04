@@ -541,6 +541,96 @@ static void TEST_single_response_topic(void)
 	string_prop_read_helper(payload, 9, MOSQ_ERR_SUCCESS, PROP_RESPONSE_TOPIC, "hello");
 }
 
+static void TEST_single_assigned_client_identifier(void)
+{
+	uint8_t payload[20];
+
+	memset(&payload, 0, sizeof(payload));
+	payload[0] = 8;
+	payload[1] = PROP_ASSIGNED_CLIENT_IDENTIFIER;
+	payload[2] = 0x00;
+	payload[3] = 0x05;
+	payload[4] = 'h';
+	payload[5] = 'e';
+	payload[6] = 'l';
+	payload[7] = 'l';
+	payload[8] = 'o';
+
+	string_prop_read_helper(payload, 9, MOSQ_ERR_SUCCESS, PROP_ASSIGNED_CLIENT_IDENTIFIER, "hello");
+}
+
+static void TEST_single_authentication_method(void)
+{
+	uint8_t payload[20];
+
+	memset(&payload, 0, sizeof(payload));
+	payload[0] = 8;
+	payload[1] = PROP_AUTHENTICATION_METHOD;
+	payload[2] = 0x00;
+	payload[3] = 0x05;
+	payload[4] = 'h';
+	payload[5] = 'e';
+	payload[6] = 'l';
+	payload[7] = 'l';
+	payload[8] = 'o';
+
+	string_prop_read_helper(payload, 9, MOSQ_ERR_SUCCESS, PROP_AUTHENTICATION_METHOD, "hello");
+}
+
+static void TEST_single_response_information(void)
+{
+	uint8_t payload[20];
+
+	memset(&payload, 0, sizeof(payload));
+	payload[0] = 8;
+	payload[1] = PROP_RESPONSE_INFO;
+	payload[2] = 0x00;
+	payload[3] = 0x05;
+	payload[4] = 'h';
+	payload[5] = 'e';
+	payload[6] = 'l';
+	payload[7] = 'l';
+	payload[8] = 'o';
+
+	string_prop_read_helper(payload, 9, MOSQ_ERR_SUCCESS, PROP_RESPONSE_INFO, "hello");
+}
+
+static void TEST_single_server_reference(void)
+{
+	uint8_t payload[20];
+
+	memset(&payload, 0, sizeof(payload));
+	payload[0] = 8;
+	payload[1] = PROP_SERVER_REFERENCE;
+	payload[2] = 0x00;
+	payload[3] = 0x05;
+	payload[4] = 'h';
+	payload[5] = 'e';
+	payload[6] = 'l';
+	payload[7] = 'l';
+	payload[8] = 'o';
+
+	string_prop_read_helper(payload, 9, MOSQ_ERR_SUCCESS, PROP_SERVER_REFERENCE, "hello");
+}
+
+static void TEST_single_reason_string(void)
+{
+	uint8_t payload[20];
+
+	memset(&payload, 0, sizeof(payload));
+	payload[0] = 8;
+	payload[1] = PROP_REASON_STRING;
+	payload[2] = 0x00;
+	payload[3] = 0x05;
+	payload[4] = 'h';
+	payload[5] = 'e';
+	payload[6] = 'l';
+	payload[7] = 'l';
+	payload[8] = 'o';
+
+	string_prop_read_helper(payload, 9, MOSQ_ERR_SUCCESS, PROP_REASON_STRING, "hello");
+}
+
 /* ========================================================================
  * DUPLICATE PROPERTIES
  * ======================================================================== */
@@ -633,6 +723,31 @@ static void TEST_duplicate_content_type(void)
 static void TEST_duplicate_response_topic(void)
 {
 	duplicate_string_helper(PROP_RESPONSE_TOPIC);
+}
+
+static void TEST_duplicate_assigned_client_identifier(void)
+{
+	duplicate_string_helper(PROP_ASSIGNED_CLIENT_IDENTIFIER);
+}
+
+static void TEST_duplicate_authentication_method(void)
+{
+	duplicate_string_helper(PROP_AUTHENTICATION_METHOD);
+}
+
+static void TEST_duplicate_response_information(void)
+{
+	duplicate_string_helper(PROP_RESPONSE_INFO);
+}
+
+static void TEST_duplicate_server_reference(void)
+{
+	duplicate_string_helper(PROP_SERVER_REFERENCE);
+}
+
+static void TEST_duplicate_reason_string(void)
+{
+	duplicate_string_helper(PROP_REASON_STRING);
 }
 
 /* ========================================================================
@@ -751,6 +866,11 @@ int init_property_read_tests(void)
 			|| !CU_add_test(test_suite, "Single Topic Alias", TEST_single_topic_alias)
 			|| !CU_add_test(test_suite, "Single Content Type", TEST_single_content_type)
 			|| !CU_add_test(test_suite, "Single Response Topic", TEST_single_response_topic)
+			|| !CU_add_test(test_suite, "Single Assigned Client Identifier", TEST_single_assigned_client_identifier)
+			|| !CU_add_test(test_suite, "Single Authentication Method", TEST_single_authentication_method)
+			|| !CU_add_test(test_suite, "Single Response Information", TEST_single_response_information)
+			|| !CU_add_test(test_suite, "Single Server Reference", TEST_single_server_reference)
+			|| !CU_add_test(test_suite, "Single Reason String", TEST_single_reason_string)
 			|| !CU_add_test(test_suite, "Duplicate Payload Format Indicator", TEST_duplicate_payload_format_indicator)
 			|| !CU_add_test(test_suite, "Duplicate Request Problem Information", TEST_duplicate_request_problem_information)
 			|| !CU_add_test(test_suite, "Duplicate Request Response Information", TEST_duplicate_request_response_information)
@@ -769,6 +889,11 @@ int init_property_read_tests(void)
 			|| !CU_add_test(test_suite, "Duplicate Topic Alias", TEST_duplicate_topic_alias)
 			|| !CU_add_test(test_suite, "Duplicate Content Type", TEST_duplicate_content_type)
 			|| !CU_add_test(test_suite, "Duplicate Response Topic", TEST_duplicate_response_topic)
+			|| !CU_add_test(test_suite, "Duplicate Assigned Client ID", TEST_duplicate_assigned_client_identifier)
+			|| !CU_add_test(test_suite, "Duplicate Authentication Method", TEST_duplicate_authentication_method)
+			|| !CU_add_test(test_suite, "Duplicate Response Information", TEST_duplicate_response_information)
+			|| !CU_add_test(test_suite, "Duplicate Server Reference", TEST_duplicate_server_reference)
+			|| !CU_add_test(test_suite, "Duplicate Reason String", TEST_duplicate_reason_string)
 			|| !CU_add_test(test_suite, "Bad Request Problem Information", TEST_bad_request_problem_information)
 			|| !CU_add_test(test_suite, "Bad Request Response Information", TEST_bad_request_response_information)
 			|| !CU_add_test(test_suite, "Bad Maximum QoS", TEST_bad_maximum_qos)
