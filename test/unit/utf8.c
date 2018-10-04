@@ -83,6 +83,8 @@ static void TEST_utf8_boundary_conditions(void)
 
 static void TEST_utf8_malformed_sequences(void)
 {
+	char buf[100];
+	int i;
 	/* 3  Malformed sequences */
 	/* 3.1  Unexpected continuation bytes */
 	utf8_helper("3.1.1  First continuation byte 0x80: \"€\"", MOSQ_ERR_MALFORMED_UTF8);
@@ -95,32 +97,82 @@ static void TEST_utf8_malformed_sequences(void)
 	utf8_helper("3.1.8  7 continuation bytes: \"€¿€¿€¿€\"", MOSQ_ERR_MALFORMED_UTF8);
 
 	/* 3.1.9  Sequence of all 64 possible continuation bytes (0x80-0xbf): */
-	utf8_helper("€‚ƒ„…†‡ˆ‰Š‹Œ", MOSQ_ERR_MALFORMED_UTF8);
-    utf8_helper("‘’“”•–—˜™š›œŸ", MOSQ_ERR_MALFORMED_UTF8);
-    utf8_helper(" ¡¢£¤¥¦§¨©ª«¬­®¯", MOSQ_ERR_MALFORMED_UTF8);
-    utf8_helper("°±²³´µ¶·¸¹º»¼½¾¿\"", MOSQ_ERR_MALFORMED_UTF8);
+	memset(buf, 0, sizeof(buf));
+	for(i=0x80; i<0x90; i++){
+		buf[i-0x80] = i;
+	}
+	utf8_helper(buf, MOSQ_ERR_MALFORMED_UTF8);
+	memset(buf, 0, sizeof(buf));
+	for(i=0x90; i<0xa0; i++){
+		buf[i-0x90] = i;
+	}
+	utf8_helper(buf, MOSQ_ERR_MALFORMED_UTF8);
+
+	for(i=0x80; i<0xA0; i++){
+		buf[0] = i;
+		buf[1] = 0;
+		utf8_helper(buf, MOSQ_ERR_MALFORMED_UTF8);
+	}
+
+	for(i=0xA0; i<0xC0; i++){
+		buf[0] = i;
+		buf[1] = 0;
+		utf8_helper(buf, MOSQ_ERR_MALFORMED_UTF8);
+	}
 
 	/* 3.2  Lonely start characters */
 
 	/* 3.2.1  All 32 first bytes of 2-byte sequences (0xc0-0xdf),
        each followed by a space character: */
-	utf8_helper("\"À Á Â Ã Ä Å Æ Ç È É Ê Ë Ì Í Î Ï Ğ Ñ Ò Ó Ô Õ Ö × Ø Ù Ú Û Ü İ Ş ß \"", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("À Á Â Ã Ä Å Æ Ç È É Ê Ë Ì Í Î Ï Ğ Ñ Ò Ó Ô Õ Ö × Ø Ù Ú Û Ü İ Ş ß ", MOSQ_ERR_MALFORMED_UTF8);
+	for(i=0xC0; i<0xE0; i++){
+		buf[0] = i;
+		buf[1] = ' ';
+		buf[2] = 0;
+		utf8_helper(buf, MOSQ_ERR_MALFORMED_UTF8);
+	}
 
 	/* 3.2.2  All 16 first bytes of 3-byte sequences (0xe0-0xef),
        each followed by a space character: */
 	utf8_helper("\"à á â ã ä å æ ç è é ê ë ì í î ï \"", MOSQ_ERR_MALFORMED_UTF8);
+	for(i=0xe0; i<0xf0; i++){
+		buf[0] = i;
+		buf[1] = ' ';
+		buf[2] = 0;
+		utf8_helper(buf, MOSQ_ERR_MALFORMED_UTF8);
+	}
 
 	/* 3.2.3  All 8 first bytes of 4-byte sequences (0xf0-0xf7),
        each followed by a space character: */
 	utf8_helper("\"ğ ñ ò ó ô õ ö ÷ \"", MOSQ_ERR_MALFORMED_UTF8);
+	for(i=0xF0; i<0xF8; i++){
+		buf[0] = i;
+		buf[1] = ' ';
+		buf[2] = 0;
+		utf8_helper(buf, MOSQ_ERR_MALFORMED_UTF8);
+	}
 
 	/* 3.2.4  All 4 first bytes of 5-byte sequences (0xf8-0xfb),
        each followed by a space character: */
 	utf8_helper("\"ø ù ú û \"", MOSQ_ERR_MALFORMED_UTF8);
+	for(i=0xF8; i<0xFC; i++){
+		buf[0] = i;
+		buf[1] = ' ';
+		buf[2] = 0;
+		utf8_helper(buf, MOSQ_ERR_MALFORMED_UTF8);
+	}
 
 	/* 3.2.5  All 2 first bytes of 6-byte sequences (0xfc-0xfd),
        each followed by a space character: */
 	utf8_helper("\"ü ı \"", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ü ", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ı ", MOSQ_ERR_MALFORMED_UTF8);
+	for(i=0xFC; i<0xFE; i++){
+		buf[0] = i;
+		buf[1] = ' ';
+		buf[2] = 0;
+		utf8_helper(buf, MOSQ_ERR_MALFORMED_UTF8);
+	}
 
 	/* 3.3  Sequences with last continuation byte missing
 
@@ -239,7 +291,6 @@ static void TEST_utf8_illegal_code_positions(void)
 
 	/* 5.2 Paired UTF-16 surrogates */
 
-	/* FIXME - these need splitting up into separate tests. */
 	utf8_helper("5.2.1  U+D800 U+DC00 = ed a0 80 ed b0 80 = \"í €í°€\"", MOSQ_ERR_MALFORMED_UTF8);
 	utf8_helper("5.2.2  U+D800 U+DFFF = ed a0 80 ed bf bf = \"í €í¿¿\"", MOSQ_ERR_MALFORMED_UTF8);
 	utf8_helper("5.2.3  U+DB7F U+DC00 = ed ad bf ed b0 80 = \"í­¿í°€\"", MOSQ_ERR_MALFORMED_UTF8);
@@ -277,10 +328,73 @@ static void TEST_utf8_illegal_code_positions(void)
 
 	/* FIXME - these need splitting up into separate tests. */
 	utf8_helper("5.3.3  U+FDD0 .. U+FDEF = \"ï·ï·‘ï·’ï·“ï·”ï·•ï·–ï·—ï·˜ï·™ï·šï·›ï·œï·ï·ï·Ÿï· ï·¡ï·¢ï·£ï·¤ï·¥ï·¦ï·§ï·¨ï·©ï·ªï·«ï·¬ï·­ï·®ï·¯\"", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï·", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï·‘", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï·’", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï·“", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï·”", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï·•", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï·–", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï·—", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï·˜", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï·™", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï·š", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï·›", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï·œ", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï·", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï·", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï·Ÿ", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï· ", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï·¡", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï·¢", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï·£", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï·¤", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï·¥", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï·¦", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï·§", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï·¨", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï·©", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï·ª", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï·«", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï·¬", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï·­", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï·®", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ï·¯", MOSQ_ERR_MALFORMED_UTF8);
 
 	/* 5.3.4  U+nFFFE U+nFFFF (for n = 1..10) */
 
-	utf8_helper("\"ğŸ¿¾ğŸ¿¿ğ¯¿¾ğ¯¿¿ğ¿¿¾ğ¿¿¿ñ¿¾ñ¿¿ñŸ¿¾ñŸ¿¿ñ¯¿¾ñ¯¿¿ñ¿¿¾ñ¿¿¿ò¿¾ò¿¿òŸ¿¾òŸ¿¿ò¯¿¾ò¯¿¿ò¿¿¾ò¿¿¿ó¿¾ó¿¿óŸ¿¾óŸ¿¿ó¯¿¾ó¯¿¿ó¿¿¾ó¿¿¿ô¿¾ô¿¿\"", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ğŸ¿¾", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ğŸ¿¿", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ğ¯¿¾", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ğ¯¿¿", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ğ¿¿¾", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ğ¿¿¿", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ñ¿¾", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ñ¿¿", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ñŸ¿¾", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ñŸ¿¿", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ñ¯¿¾", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ñ¯¿¿", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ñ¿¿¾", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ñ¿¿¿", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ò¿¾", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ò¿¿", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("òŸ¿¾", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("òŸ¿¿", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ò¯¿¾", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ò¯¿¿", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ò¿¿¾", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ò¿¿¿", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ó¿¾", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ó¿¿", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("óŸ¿¾", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("óŸ¿¿", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ó¯¿¾", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ó¯¿¿", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ó¿¿¾", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ó¿¿¿", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ô¿¾", MOSQ_ERR_MALFORMED_UTF8);
+	utf8_helper("ô¿¿", MOSQ_ERR_MALFORMED_UTF8);
 }
 
 
