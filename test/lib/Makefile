@@ -48,7 +48,6 @@ ifeq ($(WITH_TLS),yes)
 endif
 	./09-util-topic-matching.py $@/09-util-topic-matching.test
 	./09-util-topic-tokenise.py $@/09-util-topic-tokenise.test
-	./09-util-utf8-validate.py $@/09-util-utf8-validate.test
 
 clean : 
 	$(MAKE) -C c clean
