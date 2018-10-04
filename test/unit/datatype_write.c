@@ -104,7 +104,6 @@ static void TEST_string_write(void)
 {
 	uint8_t payload[100];
 	struct mosquitto__packet packet;
-	int i;
 
 	memset(&packet, 0, sizeof(struct mosquitto__packet));
 	memset(payload, 0, 100);

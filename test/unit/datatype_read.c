@@ -97,7 +97,7 @@ static void binary_read_helper(
 	memset(&packet, 0, sizeof(struct mosquitto__packet));
 	packet.payload = payload;
 	packet.remaining_length = remaining_length;
-	rc = packet__read_binary(&packet, (void **)&value, &length);
+	rc = packet__read_binary(&packet, (uint8_t **)&value, &length);
 	CU_ASSERT_EQUAL(rc, rc_expected);
 	if(value_expected){
 		/* FIXME - this should be a memcmp */

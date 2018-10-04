@@ -88,7 +88,7 @@ void packet__write_bytes(struct mosquitto__packet *packet, const void *bytes, ui
 }
 
 
-int packet__read_binary(struct mosquitto__packet *packet, void **data, int *length)
+int packet__read_binary(struct mosquitto__packet *packet, uint8_t **data, int *length)
 {
 	uint16_t slen;
 	int rc;
@@ -118,7 +118,7 @@ int packet__read_string(struct mosquitto__packet *packet, char **str, int *lengt
 	int rc;
 	int len;
 
-	rc = packet__read_binary(packet, (void **)str, &len);
+	rc = packet__read_binary(packet, (uint8_t **)str, &len);
 	if(rc) return rc;
 
 	if(mosquitto_validate_utf8(*str, len)){

@@ -5,6 +5,7 @@
 
 int init_datatype_read_tests(void);
 int init_datatype_write_tests(void);
+int init_property_read_tests(void);
 int init_utf8_tests(void);
 
 int main(int argc, char *argv[])
@@ -19,6 +20,7 @@ int main(int argc, char *argv[])
 			|| init_utf8_tests()
 			|| init_datatype_read_tests()
 			|| init_datatype_write_tests()
+			|| init_property_read_tests()
 			){
 
         CU_cleanup_registry();

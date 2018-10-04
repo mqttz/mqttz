@@ -5,15 +5,30 @@ include ../../config.mk
 CFLAGS=-I../.. -I../../lib -coverage -Wall -ggdb
 TEST_LDFLAGS=-lcunit -coverage
 
+TEST_OBJS = test.o \
+			datatype_read.o \
+			datatype_write.o \
+			property_read.o \
+			stubs.o \
+			utf8.o
+
+LIB_OBJS = memory_mosq.o \
+		   packet_datatypes.o \
+		   property_mosq.o \
+		   utf8_mosq.o
+
 all : test
 
-mosq_test : test.o datatype_read.o datatype_write.o utf8.o memory_mosq.o packet_datatypes.o utf8_mosq.o
+mosq_test : ${TEST_OBJS} ${LIB_OBJS}
 	$(CROSS_COMPILE)$(CC) -o $@ $^ ${TEST_LDFLAGS}
 
 memory_mosq.o : ../../lib/memory_mosq.c
 	$(CROSS_COMPILE)$(CC) $(CFLAGS) -c -o $@ $^
 
 packet_datatypes.o : ../../lib/packet_datatypes.c
+	$(CROSS_COMPILE)$(CC) $(CFLAGS) -c -o $@ $^
+
+property_mosq.o : ../../lib/property_mosq.c
 	$(CROSS_COMPILE)$(CC) $(CFLAGS) -c -o $@ $^
 
 utf8_mosq.o : ../../lib/utf8_mosq.c

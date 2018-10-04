@@ -131,6 +131,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	struct mosquitto__subleaf *leaf;
 	int i;
 	struct mosquitto__security_options *security_opts;
+	struct mqtt5__property *properties;
 #ifdef WITH_TLS
 	X509 *client_cert = NULL;
 	X509_NAME *name;
@@ -241,8 +242,9 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	if(protocol_version == PROTOCOL_VERSION_v5){
-		rc = property__read_all(&context->in_packet);
+		rc = property__read_all(&context->in_packet, &properties);
 		if(rc) return rc;
+		property__free_all(&properties);
 	}
 
 	if(packet__read_string(&context->in_packet, &client_id, &slen)){

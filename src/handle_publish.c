@@ -45,6 +45,8 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	int len;
 	int slen;
 	char *topic_mount;
+	struct mqtt5__property *properties;
+
 #ifdef WITH_BRIDGE
 	char *topic_temp;
 	int i;
@@ -132,8 +134,9 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	if(context->protocol == mosq_p_mqtt5){
-		rc = property__read_all(&context->in_packet);
+		rc = property__read_all(&context->in_packet, &properties);
 		if(rc) return rc;
+		property__free_all(&properties);
 	}
 
 	payloadlen = context->in_packet.remaining_length - context->in_packet.pos;
