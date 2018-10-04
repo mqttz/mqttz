@@ -31,7 +31,7 @@ int send__pubcomp(struct mosquitto *mosq, uint16_t mid);
 int send__publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint32_t payloadlen, const void *payload, int qos, bool retain, bool dup);
 int send__pubrec(struct mosquitto *mosq, uint16_t mid);
 int send__pubrel(struct mosquitto *mosq, uint16_t mid);
-int send__subscribe(struct mosquitto *mosq, int *mid, int topic_count, const char **topic, int topic_qos);
+int send__subscribe(struct mosquitto *mosq, int *mid, int topic_count, char *const *const topic, int topic_qos);
 int send__unsubscribe(struct mosquitto *mosq, int *mid, const char *topic);
 
 #endif

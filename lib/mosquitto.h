@@ -646,6 +646,10 @@ libmosq_EXPORT int mosquitto_subscribe(struct mosquitto *mosq, int *mid, const c
  *	       sent.
  *  sub_count - the count of subscriptions to be made
  *	sub -  array of sub_count pointers, each pointing to a subscription string.
+ *	       The "char *const *const" datatype ensures that neither the array of
+ *	       pointers nor the strings that they point to are mutable. If you aren't
+ *	       familiar with this, just think of it as a safer "char **",
+ *	       equivalent to "const char *" for a simple string pointer.
  *	qos -  the requested Quality of Service for each subscription.
  *
  * Returns:
@@ -655,7 +659,7 @@ libmosq_EXPORT int mosquitto_subscribe(struct mosquitto *mosq, int *mid, const c
  * 	MOSQ_ERR_NO_CONN -        if the client isn't connected to a broker.
  * 	MOSQ_ERR_MALFORMED_UTF8 - if a topic is not valid UTF-8
  */
-int mosquitto_subscribe_multiple(struct mosquitto *mosq, int *mid, int sub_count, const char **sub, int qos);
+int mosquitto_subscribe_multiple(struct mosquitto *mosq, int *mid, int sub_count, char *const *const sub, int qos);
 
 /*
  * Function: mosquitto_unsubscribe
