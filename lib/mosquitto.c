@@ -27,6 +27,7 @@ Contributors:
 #include "mosquitto_internal.h"
 #include "memory_mosq.h"
 #include "messages_mosq.h"
+#include "mqtt_protocol.h"
 #include "net_mosq.h"
 #include "packet_mosq.h"
 #include "will_mosq.h"
@@ -394,6 +395,101 @@ const char *mosquitto_connack_string(int connack_code)
 			return "Connection Refused: not authorised.";
 		default:
 			return "Connection Refused: unknown reason.";
+	}
+}
+
+const char *mosquitto_reason_string(int reason_code)
+{
+	switch(reason_code){
+		case RC5_SUCCESS:
+			return "Success";
+		case RC5_GRANTED_QOS1:
+			return "Granted QoS 1";
+		case RC5_GRANTED_QOS2:
+			return "Granted QoS 2";
+		case RC5_DISCONNECT_WITH_WILL_MSG:
+			return "Disconnect with Will Message";
+		case RC5_NO_MATCHING_SUBSCRIBERS:
+			return "No matching subscribers";
+		case RC5_NO_SUBSCRIPTION_EXISTED:
+			return "No subscription existed";
+		case RC5_CONTINUE_AUTHENTICATION:
+			return "Continue authentication";
+		case RC5_REAUTHENTICATE:
+			return "Re-authenticate";
+
+		case RC5_UNSPECIFIED:
+			return "Unspecified error";
+		case RC5_MALFORMED_PACKET:
+			return "Malformed Packet";
+		case RC5_PROTOCOL_ERROR:
+			return "Protocol Error";
+		case RC5_IMPLEMENTATION_SPECIFIC:
+			return "Implementation specific error";
+		case RC5_UNSUPPORTED_PROTOCOL_VERSION:
+			return "Unsupported Protocol Version";
+		case RC5_CLIENTID_NOT_VALID:
+			return "Client Identifier not valid";
+		case RC5_BAD_USERNAME_OR_PASSWORD:
+			return "Bad User Name or Password";
+		case RC5_NOT_AUTHORIZED:
+			return "Not authorized";
+		case RC5_SERVER_UNAVAILABLE:
+			return "Server unavailable";
+		case RC5_SERVER_BUSY:
+			return "Server busy";
+		case RC5_BANNED:
+			return "Banned";
+		case RC5_SERVER_SHUTTING_DOWN:
+			return "Server shutting down";
+		case RC5_BAD_AUTHENTICATION_METHOD:
+			return "Bad authentication method";
+		case RC5_KEEP_ALIVE_TIMEOUT:
+			return "Keep Alive timeout";
+		case RC5_SESSION_TAKEN_OVER:
+			return "Session taken over";
+		case RC5_TOPIC_FILTER_INVALID:
+			return "Topic Filter invalid";
+		case RC5_TOPIC_NAME_INVALID:
+			return "Topic Name invalid";
+		case RC5_PACKET_ID_IN_USE:
+			return "Packet Identifier in use";
+		case RC5_PACKET_ID_NOT_FOUND:
+			return "Packet Identifier not found";
+		case RC5_RECEIVE_MAXIMUM_EXCEEDED:
+			return "Receive Maximum exceeded";
+		case RC5_TOPIC_ALIAS_INVALID:
+			return "Topic Alias invalid";
+		case RC5_PACKET_TOO_LARGE:
+			return "Packet too large";
+		case RC5_MESSAGE_RATE_TOO_HIGH:
+			return "Message rate too high";
+		case RC5_QUOTA_EXCEEDED:
+			return "Quota exceeded";
+		case RC5_ADMINISTRATIVE_ACTION:
+			return "Administrative action";
+		case RC5_PAYLOAD_FORMAT_INVALID:
+			return "Payload format invalid";
+		case RC5_RETAIN_NOT_SUPPORTED:
+			return "Retain not supported";
+		case RC5_QOS_NOT_SUPPORTED:
+			return "QoS not supported";
+		case RC5_USE_ANOTHER_SERVER:
+			return "Use another server";
+		case RC5_SERVER_MOVED:
+			return "Server moved";
+		case RC5_SHARED_SUBS_NOT_SUPPORTED:
+			return "Shared Subscriptions not supported";
+		case RC5_CONNECTION_RATE_EXCEEDED:
+			return "Connection rate exceeded";
+		case RC5_MAXIMUM_CONNECT_TIME:
+			return "Maximum connect time";
+		case RC5_SUBSCRIPTION_IDS_NOT_SUPPORTED:
+			return "Subscription identifiers not supported";
+		case RC5_WILDCARD_SUBS_NOT_SUPPORTED:
+			return "Wildcard Subscriptions not supported";
+		default:
+			return "Unknown reason";
 	}
 }
 
