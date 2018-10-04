@@ -142,26 +142,8 @@ int property__read_all(struct mosquitto__packet *packet, struct mqtt5__property 
 {
 	int rc;
 	int32_t proplen;
-	struct mqtt5__property *p, *last = NULL;
-
-	bool have_payload_format_indicator = false;
-	bool have_request_problem_info = false;
-	bool have_request_response_info = false;
-	bool have_maximum_qos = false;
-	bool have_retain_available = false;
-	bool have_wildcard_sub_available = false;
-	bool have_subscription_id_available = false;
-	bool have_shared_sub_available = false;
-	bool have_message_expiry_interval = false;
-	bool have_session_expiry_interval = false;
-	bool have_will_delay_interval = false;
-	bool have_maximum_packet_size = false;
-	bool have_server_keep_alive = false;
-	bool have_receive_maximum = false;
-	bool have_topic_alias_maximum = false;
-	bool have_topic_alias = false;
-	bool have_content_type = false;
-	bool have_response_topic = false;
+	struct mqtt5__property *p, *tail = NULL;
+	struct mqtt5__property *current;
 
 	rc = packet__read_varint(packet, &proplen, NULL);
 	if(rc) return rc;
@@ -183,120 +165,51 @@ int property__read_all(struct mosquitto__packet *packet, struct mqtt5__property 
 		if(!(*properties)){
 			*properties = p;
 		}else{
-			last->next = p;
+			tail->next = p;
 		}
-		last = p;
+		tail = p;
 
 		/* Validity checks */
-		if(p->identifier == PROP_PAYLOAD_FORMAT_INDICATOR){
-			if(have_payload_format_indicator){
+		if(p->identifier == PROP_REQUEST_PROBLEM_INFO
+				|| p->identifier == PROP_REQUEST_RESPONSE_INFO
+				|| p->identifier == PROP_MAXIMUM_QOS
+				|| p->identifier == PROP_RETAIN_AVAILABLE
+				|| p->identifier == PROP_WILDCARD_SUB_AVAILABLE
+				|| p->identifier == PROP_SUBSCRIPTION_ID_AVAILABLE
+				|| p->identifier == PROP_SHARED_SUB_AVAILABLE){
+
+			if(p->value.i8 > 1){
 				property__free_all(properties);
 				return MOSQ_ERR_PROTOCOL;
 			}
-			have_payload_format_indicator = true;
-		}else if(p->identifier == PROP_REQUEST_PROBLEM_INFO){
-			if(have_request_problem_info || p->value.i8 > 1){
-				property__free_all(properties);
-				return MOSQ_ERR_PROTOCOL;
-			}
-			have_request_problem_info = true;
-		}else if(p->identifier == PROP_REQUEST_RESPONSE_INFO){
-			if(have_request_response_info || p->value.i8 > 1){
-				property__free_all(properties);
-				return MOSQ_ERR_PROTOCOL;
-			}
-			have_request_response_info = true;
-		}else if(p->identifier == PROP_MAXIMUM_QOS){
-			if(have_maximum_qos || p->value.i8 > 1){
-				property__free_all(properties);
-				return MOSQ_ERR_PROTOCOL;
-			}
-			have_maximum_qos = true;
-		}else if(p->identifier == PROP_RETAIN_AVAILABLE){
-			if(have_retain_available || p->value.i8 > 1){
-				property__free_all(properties);
-				return MOSQ_ERR_PROTOCOL;
-			}
-			have_retain_available = true;
-		}else if(p->identifier == PROP_WILDCARD_SUB_AVAILABLE){
-			if(have_wildcard_sub_available || p->value.i8 > 1){
-				property__free_all(properties);
-				return MOSQ_ERR_PROTOCOL;
-			}
-			have_wildcard_sub_available = true;
-		}else if(p->identifier == PROP_SUBSCRIPTION_ID_AVAILABLE){
-			if(have_subscription_id_available || p->value.i8 > 1){
-				property__free_all(properties);
-				return MOSQ_ERR_PROTOCOL;
-			}
-			have_subscription_id_available = true;
-		}else if(p->identifier == PROP_SHARED_SUB_AVAILABLE){
-			if(have_shared_sub_available || p->value.i8 > 1){
-				property__free_all(properties);
-				return MOSQ_ERR_PROTOCOL;
-			}
-			have_shared_sub_available = true;
-		}else if(p->identifier == PROP_MESSAGE_EXPIRY_INTERVAL){
-			if(have_message_expiry_interval){
-				property__free_all(properties);
-				return MOSQ_ERR_PROTOCOL;
-			}
-			have_message_expiry_interval = true;
-		}else if(p->identifier == PROP_SESSION_EXPIRY_INTERVAL){
-			if(have_session_expiry_interval){
-				property__free_all(properties);
-				return MOSQ_ERR_PROTOCOL;
-			}
-			have_session_expiry_interval = true;
-		}else if(p->identifier == PROP_WILL_DELAY_INTERVAL){
-			if(have_will_delay_interval){
-				property__free_all(properties);
-				return MOSQ_ERR_PROTOCOL;
-			}
-			have_will_delay_interval = true;
 		}else if(p->identifier == PROP_MAXIMUM_PACKET_SIZE){
-			if(have_maximum_packet_size || p->value.i32 == 0){
+			if( p->value.i32 == 0){
 				property__free_all(properties);
 				return MOSQ_ERR_PROTOCOL;
 			}
-			have_maximum_packet_size = true;
-		}else if(p->identifier == PROP_SERVER_KEEP_ALIVE){
-			if(have_server_keep_alive){
+		}else if(p->identifier == PROP_RECEIVE_MAXIMUM
+				|| p->identifier == PROP_TOPIC_ALIAS){
+
+			if(p->value.i16 == 0){
 				property__free_all(properties);
 				return MOSQ_ERR_PROTOCOL;
 			}
-			have_server_keep_alive = true;
-		}else if(p->identifier == PROP_RECEIVE_MAXIMUM){
-			if(have_receive_maximum || p->value.i16 == 0){
-				property__free_all(properties);
-				return MOSQ_ERR_PROTOCOL;
-			}
-			have_receive_maximum = true;
-		}else if(p->identifier == PROP_TOPIC_ALIAS_MAXIMUM){
-			if(have_topic_alias_maximum){
-				property__free_all(properties);
-				return MOSQ_ERR_PROTOCOL;
-			}
-			have_topic_alias_maximum = true;
-		}else if(p->identifier == PROP_TOPIC_ALIAS){
-			if(have_topic_alias || p->value.i16 == 0){
-				property__free_all(properties);
-				return MOSQ_ERR_PROTOCOL;
-			}
-			have_topic_alias = true;
-		}else if(p->identifier == PROP_CONTENT_TYPE){
-			if(have_content_type){
-				property__free_all(properties);
-				return MOSQ_ERR_PROTOCOL;
-			}
-			have_content_type = true;
-		}else if(p->identifier == PROP_RESPONSE_TOPIC){
-			if(have_response_topic){
-				property__free_all(properties);
-				return MOSQ_ERR_PROTOCOL;
-			}
-			have_response_topic = true;
 		}
+	}
+
+	current = *properties;
+	while(current){
+		tail = current->next;
+		while(tail){
+			if(current->identifier == tail->identifier
+					&& current->identifier != PROP_USER_PROPERTY){
+
+				property__free_all(properties);
+				return MOSQ_ERR_PROTOCOL;
+			}
+			tail = tail->next;
+		}
+		current = current->next;
 	}
 
 	return MOSQ_ERR_SUCCESS;
