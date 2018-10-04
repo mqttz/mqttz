@@ -106,6 +106,50 @@ static void duplicate_int32_helper(int identifier)
 	int32_prop_read_helper(payload, 11, MOSQ_ERR_PROTOCOL, identifier, 1);
 }
 
+
+static void int16_prop_read_helper(
+		uint8_t *payload,
+		int remaining_length,
+		int rc_expected,
+		int identifier,
+		uint16_t value_expected)
+{
+	struct mosquitto__packet packet;
+	struct mqtt5__property *properties;
+	int rc;
+
+	memset(&packet, 0, sizeof(struct mosquitto__packet));
+	packet.payload = payload;
+	packet.remaining_length = remaining_length;
+	rc = property__read_all(&packet, &properties);
+
+	CU_ASSERT_EQUAL(rc, rc_expected);
+	CU_ASSERT_EQUAL(packet.pos, remaining_length);
+	if(properties){
+		CU_ASSERT_EQUAL(properties->identifier, identifier);
+		CU_ASSERT_EQUAL(properties->value.i16, value_expected);
+		CU_ASSERT_PTR_EQUAL(properties->next, NULL);
+		property__free_all(&properties);
+	}
+	CU_ASSERT_PTR_EQUAL(properties, NULL);
+}
+
+static void duplicate_int16_helper(int identifier)
+{
+	uint8_t payload[20];
+
+	memset(&payload, 0, sizeof(payload));
+	payload[0] = 6; /* Proplen = (Identifier + int16)*2 */
+	payload[1] = identifier;
+	payload[2] = 1;
+	payload[3] = 1;
+	payload[4] = identifier;
+	payload[5] = 0;
+	payload[6] = 0;
+
+	int16_prop_read_helper(payload, 7, MOSQ_ERR_PROTOCOL, identifier, 1);
+}
+
 /* ========================================================================
  * NO PROPERTIES
  * ======================================================================== */
@@ -308,7 +352,7 @@ static void TEST_single_message_expiry_interval(void)
 	uint8_t payload[20];
 
 	memset(&payload, 0, sizeof(payload));
-	payload[0] = 5; /* Proplen = Identifier + byte */
+	payload[0] = 5; /* Proplen = Identifier + int32 */
 	payload[1] = PROP_MESSAGE_EXPIRY_INTERVAL;
 	payload[2] = 0x12;
 	payload[3] = 0x23;
@@ -323,7 +367,7 @@ static void TEST_single_session_expiry_interval(void)
 	uint8_t payload[20];
 
 	memset(&payload, 0, sizeof(payload));
-	payload[0] = 5; /* Proplen = Identifier + byte */
+	payload[0] = 5; /* Proplen = Identifier + int32 */
 	payload[1] = PROP_SESSION_EXPIRY_INTERVAL;
 	payload[2] = 0x45;
 	payload[3] = 0x34;
@@ -338,7 +382,7 @@ static void TEST_single_will_delay_interval(void)
 	uint8_t payload[20];
 
 	memset(&payload, 0, sizeof(payload));
-	payload[0] = 5; /* Proplen = Identifier + byte */
+	payload[0] = 5; /* Proplen = Identifier + int32 */
 	payload[1] = PROP_WILL_DELAY_INTERVAL;
 	payload[2] = 0x45;
 	payload[3] = 0x34;
@@ -353,7 +397,7 @@ static void TEST_single_maximum_packet_size(void)
 	uint8_t payload[20];
 
 	memset(&payload, 0, sizeof(payload));
-	payload[0] = 5; /* Proplen = Identifier + byte */
+	payload[0] = 5; /* Proplen = Identifier + int32 */
 	payload[1] = PROP_MAXIMUM_PACKET_SIZE;
 	payload[2] = 0x45;
 	payload[3] = 0x34;
@@ -361,6 +405,58 @@ static void TEST_single_maximum_packet_size(void)
 	payload[5] = 0x12;
 
 	int32_prop_read_helper(payload, 6, MOSQ_ERR_SUCCESS, PROP_MAXIMUM_PACKET_SIZE, 0x45342312);
+}
+
+static void TEST_single_server_keep_alive(void)
+{
+	uint8_t payload[20];
+
+	memset(&payload, 0, sizeof(payload));
+	payload[0] = 3; /* Proplen = Identifier + int16 */
+	payload[1] = PROP_SERVER_KEEP_ALIVE;
+	payload[2] = 0x45;
+	payload[3] = 0x34;
+
+	int16_prop_read_helper(payload, 4, MOSQ_ERR_SUCCESS, PROP_SERVER_KEEP_ALIVE, 0x4534);
+}
+
+static void TEST_single_receive_maximum(void)
+{
+	uint8_t payload[20];
+
+	memset(&payload, 0, sizeof(payload));
+	payload[0] = 3; /* Proplen = Identifier + int16 */
+	payload[1] = PROP_RECEIVE_MAXIMUM;
+	payload[2] = 0x68;
+	payload[3] = 0x42;
+
+	int16_prop_read_helper(payload, 4, MOSQ_ERR_SUCCESS, PROP_RECEIVE_MAXIMUM, 0x6842);
+}
+
+static void TEST_single_topic_alias_maximum(void)
+{
+	uint8_t payload[20];
+
+	memset(&payload, 0, sizeof(payload));
+	payload[0] = 3; /* Proplen = Identifier + int16 */
+	payload[1] = PROP_TOPIC_ALIAS_MAXIMUM;
+	payload[2] = 0x68;
+	payload[3] = 0x42;
+
+	int16_prop_read_helper(payload, 4, MOSQ_ERR_SUCCESS, PROP_TOPIC_ALIAS_MAXIMUM, 0x6842);
+}
+
+static void TEST_single_topic_alias(void)
+{
+	uint8_t payload[20];
+
+	memset(&payload, 0, sizeof(payload));
+	payload[0] = 3; /* Proplen = Identifier + int16 */
+	payload[1] = PROP_TOPIC_ALIAS;
+	payload[2] = 0x68;
+	payload[3] = 0x42;
+
+	int16_prop_read_helper(payload, 4, MOSQ_ERR_SUCCESS, PROP_TOPIC_ALIAS, 0x6842);
 }
 
 /* ========================================================================
@@ -427,6 +523,26 @@ static void TEST_duplicate_maximum_packet_size(void)
 	duplicate_int32_helper(PROP_MAXIMUM_PACKET_SIZE);
 }
 
+static void TEST_duplicate_server_keep_alive(void)
+{
+	duplicate_int16_helper(PROP_SERVER_KEEP_ALIVE);
+}
+
+static void TEST_duplicate_receive_maximum(void)
+{
+	duplicate_int16_helper(PROP_RECEIVE_MAXIMUM);
+}
+
+static void TEST_duplicate_topic_alias_maximum(void)
+{
+	duplicate_int16_helper(PROP_TOPIC_ALIAS_MAXIMUM);
+}
+
+static void TEST_duplicate_topic_alias(void)
+{
+	duplicate_int16_helper(PROP_TOPIC_ALIAS);
+}
+
 /* ========================================================================
  * BAD PROPERTY VALUES
  * ======================================================================== */
@@ -481,6 +597,32 @@ static void TEST_bad_maximum_packet_size(void)
 	int32_prop_read_helper(payload, 6, MOSQ_ERR_PROTOCOL, PROP_MAXIMUM_PACKET_SIZE, 0);
 }
 
+static void TEST_bad_receive_maximum(void)
+{
+	uint8_t payload[20];
+
+	memset(&payload, 0, sizeof(payload));
+	payload[0] = 3; /* Proplen = Identifier + int16 */
+	payload[1] = PROP_RECEIVE_MAXIMUM;
+	payload[2] = 0;
+	payload[3] = 0; /* 0 is invalid */
+
+	int32_prop_read_helper(payload, 4, MOSQ_ERR_PROTOCOL, PROP_RECEIVE_MAXIMUM, 0);
+}
+
+static void TEST_bad_topic_alias(void)
+{
+	uint8_t payload[20];
+
+	memset(&payload, 0, sizeof(payload));
+	payload[0] = 3; /* Proplen = Identifier + int16 */
+	payload[1] = PROP_TOPIC_ALIAS;
+	payload[2] = 0;
+	payload[3] = 0; /* 0 is invalid */
+
+	int32_prop_read_helper(payload, 4, MOSQ_ERR_PROTOCOL, PROP_TOPIC_ALIAS, 0);
+}
+
 /* ========================================================================
  * TEST SUITE SETUP
  * ======================================================================== */
@@ -511,6 +653,10 @@ int init_property_read_tests(void)
 			|| !CU_add_test(test_suite, "Single Session Expiry Interval", TEST_single_session_expiry_interval)
 			|| !CU_add_test(test_suite, "Single Will Delay Interval", TEST_single_will_delay_interval)
 			|| !CU_add_test(test_suite, "Single Maximum Packet Size", TEST_single_maximum_packet_size)
+			|| !CU_add_test(test_suite, "Single Server Keep Alive", TEST_single_server_keep_alive)
+			|| !CU_add_test(test_suite, "Single Receive Maximum", TEST_single_receive_maximum)
+			|| !CU_add_test(test_suite, "Single Topic Alias Maximum", TEST_single_topic_alias_maximum)
+			|| !CU_add_test(test_suite, "Single Topic Alias", TEST_single_topic_alias)
 			|| !CU_add_test(test_suite, "Duplicate Payload Format Indicator", TEST_duplicate_payload_format_indicator)
 			|| !CU_add_test(test_suite, "Duplicate Request Problem Information", TEST_duplicate_request_problem_information)
 			|| !CU_add_test(test_suite, "Duplicate Request Response Information", TEST_duplicate_request_response_information)
@@ -523,6 +669,10 @@ int init_property_read_tests(void)
 			|| !CU_add_test(test_suite, "Duplicate Session Expiry Interval", TEST_duplicate_session_expiry_interval)
 			|| !CU_add_test(test_suite, "Duplicate Will Delay Interval", TEST_duplicate_will_delay_interval)
 			|| !CU_add_test(test_suite, "Duplicate Maximum Packet Size", TEST_duplicate_maximum_packet_size)
+			|| !CU_add_test(test_suite, "Duplicate Server Keep Alive", TEST_duplicate_server_keep_alive)
+			|| !CU_add_test(test_suite, "Duplicate Receive Maximum", TEST_duplicate_receive_maximum)
+			|| !CU_add_test(test_suite, "Duplicate Topic Alias Maximum", TEST_duplicate_topic_alias_maximum)
+			|| !CU_add_test(test_suite, "Duplicate Topic Alias", TEST_duplicate_topic_alias)
 			|| !CU_add_test(test_suite, "Bad Request Problem Information", TEST_bad_request_problem_information)
 			|| !CU_add_test(test_suite, "Bad Request Response Information", TEST_bad_request_response_information)
 			|| !CU_add_test(test_suite, "Bad Maximum QoS", TEST_bad_maximum_qos)
@@ -531,6 +681,8 @@ int init_property_read_tests(void)
 			|| !CU_add_test(test_suite, "Bad Subscription Identifier Available", TEST_bad_subscription_id_available)
 			|| !CU_add_test(test_suite, "Bad Shared Subscription Available", TEST_bad_shared_sub_available)
 			|| !CU_add_test(test_suite, "Bad Maximum Packet Size", TEST_bad_maximum_packet_size)
+			|| !CU_add_test(test_suite, "Bad Receive Maximum", TEST_bad_receive_maximum)
+			|| !CU_add_test(test_suite, "Bad Topic Alias", TEST_bad_topic_alias)
 			){
 
 		printf("Error adding Property read CUnit tests.\n");

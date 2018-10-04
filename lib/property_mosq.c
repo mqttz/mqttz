@@ -156,6 +156,10 @@ int property__read_all(struct mosquitto__packet *packet, struct mqtt5__property 
 	bool have_session_expiry_interval = false;
 	bool have_will_delay_interval = false;
 	bool have_maximum_packet_size = false;
+	bool have_server_keep_alive = false;
+	bool have_receive_maximum = false;
+	bool have_topic_alias_maximum = false;
+	bool have_topic_alias = false;
 
 	rc = packet__read_varint(packet, &proplen, NULL);
 	if(rc) return rc;
@@ -254,6 +258,30 @@ int property__read_all(struct mosquitto__packet *packet, struct mqtt5__property 
 				return MOSQ_ERR_PROTOCOL;
 			}
 			have_maximum_packet_size = true;
+		}else if(p->identifier == PROP_SERVER_KEEP_ALIVE){
+			if(have_server_keep_alive){
+				property__free_all(properties);
+				return MOSQ_ERR_PROTOCOL;
+			}
+			have_server_keep_alive = true;
+		}else if(p->identifier == PROP_RECEIVE_MAXIMUM){
+			if(have_receive_maximum || p->value.i16 == 0){
+				property__free_all(properties);
+				return MOSQ_ERR_PROTOCOL;
+			}
+			have_receive_maximum = true;
+		}else if(p->identifier == PROP_TOPIC_ALIAS_MAXIMUM){
+			if(have_topic_alias_maximum){
+				property__free_all(properties);
+				return MOSQ_ERR_PROTOCOL;
+			}
+			have_topic_alias_maximum = true;
+		}else if(p->identifier == PROP_TOPIC_ALIAS){
+			if(have_topic_alias || p->value.i16 == 0){
+				property__free_all(properties);
+				return MOSQ_ERR_PROTOCOL;
+			}
+			have_topic_alias = true;
 		}
 	}
 
