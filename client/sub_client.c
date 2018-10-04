@@ -96,7 +96,7 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 	cfg = (struct mosq_config *)obj;
 
 	if(!result){
-		mosquitto_subscribe_multiple(mosq, NULL, cfg->topic_count, (const char **)cfg->topics, cfg->qos);
+		mosquitto_subscribe_multiple(mosq, NULL, cfg->topic_count, cfg->topics, cfg->qos);
 
 		for(i=0; i<cfg->unsub_topic_count; i++){
 			mosquitto_unsubscribe(mosq, NULL, cfg->unsub_topics[i]);

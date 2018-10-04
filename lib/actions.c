@@ -105,11 +105,11 @@ int mosquitto_subscribe(struct mosquitto *mosq, int *mid, const char *sub, int q
 	if(mosquitto_sub_topic_check(sub)) return MOSQ_ERR_INVAL;
 	if(mosquitto_validate_utf8(sub, strlen(sub))) return MOSQ_ERR_MALFORMED_UTF8;
 
-	return send__subscribe(mosq, mid, 1, &sub, qos);
+	return send__subscribe(mosq, mid, 1, (char *const *const)&sub, qos);
 }
 
 
-int mosquitto_subscribe_multiple(struct mosquitto *mosq, int *mid, int sub_count, const char **sub, int qos)
+int mosquitto_subscribe_multiple(struct mosquitto *mosq, int *mid, int sub_count, char *const *const sub, int qos)
 {
 	int i;
 
