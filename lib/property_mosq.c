@@ -92,21 +92,21 @@ int property__read(struct mosquitto__packet *packet, int32_t *len, struct mqtt5_
 		case PROP_RESPONSE_TOPIC:
 		case PROP_ASSIGNED_CLIENT_IDENTIFIER:
 		case PROP_AUTHENTICATION_METHOD:
-		case PROP_AUTHENTICATION_DATA:
 		case PROP_RESPONSE_INFO:
 		case PROP_SERVER_REFERENCE:
 		case PROP_REASON_STRING:
 			rc = packet__read_string(packet, &str1, &slen1);
 			if(rc) return rc;
-			*len -= 2 - slen1; /* uint16, string len */
+			*len = (*len) - 2 - slen1; /* uint16, string len */
 			property->value.s.v = str1;
 			property->value.s.len = slen1;
 			break;
 
+		case PROP_AUTHENTICATION_DATA:
 		case PROP_CORRELATION_DATA:
 			rc = packet__read_binary(packet, (uint8_t **)&str1, &slen1);
 			if(rc) return rc;
-			*len -= 2 - slen1; /* uint16, binary len */
+			*len = (*len) - 2 - slen1; /* uint16, binary len */
 			property->value.bin.v = str1;
 			property->value.bin.len = slen1;
 			break;
@@ -114,14 +114,14 @@ int property__read(struct mosquitto__packet *packet, int32_t *len, struct mqtt5_
 		case PROP_USER_PROPERTY:
 			rc = packet__read_string(packet, &str1, &slen1);
 			if(rc) return rc;
-			*len -= 2 - slen1; /* uint16, string len */
+			*len = (*len) - 2 - slen1; /* uint16, string len */
 
 			rc = packet__read_string(packet, &str2, &slen2);
 			if(rc){
 				mosquitto__free(str1);
 				return rc;
 			}
-			*len -= 2 - slen2; /* uint16, string len */
+			*len = (*len) - 2 - slen2; /* uint16, string len */
 
 			property->name.v = str1;
 			property->name.len = slen1;
@@ -160,6 +160,8 @@ int property__read_all(struct mosquitto__packet *packet, struct mqtt5__property 
 	bool have_receive_maximum = false;
 	bool have_topic_alias_maximum = false;
 	bool have_topic_alias = false;
+	bool have_content_type = false;
+	bool have_response_topic = false;
 
 	rc = packet__read_varint(packet, &proplen, NULL);
 	if(rc) return rc;
@@ -282,6 +284,18 @@ int property__read_all(struct mosquitto__packet *packet, struct mqtt5__property 
 				return MOSQ_ERR_PROTOCOL;
 			}
 			have_topic_alias = true;
+		}else if(p->identifier == PROP_CONTENT_TYPE){
+			if(have_content_type){
+				property__free_all(properties);
+				return MOSQ_ERR_PROTOCOL;
+			}
+			have_content_type = true;
+		}else if(p->identifier == PROP_RESPONSE_TOPIC){
+			if(have_response_topic){
+				property__free_all(properties);
+				return MOSQ_ERR_PROTOCOL;
+			}
+			have_response_topic = true;
 		}
 	}
 
@@ -296,14 +310,17 @@ void property__free(struct mqtt5__property **property)
 	switch((*property)->identifier){
 		case PROP_CONTENT_TYPE:
 		case PROP_RESPONSE_TOPIC:
-		case PROP_CORRELATION_DATA:
 		case PROP_ASSIGNED_CLIENT_IDENTIFIER:
 		case PROP_AUTHENTICATION_METHOD:
-		case PROP_AUTHENTICATION_DATA:
 		case PROP_RESPONSE_INFO:
 		case PROP_SERVER_REFERENCE:
 		case PROP_REASON_STRING:
 			mosquitto__free((*property)->value.s.v);
+			break;
+
+		case PROP_AUTHENTICATION_DATA:
+		case PROP_CORRELATION_DATA:
+			mosquitto__free((*property)->value.bin.v);
 			break;
 
 		case PROP_USER_PROPERTY:

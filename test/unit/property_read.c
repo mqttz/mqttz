@@ -150,6 +150,52 @@ static void duplicate_int16_helper(int identifier)
 	int16_prop_read_helper(payload, 7, MOSQ_ERR_PROTOCOL, identifier, 1);
 }
 
+static void string_prop_read_helper(
+		uint8_t *payload,
+		int remaining_length,
+		int rc_expected,
+		int identifier,
+		const char *value_expected)
+{
+	struct mosquitto__packet packet;
+	struct mqtt5__property *properties;
+	int rc;
+
+	memset(&packet, 0, sizeof(struct mosquitto__packet));
+	packet.payload = payload;
+	packet.remaining_length = remaining_length;
+	rc = property__read_all(&packet, &properties);
+
+	CU_ASSERT_EQUAL(rc, rc_expected);
+	CU_ASSERT_EQUAL(packet.pos, remaining_length);
+	if(properties){
+		CU_ASSERT_EQUAL(properties->identifier, identifier);
+		CU_ASSERT_EQUAL(properties->value.s.len, strlen(value_expected));
+		CU_ASSERT_STRING_EQUAL(properties->value.s.v, value_expected);
+		CU_ASSERT_PTR_EQUAL(properties->next, NULL);
+		property__free_all(&properties);
+	}
+	CU_ASSERT_PTR_EQUAL(properties, NULL);
+}
+
+static void duplicate_string_helper(int identifier)
+{
+	uint8_t payload[20];
+
+	memset(&payload, 0, sizeof(payload));
+	payload[0] = 8;
+	payload[1] = identifier;
+	payload[2] = 0;
+	payload[3] = 1; /* 1 length string */
+	payload[4] = 'h';
+	payload[5] = identifier;
+	payload[6] = 0;
+	payload[7] = 1;
+	payload[8] = 'h';
+
+	string_prop_read_helper(payload, 9, MOSQ_ERR_PROTOCOL, identifier, "");
+}
+
 /* ========================================================================
  * NO PROPERTIES
  * ======================================================================== */
@@ -459,6 +505,42 @@ static void TEST_single_topic_alias(void)
 	int16_prop_read_helper(payload, 4, MOSQ_ERR_SUCCESS, PROP_TOPIC_ALIAS, 0x6842);
 }
 
+static void TEST_single_content_type(void)
+{
+	uint8_t payload[20];
+
+	memset(&payload, 0, sizeof(payload));
+	payload[0] = 8;
+	payload[1] = PROP_CONTENT_TYPE;
+	payload[2] = 0x00;
+	payload[3] = 0x05;
+	payload[4] = 'h';
+	payload[5] = 'e';
+	payload[6] = 'l';
+	payload[7] = 'l';
+	payload[8] = 'o';
+
+	string_prop_read_helper(payload, 9, MOSQ_ERR_SUCCESS, PROP_CONTENT_TYPE, "hello");
+}
+
+static void TEST_single_response_topic(void)
+{
+	uint8_t payload[20];
+
+	memset(&payload, 0, sizeof(payload));
+	payload[0] = 8;
+	payload[1] = PROP_RESPONSE_TOPIC;
+	payload[2] = 0x00;
+	payload[3] = 0x05;
+	payload[4] = 'h';
+	payload[5] = 'e';
+	payload[6] = 'l';
+	payload[7] = 'l';
+	payload[8] = 'o';
+
+	string_prop_read_helper(payload, 9, MOSQ_ERR_SUCCESS, PROP_RESPONSE_TOPIC, "hello");
+}
+
 /* ========================================================================
  * DUPLICATE PROPERTIES
  * ======================================================================== */
@@ -541,6 +623,16 @@ static void TEST_duplicate_topic_alias_maximum(void)
 static void TEST_duplicate_topic_alias(void)
 {
 	duplicate_int16_helper(PROP_TOPIC_ALIAS);
+}
+
+static void TEST_duplicate_content_type(void)
+{
+	duplicate_string_helper(PROP_CONTENT_TYPE);
+}
+
+static void TEST_duplicate_response_topic(void)
+{
+	duplicate_string_helper(PROP_RESPONSE_TOPIC);
 }
 
 /* ========================================================================
@@ -657,6 +749,8 @@ int init_property_read_tests(void)
 			|| !CU_add_test(test_suite, "Single Receive Maximum", TEST_single_receive_maximum)
 			|| !CU_add_test(test_suite, "Single Topic Alias Maximum", TEST_single_topic_alias_maximum)
 			|| !CU_add_test(test_suite, "Single Topic Alias", TEST_single_topic_alias)
+			|| !CU_add_test(test_suite, "Single Content Type", TEST_single_content_type)
+			|| !CU_add_test(test_suite, "Single Response Topic", TEST_single_response_topic)
 			|| !CU_add_test(test_suite, "Duplicate Payload Format Indicator", TEST_duplicate_payload_format_indicator)
 			|| !CU_add_test(test_suite, "Duplicate Request Problem Information", TEST_duplicate_request_problem_information)
 			|| !CU_add_test(test_suite, "Duplicate Request Response Information", TEST_duplicate_request_response_information)
@@ -673,6 +767,8 @@ int init_property_read_tests(void)
 			|| !CU_add_test(test_suite, "Duplicate Receive Maximum", TEST_duplicate_receive_maximum)
 			|| !CU_add_test(test_suite, "Duplicate Topic Alias Maximum", TEST_duplicate_topic_alias_maximum)
 			|| !CU_add_test(test_suite, "Duplicate Topic Alias", TEST_duplicate_topic_alias)
+			|| !CU_add_test(test_suite, "Duplicate Content Type", TEST_duplicate_content_type)
+			|| !CU_add_test(test_suite, "Duplicate Response Topic", TEST_duplicate_response_topic)
 			|| !CU_add_test(test_suite, "Bad Request Problem Information", TEST_bad_request_problem_information)
 			|| !CU_add_test(test_suite, "Bad Request Response Information", TEST_bad_request_response_information)
 			|| !CU_add_test(test_suite, "Bad Maximum QoS", TEST_bad_maximum_qos)
