@@ -152,6 +152,10 @@ int property__read_all(struct mosquitto__packet *packet, struct mqtt5__property 
 	bool have_wildcard_sub_available = false;
 	bool have_subscription_id_available = false;
 	bool have_shared_sub_available = false;
+	bool have_message_expiry_interval = false;
+	bool have_session_expiry_interval = false;
+	bool have_will_delay_interval = false;
+	bool have_maximum_packet_size = false;
 
 	rc = packet__read_varint(packet, &proplen, NULL);
 	if(rc) return rc;
@@ -226,6 +230,30 @@ int property__read_all(struct mosquitto__packet *packet, struct mqtt5__property 
 				return MOSQ_ERR_PROTOCOL;
 			}
 			have_shared_sub_available = true;
+		}else if(p->identifier == PROP_MESSAGE_EXPIRY_INTERVAL){
+			if(have_message_expiry_interval){
+				property__free_all(properties);
+				return MOSQ_ERR_PROTOCOL;
+			}
+			have_message_expiry_interval = true;
+		}else if(p->identifier == PROP_SESSION_EXPIRY_INTERVAL){
+			if(have_session_expiry_interval){
+				property__free_all(properties);
+				return MOSQ_ERR_PROTOCOL;
+			}
+			have_session_expiry_interval = true;
+		}else if(p->identifier == PROP_WILL_DELAY_INTERVAL){
+			if(have_will_delay_interval){
+				property__free_all(properties);
+				return MOSQ_ERR_PROTOCOL;
+			}
+			have_will_delay_interval = true;
+		}else if(p->identifier == PROP_MAXIMUM_PACKET_SIZE){
+			if(have_maximum_packet_size || p->value.i32 == 0){
+				property__free_all(properties);
+				return MOSQ_ERR_PROTOCOL;
+			}
+			have_maximum_packet_size = true;
 		}
 	}
 
