@@ -29,6 +29,7 @@ Contributors:
 int property__read(struct mosquitto__packet *packet, int32_t *len)
 {
 	int rc;
+	int32_t property_identifier;
 	uint8_t byte;
 	int8_t byte_count;
 	uint16_t uint16;
@@ -38,11 +39,11 @@ int property__read(struct mosquitto__packet *packet, int32_t *len)
 	int slen;
 	*len -= 14;
 
-	rc = packet__read_byte(packet, &byte);
+	rc = packet__read_varint(packet, &property_identifier, NULL);
 	if(rc) return rc;
 	*len -= 1;
 
-	switch(byte){
+	switch(property_identifier){
 		case PROP_PAYLOAD_FORMAT_INDICATOR:
 			rc = packet__read_byte(packet, &byte);
 			if(rc) return rc;
