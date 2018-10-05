@@ -196,6 +196,69 @@ static void duplicate_string_helper(int identifier)
 	string_prop_read_helper(payload, 9, MOSQ_ERR_PROTOCOL, identifier, "");
 }
 
+static void bad_string_helper(int identifier)
+{
+	uint8_t payload[20];
+
+	memset(&payload, 0, sizeof(payload));
+	payload[0] = 6;
+	payload[1] = identifier;
+	payload[2] = 0;
+	payload[3] = 3; /* 1 length string */
+	payload[4] = 'h';
+	payload[5] = 0; /* 0 in string not allowed */
+	payload[6] = 'h';
+
+	string_prop_read_helper(payload, 7, MOSQ_ERR_MALFORMED_UTF8, identifier, "");
+}
+
+static void binary_prop_read_helper(
+		uint8_t *payload,
+		int remaining_length,
+		int rc_expected,
+		int identifier,
+		const uint8_t *value_expected,
+		int len_expected)
+{
+	struct mosquitto__packet packet;
+	struct mqtt5__property *properties;
+	int rc;
+
+	memset(&packet, 0, sizeof(struct mosquitto__packet));
+	packet.payload = payload;
+	packet.remaining_length = remaining_length;
+	rc = property__read_all(&packet, &properties);
+
+	CU_ASSERT_EQUAL(rc, rc_expected);
+	CU_ASSERT_EQUAL(packet.pos, remaining_length);
+	if(properties){
+		CU_ASSERT_EQUAL(properties->identifier, identifier);
+		CU_ASSERT_EQUAL(properties->value.bin.len, len_expected);
+		CU_ASSERT_EQUAL(memcmp(properties->value.bin.v, value_expected, len_expected), 0);
+		CU_ASSERT_PTR_EQUAL(properties->next, NULL);
+		property__free_all(&properties);
+	}
+	CU_ASSERT_PTR_EQUAL(properties, NULL);
+}
+
+static void duplicate_binary_helper(int identifier)
+{
+	uint8_t payload[20];
+
+	memset(&payload, 0, sizeof(payload));
+	payload[0] = 8;
+	payload[1] = identifier;
+	payload[2] = 0;
+	payload[3] = 1; /* 2 length binary */
+	payload[4] = 'h';
+	payload[5] = identifier;
+	payload[6] = 0;
+	payload[7] = 1;
+	payload[8] = 'h';
+
+	string_prop_read_helper(payload, 9, MOSQ_ERR_PROTOCOL, identifier, "");
+}
+
 /* ========================================================================
  * NO PROPERTIES
  * ======================================================================== */
@@ -631,6 +694,42 @@ static void TEST_single_reason_string(void)
 	string_prop_read_helper(payload, 9, MOSQ_ERR_SUCCESS, PROP_REASON_STRING, "hello");
 }
 
+static void TEST_single_correlation_data(void)
+{
+	uint8_t payload[20];
+
+	memset(&payload, 0, sizeof(payload));
+	payload[0] = 8;
+	payload[1] = PROP_CORRELATION_DATA;
+	payload[2] = 0x00;
+	payload[3] = 0x05;
+	payload[4] = 1;
+	payload[5] = 'e';
+	payload[6] = 0;
+	payload[7] = 'l';
+	payload[8] = 9;
+
+	binary_prop_read_helper(payload, 9, MOSQ_ERR_SUCCESS, PROP_CORRELATION_DATA, &payload[4], 5);
+}
+
+static void TEST_single_authentication_data(void)
+{
+	uint8_t payload[20];
+
+	memset(&payload, 0, sizeof(payload));
+	payload[0] = 8;
+	payload[1] = PROP_AUTHENTICATION_DATA;
+	payload[2] = 0x00;
+	payload[3] = 0x05;
+	payload[4] = 1;
+	payload[5] = 'e';
+	payload[6] = 0;
+	payload[7] = 'l';
+	payload[8] = 9;
+
+	binary_prop_read_helper(payload, 9, MOSQ_ERR_SUCCESS, PROP_AUTHENTICATION_DATA, &payload[4], 5);
+}
+
 /* ========================================================================
  * DUPLICATE PROPERTIES
  * ======================================================================== */
@@ -750,6 +849,16 @@ static void TEST_duplicate_reason_string(void)
 	duplicate_string_helper(PROP_REASON_STRING);
 }
 
+static void TEST_duplicate_correlation_data(void)
+{
+	duplicate_binary_helper(PROP_CORRELATION_DATA);
+}
+
+static void TEST_duplicate_authentication_data(void)
+{
+	duplicate_binary_helper(PROP_AUTHENTICATION_DATA);
+}
+
 /* ========================================================================
  * BAD PROPERTY VALUES
  * ======================================================================== */
@@ -830,6 +939,11 @@ static void TEST_bad_topic_alias(void)
 	int32_prop_read_helper(payload, 4, MOSQ_ERR_PROTOCOL, PROP_TOPIC_ALIAS, 0);
 }
 
+static void TEST_bad_content_type(void)
+{
+	bad_string_helper(PROP_CONTENT_TYPE);
+}
+
 /* ========================================================================
  * TEST SUITE SETUP
  * ======================================================================== */
@@ -871,6 +985,8 @@ int init_property_read_tests(void)
 			|| !CU_add_test(test_suite, "Single Response Information", TEST_single_response_information)
 			|| !CU_add_test(test_suite, "Single Server Reference", TEST_single_server_reference)
 			|| !CU_add_test(test_suite, "Single Reason String", TEST_single_reason_string)
+			|| !CU_add_test(test_suite, "Single Correlation Data", TEST_single_correlation_data)
+			|| !CU_add_test(test_suite, "Single Authentication Data", TEST_single_authentication_data)
 			|| !CU_add_test(test_suite, "Duplicate Payload Format Indicator", TEST_duplicate_payload_format_indicator)
 			|| !CU_add_test(test_suite, "Duplicate Request Problem Information", TEST_duplicate_request_problem_information)
 			|| !CU_add_test(test_suite, "Duplicate Request Response Information", TEST_duplicate_request_response_information)
@@ -894,6 +1010,8 @@ int init_property_read_tests(void)
 			|| !CU_add_test(test_suite, "Duplicate Response Information", TEST_duplicate_response_information)
 			|| !CU_add_test(test_suite, "Duplicate Server Reference", TEST_duplicate_server_reference)
 			|| !CU_add_test(test_suite, "Duplicate Reason String", TEST_duplicate_reason_string)
+			|| !CU_add_test(test_suite, "Duplicate Correlation Data", TEST_duplicate_correlation_data)
+			|| !CU_add_test(test_suite, "Duplicate Authentication Data", TEST_duplicate_authentication_data)
 			|| !CU_add_test(test_suite, "Bad Request Problem Information", TEST_bad_request_problem_information)
 			|| !CU_add_test(test_suite, "Bad Request Response Information", TEST_bad_request_response_information)
 			|| !CU_add_test(test_suite, "Bad Maximum QoS", TEST_bad_maximum_qos)
@@ -904,6 +1022,7 @@ int init_property_read_tests(void)
 			|| !CU_add_test(test_suite, "Bad Maximum Packet Size", TEST_bad_maximum_packet_size)
 			|| !CU_add_test(test_suite, "Bad Receive Maximum", TEST_bad_receive_maximum)
 			|| !CU_add_test(test_suite, "Bad Topic Alias", TEST_bad_topic_alias)
+			|| !CU_add_test(test_suite, "Bad Content Type", TEST_bad_content_type)
 			){
 
 		printf("Error adding Property read CUnit tests.\n");
