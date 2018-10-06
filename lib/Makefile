@@ -72,7 +72,7 @@ uninstall :
 reallyclean : clean
 
 clean :
-	-rm -f *.o libmosquitto.so.${SOVERSION} libmosquitto.so libmosquitto.a
+	-rm -f *.o libmosquitto.so.${SOVERSION} libmosquitto.so libmosquitto.a *.gcno *.gcda
 	$(MAKE) -C cpp clean
 
 libmosquitto.so.${SOVERSION} : ${MOSQ_OBJS}
