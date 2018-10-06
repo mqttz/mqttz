@@ -86,6 +86,9 @@ WITH_STRIP:=no
 # Build static libraries
 WITH_STATIC_LIBRARIES:=no
 
+# Build shared libraries
+WITH_SHARED_LIBRARIES:=yes
+
 # Build with async dns lookup support for bridges (temporary). Requires glibc.
 #WITH_ADNS:=yes
 
@@ -146,7 +149,10 @@ ifeq ($(UNAME),Linux)
 	LIB_LIBS:=$(LIB_LIBS) -lrt
 endif
 
-CLIENT_LDFLAGS:=$(LDFLAGS) -L../lib ../lib/libmosquitto.so.${SOVERSION}
+CLIENT_LDFLAGS:=$(LDFLAGS) -L../lib
+ifeq ($(WITH_SHARED_LIBRARIES),yes)
+	CLIENT_LDFLAGS:=${CLIENT_LDFLAGS} ../lib/libmosquitto.so.${SOVERSION}
+endif
 
 ifeq ($(UNAME),SunOS)
 	ifeq ($(CC),cc)

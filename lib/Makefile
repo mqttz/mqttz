@@ -38,19 +38,28 @@ MOSQ_OBJS=mosquitto.o \
 		  util_mosq.o \
 		  will_mosq.o
 
-ALL_DEPS=libmosquitto.so.${SOVERSION}
+ALL_DEPS:=
+
+ifeq ($(WITH_SHARED_LIBRARIES),yes)
+	ALL_DEPS+=libmosquitto.so.${SOVERSION}
+endif
 
 ifeq ($(WITH_STATIC_LIBRARIES),yes)
 	ALL_DEPS+=libmosquitto.a
 endif
 
 all : ${ALL_DEPS}
+ifeq ($(WITH_SHARED_LIBRARIES),yes)
 	$(MAKE) -C cpp
+endif
 
 install : all
 	$(INSTALL) -d "${DESTDIR}$(prefix)/lib${LIB_SUFFIX}/"
+
+ifeq ($(WITH_SHARED_LIBRARIES),yes)
 	$(INSTALL) ${STRIP_OPTS} libmosquitto.so.${SOVERSION} "${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.so.${SOVERSION}"
 	ln -sf libmosquitto.so.${SOVERSION} "${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.so"
+endif
 ifeq ($(WITH_STATIC_LIBRARIES),yes)
 	$(INSTALL) libmosquitto.a "${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.a"
 	${CROSS_COMPILE}${STRIP} -g --strip-unneeded "${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.a"
@@ -60,7 +69,9 @@ endif
 	$(INSTALL) -d "${DESTDIR}$(prefix)/lib${LIB_SUFFIX}/pkgconfig"
 	$(INSTALL) -m644 ../libmosquitto.pc.in "${DESTDIR}$(prefix)/lib${LIB_SUFFIX}/pkgconfig/libmosquitto.pc"
 	sed -i -e "s#@CMAKE_INSTALL_PREFIX@#$(prefix)#" -e "s#@VERSION@#$(VERSION)#" "${DESTDIR}$(prefix)/lib${LIB_SUFFIX}/pkgconfig/libmosquitto.pc"
+ifeq ($(WITH_SHARED_LIBRARIES),yes)
 	$(MAKE) -C cpp install
+endif
 
 uninstall :
 	-rm -f "${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.so.${SOVERSION}"
