@@ -259,6 +259,103 @@ static void duplicate_binary_helper(int identifier)
 	string_prop_read_helper(payload, 9, MOSQ_ERR_PROTOCOL, identifier, "");
 }
 
+static void string_pair_prop_read_helper(
+		uint8_t *payload,
+		int remaining_length,
+		int rc_expected,
+		int identifier,
+		const char *name_expected,
+		const char *value_expected,
+		bool expect_multiple)
+{
+	struct mosquitto__packet packet;
+	struct mqtt5__property *properties;
+	int rc;
+
+	memset(&packet, 0, sizeof(struct mosquitto__packet));
+	packet.payload = payload;
+	packet.remaining_length = remaining_length;
+	rc = property__read_all(&packet, &properties);
+
+	CU_ASSERT_EQUAL(rc, rc_expected);
+	CU_ASSERT_EQUAL(packet.pos, remaining_length);
+	if(properties){
+		CU_ASSERT_EQUAL(properties->identifier, identifier);
+		CU_ASSERT_EQUAL(properties->name.len, strlen(name_expected));
+		CU_ASSERT_EQUAL(properties->value.s.len, strlen(value_expected));
+		CU_ASSERT_STRING_EQUAL(properties->name.v, name_expected);
+		CU_ASSERT_STRING_EQUAL(properties->value.s.v, value_expected);
+		if(expect_multiple){
+			CU_ASSERT_PTR_NOT_NULL(properties->next);
+		}else{
+			CU_ASSERT_PTR_NULL(properties->next);
+		}
+		property__free_all(&properties);
+	}
+	CU_ASSERT_PTR_NULL(properties);
+}
+
+static void varint_prop_read_helper(
+		uint8_t *payload,
+		int remaining_length,
+		int rc_expected,
+		int identifier,
+		uint32_t value_expected)
+{
+	struct mosquitto__packet packet;
+	struct mqtt5__property *properties;
+	int rc;
+
+	memset(&packet, 0, sizeof(struct mosquitto__packet));
+	packet.payload = payload;
+	packet.remaining_length = remaining_length;
+	rc = property__read_all(&packet, &properties);
+
+	CU_ASSERT_EQUAL(rc, rc_expected);
+	if(properties){
+		CU_ASSERT_EQUAL(properties->identifier, identifier);
+		CU_ASSERT_EQUAL(properties->value.varint, value_expected);
+		CU_ASSERT_PTR_NULL(properties->next);
+		property__free_all(&properties);
+	}
+	CU_ASSERT_PTR_NULL(properties);
+}
+
+void packet_helper_reason_string_user_property(void)
+{
+	uint8_t payload[24] = {23,
+		PROP_REASON_STRING, 0, 6, 'r', 'e', 'a', 's', 'o', 'n',
+		PROP_USER_PROPERTY, 0, 4, 'n', 'a', 'm', 'e', 0, 5, 'v', 'a', 'l', 'u', 'e'};
+
+	struct mosquitto__packet packet;
+	struct mqtt5__property *properties, *p;
+	int rc;
+
+	memset(&packet, 0, sizeof(struct mosquitto__packet));
+	packet.payload = payload;
+	packet.remaining_length = sizeof(payload);;
+	rc = property__read_all(&packet, &properties);
+
+	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
+	CU_ASSERT_PTR_NOT_NULL(properties->next);
+	p = properties;
+
+	CU_ASSERT_EQUAL(p->identifier, PROP_REASON_STRING);
+	CU_ASSERT_STRING_EQUAL(p->value.s.v, "reason");
+	CU_ASSERT_EQUAL(p->value.s.len, strlen("reason"));
+
+	p = p->next;
+	CU_ASSERT_PTR_NULL(p->next);
+
+	CU_ASSERT_EQUAL(p->identifier, PROP_USER_PROPERTY);
+	CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
+	CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
+	CU_ASSERT_STRING_EQUAL(p->name.v, "name");
+	CU_ASSERT_EQUAL(p->name.len, strlen("name"));
+
+	property__free_all(&properties);
+}
+
 /* ========================================================================
  * NO PROPERTIES
  * ======================================================================== */
@@ -730,6 +827,82 @@ static void TEST_single_authentication_data(void)
 	binary_prop_read_helper(payload, 9, MOSQ_ERR_SUCCESS, PROP_AUTHENTICATION_DATA, &payload[4], 5);
 }
 
+static void TEST_single_user_property(void)
+{
+	uint8_t payload[20];
+
+	payload[0] = 9;
+	payload[1] = PROP_USER_PROPERTY;
+	payload[2] = 0;
+	payload[3] = 2;
+	payload[4] = 'z';
+	payload[5] = 'a';
+	payload[6] = 0;
+	payload[7] = 2;
+	payload[8] = 'b';
+	payload[9] = 'c';
+
+	string_pair_prop_read_helper(payload, 10, MOSQ_ERR_SUCCESS, PROP_USER_PROPERTY, "za", "bc", false);
+}
+
+static void TEST_single_subscription_identifier(void)
+{
+	uint8_t payload[20];
+
+	payload[0] = 2;
+	payload[1] = PROP_SUBSCRIPTION_IDENTIFIER;
+	payload[2] = 0;
+	varint_prop_read_helper(payload, 3, MOSQ_ERR_SUCCESS, PROP_SUBSCRIPTION_IDENTIFIER, 0);
+
+	payload[0] = 2;
+	payload[1] = PROP_SUBSCRIPTION_IDENTIFIER;
+	payload[2] = 0x7F;
+	varint_prop_read_helper(payload, 3, MOSQ_ERR_SUCCESS, PROP_SUBSCRIPTION_IDENTIFIER, 127);
+
+	payload[0] = 3;
+	payload[1] = PROP_SUBSCRIPTION_IDENTIFIER;
+	payload[2] = 0x80;
+	payload[3] = 0x01;
+	varint_prop_read_helper(payload, 4, MOSQ_ERR_SUCCESS, PROP_SUBSCRIPTION_IDENTIFIER, 128);
+
+	payload[0] = 3;
+	payload[1] = PROP_SUBSCRIPTION_IDENTIFIER;
+	payload[2] = 0xFF;
+	payload[3] = 0x7F;
+	varint_prop_read_helper(payload, 4, MOSQ_ERR_SUCCESS, PROP_SUBSCRIPTION_IDENTIFIER, 16383);
+
+	payload[0] = 4;
+	payload[1] = PROP_SUBSCRIPTION_IDENTIFIER;
+	payload[2] = 0x80;
+	payload[3] = 0x80;
+	payload[4] = 0x01;
+	varint_prop_read_helper(payload, 5, MOSQ_ERR_SUCCESS, PROP_SUBSCRIPTION_IDENTIFIER, 16384);
+
+	payload[0] = 4;
+	payload[1] = PROP_SUBSCRIPTION_IDENTIFIER;
+	payload[2] = 0xFF;
+	payload[3] = 0xFF;
+	payload[4] = 0x7F;
+	varint_prop_read_helper(payload, 5, MOSQ_ERR_SUCCESS, PROP_SUBSCRIPTION_IDENTIFIER, 2097151);
+
+	payload[0] = 5;
+	payload[1] = PROP_SUBSCRIPTION_IDENTIFIER;
+	payload[2] = 0x80;
+	payload[3] = 0x80;
+	payload[4] = 0x80;
+	payload[5] = 0x01;
+	varint_prop_read_helper(payload, 6, MOSQ_ERR_SUCCESS, PROP_SUBSCRIPTION_IDENTIFIER, 2097152);
+
+
+	payload[0] = 5;
+	payload[1] = PROP_SUBSCRIPTION_IDENTIFIER;
+	payload[2] = 0xFF;
+	payload[3] = 0xFF;
+	payload[4] = 0xFF;
+	payload[5] = 0x7F;
+	varint_prop_read_helper(payload, 6, MOSQ_ERR_SUCCESS, PROP_SUBSCRIPTION_IDENTIFIER, 268435455);
+}
+
 /* ========================================================================
  * DUPLICATE PROPERTIES
  * ======================================================================== */
@@ -859,6 +1032,49 @@ static void TEST_duplicate_authentication_data(void)
 	duplicate_binary_helper(PROP_AUTHENTICATION_DATA);
 }
 
+static void TEST_duplicate_user_property(void)
+{
+	uint8_t payload[20];
+
+	memset(&payload, 0, sizeof(payload));
+	payload[0] = 18; /* Proplen = (Identifier + byte)*2 */
+	payload[1] = PROP_USER_PROPERTY;
+	payload[2] = 0;
+	payload[3] = 2;
+	payload[4] = 'a';
+	payload[5] = 'b';
+	payload[6] = 0;
+	payload[7] = 2;
+	payload[8] = 'g';
+	payload[9] = 'h';
+	payload[10] = PROP_USER_PROPERTY;
+	payload[11] = 0;
+	payload[12] = 2;
+	payload[13] = 'c';
+	payload[14] = 'd';
+	payload[15] = 0;
+	payload[16] = 2;
+	payload[17] = 'e';
+	payload[18] = 'f';
+
+	string_pair_prop_read_helper(payload, 19, MOSQ_ERR_SUCCESS, PROP_USER_PROPERTY, "ab", "gh", true);
+}
+
+static void TEST_duplicate_subscription_identifier(void)
+{
+	uint8_t payload[20];
+
+	memset(&payload, 0, sizeof(payload));
+	payload[0] = 4; /* Proplen = (Identifier + byte)*2 */
+	payload[1] = PROP_SUBSCRIPTION_IDENTIFIER;
+	payload[2] = 0x80;
+	payload[3] = 0x02;
+	payload[4] = PROP_SUBSCRIPTION_IDENTIFIER;
+	payload[5] = 0x04;
+
+	varint_prop_read_helper(payload, 5, MOSQ_ERR_PROTOCOL, PROP_SUBSCRIPTION_IDENTIFIER, 0);
+}
+
 /* ========================================================================
  * BAD PROPERTY VALUES
  * ======================================================================== */
@@ -944,6 +1160,507 @@ static void TEST_bad_content_type(void)
 	bad_string_helper(PROP_CONTENT_TYPE);
 }
 
+static void TEST_bad_subscription_identifier(void)
+{
+	uint8_t payload[20];
+
+	memset(&payload, 0, sizeof(payload));
+	payload[0] = 6;
+	payload[1] = PROP_SUBSCRIPTION_IDENTIFIER;
+	payload[2] = 0xFF;
+	payload[3] = 0xFF;
+	payload[4] = 0xFF;
+	payload[5] = 0xFF;
+	payload[6] = 0x01;
+
+	varint_prop_read_helper(payload, 7, MOSQ_ERR_PROTOCOL, PROP_SUBSCRIPTION_IDENTIFIER, 0);
+}
+
+/* ========================================================================
+ * CONTROL PACKET TESTS
+ * ======================================================================== */
+
+static void TEST_packet_connect(void)
+{
+	uint8_t payload[] = {0,
+		PROP_SESSION_EXPIRY_INTERVAL, 0x12, 0x45, 0x00, 0x00,
+		PROP_RECEIVE_MAXIMUM, 0x00, 0x05,
+		PROP_MAXIMUM_PACKET_SIZE, 0x12, 0x45, 0x00, 0x00,
+		PROP_TOPIC_ALIAS_MAXIMUM, 0x00, 0x02,
+		PROP_REQUEST_PROBLEM_INFO, 1,
+		PROP_REQUEST_RESPONSE_INFO, 1,
+		PROP_USER_PROPERTY, 0, 4, 'n', 'a', 'm', 'e', 0, 5, 'v', 'a', 'l', 'u', 'e',
+		PROP_AUTHENTICATION_METHOD, 0x00, 0x04, 'n', 'o', 'n', 'e',
+		PROP_AUTHENTICATION_DATA, 0x00, 0x02, 1, 2};
+
+	struct mosquitto__packet packet;
+	struct mqtt5__property *properties, *p;
+	int rc;
+
+	payload[0] = sizeof(payload)-1;
+
+	memset(&packet, 0, sizeof(struct mosquitto__packet));
+	packet.payload = payload;
+	packet.remaining_length = sizeof(payload);;
+	rc = property__read_all(&packet, &properties);
+
+	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
+	CU_ASSERT_PTR_NOT_NULL(properties->next);
+	p = properties;
+
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_SESSION_EXPIRY_INTERVAL);
+	CU_ASSERT_EQUAL(p->value.i32, 0x12450000);
+
+	p = p->next;
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_RECEIVE_MAXIMUM);
+	CU_ASSERT_EQUAL(p->value.i16, 0x0005);
+
+	p = p->next;
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_MAXIMUM_PACKET_SIZE);
+	CU_ASSERT_EQUAL(p->value.i32, 0x12450000);
+
+	p = p->next;
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_TOPIC_ALIAS_MAXIMUM);
+	CU_ASSERT_EQUAL(p->value.i16, 0x0002);
+
+	p = p->next;
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_REQUEST_PROBLEM_INFO);
+	CU_ASSERT_EQUAL(p->value.i8, 1);
+
+	p = p->next;
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_REQUEST_RESPONSE_INFO);
+	CU_ASSERT_EQUAL(p->value.i8, 1);
+
+	p = p->next;
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_USER_PROPERTY);
+	CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
+	CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
+	CU_ASSERT_STRING_EQUAL(p->name.v, "name");
+	CU_ASSERT_EQUAL(p->name.len, strlen("name"));
+
+	p = p->next;
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_AUTHENTICATION_METHOD);
+	CU_ASSERT_STRING_EQUAL(p->value.s.v, "none");
+	CU_ASSERT_EQUAL(p->value.s.len, strlen("none"));
+
+	p = p->next;
+	CU_ASSERT_PTR_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_AUTHENTICATION_DATA);
+	CU_ASSERT_EQUAL(p->value.bin.v[0], 1);
+	CU_ASSERT_EQUAL(p->value.bin.v[1], 2);
+	CU_ASSERT_EQUAL(p->value.s.len, 2);
+
+	property__free_all(&properties);
+}
+
+static void TEST_packet_connack(void)
+{
+	uint8_t payload[] = {0,
+		PROP_SESSION_EXPIRY_INTERVAL, 0x12, 0x45, 0x00, 0x00,
+		PROP_RECEIVE_MAXIMUM, 0x00, 0x05,
+		PROP_MAXIMUM_QOS, 1,
+		PROP_RETAIN_AVAILABLE, 0,
+		PROP_MAXIMUM_PACKET_SIZE, 0x12, 0x45, 0x00, 0x00,
+		PROP_ASSIGNED_CLIENT_IDENTIFIER, 0x00, 0x02, 'a', 'b',
+		PROP_TOPIC_ALIAS_MAXIMUM, 0x00, 0x02,
+		PROP_REASON_STRING, 0, 6, 'r', 'e', 'a', 's', 'o', 'n',
+		PROP_USER_PROPERTY, 0, 4, 'n', 'a', 'm', 'e', 0, 5, 'v', 'a', 'l', 'u', 'e',
+		PROP_WILDCARD_SUB_AVAILABLE, 0,
+		PROP_SUBSCRIPTION_ID_AVAILABLE, 0,
+		PROP_SHARED_SUB_AVAILABLE, 0,
+		PROP_SERVER_KEEP_ALIVE, 0x00, 0xFF,
+		PROP_RESPONSE_INFO, 0x00, 0x03, 'r', 's', 'p',
+		PROP_SERVER_REFERENCE, 0x00, 0x04, 's', 'e', 'r', 'v',
+		PROP_AUTHENTICATION_METHOD, 0x00, 0x04, 'n', 'o', 'n', 'e',
+		PROP_AUTHENTICATION_DATA, 0x00, 0x02, 1, 2};
+
+	struct mosquitto__packet packet;
+	struct mqtt5__property *properties, *p;
+	int rc;
+
+	payload[0] = sizeof(payload)-1;
+
+	memset(&packet, 0, sizeof(struct mosquitto__packet));
+	packet.payload = payload;
+	packet.remaining_length = sizeof(payload);;
+	rc = property__read_all(&packet, &properties);
+
+	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
+	CU_ASSERT_PTR_NOT_NULL(properties->next);
+	p = properties;
+
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_SESSION_EXPIRY_INTERVAL);
+	CU_ASSERT_EQUAL(p->value.i32, 0x12450000);
+
+	p = p->next;
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_RECEIVE_MAXIMUM);
+	CU_ASSERT_EQUAL(p->value.i16, 0x0005);
+
+	p = p->next;
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_MAXIMUM_QOS);
+	CU_ASSERT_EQUAL(p->value.i8, 1);
+
+	p = p->next;
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_RETAIN_AVAILABLE);
+	CU_ASSERT_EQUAL(p->value.i8, 0);
+
+	p = p->next;
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_MAXIMUM_PACKET_SIZE);
+	CU_ASSERT_EQUAL(p->value.i32, 0x12450000);
+
+	p = p->next;
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_ASSIGNED_CLIENT_IDENTIFIER);
+	CU_ASSERT_STRING_EQUAL(p->value.s.v, "ab");
+	CU_ASSERT_EQUAL(p->value.s.len, strlen("ab"));
+
+	p = p->next;
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_TOPIC_ALIAS_MAXIMUM);
+	CU_ASSERT_EQUAL(p->value.i16, 0x0002);
+
+	p = p->next;
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_REASON_STRING);
+	CU_ASSERT_STRING_EQUAL(p->value.s.v, "reason");
+	CU_ASSERT_EQUAL(p->value.s.len, strlen("reason"));
+
+	p = p->next;
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_USER_PROPERTY);
+	CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
+	CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
+	CU_ASSERT_STRING_EQUAL(p->name.v, "name");
+	CU_ASSERT_EQUAL(p->name.len, strlen("name"));
+
+	p = p->next;
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_WILDCARD_SUB_AVAILABLE);
+	CU_ASSERT_EQUAL(p->value.i8, 0);
+
+	p = p->next;
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_SUBSCRIPTION_ID_AVAILABLE);
+	CU_ASSERT_EQUAL(p->value.i8, 0);
+
+	p = p->next;
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_SHARED_SUB_AVAILABLE);
+	CU_ASSERT_EQUAL(p->value.i8, 0);
+
+	p = p->next;
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_SERVER_KEEP_ALIVE);
+	CU_ASSERT_EQUAL(p->value.i16, 0x00FF);
+
+	p = p->next;
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_RESPONSE_INFO);
+	CU_ASSERT_STRING_EQUAL(p->value.s.v, "rsp");
+	CU_ASSERT_EQUAL(p->value.s.len, strlen("rsp"));
+
+	p = p->next;
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_SERVER_REFERENCE);
+	CU_ASSERT_STRING_EQUAL(p->value.s.v, "serv");
+	CU_ASSERT_EQUAL(p->value.s.len, strlen("serv"));
+
+	p = p->next;
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_AUTHENTICATION_METHOD);
+	CU_ASSERT_STRING_EQUAL(p->value.s.v, "none");
+	CU_ASSERT_EQUAL(p->value.s.len, strlen("none"));
+
+	p = p->next;
+	CU_ASSERT_PTR_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_AUTHENTICATION_DATA);
+	CU_ASSERT_EQUAL(p->value.bin.v[0], 1);
+	CU_ASSERT_EQUAL(p->value.bin.v[1], 2);
+	CU_ASSERT_EQUAL(p->value.s.len, 2);
+
+	property__free_all(&properties);
+}
+
+static void TEST_packet_publish(void)
+{
+	uint8_t payload[] = {0,
+		PROP_PAYLOAD_FORMAT_INDICATOR, 1,
+		PROP_MESSAGE_EXPIRY_INTERVAL, 0x12, 0x45, 0x00, 0x00,
+		PROP_TOPIC_ALIAS, 0x00, 0x02,
+		PROP_RESPONSE_TOPIC, 0, 6, 'r', 'e', 's', 'p', 'o', 'n',
+		PROP_CORRELATION_DATA, 0x00, 0x02, 1, 2,
+		PROP_USER_PROPERTY, 0, 4, 'n', 'a', 'm', 'e', 0, 5, 'v', 'a', 'l', 'u', 'e',
+		PROP_SUBSCRIPTION_IDENTIFIER, 0x04,
+		PROP_CONTENT_TYPE, 0, 5, 'e', 'm', 'p', 't', 'y'};
+
+	struct mosquitto__packet packet;
+	struct mqtt5__property *properties, *p;
+	int rc;
+
+	payload[0] = sizeof(payload)-1;
+
+	memset(&packet, 0, sizeof(struct mosquitto__packet));
+	packet.payload = payload;
+	packet.remaining_length = sizeof(payload);;
+	rc = property__read_all(&packet, &properties);
+
+	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
+	CU_ASSERT_PTR_NOT_NULL(properties->next);
+	p = properties;
+
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_PAYLOAD_FORMAT_INDICATOR);
+	CU_ASSERT_EQUAL(p->value.i8, 1);
+
+	p = p->next;
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_MESSAGE_EXPIRY_INTERVAL);
+	CU_ASSERT_EQUAL(p->value.i32, 0x12450000);
+
+	p = p->next;
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_TOPIC_ALIAS);
+	CU_ASSERT_EQUAL(p->value.i16, 0x0002);
+
+	p = p->next;
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_RESPONSE_TOPIC);
+	CU_ASSERT_STRING_EQUAL(p->value.s.v, "respon");
+	CU_ASSERT_EQUAL(p->value.s.len, strlen("respon"));
+
+	p = p->next;
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_CORRELATION_DATA);
+	CU_ASSERT_EQUAL(p->value.bin.v[0], 1);
+	CU_ASSERT_EQUAL(p->value.bin.v[1], 2);
+	CU_ASSERT_EQUAL(p->value.bin.len, 2);
+
+	p = p->next;
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_USER_PROPERTY);
+	CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
+	CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
+	CU_ASSERT_STRING_EQUAL(p->name.v, "name");
+	CU_ASSERT_EQUAL(p->name.len, strlen("name"));
+
+	p = p->next;
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_SUBSCRIPTION_IDENTIFIER);
+	CU_ASSERT_EQUAL(p->value.varint, 0x00000004);
+
+	p = p->next;
+	CU_ASSERT_PTR_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_CONTENT_TYPE);
+	CU_ASSERT_STRING_EQUAL(p->value.s.v, "empty");
+	CU_ASSERT_EQUAL(p->value.s.len, strlen("empty"));
+
+	property__free_all(&properties);
+}
+
+static void TEST_packet_puback(void)
+{
+	packet_helper_reason_string_user_property();
+}
+
+static void TEST_packet_pubrec(void)
+{
+	packet_helper_reason_string_user_property();
+}
+
+static void TEST_packet_pubrel(void)
+{
+	packet_helper_reason_string_user_property();
+}
+
+static void TEST_packet_pubcomp(void)
+{
+	packet_helper_reason_string_user_property();
+}
+
+static void TEST_packet_subscribe(void)
+{
+	uint8_t payload[] = {0,
+		PROP_USER_PROPERTY, 0, 4, 'n', 'a', 'm', 'e', 0, 5, 'v', 'a', 'l', 'u', 'e',
+		PROP_SUBSCRIPTION_IDENTIFIER, 0x04};
+
+	struct mosquitto__packet packet;
+	struct mqtt5__property *properties, *p;
+	int rc;
+
+	payload[0] = sizeof(payload)-1;
+
+	memset(&packet, 0, sizeof(struct mosquitto__packet));
+	packet.payload = payload;
+	packet.remaining_length = sizeof(payload);;
+	rc = property__read_all(&packet, &properties);
+
+	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
+	CU_ASSERT_PTR_NOT_NULL(properties->next);
+	p = properties;
+
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_USER_PROPERTY);
+	CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
+	CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
+	CU_ASSERT_STRING_EQUAL(p->name.v, "name");
+	CU_ASSERT_EQUAL(p->name.len, strlen("name"));
+
+	p = p->next;
+	CU_ASSERT_PTR_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_SUBSCRIPTION_IDENTIFIER);
+	CU_ASSERT_EQUAL(p->value.varint, 0x00000004);
+
+	property__free_all(&properties);
+}
+
+static void TEST_packet_suback(void)
+{
+	packet_helper_reason_string_user_property();
+}
+
+static void TEST_packet_unsubscribe(void)
+{
+	uint8_t payload[] = {0,
+		PROP_USER_PROPERTY, 0, 4, 'n', 'a', 'm', 'e', 0, 5, 'v', 'a', 'l', 'u', 'e'};
+
+	struct mosquitto__packet packet;
+	struct mqtt5__property *properties, *p;
+	int rc;
+
+	payload[0] = sizeof(payload)-1;
+
+	memset(&packet, 0, sizeof(struct mosquitto__packet));
+	packet.payload = payload;
+	packet.remaining_length = sizeof(payload);;
+	rc = property__read_all(&packet, &properties);
+
+	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
+	p = properties;
+
+	CU_ASSERT_PTR_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_USER_PROPERTY);
+	CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
+	CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
+	CU_ASSERT_STRING_EQUAL(p->name.v, "name");
+	CU_ASSERT_EQUAL(p->name.len, strlen("name"));
+
+	property__free_all(&properties);
+}
+
+static void TEST_packet_unsuback(void)
+{
+	packet_helper_reason_string_user_property();
+}
+
+static void TEST_packet_disconnect(void)
+{
+	uint8_t payload[] = {0,
+		PROP_SESSION_EXPIRY_INTERVAL, 0x12, 0x45, 0x00, 0x00,
+		PROP_REASON_STRING, 0, 6, 'r', 'e', 'a', 's', 'o', 'n',
+		PROP_USER_PROPERTY, 0, 4, 'n', 'a', 'm', 'e', 0, 5, 'v', 'a', 'l', 'u', 'e'};
+
+	struct mosquitto__packet packet;
+	struct mqtt5__property *properties, *p;
+	int rc;
+
+	payload[0] = sizeof(payload)-1;
+
+	memset(&packet, 0, sizeof(struct mosquitto__packet));
+	packet.payload = payload;
+	packet.remaining_length = sizeof(payload);;
+	rc = property__read_all(&packet, &properties);
+
+	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
+	CU_ASSERT_PTR_NOT_NULL(properties->next);
+	p = properties;
+
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_SESSION_EXPIRY_INTERVAL);
+	CU_ASSERT_EQUAL(p->value.i32, 0x12450000);
+
+	p = p->next;
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_REASON_STRING);
+	CU_ASSERT_STRING_EQUAL(p->value.s.v, "reason");
+	CU_ASSERT_EQUAL(p->value.s.len, strlen("reason"));
+
+	p = p->next;
+	CU_ASSERT_PTR_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_USER_PROPERTY);
+	CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
+	CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
+	CU_ASSERT_STRING_EQUAL(p->name.v, "name");
+	CU_ASSERT_EQUAL(p->name.len, strlen("name"));
+
+	property__free_all(&properties);
+}
+
+static void TEST_packet_auth(void)
+{
+	uint8_t payload[] = {0,
+		PROP_AUTHENTICATION_METHOD, 0x00, 0x04, 'n', 'o', 'n', 'e',
+		PROP_AUTHENTICATION_DATA, 0x00, 0x02, 1, 2,
+		PROP_REASON_STRING, 0, 6, 'r', 'e', 'a', 's', 'o', 'n',
+		PROP_USER_PROPERTY, 0, 4, 'n', 'a', 'm', 'e', 0, 5, 'v', 'a', 'l', 'u', 'e'};
+
+	struct mosquitto__packet packet;
+	struct mqtt5__property *properties, *p;
+	int rc;
+
+	payload[0] = sizeof(payload)-1;
+
+	memset(&packet, 0, sizeof(struct mosquitto__packet));
+	packet.payload = payload;
+	packet.remaining_length = sizeof(payload);;
+	rc = property__read_all(&packet, &properties);
+
+	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
+	CU_ASSERT_PTR_NOT_NULL(properties->next);
+	p = properties;
+
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_AUTHENTICATION_METHOD);
+	CU_ASSERT_STRING_EQUAL(p->value.s.v, "none");
+	CU_ASSERT_EQUAL(p->value.s.len, strlen("none"));
+
+	p = p->next;
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_AUTHENTICATION_DATA);
+	CU_ASSERT_EQUAL(p->value.bin.v[0], 1);
+	CU_ASSERT_EQUAL(p->value.bin.v[1], 2);
+	CU_ASSERT_EQUAL(p->value.s.len, 2);
+
+	p = p->next;
+	CU_ASSERT_PTR_NOT_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_REASON_STRING);
+	CU_ASSERT_STRING_EQUAL(p->value.s.v, "reason");
+	CU_ASSERT_EQUAL(p->value.s.len, strlen("reason"));
+
+	p = p->next;
+	CU_ASSERT_PTR_NULL(p->next);
+	CU_ASSERT_EQUAL(p->identifier, PROP_USER_PROPERTY);
+	CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
+	CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
+	CU_ASSERT_STRING_EQUAL(p->name.v, "name");
+	CU_ASSERT_EQUAL(p->name.len, strlen("name"));
+
+	property__free_all(&properties);
+}
+
+
 /* ========================================================================
  * TEST SUITE SETUP
  * ======================================================================== */
@@ -987,6 +1704,8 @@ int init_property_read_tests(void)
 			|| !CU_add_test(test_suite, "Single Reason String", TEST_single_reason_string)
 			|| !CU_add_test(test_suite, "Single Correlation Data", TEST_single_correlation_data)
 			|| !CU_add_test(test_suite, "Single Authentication Data", TEST_single_authentication_data)
+			|| !CU_add_test(test_suite, "Single User Property", TEST_single_user_property)
+			|| !CU_add_test(test_suite, "Single Subscription Identifier", TEST_single_subscription_identifier)
 			|| !CU_add_test(test_suite, "Duplicate Payload Format Indicator", TEST_duplicate_payload_format_indicator)
 			|| !CU_add_test(test_suite, "Duplicate Request Problem Information", TEST_duplicate_request_problem_information)
 			|| !CU_add_test(test_suite, "Duplicate Request Response Information", TEST_duplicate_request_response_information)
@@ -1012,6 +1731,8 @@ int init_property_read_tests(void)
 			|| !CU_add_test(test_suite, "Duplicate Reason String", TEST_duplicate_reason_string)
 			|| !CU_add_test(test_suite, "Duplicate Correlation Data", TEST_duplicate_correlation_data)
 			|| !CU_add_test(test_suite, "Duplicate Authentication Data", TEST_duplicate_authentication_data)
+			|| !CU_add_test(test_suite, "Duplicate User Property", TEST_duplicate_user_property)
+			|| !CU_add_test(test_suite, "Duplicate Subscription Identifier", TEST_duplicate_subscription_identifier)
 			|| !CU_add_test(test_suite, "Bad Request Problem Information", TEST_bad_request_problem_information)
 			|| !CU_add_test(test_suite, "Bad Request Response Information", TEST_bad_request_response_information)
 			|| !CU_add_test(test_suite, "Bad Maximum QoS", TEST_bad_maximum_qos)
@@ -1023,6 +1744,20 @@ int init_property_read_tests(void)
 			|| !CU_add_test(test_suite, "Bad Receive Maximum", TEST_bad_receive_maximum)
 			|| !CU_add_test(test_suite, "Bad Topic Alias", TEST_bad_topic_alias)
 			|| !CU_add_test(test_suite, "Bad Content Type", TEST_bad_content_type)
+			|| !CU_add_test(test_suite, "Bad Subscription Identifier", TEST_bad_subscription_identifier)
+			|| !CU_add_test(test_suite, "Packet CONNECT", TEST_packet_connect)
+			|| !CU_add_test(test_suite, "Packet CONNACK", TEST_packet_connack)
+			|| !CU_add_test(test_suite, "Packet PUBLISH", TEST_packet_publish)
+			|| !CU_add_test(test_suite, "Packet PUBACK", TEST_packet_puback)
+			|| !CU_add_test(test_suite, "Packet PUBREC", TEST_packet_pubrec)
+			|| !CU_add_test(test_suite, "Packet PUBREL", TEST_packet_pubrel)
+			|| !CU_add_test(test_suite, "Packet PUBCOMP", TEST_packet_pubcomp)
+			|| !CU_add_test(test_suite, "Packet SUBSCRIBE", TEST_packet_subscribe)
+			|| !CU_add_test(test_suite, "Packet SUBACK", TEST_packet_suback)
+			|| !CU_add_test(test_suite, "Packet UNSUBSCRIBE", TEST_packet_unsubscribe)
+			|| !CU_add_test(test_suite, "Packet UNSUBACK", TEST_packet_unsuback)
+			|| !CU_add_test(test_suite, "Packet DISCONNECT", TEST_packet_disconnect)
+			|| !CU_add_test(test_suite, "Packet AUTH", TEST_packet_auth)
 			){
 
 		printf("Error adding Property read CUnit tests.\n");
