@@ -246,6 +246,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		if(rc) return rc;
 		property__free_all(&properties);
 	}
+	property__free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
 
 	if(packet__read_string(&context->in_packet, &client_id, &slen)){
 		rc = 1;
@@ -300,6 +301,13 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			rc = MOSQ_ERR_NOMEM;
 			goto handle_connect_error;
 		}
+		/* FIXME - this needs to be "will" specific */
+		if(protocol_version == PROTOCOL_VERSION_v5){
+			rc = property__read_all(&context->in_packet, &properties);
+			if(rc) return rc;
+			property__free_all(&properties);
+		}
+		property__free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
 		if(packet__read_string(&context->in_packet, &will_topic, &slen)){
 			rc = 1;
 			goto handle_connect_error;
