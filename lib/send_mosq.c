@@ -34,6 +34,7 @@ Contributors:
 #include "memory_mosq.h"
 #include "net_mosq.h"
 #include "packet_mosq.h"
+#include "property_mosq.h"
 #include "send_mosq.h"
 #include "time_mosq.h"
 #include "util_mosq.h"
@@ -71,7 +72,7 @@ int send__puback(struct mosquitto *mosq, uint16_t mid)
 #else
 	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBACK (Mid: %d)", mosq->id, mid);
 #endif
-	return send__command_with_mid(mosq, PUBACK, mid, false);
+	return send__command_with_mid(mosq, PUBACK, mid, false, NULL);
 }
 
 int send__pubcomp(struct mosquitto *mosq, uint16_t mid)
@@ -81,7 +82,7 @@ int send__pubcomp(struct mosquitto *mosq, uint16_t mid)
 #else
 	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBCOMP (Mid: %d)", mosq->id, mid);
 #endif
-	return send__command_with_mid(mosq, PUBCOMP, mid, false);
+	return send__command_with_mid(mosq, PUBCOMP, mid, false, NULL);
 }
 
 
@@ -92,7 +93,7 @@ int send__pubrec(struct mosquitto *mosq, uint16_t mid)
 #else
 	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBREC (Mid: %d)", mosq->id, mid);
 #endif
-	return send__command_with_mid(mosq, PUBREC, mid, false);
+	return send__command_with_mid(mosq, PUBREC, mid, false, NULL);
 }
 
 int send__pubrel(struct mosquitto *mosq, uint16_t mid)
@@ -102,11 +103,11 @@ int send__pubrel(struct mosquitto *mosq, uint16_t mid)
 #else
 	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBREL (Mid: %d)", mosq->id, mid);
 #endif
-	return send__command_with_mid(mosq, PUBREL|2, mid, false);
+	return send__command_with_mid(mosq, PUBREL|2, mid, false, NULL);
 }
 
 /* For PUBACK, PUBCOMP, PUBREC, and PUBREL */
-int send__command_with_mid(struct mosquitto *mosq, uint8_t command, uint16_t mid, bool dup)
+int send__command_with_mid(struct mosquitto *mosq, uint8_t command, uint16_t mid, bool dup, struct mqtt5__property *properties)
 {
 	struct mosquitto__packet *packet = NULL;
 	int rc;
@@ -120,14 +121,21 @@ int send__command_with_mid(struct mosquitto *mosq, uint8_t command, uint16_t mid
 		packet->command |= 8;
 	}
 	packet->remaining_length = 2;
+	if(mosq->protocol == mosq_p_mqtt5){
+		packet->remaining_length += 1;
+	}
+
 	rc = packet__alloc(packet);
 	if(rc){
 		mosquitto__free(packet);
 		return rc;
 	}
 
-	packet->payload[packet->pos+0] = MOSQ_MSB(mid);
-	packet->payload[packet->pos+1] = MOSQ_LSB(mid);
+	packet__write_uint16(packet, mid);
+
+	if(mosq->protocol == mosq_p_mqtt5){
+		property__write_all(packet, NULL);
+	}
 
 	return packet__queue(mosq, packet);
 }

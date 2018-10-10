@@ -28,6 +28,7 @@ Contributors:
 #include "memory_mosq.h"
 #include "mqtt_protocol.h"
 #include "packet_mosq.h"
+#include "property_mosq.h"
 #include "util_mosq.h"
 
 
@@ -46,6 +47,9 @@ int send__unsubscribe(struct mosquitto *mosq, int *mid, const char *topic)
 	if(!packet) return MOSQ_ERR_NOMEM;
 
 	packetlen = 2 + 2+strlen(topic);
+	if(mosq->protocol == mosq_p_mqtt5){
+		packetlen += 1;
+	}
 
 	packet->command = UNSUBSCRIBE | (1<<1);
 	packet->remaining_length = packetlen;
@@ -59,6 +63,10 @@ int send__unsubscribe(struct mosquitto *mosq, int *mid, const char *topic)
 	local_mid = mosquitto__mid_generate(mosq);
 	if(mid) *mid = (int)local_mid;
 	packet__write_uint16(packet, local_mid);
+
+	if(mosq->protocol == mosq_p_mqtt5){
+		property__write_all(packet, NULL);
+	}
 
 	/* Payload */
 	packet__write_string(packet, topic, strlen(topic));

@@ -25,12 +25,18 @@ Contributors:
 #include "mosquitto.h"
 #include "mosquitto_internal.h"
 #include "logging_mosq.h"
+#include "memory_mosq.h"
 #include "mqtt_protocol.h"
+#include "packet_mosq.h"
+#include "property_mosq.h"
 #include "send_mosq.h"
 
 
 int send__disconnect(struct mosquitto *mosq)
 {
+	struct mosquitto__packet *packet = NULL;
+	int rc;
+
 	assert(mosq);
 #ifdef WITH_BROKER
 # ifdef WITH_BRIDGE
@@ -39,6 +45,26 @@ int send__disconnect(struct mosquitto *mosq)
 #else
 	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending DISCONNECT", mosq->id);
 #endif
-	return send__simple_command(mosq, DISCONNECT);
+	assert(mosq);
+	packet = mosquitto__calloc(1, sizeof(struct mosquitto__packet));
+	if(!packet) return MOSQ_ERR_NOMEM;
+
+	packet->command = DISCONNECT;
+	if(mosq->protocol == mosq_p_mqtt5){
+		packet->remaining_length = 1;
+	}else{
+		packet->remaining_length = 0;
+	}
+
+	rc = packet__alloc(packet);
+	if(rc){
+		mosquitto__free(packet);
+		return rc;
+	}
+	if(mosq->protocol == mosq_p_mqtt5){
+		property__write_all(packet, NULL);
+	}
+
+	return packet__queue(mosq, packet);
 }
 

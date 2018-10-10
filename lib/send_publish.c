@@ -33,6 +33,7 @@ Contributors:
 #include "memory_mosq.h"
 #include "net_mosq.h"
 #include "packet_mosq.h"
+#include "property_mosq.h"
 #include "send_mosq.h"
 
 
@@ -139,6 +140,9 @@ int send__real_publish(struct mosquitto *mosq, uint16_t mid, const char *topic, 
 
 	packetlen = 2+strlen(topic) + payloadlen;
 	if(qos > 0) packetlen += 2; /* For message id */
+	if(mosq->protocol == mosq_p_mqtt5){
+		packetlen += 1;
+	}
 	packet = mosquitto__calloc(1, sizeof(struct mosquitto__packet));
 	if(!packet) return MOSQ_ERR_NOMEM;
 
@@ -154,6 +158,10 @@ int send__real_publish(struct mosquitto *mosq, uint16_t mid, const char *topic, 
 	packet__write_string(packet, topic, strlen(topic));
 	if(qos > 0){
 		packet__write_uint16(packet, mid);
+	}
+
+	if(mosq->protocol == mosq_p_mqtt5){
+		property__write_all(packet, NULL);
 	}
 
 	/* Payload */

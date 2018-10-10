@@ -29,6 +29,7 @@ Contributors:
 #include "mosquitto_internal.h"
 #include "mqtt_protocol.h"
 #include "packet_mosq.h"
+#include "property_mosq.h"
 
 int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session)
 {
@@ -82,6 +83,9 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 		assert(mosq->will->topic);
 
 		payloadlen += 2+strlen(mosq->will->topic) + 2+mosq->will->payloadlen;
+		if(mosq->protocol == mosq_p_mqtt5){
+			payloadlen += 1;
+		}
 	}
 	if(username){
 		payloadlen += 2+strlen(username);
@@ -126,12 +130,16 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 
 	if(mosq->protocol == mosq_p_mqtt5){
 		/* Write properties */
-		packet__write_byte(packet, 0); /* FIXME - No properties yet. */
+		property__write_all(packet, NULL);
 	}
 
 	/* Payload */
 	packet__write_string(packet, clientid, strlen(clientid));
 	if(will){
+		if(mosq->protocol == mosq_p_mqtt5){
+			/* Write will properties */
+			property__write_all(packet, NULL);
+		}
 		packet__write_string(packet, mosq->will->topic, strlen(mosq->will->topic));
 		packet__write_string(packet, (const char *)mosq->will->payload, mosq->will->payloadlen);
 	}

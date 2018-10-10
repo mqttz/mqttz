@@ -20,6 +20,7 @@ Contributors:
 #include "mqtt_protocol.h"
 #include "memory_mosq.h"
 #include "packet_mosq.h"
+#include "property_mosq.h"
 #include "util_mosq.h"
 
 int send__connack(struct mosquitto *context, int ack, int result)
@@ -50,10 +51,10 @@ int send__connack(struct mosquitto *context, int ack, int result)
 		mosquitto__free(packet);
 		return rc;
 	}
-	packet->payload[packet->pos+0] = ack;
-	packet->payload[packet->pos+1] = result;
+	packet__write_byte(packet, ack);
+	packet__write_byte(packet, result);
 	if(context->protocol == mosq_p_mqtt5){
-		packet->payload[packet->pos+2] = 0;
+		property__write_all(packet, NULL);
 	}
 
 	return packet__queue(context, packet);

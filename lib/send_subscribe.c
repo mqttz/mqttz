@@ -29,6 +29,7 @@ Contributors:
 #include "memory_mosq.h"
 #include "mqtt_protocol.h"
 #include "packet_mosq.h"
+#include "property_mosq.h"
 #include "util_mosq.h"
 
 
@@ -47,6 +48,9 @@ int send__subscribe(struct mosquitto *mosq, int *mid, int topic_count, const cha
 	if(!packet) return MOSQ_ERR_NOMEM;
 
 	packetlen = 2;
+	if(mosq->protocol == mosq_p_mqtt5){
+		packetlen += 1;
+	}
 	for(i=0; i<topic_count; i++){
 		packetlen += 2+strlen(topic[i]) + 1;
 	}
@@ -63,6 +67,10 @@ int send__subscribe(struct mosquitto *mosq, int *mid, int topic_count, const cha
 	local_mid = mosquitto__mid_generate(mosq);
 	if(mid) *mid = (int)local_mid;
 	packet__write_uint16(packet, local_mid);
+
+	if(mosq->protocol == mosq_p_mqtt5){
+		property__write_all(packet, NULL);
+	}
 
 	/* Payload */
 	for(i=0; i<topic_count; i++){

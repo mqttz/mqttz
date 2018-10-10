@@ -20,6 +20,7 @@ Contributors:
 #include "mqtt_protocol.h"
 #include "memory_mosq.h"
 #include "packet_mosq.h"
+#include "property_mosq.h"
 #include "util_mosq.h"
 
 
@@ -35,12 +36,20 @@ int send__suback(struct mosquitto *context, uint16_t mid, uint32_t payloadlen, c
 
 	packet->command = SUBACK;
 	packet->remaining_length = 2+payloadlen;
+	if(context->protocol == mosq_p_mqtt5){
+		packet->remaining_length += 1;
+	}
 	rc = packet__alloc(packet);
 	if(rc){
 		mosquitto__free(packet);
 		return rc;
 	}
 	packet__write_uint16(packet, mid);
+
+	if(context->protocol == mosq_p_mqtt5){
+		property__write_all(packet, NULL);
+	}
+
 	if(payloadlen){
 		packet__write_bytes(packet, payload, payloadlen);
 	}

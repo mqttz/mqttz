@@ -279,3 +279,11 @@ void property__free_all(struct mqtt5__property **property)
 	}
 	*property = NULL;
 }
+
+
+int property__write_all(struct mosquitto__packet *packet, struct mqtt5__property **property)
+{
+	packet__write_byte(packet, 0);
+	return MOSQ_ERR_SUCCESS;
+}
+
