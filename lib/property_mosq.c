@@ -310,13 +310,13 @@ int property__get_length(struct mqtt5__property *property)
 
 		case PROP_SUBSCRIPTION_IDENTIFIER:
 			if(property->value.varint < 128){
-				return 1;
-			}else if(property->value.varint < 16384){
 				return 2;
-			}else if(property->value.varint < 2097152){
+			}else if(property->value.varint < 16384){
 				return 3;
-			}else if(property->value.varint < 268435456){
+			}else if(property->value.varint < 2097152){
 				return 4;
+			}else if(property->value.varint < 268435456){
+				return 5;
 			}else{
 				return 0;
 			}
