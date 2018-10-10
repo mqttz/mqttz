@@ -38,6 +38,7 @@ MOSQ_OBJS=mosquitto.o \
 		  tls_mosq.o \
 		  utf8_mosq.o \
 		  util_mosq.o \
+		  util_topic.o \
 		  will_mosq.o
 
 ALL_DEPS=libmosquitto.so.${SOVERSION}
@@ -187,6 +188,9 @@ utf8_mosq.o : utf8_mosq.c
 	${CROSS_COMPILE}$(CC) $(LIB_CFLAGS) -c $< -o $@
 
 util_mosq.o : util_mosq.c util_mosq.h
+	${CROSS_COMPILE}$(CC) $(LIB_CFLAGS) -c $< -o $@
+
+util_topic.o : util_topic.c util_mosq.h
 	${CROSS_COMPILE}$(CC) $(LIB_CFLAGS) -c $< -o $@
 
 will_mosq.o : will_mosq.c will_mosq.h

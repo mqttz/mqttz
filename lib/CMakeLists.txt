@@ -69,7 +69,7 @@ set(C_SRC
 	time_mosq.c
 	tls_mosq.c
 	utf8_mosq.c
-	util_mosq.c util_mosq.h
+	util_mosq.c util_topic.c util_mosq.h
 	will_mosq.c will_mosq.h)
 
 set (LIBRARIES ${OPENSSL_LIBRARIES} ${PTHREAD_LIBRARIES})

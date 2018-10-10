@@ -74,9 +74,6 @@ all : 01 02 03 04 08 09
 08-ssl-fake-cacert.test : 08-ssl-fake-cacert.c
 	$(CC) $< -o $@ $(CFLAGS) $(LIBS)
 
-09-util-topic-matching.test : 09-util-topic-matching.c
-	$(CC) $< -o $@ $(CFLAGS) $(LIBS)
-
 09-util-topic-tokenise.test : 09-util-topic-tokenise.c
 	$(CC) $< -o $@ $(CFLAGS) $(LIBS)
 
@@ -90,7 +87,7 @@ all : 01 02 03 04 08 09
 
 08 : 08-ssl-connect-no-auth.test 08-ssl-connect-cert-auth.test 08-ssl-connect-cert-auth-enc.test 08-ssl-bad-cacert.test 08-ssl-fake-cacert.test
 
-09 : 09-util-topic-matching.test 09-util-topic-tokenise.test
+09 : 09-util-topic-tokenise.test
 
 reallyclean : clean
 	-rm -f *.orig

@@ -10,11 +10,13 @@ TEST_OBJS = test.o \
 			datatype_write.o \
 			property_read.o \
 			stubs.o \
+			util_topic_test.o \
 			utf8.o
 
 LIB_OBJS = memory_mosq.o \
 		   packet_datatypes.o \
 		   property_mosq.o \
+		   util_topic.o \
 		   utf8_mosq.o
 
 all : test
@@ -29,6 +31,9 @@ packet_datatypes.o : ../../lib/packet_datatypes.c
 	$(CROSS_COMPILE)$(CC) $(CFLAGS) -c -o $@ $^
 
 property_mosq.o : ../../lib/property_mosq.c
+	$(CROSS_COMPILE)$(CC) $(CFLAGS) -c -o $@ $^
+
+util_topic.o : ../../lib/util_topic.c
 	$(CROSS_COMPILE)$(CC) $(CFLAGS) -c -o $@ $^
 
 utf8_mosq.o : ../../lib/utf8_mosq.c
