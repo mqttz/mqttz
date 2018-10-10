@@ -27,6 +27,7 @@ static void byte_prop_read_helper(
 		CU_ASSERT_EQUAL(properties->identifier, identifier);
 		CU_ASSERT_EQUAL(properties->value.i8, value_expected);
 		CU_ASSERT_PTR_EQUAL(properties->next, NULL);
+		CU_ASSERT_EQUAL(property__get_length_all(properties), 2);
 		property__free_all(&properties);
 	}
 	CU_ASSERT_PTR_EQUAL(properties, NULL);
@@ -81,6 +82,7 @@ static void int32_prop_read_helper(
 		CU_ASSERT_EQUAL(properties->identifier, identifier);
 		CU_ASSERT_EQUAL(properties->value.i32, value_expected);
 		CU_ASSERT_PTR_EQUAL(properties->next, NULL);
+		CU_ASSERT_EQUAL(property__get_length_all(properties), 5);
 		property__free_all(&properties);
 	}
 	CU_ASSERT_PTR_EQUAL(properties, NULL);
@@ -129,6 +131,7 @@ static void int16_prop_read_helper(
 		CU_ASSERT_EQUAL(properties->identifier, identifier);
 		CU_ASSERT_EQUAL(properties->value.i16, value_expected);
 		CU_ASSERT_PTR_EQUAL(properties->next, NULL);
+		CU_ASSERT_EQUAL(property__get_length_all(properties), 3);
 		property__free_all(&properties);
 	}
 	CU_ASSERT_PTR_EQUAL(properties, NULL);
@@ -173,6 +176,7 @@ static void string_prop_read_helper(
 		CU_ASSERT_EQUAL(properties->value.s.len, strlen(value_expected));
 		CU_ASSERT_STRING_EQUAL(properties->value.s.v, value_expected);
 		CU_ASSERT_PTR_EQUAL(properties->next, NULL);
+		CU_ASSERT_EQUAL(property__get_length_all(properties), 1+2+strlen(value_expected));
 		property__free_all(&properties);
 	}
 	CU_ASSERT_PTR_EQUAL(properties, NULL);
@@ -236,6 +240,7 @@ static void binary_prop_read_helper(
 		CU_ASSERT_EQUAL(properties->value.bin.len, len_expected);
 		CU_ASSERT_EQUAL(memcmp(properties->value.bin.v, value_expected, len_expected), 0);
 		CU_ASSERT_PTR_EQUAL(properties->next, NULL);
+		CU_ASSERT_EQUAL(property__get_length_all(properties), 1+2+len_expected);
 		property__free_all(&properties);
 	}
 	CU_ASSERT_PTR_EQUAL(properties, NULL);
@@ -289,6 +294,7 @@ static void string_pair_prop_read_helper(
 			CU_ASSERT_PTR_NOT_NULL(properties->next);
 		}else{
 			CU_ASSERT_PTR_NULL(properties->next);
+			CU_ASSERT_EQUAL(property__get_length_all(properties), 1+2+strlen(name_expected)+2+strlen(value_expected));
 		}
 		property__free_all(&properties);
 	}
@@ -316,6 +322,17 @@ static void varint_prop_read_helper(
 		CU_ASSERT_EQUAL(properties->identifier, identifier);
 		CU_ASSERT_EQUAL(properties->value.varint, value_expected);
 		CU_ASSERT_PTR_NULL(properties->next);
+		if(value_expected < 128){
+			CU_ASSERT_EQUAL(property__get_length_all(properties), 2);
+		}else if(value_expected < 16384){
+			CU_ASSERT_EQUAL(property__get_length_all(properties), 3);
+		}else if(value_expected < 2097152){
+			CU_ASSERT_EQUAL(property__get_length_all(properties), 4);
+		}else if(value_expected < 268435456){
+			CU_ASSERT_EQUAL(property__get_length_all(properties), 5);
+		}else{
+			CU_FAIL("Incorrect varint value.");
+		}
 		property__free_all(&properties);
 	}
 	CU_ASSERT_PTR_NULL(properties);

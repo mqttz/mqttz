@@ -281,6 +281,83 @@ void property__free_all(struct mqtt5__property **property)
 }
 
 
+int property__get_length(struct mqtt5__property *property)
+{
+	if(!property) return 0;
+
+	switch(property->identifier){
+		case PROP_PAYLOAD_FORMAT_INDICATOR:
+		case PROP_REQUEST_PROBLEM_INFO:
+		case PROP_REQUEST_RESPONSE_INFO:
+		case PROP_MAXIMUM_QOS:
+		case PROP_RETAIN_AVAILABLE:
+		case PROP_WILDCARD_SUB_AVAILABLE:
+		case PROP_SUBSCRIPTION_ID_AVAILABLE:
+		case PROP_SHARED_SUB_AVAILABLE:
+			return 2; /* 1 (identifier) + 1 byte */
+
+		case PROP_SERVER_KEEP_ALIVE:
+		case PROP_RECEIVE_MAXIMUM:
+		case PROP_TOPIC_ALIAS_MAXIMUM:
+		case PROP_TOPIC_ALIAS:
+			return 3; /* 1 (identifier) + 2 bytes */
+
+		case PROP_MESSAGE_EXPIRY_INTERVAL:
+		case PROP_WILL_DELAY_INTERVAL:
+		case PROP_MAXIMUM_PACKET_SIZE:
+		case PROP_SESSION_EXPIRY_INTERVAL:
+			return 5; /* 1 (identifier) + 5 bytes */
+
+		case PROP_SUBSCRIPTION_IDENTIFIER:
+			if(property->value.varint < 128){
+				return 1;
+			}else if(property->value.varint < 16384){
+				return 2;
+			}else if(property->value.varint < 2097152){
+				return 3;
+			}else if(property->value.varint < 268435456){
+				return 4;
+			}else{
+				return 0;
+			}
+
+		case PROP_CORRELATION_DATA:
+		case PROP_AUTHENTICATION_DATA:
+			return 3 + property->value.bin.len; /* 1 + 2 bytes (len) + X bytes (payload) */
+
+		case PROP_CONTENT_TYPE:
+		case PROP_RESPONSE_TOPIC:
+		case PROP_ASSIGNED_CLIENT_IDENTIFIER:
+		case PROP_AUTHENTICATION_METHOD:
+		case PROP_RESPONSE_INFO:
+		case PROP_SERVER_REFERENCE:
+		case PROP_REASON_STRING:
+			return 3 + property->value.s.len; /* 1 + 2 bytes (len) + X bytes (string) */
+
+		case PROP_USER_PROPERTY:
+			return 5 + property->value.s.len + property->name.len; /* 1 + 2*(2 bytes (len) + X bytes (string))*/
+
+		default:
+			return 0;
+	}
+	return 0;
+}
+
+
+int property__get_length_all(struct mqtt5__property *property)
+{
+	struct mqtt5__property *p;
+	int len = 0;
+
+	p = property;
+	while(p){
+		len += property__get_length(p);
+		p = p->next;
+	}
+	return len;
+}
+
+
 int property__write_all(struct mosquitto__packet *packet, struct mqtt5__property **property)
 {
 	packet__write_byte(packet, 0);
