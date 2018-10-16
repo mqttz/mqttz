@@ -85,7 +85,7 @@ static void TEST_empty_input(void)
  * VALID MATCHING AND NON-MATCHING
  * ======================================================================== */
 
-void TEST_valid_matching(void)
+static void TEST_valid_matching(void)
 {
 	match_helper("foo/#", "foo/");
 	match_helper("foo/#", "foo");
@@ -106,7 +106,7 @@ void TEST_valid_matching(void)
 }
 
 
-void TEST_invalid_but_matching(void)
+static void TEST_invalid_but_matching(void)
 {
 	/* Matching here is "naive treatment of the wildcards would produce a
 	 * match". They shouldn't really match, they should fail. */
@@ -118,6 +118,14 @@ void TEST_invalid_but_matching(void)
 	no_match_helper(MOSQ_ERR_INVAL, "foo/+bar", "foo/+bar");
 	no_match_helper(MOSQ_ERR_INVAL, "foo/bar+", "foo/bar+");
 
+	no_match_helper(MOSQ_ERR_INVAL, "+foo", "afoo");
+	no_match_helper(MOSQ_ERR_INVAL, "fo+o", "foao");
+	no_match_helper(MOSQ_ERR_INVAL, "foo+", "fooa");
+	no_match_helper(MOSQ_ERR_INVAL, "+foo/bar", "afoo/bar");
+	no_match_helper(MOSQ_ERR_INVAL, "foo+/bar", "fooa/bar");
+	no_match_helper(MOSQ_ERR_INVAL, "foo/+bar", "foo/abar");
+	no_match_helper(MOSQ_ERR_INVAL, "foo/bar+", "foo/bara");
+
 	no_match_helper(MOSQ_ERR_INVAL, "#foo", "#foo");
 	no_match_helper(MOSQ_ERR_INVAL, "fo#o", "fo#o");
 	no_match_helper(MOSQ_ERR_INVAL, "foo#", "foo#");
@@ -125,31 +133,35 @@ void TEST_invalid_but_matching(void)
 	no_match_helper(MOSQ_ERR_INVAL, "foo#/bar", "foo#/bar");
 	no_match_helper(MOSQ_ERR_INVAL, "foo/#bar", "foo/#bar");
 	no_match_helper(MOSQ_ERR_INVAL, "foo/bar#", "foo/bar#");
+
+	no_match_helper(MOSQ_ERR_INVAL, "foo+", "fooa");
 }
 
 
-void TEST_valid_no_matching(void)
+static void TEST_valid_no_matching(void)
+{
+	no_match_helper(MOSQ_ERR_SUCCESS, "test/6/#", "test/3");
+
+	no_match_helper(MOSQ_ERR_SUCCESS, "foo/bar", "foo");
+	no_match_helper(MOSQ_ERR_SUCCESS, "foo/+", "foo/bar/baz");
+	no_match_helper(MOSQ_ERR_SUCCESS, "foo/+/baz", "foo/bar/bar");
+
+	no_match_helper(MOSQ_ERR_SUCCESS, "foo/+/#", "fo2/bar/baz");
+
+	no_match_helper(MOSQ_ERR_SUCCESS, "/#", "foo/bar");
+	no_match_helper(MOSQ_ERR_SUCCESS, "/#a", "foo/bar");
+
+	no_match_helper(MOSQ_ERR_SUCCESS, "#", "$SYS/bar");
+	no_match_helper(MOSQ_ERR_SUCCESS, "$BOB/bar", "$SYS/bar");
+}
+
+
+static void TEST_invalid(void)
 {
 	no_match_helper(MOSQ_ERR_INVAL, "foo#", "foo");
 	no_match_helper(MOSQ_ERR_INVAL, "fo#o/", "foo");
 	no_match_helper(MOSQ_ERR_INVAL, "foo#", "fooa");
 	no_match_helper(MOSQ_ERR_INVAL, "foo+", "foo");
-	no_match_helper(MOSQ_ERR_INVAL, "foo+", "fooa");
-
-	no_match_helper(MOSQ_ERR_INVAL, "test/6/#", "test/3");
-
-	no_match_helper(MOSQ_ERR_INVAL, "foo/bar", "foo");
-	no_match_helper(MOSQ_ERR_INVAL, "foo/+", "foo/bar/baz");
-	no_match_helper(MOSQ_ERR_INVAL, "foo/+/baz", "foo/bar/bar");
-
-	no_match_helper(MOSQ_ERR_INVAL, "foo/+/#", "fo2/bar/baz");
-
-	no_match_helper(MOSQ_ERR_INVAL, "/#", "foo/bar");
-	no_match_helper(MOSQ_ERR_INVAL, "/#a", "foo/bar");
-
-
-	no_match_helper(MOSQ_ERR_INVAL, "#", "$SYS/bar");
-	no_match_helper(MOSQ_ERR_INVAL, "$BOB/bar", "$SYS/bar");
 }
 
 /* ========================================================================
@@ -171,6 +183,7 @@ int init_util_topic_tests(void)
 			|| !CU_add_test(test_suite, "Valid matching", TEST_valid_matching)
 			|| !CU_add_test(test_suite, "Valid no matching", TEST_valid_no_matching)
 			|| !CU_add_test(test_suite, "Invalid but matching", TEST_invalid_but_matching)
+			|| !CU_add_test(test_suite, "Invalid", TEST_invalid)
 			){
 
 		printf("Error adding util topic CUnit tests.\n");
