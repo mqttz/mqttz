@@ -47,7 +47,7 @@ set (MOSQ_SRCS
 	sys_tree.c sys_tree.h
 	../lib/time_mosq.c
 	../lib/tls_mosq.c
-	../lib/util_mosq.c ../lib/util_mosq.h
+	../lib/util_mosq.c ../lib/util_topic.c ../lib/util_mosq.h
 	../lib/utf8_mosq.c
 	websockets.c
 	../lib/will_mosq.c ../lib/will_mosq.h)

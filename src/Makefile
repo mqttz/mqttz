@@ -54,6 +54,7 @@ OBJS=	mosquitto.o \
 		tls_mosq.o \
 		utf8_mosq.o \
 		util_mosq.o \
+		util_topic.o \
 		websockets.o \
 		will_mosq.o
 
@@ -193,6 +194,9 @@ tls_mosq.o : ../lib/tls_mosq.c
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
 util_mosq.o : ../lib/util_mosq.c ../lib/util_mosq.h
+	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
+
+util_topic.o : ../lib/util_topic.c ../lib/util_mosq.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
 utf8_mosq.o : ../lib/utf8_mosq.c
