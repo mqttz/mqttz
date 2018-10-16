@@ -225,3 +225,27 @@ int packet__read_varint(struct mosquitto__packet *packet, int32_t *word, int8_t 
 	return MOSQ_ERR_PROTOCOL;
 }
 
+
+int packet__write_varint(struct mosquitto__packet *packet, int32_t word)
+{
+	uint8_t byte;
+	int count = 0;
+
+	packet->payload = NULL;
+	packet->remaining_count = 0;
+	do{
+		byte = word % 128;
+		word = word / 128;
+		/* If there are more digits to encode, set the top bit of this digit */
+		if(word > 0){
+			byte = byte | 0x80;
+		}
+		packet__write_byte(packet, byte);
+		count++;
+	}while(word > 0 && count < 5);
+
+	if(count == 5){
+		return MOSQ_ERR_PROTOCOL;
+	}
+	return MOSQ_ERR_SUCCESS;
+}

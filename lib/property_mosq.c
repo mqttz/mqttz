@@ -358,9 +358,86 @@ int property__get_length_all(struct mqtt5__property *property)
 }
 
 
-int property__write_all(struct mosquitto__packet *packet, struct mqtt5__property **property)
+int property__write(struct mosquitto__packet *packet, struct mqtt5__property *property)
 {
-	packet__write_byte(packet, 0);
+	int rc;
+
+	rc = packet__write_varint(packet, property->identifier);
+	if(rc) return rc;
+
+	switch(property->identifier){
+		case PROP_PAYLOAD_FORMAT_INDICATOR:
+		case PROP_REQUEST_PROBLEM_INFO:
+		case PROP_REQUEST_RESPONSE_INFO:
+		case PROP_MAXIMUM_QOS:
+		case PROP_RETAIN_AVAILABLE:
+		case PROP_WILDCARD_SUB_AVAILABLE:
+		case PROP_SUBSCRIPTION_ID_AVAILABLE:
+		case PROP_SHARED_SUB_AVAILABLE:
+			packet__write_byte(packet, property->value.i8);
+			break;
+
+		case PROP_SERVER_KEEP_ALIVE:
+		case PROP_RECEIVE_MAXIMUM:
+		case PROP_TOPIC_ALIAS_MAXIMUM:
+		case PROP_TOPIC_ALIAS:
+			packet__write_uint16(packet, property->value.i16);
+			break;
+
+		case PROP_MESSAGE_EXPIRY_INTERVAL:
+		case PROP_SESSION_EXPIRY_INTERVAL:
+		case PROP_WILL_DELAY_INTERVAL:
+		case PROP_MAXIMUM_PACKET_SIZE:
+			packet__write_uint32(packet, property->value.i32);
+			break;
+
+		case PROP_SUBSCRIPTION_IDENTIFIER:
+			return packet__write_varint(packet, property->value.varint);
+
+		case PROP_CONTENT_TYPE:
+		case PROP_RESPONSE_TOPIC:
+		case PROP_ASSIGNED_CLIENT_IDENTIFIER:
+		case PROP_AUTHENTICATION_METHOD:
+		case PROP_RESPONSE_INFO:
+		case PROP_SERVER_REFERENCE:
+		case PROP_REASON_STRING:
+			packet__write_string(packet, property->value.s.v, property->value.s.len);
+			break;
+
+		case PROP_AUTHENTICATION_DATA:
+		case PROP_CORRELATION_DATA:
+			packet__write_uint16(packet, property->value.bin.len);
+			packet__write_bytes(packet, property->value.bin.v, property->value.bin.len);
+
+		case PROP_USER_PROPERTY:
+			packet__write_string(packet, property->name.v, property->name.len);
+			packet__write_string(packet, property->value.s.v, property->value.s.len);
+			break;
+
+		default:
+			log__printf(NULL, MOSQ_LOG_DEBUG, "Unsupported property type: %d", property->identifier);
+			return MOSQ_ERR_INVAL;
+	}
+
+	return MOSQ_ERR_SUCCESS;
+}
+
+
+int property__write_all(struct mosquitto__packet *packet, struct mqtt5__property *properties)
+{
+	int rc;
+	struct mqtt5__property *p;
+
+	rc = packet__write_varint(packet, property__get_length_all(properties));
+	if(rc) return rc;
+
+	p = properties;
+	while(p){
+		rc = property__write(packet, p);
+		if(rc) return rc;
+		p = p->next;
+	}
+
 	return MOSQ_ERR_SUCCESS;
 }
 

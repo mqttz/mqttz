@@ -40,6 +40,7 @@ void packet__write_bytes(struct mosquitto__packet *packet, const void *bytes, ui
 void packet__write_string(struct mosquitto__packet *packet, const char *str, uint16_t length);
 void packet__write_uint16(struct mosquitto__packet *packet, uint16_t word);
 void packet__write_uint32(struct mosquitto__packet *packet, uint32_t word);
+int packet__write_varint(struct mosquitto__packet *packet, int32_t word);
 
 int packet__write(struct mosquitto *mosq);
 #ifdef WITH_BROKER
