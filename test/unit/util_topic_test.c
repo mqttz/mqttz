@@ -165,6 +165,88 @@ static void TEST_invalid(void)
 }
 
 /* ========================================================================
+ * PUB TOPIC CHECK
+ * ======================================================================== */
+
+static void pub_topic_helper(const char *topic, int rc_expected)
+{
+	int rc;
+
+	rc = mosquitto_pub_topic_check(topic);
+	CU_ASSERT_EQUAL(rc, rc_expected);
+
+	rc = mosquitto_pub_topic_check2(topic, strlen(topic));
+	CU_ASSERT_EQUAL(rc, rc_expected);
+}
+
+static void TEST_pub_topic_valid(void)
+{
+	pub_topic_helper("pub/topic", MOSQ_ERR_SUCCESS);
+	pub_topic_helper("pub//topic", MOSQ_ERR_SUCCESS);
+	pub_topic_helper("pub/ /topic", MOSQ_ERR_SUCCESS);
+}
+
+static void TEST_pub_topic_invalid(void)
+{
+	pub_topic_helper("+pub/topic", MOSQ_ERR_INVAL);
+	pub_topic_helper("pub+/topic", MOSQ_ERR_INVAL);
+	pub_topic_helper("pub/+topic", MOSQ_ERR_INVAL);
+	pub_topic_helper("pub/topic+", MOSQ_ERR_INVAL);
+	pub_topic_helper("pub/topic/+", MOSQ_ERR_INVAL);
+	pub_topic_helper("#pub/topic", MOSQ_ERR_INVAL);
+	pub_topic_helper("pub#/topic", MOSQ_ERR_INVAL);
+	pub_topic_helper("pub/#topic", MOSQ_ERR_INVAL);
+	pub_topic_helper("pub/topic#", MOSQ_ERR_INVAL);
+	pub_topic_helper("pub/topic/#", MOSQ_ERR_INVAL);
+	pub_topic_helper("+/pub/topic", MOSQ_ERR_INVAL);
+}
+
+
+/* ========================================================================
+ * SUB TOPIC CHECK
+ * ======================================================================== */
+
+static void sub_topic_helper(const char *topic, int rc_expected)
+{
+	int rc;
+
+	rc = mosquitto_sub_topic_check(topic);
+	CU_ASSERT_EQUAL(rc, rc_expected);
+
+	rc = mosquitto_sub_topic_check2(topic, strlen(topic));
+	CU_ASSERT_EQUAL(rc, rc_expected);
+}
+
+static void TEST_sub_topic_valid(void)
+{
+	sub_topic_helper("sub/topic", MOSQ_ERR_SUCCESS);
+	sub_topic_helper("sub//topic", MOSQ_ERR_SUCCESS);
+	sub_topic_helper("sub/ /topic", MOSQ_ERR_SUCCESS);
+	sub_topic_helper("sub/+/topic", MOSQ_ERR_SUCCESS);
+	sub_topic_helper("+/+/+", MOSQ_ERR_SUCCESS);
+	sub_topic_helper("+", MOSQ_ERR_SUCCESS);
+	sub_topic_helper("sub/topic/#", MOSQ_ERR_SUCCESS);
+	sub_topic_helper("sub//topic/#", MOSQ_ERR_SUCCESS);
+	sub_topic_helper("sub/ /topic/#", MOSQ_ERR_SUCCESS);
+	sub_topic_helper("sub/+/topic/#", MOSQ_ERR_SUCCESS);
+	sub_topic_helper("+/+/+/#", MOSQ_ERR_SUCCESS);
+	sub_topic_helper("#", MOSQ_ERR_SUCCESS);
+}
+
+static void TEST_sub_topic_invalid(void)
+{
+	sub_topic_helper("+sub/topic", MOSQ_ERR_INVAL);
+	sub_topic_helper("sub+/topic", MOSQ_ERR_INVAL);
+	sub_topic_helper("sub/+topic", MOSQ_ERR_INVAL);
+	sub_topic_helper("sub/topic+", MOSQ_ERR_INVAL);
+	sub_topic_helper("#sub/topic", MOSQ_ERR_INVAL);
+	sub_topic_helper("sub#/topic", MOSQ_ERR_INVAL);
+	sub_topic_helper("sub/#topic", MOSQ_ERR_INVAL);
+	sub_topic_helper("sub/topic#", MOSQ_ERR_INVAL);
+	sub_topic_helper("#/sub/topic", MOSQ_ERR_INVAL);
+}
+
+/* ========================================================================
  * TEST SUITE SETUP
  * ======================================================================== */
 
@@ -179,11 +261,15 @@ int init_util_topic_tests(void)
 	}
 
 	if(0
-			|| !CU_add_test(test_suite, "Empty input", TEST_empty_input)
-			|| !CU_add_test(test_suite, "Valid matching", TEST_valid_matching)
-			|| !CU_add_test(test_suite, "Valid no matching", TEST_valid_no_matching)
-			|| !CU_add_test(test_suite, "Invalid but matching", TEST_invalid_but_matching)
-			|| !CU_add_test(test_suite, "Invalid", TEST_invalid)
+			|| !CU_add_test(test_suite, "Matching: Empty input", TEST_empty_input)
+			|| !CU_add_test(test_suite, "Matching: Valid matching", TEST_valid_matching)
+			|| !CU_add_test(test_suite, "Matching: Valid no matching", TEST_valid_no_matching)
+			|| !CU_add_test(test_suite, "Matching: Invalid but matching", TEST_invalid_but_matching)
+			|| !CU_add_test(test_suite, "Matching: Invalid", TEST_invalid)
+			|| !CU_add_test(test_suite, "Pub topic: Valid", TEST_pub_topic_valid)
+			|| !CU_add_test(test_suite, "Pub topic: Invalid", TEST_pub_topic_invalid)
+			|| !CU_add_test(test_suite, "Sub topic: Valid", TEST_sub_topic_valid)
+			|| !CU_add_test(test_suite, "Sub topic: Invalid", TEST_sub_topic_invalid)
 			){
 
 		printf("Error adding util topic CUnit tests.\n");
