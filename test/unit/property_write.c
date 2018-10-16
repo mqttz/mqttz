@@ -306,6 +306,28 @@ static void varint_prop_write_helper(
 }
 
 /* ========================================================================
+ * BAD IDENTIFIER
+ * ======================================================================== */
+
+static void TEST_bad_identifier(void)
+{
+	struct mqtt5__property property;
+	struct mosquitto__packet packet;
+	uint8_t payload[10];
+	int rc;
+
+	memset(&property, 0, sizeof(struct mqtt5__property));
+	memset(&packet, 0, sizeof(struct mosquitto__packet));
+	property.identifier = 0xFFFF;
+	packet.packet_length = 10;
+	packet.remaining_length = 8;
+	packet.payload = payload;
+	rc = property__write_all(&packet, &property);
+	CU_ASSERT_EQUAL(rc, MOSQ_ERR_INVAL);
+}
+
+
+/* ========================================================================
  * SINGLE PROPERTIES
  * ======================================================================== */
 
@@ -471,6 +493,7 @@ int init_property_write_tests(void)
 	}
 
 	if(0
+			|| !CU_add_test(test_suite, "Bad identifier", TEST_bad_identifier)
 			|| !CU_add_test(test_suite, "Single Payload Format Indicator", TEST_single_payload_format_indicator)
 			|| !CU_add_test(test_suite, "Single Request Problem Information", TEST_single_request_problem_information)
 			|| !CU_add_test(test_suite, "Single Request Response Information", TEST_single_request_response_information)
