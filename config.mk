@@ -95,6 +95,9 @@ WITH_EPOLL:=yes
 # Build with bundled uthash.h
 WITH_BUNDLED_DEPS:=yes
 
+# Build with coverage options
+WITH_COVERAGE:=no
+
 # =============================================================================
 # End of user configuration
 # =============================================================================
@@ -131,6 +134,7 @@ LIB_CXXFLAGS:=$(CFLAGS) ${CPPFLAGS} -I. -I.. -I../lib
 LIB_LDFLAGS:=${LDFLAGS}
 
 BROKER_CFLAGS:=${LIB_CFLAGS} ${CPPFLAGS} -DVERSION="\"${VERSION}\"" -DWITH_BROKER
+BROKER_LDFLAGS:=${LDFLAGS}
 CLIENT_CFLAGS:=${CFLAGS} ${CPPFLAGS} -I.. -I../lib -DVERSION="\"${VERSION}\""
 
 ifneq ($(or $(findstring $(UNAME),FreeBSD), $(findstring $(UNAME),OpenBSD), $(findstring $(UNAME),NetBSD)),)
@@ -294,4 +298,13 @@ endif
 
 ifeq ($(WITH_BUNDLED_DEPS),yes)
 	BROKER_CFLAGS:=$(BROKER_CFLAGS) -Ideps
+endif
+
+ifeq ($(WITH_COVERAGE),yes)
+	BROKER_CFLAGS:=$(BROKER_CFLAGS) -coverage
+	BROKER_LDFLAGS:=$(BROKER_LDFLAGS) -coverage
+	LIB_CFLAGS:=$(LIB_CFLAGS) -coverage
+	LIB_LDFLAGS:=$(LIB_LDFLAGS) -coverage
+	CLIENT_CFLAGS:=$(CLIENT_CFLAGS) -coverage
+	CLIENT_LDFLAGS:=$(CLIENT_LDFLAGS) -coverage
 endif

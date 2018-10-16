@@ -59,7 +59,7 @@ OBJS=	mosquitto.o \
 		will_mosq.o
 
 mosquitto : ${OBJS}
-	${CROSS_COMPILE}${CC} $^ -o $@ ${LDFLAGS} $(BROKER_LIBS)
+	${CROSS_COMPILE}${CC} $^ -o $@ ${BROKER_LDFLAGS} $(BROKER_LIBS)
 
 mosquitto.o : mosquitto.c mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
