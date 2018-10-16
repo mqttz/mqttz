@@ -9,6 +9,7 @@ TEST_OBJS = test.o \
 			datatype_read.o \
 			datatype_write.o \
 			property_read.o \
+			property_write.o \
 			stubs.o \
 			util_topic_test.o \
 			utf8.o

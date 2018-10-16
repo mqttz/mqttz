@@ -231,8 +231,6 @@ int packet__write_varint(struct mosquitto__packet *packet, int32_t word)
 	uint8_t byte;
 	int count = 0;
 
-	packet->payload = NULL;
-	packet->remaining_count = 0;
 	do{
 		byte = word % 128;
 		word = word / 128;

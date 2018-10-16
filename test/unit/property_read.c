@@ -338,7 +338,7 @@ static void varint_prop_read_helper(
 	CU_ASSERT_PTR_NULL(properties);
 }
 
-void packet_helper_reason_string_user_property(void)
+static void packet_helper_reason_string_user_property(void)
 {
 	uint8_t payload[24] = {23,
 		PROP_REASON_STRING, 0, 6, 'r', 'e', 'a', 's', 'o', 'n',
