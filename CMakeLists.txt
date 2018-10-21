@@ -75,6 +75,14 @@ option(WITH_SRV "Include SRV lookup support?" OFF)
 
 option(DOCUMENTATION "Build documentation?" ON)
 
+option(WITH_DLT "Include DLT support (requires WITH_DLT)?" OFF)
+message(STATUS "WITH_DLT = ${WITH_DLT}")
+if (${WITH_DLT} STREQUAL ON)
+	#find_package(DLT REQUIRED)
+        find_package(PkgConfig)
+        pkg_check_modules(DLT "automotive-dlt >= 2.11")
+        add_definitions("-DWITH_DLT")
+endif (${WITH_DLT} STREQUAL ON)
 # ========================================
 # Include projects
 # ========================================

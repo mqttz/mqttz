@@ -115,8 +115,13 @@ endif (WIN32 OR CYGWIN)
 
 add_definitions (-DWITH_BROKER)
 
-set (MOSQ_LIBS ${MOSQ_LIBS} ${OPENSSL_LIBRARIES})
+if (${WITH_DLT} STREQUAL ON)
+    message(STATUS "DLT_LIBDIR = ${DLT_LIBDIR}")
+    link_directories(${DLT_LIBDIR})
+    set (MOSQ_LIBS ${DLT_LIBRARIES})
+endif (${WITH_DLT} STREQUAL ON)
 
+set (MOSQ_LIBS ${MOSQ_LIBS} ${OPENSSL_LIBRARIES})
 # Check for getaddrinfo_a
 include(CheckLibraryExists)
 check_library_exists(anl getaddrinfo_a  "" HAVE_GETADDRINFO_A)
