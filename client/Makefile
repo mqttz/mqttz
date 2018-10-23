@@ -7,10 +7,10 @@ SHARED_DEP:=../lib/libmosquitto.so.${SOVERSION}
 endif
 
 ifeq ($(WITH_SHARED_LIBRARIES),yes)
-	ALL_DEPS:= mosquitto_pub mosquitto_sub
+ALL_DEPS:= mosquitto_pub mosquitto_sub
 else
 ifeq ($(WITH_STATIC_LIBRARIES),yes)
-	ALL_DEPS:= static_pub static_sub
+ALL_DEPS:= static_pub static_sub
 endif
 endif
 

@@ -105,7 +105,7 @@ WITH_BUNDLED_DEPS:=yes
 
 # Also bump lib/mosquitto.h, CMakeLists.txt,
 # installer/mosquitto.nsi, installer/mosquitto64.nsi
-VERSION=1.5.2
+VERSION=1.5.3
 
 # Client library SO version. Bump if incompatible API/ABI changes are made.
 SOVERSION=1
@@ -281,9 +281,11 @@ ifeq ($(WITH_WEBSOCKETS),static)
 endif
 
 INSTALL?=install
-prefix=/usr/local
-mandir=${prefix}/share/man
-localedir=${prefix}/share/locale
+prefix?=/usr/local
+incdir?=${prefix}/include
+libdir?=${prefix}/lib${LIB_SUFFIX}
+localedir?=${prefix}/share/locale
+mandir?=${prefix}/share/man
 STRIP?=strip
 
 ifeq ($(WITH_STRIP),yes)

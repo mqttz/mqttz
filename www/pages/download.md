@@ -11,8 +11,8 @@
 
 # Source
 
-* [mosquitto-1.5.2.tar.gz](http://mosquitto.org/files/source/mosquitto-1.5.2.tar.gz) (319kB) ([GPG signature](http://mosquitto.org/files/source/mosquitto-1.5.1.tar.gz.asc))
-* [mosquitto-1.5.2.tar.gz](http://www.eclipse.org/downloads/download.php?file=/mosquitto/source/mosquitto-1.5.2.tar.gz) (via Eclipse)
+* [mosquitto-1.5.3.tar.gz](http://mosquitto.org/files/source/mosquitto-1.5.3.tar.gz) (319kB) ([GPG signature](http://mosquitto.org/files/source/mosquitto-1.5.3.tar.gz.asc))
+* [mosquitto-1.5.3.tar.gz](http://www.eclipse.org/downloads/download.php?file=/mosquitto/source/mosquitto-1.5.3.tar.gz) (via Eclipse)
 * [Git source code repository](https://github.com/eclipse/mosquitto) (github.com)
 
 Older downloads are available at [http://mosquitto.org/files/](../files/)
@@ -25,10 +25,8 @@ distributions.
 
 ## Windows
 
-* [mosquitto-1.5.2-install-windows-x64.exe](http://www.eclipse.org/downloads/download.php?file=/mosquitto/binary/win64/mosquitto-1.5.2-install-windows-x64.exe) (~360 kB) (64-bit build, Windows Vista and up, built with Visual Studio Community 2017)
-* [mosquitto-1.5.2-install-windows-x32.exe](http://www.eclipse.org/downloads/download.php?file=/mosquitto/binary/win32/mosquitto-1.5.2-install-windows-x86.exe) (~360 kB) (32-bit build, Windows Vista and up, built with Visual Studio Community 2017)
-
-You will also need to install Win64 OpenSSL v1.1.0 Light or Win32OpenSSL v1.1.0 Light from [slproweb.com](http://slproweb.com/products/Win32OpenSSL.html)
+* [mosquitto-1.5.3-install-windows-x64.exe](http://www.eclipse.org/downloads/download.php?file=/mosquitto/binary/win64/mosquitto-1.5.3-install-windows-x64.exe) (~360 kB) (64-bit build, Windows Vista and up, built with Visual Studio Community 2017)
+* [mosquitto-1.5.3-install-windows-x32.exe](http://www.eclipse.org/downloads/download.php?file=/mosquitto/binary/win32/mosquitto-1.5.3-install-windows-x86.exe) (~360 kB) (32-bit build, Windows Vista and up, built with Visual Studio Community 2017)
 
 See also readme-windows.txt after installing.
 
