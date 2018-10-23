@@ -1,3 +1,11 @@
+1.5.4 - 201810xx
+================
+
+Library:
+- Fix memory leak that occurred if mosquitto_reconnect() was used when TLS
+errors were present. Closes #592.
+
+
 1.5.3 - 20180925
 ================
 
