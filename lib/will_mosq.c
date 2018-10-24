@@ -46,41 +46,41 @@ int will__set(struct mosquitto *mosq, const char *topic, int payloadlen, const v
 	if(mosquitto_validate_utf8(topic, strlen(topic))) return MOSQ_ERR_MALFORMED_UTF8;
 
 	if(mosq->will){
-		mosquitto__free(mosq->will->topic);
-		mosquitto__free(mosq->will->payload);
+		mosquitto__free(mosq->will->msg.topic);
+		mosquitto__free(mosq->will->msg.payload);
 		mosquitto__free(mosq->will);
 	}
 
-	mosq->will = mosquitto__calloc(1, sizeof(struct mosquitto_message));
+	mosq->will = mosquitto__calloc(1, sizeof(struct mosquitto_message_all));
 	if(!mosq->will) return MOSQ_ERR_NOMEM;
-	mosq->will->topic = mosquitto__strdup(topic);
-	if(!mosq->will->topic){
+	mosq->will->msg.topic = mosquitto__strdup(topic);
+	if(!mosq->will->msg.topic){
 		rc = MOSQ_ERR_NOMEM;
 		goto cleanup;
 	}
-	mosq->will->payloadlen = payloadlen;
-	if(mosq->will->payloadlen > 0){
+	mosq->will->msg.payloadlen = payloadlen;
+	if(mosq->will->msg.payloadlen > 0){
 		if(!payload){
 			rc = MOSQ_ERR_INVAL;
 			goto cleanup;
 		}
-		mosq->will->payload = mosquitto__malloc(sizeof(char)*mosq->will->payloadlen);
-		if(!mosq->will->payload){
+		mosq->will->msg.payload = mosquitto__malloc(sizeof(char)*mosq->will->msg.payloadlen);
+		if(!mosq->will->msg.payload){
 			rc = MOSQ_ERR_NOMEM;
 			goto cleanup;
 		}
 
-		memcpy(mosq->will->payload, payload, payloadlen);
+		memcpy(mosq->will->msg.payload, payload, payloadlen);
 	}
-	mosq->will->qos = qos;
-	mosq->will->retain = retain;
+	mosq->will->msg.qos = qos;
+	mosq->will->msg.retain = retain;
 
 	return MOSQ_ERR_SUCCESS;
 
 cleanup:
 	if(mosq->will){
-		mosquitto__free(mosq->will->topic);
-		mosquitto__free(mosq->will->payload);
+		mosquitto__free(mosq->will->msg.topic);
+		mosquitto__free(mosq->will->msg.payload);
 
 		mosquitto__free(mosq->will);
 		mosq->will = NULL;
@@ -93,11 +93,11 @@ int will__clear(struct mosquitto *mosq)
 {
 	if(!mosq->will) return MOSQ_ERR_SUCCESS;
 
-	mosquitto__free(mosq->will->topic);
-	mosq->will->topic = NULL;
+	mosquitto__free(mosq->will->msg.topic);
+	mosq->will->msg.topic = NULL;
 
-	mosquitto__free(mosq->will->payload);
-	mosq->will->payload = NULL;
+	mosquitto__free(mosq->will->msg.payload);
+	mosq->will->msg.payload = NULL;
 
 	mosquitto__free(mosq->will);
 	mosq->will = NULL;

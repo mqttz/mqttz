@@ -80,9 +80,9 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 	payloadlen = 2+strlen(clientid);
 	if(mosq->will){
 		will = 1;
-		assert(mosq->will->topic);
+		assert(mosq->will->msg.topic);
 
-		payloadlen += 2+strlen(mosq->will->topic) + 2+mosq->will->payloadlen;
+		payloadlen += 2+strlen(mosq->will->msg.topic) + 2+mosq->will->msg.payloadlen;
 		if(mosq->protocol == mosq_p_mqtt5){
 			payloadlen += 1;
 		}
@@ -117,7 +117,7 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 	packet__write_byte(packet, version);
 	byte = (clean_session&0x1)<<1;
 	if(will){
-		byte = byte | ((mosq->will->retain&0x1)<<5) | ((mosq->will->qos&0x3)<<3) | ((will&0x1)<<2);
+		byte = byte | ((mosq->will->msg.retain&0x1)<<5) | ((mosq->will->msg.qos&0x3)<<3) | ((will&0x1)<<2);
 	}
 	if(username){
 		byte = byte | 0x1<<7;
@@ -130,7 +130,7 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 
 	if(mosq->protocol == mosq_p_mqtt5){
 		/* Write properties */
-		property__write_all(packet, NULL);
+		property__write_all(packet, mosq->will->properties);
 	}
 
 	/* Payload */
@@ -140,8 +140,8 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 			/* Write will properties */
 			property__write_all(packet, NULL);
 		}
-		packet__write_string(packet, mosq->will->topic, strlen(mosq->will->topic));
-		packet__write_string(packet, (const char *)mosq->will->payload, mosq->will->payloadlen);
+		packet__write_string(packet, mosq->will->msg.topic, strlen(mosq->will->msg.topic));
+		packet__write_string(packet, (const char *)mosq->will->msg.payload, mosq->will->msg.payloadlen);
 	}
 	if(username){
 		packet__write_string(packet, username, strlen(username));

@@ -206,15 +206,26 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 void context__send_will(struct mosquitto_db *db, struct mosquitto *ctxt)
 {
 	if(ctxt->state != mosq_cs_disconnecting && ctxt->will){
-		if(mosquitto_acl_check(db, ctxt, ctxt->will->topic, ctxt->will->payloadlen, ctxt->will->payload,
-							   ctxt->will->qos, ctxt->will->retain, MOSQ_ACL_WRITE) == MOSQ_ERR_SUCCESS){
+		if(mosquitto_acl_check(db, ctxt,
+					ctxt->will->msg.topic,
+					ctxt->will->msg.payloadlen,
+					ctxt->will->msg.payload,
+					ctxt->will->msg.qos,
+					ctxt->will->msg.retain,
+					MOSQ_ACL_WRITE) == MOSQ_ERR_SUCCESS){
+
 			/* Unexpected disconnect, queue the client will. */
-			db__messages_easy_queue(db, ctxt, ctxt->will->topic, ctxt->will->qos, ctxt->will->payloadlen, ctxt->will->payload, ctxt->will->retain);
+			db__messages_easy_queue(db, ctxt,
+					ctxt->will->msg.topic,
+					ctxt->will->msg.qos,
+					ctxt->will->msg.payloadlen,
+					ctxt->will->msg.payload,
+					ctxt->will->msg.retain);
 		}
 	}
 	if(ctxt->will){
-		mosquitto__free(ctxt->will->topic);
-		mosquitto__free(ctxt->will->payload);
+		mosquitto__free(ctxt->will->msg.topic);
+		mosquitto__free(ctxt->will->msg.payload);
 		mosquitto__free(ctxt->will);
 		ctxt->will = NULL;
 	}

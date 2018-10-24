@@ -119,7 +119,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	char *will_payload = NULL, *will_topic = NULL;
 	char *will_topic_mount;
 	uint16_t will_payloadlen;
-	struct mosquitto_message *will_struct = NULL;
+	struct mosquitto_message_all *will_struct = NULL;
 	uint8_t will, will_retain, will_qos, clean_session;
 	uint8_t username_flag, password_flag;
 	char *username = NULL, *password = NULL;
@@ -296,7 +296,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	if(will){
-		will_struct = mosquitto__calloc(1, sizeof(struct mosquitto_message));
+		will_struct = mosquitto__calloc(1, sizeof(struct mosquitto_message_all));
 		if(!will_struct){
 			rc = MOSQ_ERR_NOMEM;
 			goto handle_connect_error;
@@ -643,16 +643,16 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 
 	if(will_struct){
 		context->will = will_struct;
-		context->will->topic = will_topic;
+		context->will->msg.topic = will_topic;
 		if(will_payload){
-			context->will->payload = will_payload;
-			context->will->payloadlen = will_payloadlen;
+			context->will->msg.payload = will_payload;
+			context->will->msg.payloadlen = will_payloadlen;
 		}else{
-			context->will->payload = NULL;
-			context->will->payloadlen = 0;
+			context->will->msg.payload = NULL;
+			context->will->msg.payloadlen = 0;
 		}
-		context->will->qos = will_qos;
-		context->will->retain = will_retain;
+		context->will->msg.qos = will_qos;
+		context->will->msg.retain = will_retain;
 	}
 
 	if(db->config->connection_messages == true){
@@ -671,8 +671,12 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		}
 
 		if(context->will) {
-			log__printf(NULL, MOSQ_LOG_DEBUG, "Will message specified (%ld bytes) (r%d, q%d).", (long)context->will->payloadlen, context->will->retain, context->will->qos);
-			log__printf(NULL, MOSQ_LOG_DEBUG, "\t%s", context->will->topic);
+			log__printf(NULL, MOSQ_LOG_DEBUG, "Will message specified (%ld bytes) (r%d, q%d).",
+					(long)context->will->msg.payloadlen,
+					context->will->msg.retain,
+					context->will->msg.qos);
+
+			log__printf(NULL, MOSQ_LOG_DEBUG, "\t%s", context->will->msg.topic);
 		} else {
 			log__printf(NULL, MOSQ_LOG_DEBUG, "No will message specified.");
 		}

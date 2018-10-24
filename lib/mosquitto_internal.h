@@ -147,6 +147,7 @@ struct mosquitto__packet{
 
 struct mosquitto_message_all{
 	struct mosquitto_message_all *next;
+	struct mqtt5__property *properties;
 	time_t timestamp;
 	//enum mosquitto_msg_direction direction;
 	enum mosquitto_msg_state state;
@@ -176,7 +177,7 @@ struct mosquitto {
 	struct mosquitto__packet in_packet;
 	struct mosquitto__packet *current_out_packet;
 	struct mosquitto__packet *out_packet;
-	struct mosquitto_message *will;
+	struct mosquitto_message_all *will;
 #ifdef WITH_TLS
 	SSL *ssl;
 	SSL_CTX *ssl_ctx;
