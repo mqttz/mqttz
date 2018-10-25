@@ -21,6 +21,7 @@ Contributors:
 
 #include "mosquitto_broker_internal.h"
 #include "memory_mosq.h"
+#include "mqtt_protocol.h"
 #include "packet_mosq.h"
 #include "property_mosq.h"
 
@@ -52,7 +53,7 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 	if(packet__read_uint16(&context->in_packet, &mid)) return 1;
 
 	if(context->protocol == mosq_p_mqtt5){
-		rc = property__read_all(&context->in_packet, &properties);
+		rc = property__read_all(SUBSCRIBE, &context->in_packet, &properties);
 		if(rc) return rc;
 		property__free_all(&properties);
 	}

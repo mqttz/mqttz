@@ -6,6 +6,7 @@
 #include "packet_mosq.h"
 
 static void byte_prop_write_helper(
+		int command,
 		int remaining_length,
 		int rc_expected,
 		int identifier,
@@ -29,7 +30,7 @@ static void byte_prop_write_helper(
 	property__write_all(&packet, &property);
 	packet.pos = 0;
 
-	rc = property__read_all(&packet, &properties);
+	rc = property__read_all(command, &packet, &properties);
 
 	CU_ASSERT_EQUAL(rc, rc_expected);
 	CU_ASSERT_EQUAL(packet.pos, remaining_length);
@@ -45,6 +46,7 @@ static void byte_prop_write_helper(
 
 
 static void int32_prop_write_helper(
+		int command,
 		int remaining_length,
 		int rc_expected,
 		int identifier,
@@ -68,7 +70,7 @@ static void int32_prop_write_helper(
 	property__write_all(&packet, &property);
 	packet.pos = 0;
 
-	rc = property__read_all(&packet, &properties);
+	rc = property__read_all(command, &packet, &properties);
 
 	CU_ASSERT_EQUAL(rc, rc_expected);
 	CU_ASSERT_EQUAL(packet.pos, remaining_length);
@@ -84,6 +86,7 @@ static void int32_prop_write_helper(
 
 
 static void int16_prop_write_helper(
+		int command,
 		int remaining_length,
 		int rc_expected,
 		int identifier,
@@ -107,7 +110,7 @@ static void int16_prop_write_helper(
 	property__write_all(&packet, &property);
 	packet.pos = 0;
 
-	rc = property__read_all(&packet, &properties);
+	rc = property__read_all(command, &packet, &properties);
 
 	CU_ASSERT_EQUAL(rc, rc_expected);
 	CU_ASSERT_EQUAL(packet.pos, remaining_length);
@@ -122,6 +125,7 @@ static void int16_prop_write_helper(
 }
 
 static void string_prop_write_helper(
+		int command,
 		int remaining_length,
 		int rc_expected,
 		int identifier,
@@ -146,7 +150,7 @@ static void string_prop_write_helper(
 	property__write_all(&packet, &property);
 	packet.pos = 0;
 
-	rc = property__read_all(&packet, &properties);
+	rc = property__read_all(command, &packet, &properties);
 
 	CU_ASSERT_EQUAL(rc, rc_expected);
 	CU_ASSERT_EQUAL(packet.pos, remaining_length);
@@ -164,6 +168,7 @@ static void string_prop_write_helper(
 
 
 static void binary_prop_write_helper(
+		int command,
 		int remaining_length,
 		int rc_expected,
 		int identifier,
@@ -190,7 +195,7 @@ static void binary_prop_write_helper(
 	property__write_all(&packet, &property);
 	packet.pos = 0;
 
-	rc = property__read_all(&packet, &properties);
+	rc = property__read_all(command, &packet, &properties);
 
 	CU_ASSERT_EQUAL(rc, rc_expected);
 	CU_ASSERT_EQUAL(packet.pos, remaining_length);
@@ -235,7 +240,7 @@ static void string_pair_prop_write_helper(
 	property__write_all(&packet, &property);
 	packet.pos = 0;
 
-	rc = property__read_all(&packet, &properties);
+	rc = property__read_all(CONNECT, &packet, &properties);
 
 	CU_ASSERT_EQUAL(rc, rc_expected);
 	CU_ASSERT_EQUAL(packet.pos, remaining_length);
@@ -282,7 +287,7 @@ static void varint_prop_write_helper(
 	property__write_all(&packet, &property);
 	packet.pos = 0;
 
-	rc = property__read_all(&packet, &properties);
+	rc = property__read_all(PUBLISH, &packet, &properties);
 
 	CU_ASSERT_EQUAL(rc, rc_expected);
 	if(properties){
@@ -333,131 +338,131 @@ static void TEST_bad_identifier(void)
 
 static void TEST_single_payload_format_indicator(void)
 {
-	byte_prop_write_helper(3, MOSQ_ERR_SUCCESS, PROP_PAYLOAD_FORMAT_INDICATOR, 1);
+	byte_prop_write_helper(PUBLISH, 3, MOSQ_ERR_SUCCESS, PROP_PAYLOAD_FORMAT_INDICATOR, 1);
 }
 
 static void TEST_single_request_problem_information(void)
 {
-	byte_prop_write_helper(3, MOSQ_ERR_SUCCESS, PROP_REQUEST_PROBLEM_INFO, 1);
+	byte_prop_write_helper(CONNECT, 3, MOSQ_ERR_SUCCESS, PROP_REQUEST_PROBLEM_INFO, 1);
 }
 
 static void TEST_single_request_response_information(void)
 {
-	byte_prop_write_helper(3, MOSQ_ERR_SUCCESS, PROP_REQUEST_RESPONSE_INFO, 1);
+	byte_prop_write_helper(CONNECT, 3, MOSQ_ERR_SUCCESS, PROP_REQUEST_RESPONSE_INFO, 1);
 }
 
 static void TEST_single_maximum_qos(void)
 {
-	byte_prop_write_helper(3, MOSQ_ERR_SUCCESS, PROP_MAXIMUM_QOS, 1);
+	byte_prop_write_helper(CONNACK, 3, MOSQ_ERR_SUCCESS, PROP_MAXIMUM_QOS, 1);
 }
 
 static void TEST_single_retain_available(void)
 {
-	byte_prop_write_helper(3, MOSQ_ERR_SUCCESS, PROP_RETAIN_AVAILABLE, 1);
+	byte_prop_write_helper(CONNACK, 3, MOSQ_ERR_SUCCESS, PROP_RETAIN_AVAILABLE, 1);
 }
 
 static void TEST_single_wildcard_subscription_available(void)
 {
-	byte_prop_write_helper(3, MOSQ_ERR_SUCCESS, PROP_WILDCARD_SUB_AVAILABLE, 0);
+	byte_prop_write_helper(CONNACK, 3, MOSQ_ERR_SUCCESS, PROP_WILDCARD_SUB_AVAILABLE, 0);
 }
 
 static void TEST_single_subscription_identifier_available(void)
 {
-	byte_prop_write_helper(3, MOSQ_ERR_SUCCESS, PROP_SUBSCRIPTION_ID_AVAILABLE, 0);
+	byte_prop_write_helper(CONNACK, 3, MOSQ_ERR_SUCCESS, PROP_SUBSCRIPTION_ID_AVAILABLE, 0);
 }
 
 static void TEST_single_shared_subscription_available(void)
 {
-	byte_prop_write_helper(3, MOSQ_ERR_SUCCESS, PROP_SHARED_SUB_AVAILABLE, 1);
+	byte_prop_write_helper(CONNACK, 3, MOSQ_ERR_SUCCESS, PROP_SHARED_SUB_AVAILABLE, 1);
 }
 
 static void TEST_single_message_expiry_interval(void)
 {
-	int32_prop_write_helper(6, MOSQ_ERR_SUCCESS, PROP_MESSAGE_EXPIRY_INTERVAL, 0x12233445);
+	int32_prop_write_helper(PUBLISH, 6, MOSQ_ERR_SUCCESS, PROP_MESSAGE_EXPIRY_INTERVAL, 0x12233445);
 }
 
 static void TEST_single_session_expiry_interval(void)
 {
-	int32_prop_write_helper(6, MOSQ_ERR_SUCCESS, PROP_SESSION_EXPIRY_INTERVAL, 0x45342312);
+	int32_prop_write_helper(CONNACK, 6, MOSQ_ERR_SUCCESS, PROP_SESSION_EXPIRY_INTERVAL, 0x45342312);
 }
 
 static void TEST_single_will_delay_interval(void)
 {
-	int32_prop_write_helper(6, MOSQ_ERR_SUCCESS, PROP_WILL_DELAY_INTERVAL, 0x45342312);
+	int32_prop_write_helper(CMD_WILL, 6, MOSQ_ERR_SUCCESS, PROP_WILL_DELAY_INTERVAL, 0x45342312);
 }
 
 static void TEST_single_maximum_packet_size(void)
 {
-	int32_prop_write_helper(6, MOSQ_ERR_SUCCESS, PROP_MAXIMUM_PACKET_SIZE, 0x45342312);
+	int32_prop_write_helper(CONNECT, 6, MOSQ_ERR_SUCCESS, PROP_MAXIMUM_PACKET_SIZE, 0x45342312);
 }
 
 static void TEST_single_server_keep_alive(void)
 {
-	int16_prop_write_helper(4, MOSQ_ERR_SUCCESS, PROP_SERVER_KEEP_ALIVE, 0x4534);
+	int16_prop_write_helper(CONNACK, 4, MOSQ_ERR_SUCCESS, PROP_SERVER_KEEP_ALIVE, 0x4534);
 }
 
 static void TEST_single_receive_maximum(void)
 {
-	int16_prop_write_helper(4, MOSQ_ERR_SUCCESS, PROP_RECEIVE_MAXIMUM, 0x6842);
+	int16_prop_write_helper(CONNACK, 4, MOSQ_ERR_SUCCESS, PROP_RECEIVE_MAXIMUM, 0x6842);
 }
 
 static void TEST_single_topic_alias_maximum(void)
 {
-	int16_prop_write_helper(4, MOSQ_ERR_SUCCESS, PROP_TOPIC_ALIAS_MAXIMUM, 0x6842);
+	int16_prop_write_helper(CONNECT, 4, MOSQ_ERR_SUCCESS, PROP_TOPIC_ALIAS_MAXIMUM, 0x6842);
 }
 
 static void TEST_single_topic_alias(void)
 {
-	int16_prop_write_helper(4, MOSQ_ERR_SUCCESS, PROP_TOPIC_ALIAS, 0x6842);
+	int16_prop_write_helper(PUBLISH, 4, MOSQ_ERR_SUCCESS, PROP_TOPIC_ALIAS, 0x6842);
 }
 
 static void TEST_single_content_type(void)
 {
-	string_prop_write_helper(9, MOSQ_ERR_SUCCESS, PROP_CONTENT_TYPE, "hello");
+	string_prop_write_helper(PUBLISH, 9, MOSQ_ERR_SUCCESS, PROP_CONTENT_TYPE, "hello");
 }
 
 static void TEST_single_response_topic(void)
 {
-	string_prop_write_helper(9, MOSQ_ERR_SUCCESS, PROP_RESPONSE_TOPIC, "hello");
+	string_prop_write_helper(CMD_WILL, 9, MOSQ_ERR_SUCCESS, PROP_RESPONSE_TOPIC, "hello");
 }
 
 static void TEST_single_assigned_client_identifier(void)
 {
-	string_prop_write_helper(9, MOSQ_ERR_SUCCESS, PROP_ASSIGNED_CLIENT_IDENTIFIER, "hello");
+	string_prop_write_helper(CONNACK, 9, MOSQ_ERR_SUCCESS, PROP_ASSIGNED_CLIENT_IDENTIFIER, "hello");
 }
 
 static void TEST_single_authentication_method(void)
 {
-	string_prop_write_helper(9, MOSQ_ERR_SUCCESS, PROP_AUTHENTICATION_METHOD, "hello");
+	string_prop_write_helper(CONNECT, 9, MOSQ_ERR_SUCCESS, PROP_AUTHENTICATION_METHOD, "hello");
 }
 
 static void TEST_single_response_information(void)
 {
-	string_prop_write_helper(9, MOSQ_ERR_SUCCESS, PROP_RESPONSE_INFO, "hello");
+	string_prop_write_helper(CONNACK, 9, MOSQ_ERR_SUCCESS, PROP_RESPONSE_INFO, "hello");
 }
 
 static void TEST_single_server_reference(void)
 {
-	string_prop_write_helper(9, MOSQ_ERR_SUCCESS, PROP_SERVER_REFERENCE, "hello");
+	string_prop_write_helper(CONNACK, 9, MOSQ_ERR_SUCCESS, PROP_SERVER_REFERENCE, "hello");
 }
 
 static void TEST_single_reason_string(void)
 {
-	string_prop_write_helper(9, MOSQ_ERR_SUCCESS, PROP_REASON_STRING, "hello");
+	string_prop_write_helper(PUBREC, 9, MOSQ_ERR_SUCCESS, PROP_REASON_STRING, "hello");
 }
 
 static void TEST_single_correlation_data(void)
 {
 	uint8_t payload[5] = {1, 'e', 0, 'l', 9};
 
-	binary_prop_write_helper(9, MOSQ_ERR_SUCCESS, PROP_CORRELATION_DATA, payload, 5);
+	binary_prop_write_helper(PUBLISH, 9, MOSQ_ERR_SUCCESS, PROP_CORRELATION_DATA, payload, 5);
 }
 
 static void TEST_single_authentication_data(void)
 {
 	uint8_t payload[5] = {1, 'e', 0, 'l', 9};
 
-	binary_prop_write_helper(9, MOSQ_ERR_SUCCESS, PROP_AUTHENTICATION_DATA, payload, 5);
+	binary_prop_write_helper(CONNECT, 9, MOSQ_ERR_SUCCESS, PROP_AUTHENTICATION_DATA, payload, 5);
 }
 
 static void TEST_single_user_property(void)

@@ -134,7 +134,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	if(context->protocol == mosq_p_mqtt5){
-		rc = property__read_all(&context->in_packet, &properties);
+		rc = property__read_all(PUBLISH, &context->in_packet, &properties);
 		if(rc) return rc;
 	}
 

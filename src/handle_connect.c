@@ -242,7 +242,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	if(protocol_version == PROTOCOL_VERSION_v5){
-		rc = property__read_all(&context->in_packet, &properties);
+		rc = property__read_all(CONNECT, &context->in_packet, &properties);
 		if(rc) return rc;
 		property__free_all(&properties);
 	}
@@ -302,7 +302,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			goto handle_connect_error;
 		}
 		if(protocol_version == PROTOCOL_VERSION_v5){
-			rc = property__read_all(&context->in_packet, &will_struct->properties);
+			rc = property__read_all(CMD_WILL, &context->in_packet, &will_struct->properties);
 			if(rc) return rc;
 			property__free_all(&will_struct->properties);
 		}

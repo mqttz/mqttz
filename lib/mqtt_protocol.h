@@ -45,6 +45,9 @@ Contributors:
 #define DISCONNECT 0xE0
 #define AUTH 0xF0
 
+/* For distinguishing CONNECT and WILL properties */
+#define CMD_WILL 0
+
 enum mqtt311_connack_codes {
 	CONNACK_ACCEPTED = 0,
 	CONNACK_REFUSED_PROTOCOL_VERSION = 1,

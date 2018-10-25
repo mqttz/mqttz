@@ -26,6 +26,9 @@ Contributors:
 #include "packet_mosq.h"
 #include "property_mosq.h"
 
+static int property__command_check(int command, struct mqtt5__property *properties);
+
+
 int property__read(struct mosquitto__packet *packet, int32_t *len, struct mqtt5__property *property)
 {
 	int rc;
@@ -138,7 +141,7 @@ int property__read(struct mosquitto__packet *packet, int32_t *len, struct mqtt5_
 }
 
 
-int property__read_all(struct mosquitto__packet *packet, struct mqtt5__property **properties)
+int property__read_all(int command, struct mosquitto__packet *packet, struct mqtt5__property **properties)
 {
 	int rc;
 	int32_t proplen;
@@ -197,6 +200,7 @@ int property__read_all(struct mosquitto__packet *packet, struct mqtt5__property 
 		}
 	}
 
+	/* Check for duplicates */
 	current = *properties;
 	while(current){
 		tail = current->next;
@@ -212,6 +216,11 @@ int property__read_all(struct mosquitto__packet *packet, struct mqtt5__property 
 		current = current->next;
 	}
 
+	/* Check for properties on incorrect commands */
+	if(property__command_check(command, *properties)){
+		property__free_all(properties);
+		return MOSQ_ERR_PROTOCOL;
+	}
 	return MOSQ_ERR_SUCCESS;
 }
 
@@ -438,6 +447,107 @@ int property__write_all(struct mosquitto__packet *packet, struct mqtt5__property
 		p = p->next;
 	}
 
+	return MOSQ_ERR_SUCCESS;
+}
+
+
+static int property__command_check(int command, struct mqtt5__property *properties)
+{
+	struct mqtt5__property *p;
+
+	p = properties;
+	while(p){
+		switch(p->identifier){
+			case PROP_PAYLOAD_FORMAT_INDICATOR:
+			case PROP_MESSAGE_EXPIRY_INTERVAL:
+			case PROP_CONTENT_TYPE:
+			case PROP_RESPONSE_TOPIC:
+			case PROP_CORRELATION_DATA:
+				if(command != PUBLISH && command != 0){
+					return MOSQ_ERR_PROTOCOL;
+				}
+				break;
+
+			case PROP_SUBSCRIPTION_IDENTIFIER:
+				if(command != PUBLISH && command != SUBSCRIBE){
+					return MOSQ_ERR_PROTOCOL;
+				}
+				break;
+
+			case PROP_SESSION_EXPIRY_INTERVAL:
+				if(command != CONNECT && command != CONNACK && command != DISCONNECT){
+					return MOSQ_ERR_PROTOCOL;
+				}
+				break;
+
+			case PROP_AUTHENTICATION_METHOD:
+			case PROP_AUTHENTICATION_DATA:
+				if(command != CONNECT && command != CONNACK && command != AUTH){
+					return MOSQ_ERR_PROTOCOL;
+				}
+				break;
+
+			case PROP_ASSIGNED_CLIENT_IDENTIFIER:
+			case PROP_SERVER_KEEP_ALIVE:
+			case PROP_RESPONSE_INFO:
+			case PROP_MAXIMUM_QOS:
+			case PROP_RETAIN_AVAILABLE:
+			case PROP_WILDCARD_SUB_AVAILABLE:
+			case PROP_SUBSCRIPTION_ID_AVAILABLE:
+			case PROP_SHARED_SUB_AVAILABLE:
+				if(command != CONNACK){
+					return MOSQ_ERR_PROTOCOL;
+				}
+				break;
+
+			case PROP_WILL_DELAY_INTERVAL:
+				if(command != 0){
+					return MOSQ_ERR_PROTOCOL;
+				}
+				break;
+
+			case PROP_REQUEST_PROBLEM_INFO:
+			case PROP_REQUEST_RESPONSE_INFO:
+				if(command != CONNECT){
+					return MOSQ_ERR_PROTOCOL;
+				}
+				break;
+
+			case PROP_SERVER_REFERENCE:
+				if(command != CONNACK && command != DISCONNECT){
+					return MOSQ_ERR_PROTOCOL;
+				}
+				break;
+
+			case PROP_REASON_STRING:
+				if(command == CONNECT || command == PUBLISH || command == SUBSCRIBE || command == UNSUBSCRIBE){
+					return MOSQ_ERR_PROTOCOL;
+				}
+				break;
+
+			case PROP_RECEIVE_MAXIMUM:
+			case PROP_TOPIC_ALIAS_MAXIMUM:
+			case PROP_MAXIMUM_PACKET_SIZE:
+				if(command != CONNECT && command != CONNACK){
+					return MOSQ_ERR_PROTOCOL;
+				}
+				break;
+
+			case PROP_TOPIC_ALIAS:
+				if(command != PUBLISH){
+					return MOSQ_ERR_PROTOCOL;
+				}
+				break;
+
+			case PROP_USER_PROPERTY:
+				break;
+
+			default:
+				return MOSQ_ERR_PROTOCOL;
+		}
+
+		p = p->next;
+	}
 	return MOSQ_ERR_SUCCESS;
 }
 
