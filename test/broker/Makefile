@@ -19,6 +19,7 @@ test : test-compile 01 02 03 04 05 06 07 08 09 10 11
 
 01 :
 	./01-connect-success.py
+	./01-connect-success-v5.py
 	./01-connect-invalid-protonum.py
 	./01-connect-invalid-id-0.py
 	./01-connect-invalid-id-0-311.py

@@ -8,6 +8,7 @@ max_running = 10
 tests = [
     #(ports required, 'path'),
     (1, './01-connect-success.py'),
+    (1, './01-connect-success-v5.py'),
     (1, './01-connect-invalid-protonum.py'),
     (1, './01-connect-invalid-id-0.py'),
     (1, './01-connect-invalid-id-0-311.py'),

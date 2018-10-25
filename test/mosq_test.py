@@ -72,6 +72,8 @@ def packet_matches(name, recvd, expected):
             print("Received: "+to_string(recvd))
         except struct.error:
             print("Received (not decoded, len=%d): %s" % (len(recvd), recvd))
+            for i in range(0, len(recvd)):
+                print('%c'%(recvd[i]),)
         try:
             print("Expected: "+to_string(expected))
         except struct.error:
@@ -292,10 +294,10 @@ def to_string(packet):
         # Reserved
         return "0xF0"
 
-def gen_connect(client_id, clean_session=True, keepalive=60, username=None, password=None, will_topic=None, will_qos=0, will_retain=False, will_payload="", proto_ver=4, connect_reserved=False):
+def gen_connect(client_id, clean_session=True, keepalive=60, username=None, password=None, will_topic=None, will_qos=0, will_retain=False, will_payload="", proto_ver=4, connect_reserved=False, properties=None):
     if (proto_ver&0x7F) == 3 or proto_ver == 0:
         remaining_length = 12
-    elif (proto_ver&0x7F) == 4:
+    elif (proto_ver&0x7F) == 4 or proto_ver == 5:
         remaining_length = 10
     else:
         raise ValueError
@@ -310,6 +312,9 @@ def gen_connect(client_id, clean_session=True, keepalive=60, username=None, pass
 
     if clean_session:
         connect_flags = connect_flags | 0x02
+
+    if proto_ver == 5:
+        remaining_length += 1
 
     if will_topic != None:
         remaining_length = remaining_length + 2+len(will_topic) + 2+len(will_payload)
@@ -328,8 +333,11 @@ def gen_connect(client_id, clean_session=True, keepalive=60, username=None, pass
     packet = struct.pack("!B"+str(len(rl))+"s", 0x10, rl)
     if (proto_ver&0x7F) == 3 or proto_ver == 0:
         packet = packet + struct.pack("!H6sBBH", len("MQIsdp"), "MQIsdp", proto_ver, connect_flags, keepalive)
-    elif (proto_ver&0x7F) == 4:
+    elif (proto_ver&0x7F) == 4 or proto_ver == 5:
         packet = packet + struct.pack("!H4sBBH", len("MQTT"), "MQTT", proto_ver, connect_flags, keepalive)
+
+    if proto_ver == 5:
+        packet += struct.pack("B", 0)
 
     if client_id != None:
         packet = packet + struct.pack("!H"+str(len(client_id))+"s", len(client_id), client_id)
@@ -347,8 +355,13 @@ def gen_connect(client_id, clean_session=True, keepalive=60, username=None, pass
             packet = packet + struct.pack("!H"+str(len(password))+"s", len(password), password)
     return packet
 
-def gen_connack(resv=0, rc=0):
-    return struct.pack('!BBBB', 32, 2, resv, rc);
+def gen_connack(resv=0, rc=0, proto_ver=4):
+    if proto_ver == 5:
+        packet = struct.pack('!BBBBB', 32, 3, resv, rc, 0);
+    else:
+        packet = struct.pack('!BBBB', 32, 2, resv, rc);
+
+    return packet
 
 def gen_publish(topic, qos, payload=None, retain=False, dup=False, mid=0):
     rl = 2+len(topic)
