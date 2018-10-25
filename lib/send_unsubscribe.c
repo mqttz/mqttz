@@ -39,6 +39,8 @@ int send__unsubscribe(struct mosquitto *mosq, int *mid, const char *topic)
 	uint32_t packetlen;
 	uint16_t local_mid;
 	int rc;
+	struct mqtt5__property *properties = NULL;
+	int proplen, varbytes;
 
 	assert(mosq);
 	assert(topic);
@@ -48,7 +50,9 @@ int send__unsubscribe(struct mosquitto *mosq, int *mid, const char *topic)
 
 	packetlen = 2 + 2+strlen(topic);
 	if(mosq->protocol == mosq_p_mqtt5){
-		packetlen += 1;
+		proplen = property__get_length_all(properties);
+		varbytes = packet__varint_bytes(proplen);
+		packetlen += proplen + varbytes;
 	}
 
 	packet->command = UNSUBSCRIBE | (1<<1);
@@ -65,7 +69,8 @@ int send__unsubscribe(struct mosquitto *mosq, int *mid, const char *topic)
 	packet__write_uint16(packet, local_mid);
 
 	if(mosq->protocol == mosq_p_mqtt5){
-		property__write_all(packet, NULL);
+		/* We don't use User Property yet. */
+		property__write_all(packet, properties);
 	}
 
 	/* Payload */

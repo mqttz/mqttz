@@ -41,6 +41,8 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 	uint8_t version;
 	char *clientid, *username, *password;
 	int headerlen;
+	struct mqtt5__property *properties = NULL;
+	int proplen, varbytes;
 
 	assert(mosq);
 	assert(mosq->id);
@@ -63,7 +65,10 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 
 	if(mosq->protocol == mosq_p_mqtt5){
 		version = MQTT_PROTOCOL_V5;
-		headerlen = 11; /* FIXME - this has a fixed property length of 0 */
+		headerlen = 10;
+		proplen = property__get_length_all(properties);
+		varbytes = packet__varint_bytes(proplen);
+		headerlen += proplen + varbytes;
 	}else if(mosq->protocol == mosq_p_mqtt311){
 		version = MQTT_PROTOCOL_V311;
 		headerlen = 10;
@@ -84,7 +89,9 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 
 		payloadlen += 2+strlen(mosq->will->msg.topic) + 2+mosq->will->msg.payloadlen;
 		if(mosq->protocol == mosq_p_mqtt5){
-			payloadlen += 1;
+			proplen = property__get_length_all(mosq->will->properties);
+			varbytes = packet__varint_bytes(proplen);
+			payloadlen += proplen + varbytes;
 		}
 	}
 	if(username){
@@ -95,7 +102,7 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 	}
 
 	packet->command = CONNECT;
-	packet->remaining_length = headerlen+payloadlen;
+	packet->remaining_length = headerlen + payloadlen;
 	rc = packet__alloc(packet);
 	if(rc){
 		mosquitto__free(packet);

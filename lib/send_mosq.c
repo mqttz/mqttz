@@ -72,6 +72,7 @@ int send__puback(struct mosquitto *mosq, uint16_t mid)
 #else
 	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBACK (Mid: %d)", mosq->id, mid);
 #endif
+	/* We don't use Reason String or User Property yet. */
 	return send__command_with_mid(mosq, PUBACK, mid, false, NULL);
 }
 
@@ -82,6 +83,7 @@ int send__pubcomp(struct mosquitto *mosq, uint16_t mid)
 #else
 	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBCOMP (Mid: %d)", mosq->id, mid);
 #endif
+	/* We don't use Reason String or User Property yet. */
 	return send__command_with_mid(mosq, PUBCOMP, mid, false, NULL);
 }
 
@@ -93,6 +95,7 @@ int send__pubrec(struct mosquitto *mosq, uint16_t mid)
 #else
 	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBREC (Mid: %d)", mosq->id, mid);
 #endif
+	/* We don't use Reason String or User Property yet. */
 	return send__command_with_mid(mosq, PUBREC, mid, false, NULL);
 }
 
@@ -103,6 +106,7 @@ int send__pubrel(struct mosquitto *mosq, uint16_t mid)
 #else
 	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBREL (Mid: %d)", mosq->id, mid);
 #endif
+	/* We don't use Reason String or User Property yet. */
 	return send__command_with_mid(mosq, PUBREL|2, mid, false, NULL);
 }
 
@@ -111,6 +115,7 @@ int send__command_with_mid(struct mosquitto *mosq, uint8_t command, uint16_t mid
 {
 	struct mosquitto__packet *packet = NULL;
 	int rc;
+	int proplen, varbytes;
 
 	assert(mosq);
 	packet = mosquitto__calloc(1, sizeof(struct mosquitto__packet));
@@ -121,8 +126,11 @@ int send__command_with_mid(struct mosquitto *mosq, uint8_t command, uint16_t mid
 		packet->command |= 8;
 	}
 	packet->remaining_length = 2;
+
 	if(mosq->protocol == mosq_p_mqtt5){
-		packet->remaining_length += 1;
+		proplen = property__get_length_all(properties);
+		varbytes = packet__varint_bytes(proplen);
+		packet->remaining_length += varbytes + proplen;
 	}
 
 	rc = packet__alloc(packet);
@@ -134,7 +142,7 @@ int send__command_with_mid(struct mosquitto *mosq, uint8_t command, uint16_t mid
 	packet__write_uint16(packet, mid);
 
 	if(mosq->protocol == mosq_p_mqtt5){
-		property__write_all(packet, NULL);
+		property__write_all(packet, properties);
 	}
 
 	return packet__queue(mosq, packet);

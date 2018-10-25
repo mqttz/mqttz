@@ -40,6 +40,8 @@ int send__subscribe(struct mosquitto *mosq, int *mid, int topic_count, const cha
 	uint16_t local_mid;
 	int rc;
 	int i;
+	struct mqtt5__property *properties = NULL;
+	int proplen, varbytes;
 
 	assert(mosq);
 	assert(topic);
@@ -49,7 +51,9 @@ int send__subscribe(struct mosquitto *mosq, int *mid, int topic_count, const cha
 
 	packetlen = 2;
 	if(mosq->protocol == mosq_p_mqtt5){
-		packetlen += 1;
+		proplen = property__get_length_all(properties);
+		varbytes = packet__varint_bytes(proplen);
+		packetlen += proplen + varbytes;
 	}
 	for(i=0; i<topic_count; i++){
 		packetlen += 2+strlen(topic[i]) + 1;
@@ -69,7 +73,7 @@ int send__subscribe(struct mosquitto *mosq, int *mid, int topic_count, const cha
 	packet__write_uint16(packet, local_mid);
 
 	if(mosq->protocol == mosq_p_mqtt5){
-		property__write_all(packet, NULL);
+		property__write_all(packet, properties);
 	}
 
 	/* Payload */

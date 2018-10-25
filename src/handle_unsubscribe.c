@@ -91,6 +91,7 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 
 	log__printf(NULL, MOSQ_LOG_DEBUG, "Sending UNSUBACK to %s", context->id);
 
+	/* We don't use Reason String or User Property yet. */
 	return send__command_with_mid(context, UNSUBACK, mid, false, NULL);
 }
 

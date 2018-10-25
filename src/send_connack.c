@@ -27,6 +27,8 @@ int send__connack(struct mosquitto *context, int ack, int result)
 {
 	struct mosquitto__packet *packet = NULL;
 	int rc;
+	struct mqtt5__property *properties = NULL;
+	int proplen, varbytes;
 
 	if(context){
 		if(context->id){
@@ -40,11 +42,11 @@ int send__connack(struct mosquitto *context, int ack, int result)
 	if(!packet) return MOSQ_ERR_NOMEM;
 
 	packet->command = CONNACK;
+	packet->remaining_length = 2;
 	if(context->protocol == mosq_p_mqtt5){
-		/* FIXME - proper property support */
-		packet->remaining_length = 3;
-	}else{
-		packet->remaining_length = 2;
+		proplen = property__get_length_all(properties);
+		varbytes = packet__varint_bytes(proplen);
+		packet->remaining_length += proplen + varbytes;
 	}
 	rc = packet__alloc(packet);
 	if(rc){
@@ -54,7 +56,7 @@ int send__connack(struct mosquitto *context, int ack, int result)
 	packet__write_byte(packet, ack);
 	packet__write_byte(packet, result);
 	if(context->protocol == mosq_p_mqtt5){
-		property__write_all(packet, NULL);
+		property__write_all(packet, properties);
 	}
 
 	return packet__queue(context, packet);

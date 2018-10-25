@@ -28,6 +28,8 @@ int send__suback(struct mosquitto *context, uint16_t mid, uint32_t payloadlen, c
 {
 	struct mosquitto__packet *packet = NULL;
 	int rc;
+	struct mqtt5__property *properties = NULL;
+	int proplen, varbytes;
 
 	log__printf(NULL, MOSQ_LOG_DEBUG, "Sending SUBACK to %s", context->id);
 
@@ -37,7 +39,9 @@ int send__suback(struct mosquitto *context, uint16_t mid, uint32_t payloadlen, c
 	packet->command = SUBACK;
 	packet->remaining_length = 2+payloadlen;
 	if(context->protocol == mosq_p_mqtt5){
-		packet->remaining_length += 1;
+		proplen = property__get_length_all(properties);
+		varbytes = packet__varint_bytes(proplen);
+		packet->remaining_length += proplen + varbytes;
 	}
 	rc = packet__alloc(packet);
 	if(rc){
@@ -47,7 +51,8 @@ int send__suback(struct mosquitto *context, uint16_t mid, uint32_t payloadlen, c
 	packet__write_uint16(packet, mid);
 
 	if(context->protocol == mosq_p_mqtt5){
-		property__write_all(packet, NULL);
+		/* We don't use Reason String or User Property yet. */
+		property__write_all(packet, properties);
 	}
 
 	if(payloadlen){

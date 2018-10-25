@@ -133,8 +133,7 @@ int send__real_publish(struct mosquitto *mosq, uint16_t mid, const char *topic, 
 {
 	struct mosquitto__packet *packet = NULL;
 	int packetlen;
-	int proplen;
-	int varlen;
+	int proplen, varbytes;
 	int rc;
 
 	assert(mosq);
@@ -144,12 +143,12 @@ int send__real_publish(struct mosquitto *mosq, uint16_t mid, const char *topic, 
 	if(qos > 0) packetlen += 2; /* For message id */
 	if(mosq->protocol == mosq_p_mqtt5){
 		proplen = property__get_length_all(properties);
-		varlen = packet__varint_bytes(proplen);
-		if(varlen > 4){
+		varbytes = packet__varint_bytes(proplen);
+		if(varbytes > 4){
 			/* FIXME - Properties too big, don't publish any - should remove some first really */
 			properties = NULL;
 		}else{
-			packetlen += proplen + varlen;
+			packetlen += proplen + varbytes;
 		}
 	}
 	packet = mosquitto__calloc(1, sizeof(struct mosquitto__packet));
