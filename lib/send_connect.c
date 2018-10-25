@@ -137,7 +137,7 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 
 	if(mosq->protocol == mosq_p_mqtt5){
 		/* Write properties */
-		property__write_all(packet, mosq->will->properties);
+		property__write_all(packet, properties);
 	}
 
 	/* Payload */
@@ -145,7 +145,7 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 	if(will){
 		if(mosq->protocol == mosq_p_mqtt5){
 			/* Write will properties */
-			property__write_all(packet, NULL);
+			property__write_all(packet, mosq->will->properties);
 		}
 		packet__write_string(packet, mosq->will->msg.topic, strlen(mosq->will->msg.topic));
 		packet__write_string(packet, (const char *)mosq->will->msg.payload, mosq->will->msg.payloadlen);
