@@ -32,6 +32,7 @@ tests = [
     (1, './02-subpub-qos0-v5.py'),
     (1, './02-subpub-qos1-v5.py'),
     (1, './02-subpub-qos2-v5.py'),
+	(1, './02-subpub-qos0-payload-format-v5.py'),
     (1, './02-unsubscribe-qos0.py'),
     (1, './02-unsubscribe-qos1.py'),
     (1, './02-unsubscribe-qos2.py'),

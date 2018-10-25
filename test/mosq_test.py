@@ -363,15 +363,17 @@ def gen_connack(resv=0, rc=0, proto_ver=4):
 
     return packet
 
-def gen_publish(topic, qos, payload=None, retain=False, dup=False, mid=0, proto_ver=4):
+def gen_publish(topic, qos, payload=None, retain=False, dup=False, mid=0, proto_ver=4, properties=None):
     rl = 2+len(topic)
     pack_format = "H"+str(len(topic))+"s"
     if qos > 0:
         rl = rl + 2
         pack_format = pack_format + "H"
+
     if proto_ver == 5:
-        rl += 1
-        pack_format = pack_format + "B"
+        rl += len(properties)
+        # This will break if len(properties) > 127
+        pack_format = pack_format + "%ds"%(len(properties))
 
     if payload != None:
         rl = rl + len(payload)
@@ -389,9 +391,9 @@ def gen_publish(topic, qos, payload=None, retain=False, dup=False, mid=0, proto_
 
     if proto_ver == 5:
         if qos > 0:
-            return struct.pack("!B" + str(len(rlpacked))+"s" + pack_format, cmd, rlpacked, len(topic), topic, mid, 0, payload)
+            return struct.pack("!B" + str(len(rlpacked))+"s" + pack_format, cmd, rlpacked, len(topic), topic, mid, properties, payload)
         else:
-            return struct.pack("!B" + str(len(rlpacked))+"s" + pack_format, cmd, rlpacked, len(topic), topic, 0, payload)
+            return struct.pack("!B" + str(len(rlpacked))+"s" + pack_format, cmd, rlpacked, len(topic), topic, properties, payload)
     else:
         if qos > 0:
             return struct.pack("!B" + str(len(rlpacked))+"s" + pack_format, cmd, rlpacked, len(topic), topic, mid, payload)

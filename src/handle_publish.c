@@ -46,6 +46,8 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	int slen;
 	char *topic_mount;
 	struct mqtt5__property *properties = NULL;
+	struct mqtt5__property *p, *p_prev;
+	struct mqtt5__property *msg_properties = NULL, *msg_properties_last;
 
 #ifdef WITH_BRIDGE
 	char *topic_temp;
@@ -137,10 +139,62 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 		}
 	}
 
+	/* Handle properties */
 	if(context->protocol == mosq_p_mqtt5){
 		rc = property__read_all(PUBLISH, &context->in_packet, &properties);
 		if(rc) return rc;
+
+		p = properties;
+		p_prev = NULL;
+		msg_properties = NULL;
+		msg_properties_last = NULL;
+		while(p){
+			switch(p->identifier){
+				case PROP_PAYLOAD_FORMAT_INDICATOR:
+				case PROP_CORRELATION_DATA:
+				case PROP_USER_PROPERTY:
+				case PROP_CONTENT_TYPE:
+					if(msg_properties){
+						msg_properties_last->next = p;
+						msg_properties_last = p;
+					}else{
+						msg_properties = p;
+						msg_properties_last = p;
+					}
+					if(p_prev){
+						p_prev->next = p->next;
+						msg_properties_last->next = NULL;
+						p = p_prev->next;
+					}else{
+						properties = p->next;
+						msg_properties_last->next = NULL;
+						p = properties;
+					}
+					break;
+
+				case PROP_TOPIC_ALIAS:
+					p = p->next;
+					break;
+
+				case PROP_RESPONSE_TOPIC:
+					p = p->next;
+					break;
+
+				case PROP_MESSAGE_EXPIRY_INTERVAL:
+					p = p->next;
+					break;
+
+				case PROP_SUBSCRIPTION_IDENTIFIER:
+					p = p->next;
+					break;
+
+				default:
+					p = p->next;
+					break;
+			}
+		}
 	}
+	property__free_all(&properties);
 
 	payloadlen = context->in_packet.remaining_length - context->in_packet.pos;
 	G_PUB_BYTES_RECEIVED_INC(payloadlen);
@@ -149,7 +203,6 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 		topic_mount = mosquitto__malloc(len+1);
 		if(!topic_mount){
 			mosquitto__free(topic);
-			property__free_all(&properties);
 			return MOSQ_ERR_NOMEM;
 		}
 		snprintf(topic_mount, len, "%s%s", context->listener->mount_point, topic);
@@ -166,13 +219,11 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 		}
 		if(UHPA_ALLOC(payload, payloadlen+1) == 0){
 			mosquitto__free(topic);
-			property__free_all(&properties);
 			return MOSQ_ERR_NOMEM;
 		}
 		if(packet__read_bytes(&context->in_packet, UHPA_ACCESS(payload, payloadlen), payloadlen)){
 			mosquitto__free(topic);
 			UHPA_FREE(payload, payloadlen);
-			property__free_all(&properties);
 			return 1;
 		}
 	}
@@ -185,7 +236,6 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	}else if(rc != MOSQ_ERR_SUCCESS){
 		mosquitto__free(topic);
 		UHPA_FREE(payload, payloadlen);
-		property__free_all(&properties);
 		return rc;
 	}
 
@@ -195,10 +245,10 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	}
 	if(!stored){
 		dup = 0;
-		if(db__message_store(db, context->id, mid, topic, qos, payloadlen, &payload, retain, &stored, properties, 0)){
+		if(db__message_store(db, context->id, mid, topic, qos, payloadlen, &payload, retain, &stored, msg_properties, 0)){
 			return 1;
 		}
-		properties = NULL; /* Now belongs to db__message_store() */
+		msg_properties = NULL; /* Now belongs to db__message_store() */
 	}else{
 		mosquitto__free(topic);
 		topic = stored->topic;
@@ -232,7 +282,6 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	return rc;
 process_bad_message:
 	mosquitto__free(topic);
-	property__free_all(&properties);
 	UHPA_FREE(payload, payloadlen);
 	switch(qos){
 		case 0:
