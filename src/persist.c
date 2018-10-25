@@ -717,7 +717,7 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 		read_e(db_fptr, UHPA_ACCESS(payload, payloadlen), payloadlen);
 	}
 
-	rc = db__message_store(db, source_id, source_mid, topic, qos, payloadlen, &payload, retain, &stored, store_id);
+	rc = db__message_store(db, source_id, source_mid, topic, qos, payloadlen, &payload, retain, &stored, NULL, store_id);
 	mosquitto__free(source_id);
 
 	if(rc == MOSQ_ERR_SUCCESS){

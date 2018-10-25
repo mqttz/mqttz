@@ -49,12 +49,12 @@ int handle__connack(struct mosquitto_db *db, struct mosquitto *context)
 					if(context->bridge->notification_topic){
 						if(!context->bridge->notifications_local_only){
 							if(send__real_publish(context, mosquitto__mid_generate(context),
-									context->bridge->notification_topic, 1, &notification_payload, 1, true, 0)){
+									context->bridge->notification_topic, 1, &notification_payload, 1, true, 0, NULL)){
 
 								return 1;
 							}
 						}
-						db__messages_easy_queue(db, context, context->bridge->notification_topic, 1, 1, &notification_payload, 1);
+						db__messages_easy_queue(db, context, context->bridge->notification_topic, 1, 1, &notification_payload, 1, NULL);
 					}else{
 						notification_topic_len = strlen(context->bridge->remote_clientid)+strlen("$SYS/broker/connection//state");
 						notification_topic = mosquitto__malloc(sizeof(char)*(notification_topic_len+1));
@@ -64,13 +64,13 @@ int handle__connack(struct mosquitto_db *db, struct mosquitto *context)
 						notification_payload = '1';
 						if(!context->bridge->notifications_local_only){
 							if(send__real_publish(context, mosquitto__mid_generate(context),
-									notification_topic, 1, &notification_payload, 1, true, 0)){
+									notification_topic, 1, &notification_payload, 1, true, 0, NULL)){
 
 								mosquitto__free(notification_topic);
 								return 1;
 							}
 						}
-						db__messages_easy_queue(db, context, notification_topic, 1, 1, &notification_payload, 1);
+						db__messages_easy_queue(db, context, notification_topic, 1, 1, &notification_payload, 1, NULL);
 						mosquitto__free(notification_topic);
 					}
 				}

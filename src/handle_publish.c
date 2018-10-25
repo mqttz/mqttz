@@ -45,7 +45,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	int len;
 	int slen;
 	char *topic_mount;
-	struct mqtt5__property *properties;
+	struct mqtt5__property *properties = NULL;
 
 #ifdef WITH_BRIDGE
 	char *topic_temp;
@@ -136,7 +136,6 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	if(context->protocol == mosq_p_mqtt5){
 		rc = property__read_all(&context->in_packet, &properties);
 		if(rc) return rc;
-		property__free_all(&properties);
 	}
 
 	payloadlen = context->in_packet.remaining_length - context->in_packet.pos;
@@ -146,6 +145,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 		topic_mount = mosquitto__malloc(len+1);
 		if(!topic_mount){
 			mosquitto__free(topic);
+			property__free_all(&properties);
 			return MOSQ_ERR_NOMEM;
 		}
 		snprintf(topic_mount, len, "%s%s", context->listener->mount_point, topic);
@@ -162,11 +162,13 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 		}
 		if(UHPA_ALLOC(payload, payloadlen+1) == 0){
 			mosquitto__free(topic);
+			property__free_all(&properties);
 			return MOSQ_ERR_NOMEM;
 		}
 		if(packet__read_bytes(&context->in_packet, UHPA_ACCESS(payload, payloadlen), payloadlen)){
 			mosquitto__free(topic);
 			UHPA_FREE(payload, payloadlen);
+			property__free_all(&properties);
 			return 1;
 		}
 	}
@@ -179,6 +181,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	}else if(rc != MOSQ_ERR_SUCCESS){
 		mosquitto__free(topic);
 		UHPA_FREE(payload, payloadlen);
+		property__free_all(&properties);
 		return rc;
 	}
 
@@ -188,9 +191,10 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	}
 	if(!stored){
 		dup = 0;
-		if(db__message_store(db, context->id, mid, topic, qos, payloadlen, &payload, retain, &stored, 0)){
+		if(db__message_store(db, context->id, mid, topic, qos, payloadlen, &payload, retain, &stored, properties, 0)){
 			return 1;
 		}
+		properties = NULL; /* Now belongs to db__message_store() */
 	}else{
 		mosquitto__free(topic);
 		topic = stored->topic;
@@ -224,6 +228,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	return rc;
 process_bad_message:
 	mosquitto__free(topic);
+	property__free_all(&properties);
 	UHPA_FREE(payload, payloadlen);
 	switch(qos){
 		case 0:
@@ -233,7 +238,7 @@ process_bad_message:
 		case 2:
 			db__message_store_find(context, mid, &stored);
 			if(!stored){
-				if(db__message_store(db, context->id, mid, NULL, qos, 0, NULL, false, &stored, 0)){
+				if(db__message_store(db, context->id, mid, NULL, qos, 0, NULL, false, &stored, NULL, 0)){
 					return 1;
 				}
 				res = db__message_insert(db, context, mid, mosq_md_in, qos, false, stored);

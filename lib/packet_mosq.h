@@ -42,6 +42,8 @@ void packet__write_uint16(struct mosquitto__packet *packet, uint16_t word);
 void packet__write_uint32(struct mosquitto__packet *packet, uint32_t word);
 int packet__write_varint(struct mosquitto__packet *packet, int32_t word);
 
+int packet__varint_bytes(int32_t word);
+
 int packet__write(struct mosquitto *mosq);
 #ifdef WITH_BROKER
 int packet__read(struct mosquitto_db *db, struct mosquitto *mosq);

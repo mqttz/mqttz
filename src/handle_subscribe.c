@@ -22,6 +22,7 @@ Contributors:
 #include "mosquitto_broker_internal.h"
 #include "memory_mosq.h"
 #include "packet_mosq.h"
+#include "property_mosq.h"
 
 
 
@@ -37,6 +38,7 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 	int len;
 	int slen;
 	char *sub_mount;
+	struct mqtt5__property *properties = NULL;
 
 	if(!context) return MOSQ_ERR_INVAL;
 	log__printf(NULL, MOSQ_LOG_DEBUG, "Received SUBSCRIBE from %s", context->id);
@@ -48,6 +50,13 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 		}
 	}
 	if(packet__read_uint16(&context->in_packet, &mid)) return 1;
+
+	if(context->protocol == mosq_p_mqtt5){
+		rc = property__read_all(&context->in_packet, &properties);
+		if(rc) return rc;
+		property__free_all(&properties);
+	}
+	property__free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
 
 	while(context->in_packet.pos < context->in_packet.remaining_length){
 		sub = NULL;

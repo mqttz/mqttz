@@ -22,6 +22,7 @@ Contributors:
 #include "mosquitto_broker_internal.h"
 #include "memory_mosq.h"
 #include "packet_mosq.h"
+#include "property_mosq.h"
 #include "time_mosq.h"
 
 #include "uthash.h"
@@ -220,10 +221,12 @@ void context__send_will(struct mosquitto_db *db, struct mosquitto *ctxt)
 					ctxt->will->msg.qos,
 					ctxt->will->msg.payloadlen,
 					ctxt->will->msg.payload,
-					ctxt->will->msg.retain);
+					ctxt->will->msg.retain,
+					&ctxt->will->properties);
 		}
 	}
 	if(ctxt->will){
+		property__free_all(&ctxt->will->properties);
 		mosquitto__free(ctxt->will->msg.topic);
 		mosquitto__free(ctxt->will->msg.payload);
 		mosquitto__free(ctxt->will);

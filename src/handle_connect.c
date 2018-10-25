@@ -301,13 +301,11 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			rc = MOSQ_ERR_NOMEM;
 			goto handle_connect_error;
 		}
-		/* FIXME - this needs to be "will" specific */
 		if(protocol_version == PROTOCOL_VERSION_v5){
-			rc = property__read_all(&context->in_packet, &properties);
+			rc = property__read_all(&context->in_packet, &will_struct->properties);
 			if(rc) return rc;
-			property__free_all(&properties);
+			property__free_all(&will_struct->properties);
 		}
-		property__free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
 		if(packet__read_string(&context->in_packet, &will_topic, &slen)){
 			rc = 1;
 			goto handle_connect_error;
@@ -710,6 +708,9 @@ handle_connect_error:
 	mosquitto__free(password);
 	mosquitto__free(will_payload);
 	mosquitto__free(will_topic);
+	if(will_struct){
+		property__free_all(&will_struct->properties);
+	}
 	mosquitto__free(will_struct);
 #ifdef WITH_TLS
 	if(client_cert) X509_free(client_cert);

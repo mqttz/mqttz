@@ -49,7 +49,7 @@ int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int p
 	}
 
 	if(qos == 0){
-		return send__publish(mosq, local_mid, topic, payloadlen, payload, qos, retain, false);
+		return send__publish(mosq, local_mid, topic, payloadlen, payload, qos, retain, false, NULL);
 	}else{
 		message = mosquitto__calloc(1, sizeof(struct mosquitto_message_all));
 		if(!message) return MOSQ_ERR_NOMEM;
@@ -87,7 +87,7 @@ int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int p
 				message->state = mosq_ms_wait_for_pubrec;
 			}
 			pthread_mutex_unlock(&mosq->out_message_mutex);
-			return send__publish(mosq, message->msg.mid, message->msg.topic, message->msg.payloadlen, message->msg.payload, message->msg.qos, message->msg.retain, message->dup);
+			return send__publish(mosq, message->msg.mid, message->msg.topic, message->msg.payloadlen, message->msg.payload, message->msg.qos, message->msg.retain, message->dup, NULL);
 		}else{
 			message->state = mosq_ms_invalid;
 			pthread_mutex_unlock(&mosq->out_message_mutex);
