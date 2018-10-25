@@ -42,6 +42,7 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 		}
 	}
 	if(packet__read_uint16(&context->in_packet, &mid)) return 1;
+	if(mid == 0) return MOSQ_ERR_PROTOCOL;
 
 	if(context->protocol == mosq_p_mqtt5){
 		rc = property__read_all(UNSUBSCRIBE, &context->in_packet, &properties);

@@ -51,6 +51,7 @@ int handle__unsuback(struct mosquitto *mosq)
 #endif
 	rc = packet__read_uint16(&mosq->in_packet, &mid);
 	if(rc) return rc;
+	if(mid == 0) return MOSQ_ERR_PROTOCOL;
 
 	if(mosq->protocol == mosq_p_mqtt5){
 		rc = property__read_all(UNSUBACK, &mosq->in_packet, &properties);

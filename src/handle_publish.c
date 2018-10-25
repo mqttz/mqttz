@@ -131,6 +131,10 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 			mosquitto__free(topic);
 			return 1;
 		}
+		if(mid == 0){
+			mosquitto__free(topic);
+			return MOSQ_ERR_PROTOCOL;
+		}
 	}
 
 	if(context->protocol == mosq_p_mqtt5){

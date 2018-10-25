@@ -67,6 +67,10 @@ int handle__publish(struct mosquitto *mosq)
 			message__cleanup(&message);
 			return rc;
 		}
+		if(mid == 0){
+			message__cleanup(&message);
+			return MOSQ_ERR_PROTOCOL;
+		}
 		message->msg.mid = (int)mid;
 	}
 
