@@ -7,6 +7,7 @@ set (MOSQ_SRCS
 	conf_includedir.c
 	context.c
 	database.c
+	handle_auth.c
 	handle_connack.c
 	handle_connect.c
 	../lib/handle_ping.c

@@ -35,6 +35,7 @@ set(C_SRC
 	actions.c
 	callbacks.c
 	connect.c
+	handle_auth.c
 	handle_connack.c
 	handle_ping.c
 	handle_pubackcomp.c

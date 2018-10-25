@@ -6,6 +6,7 @@ MOSQ_OBJS=mosquitto.o \
 		  actions.o \
 		  callbacks.o \
 		  connect.o \
+		  handle_auth.o \
 		  handle_connack.o \
 		  handle_ping.o \
 		  handle_pubackcomp.o \
@@ -92,6 +93,9 @@ callbacks.o : callbacks.c mosquitto.h mosquitto_internal.h
 	${CROSS_COMPILE}$(CC) $(LIB_CFLAGS) -c $< -o $@
 
 connect.o : connect.c mosquitto.h mosquitto_internal.h
+	${CROSS_COMPILE}$(CC) $(LIB_CFLAGS) -c $< -o $@
+
+handle_auth.o : handle_auth.c read_handle.h
 	${CROSS_COMPILE}$(CC) $(LIB_CFLAGS) -c $< -o $@
 
 handle_connack.o : handle_connack.c read_handle.h

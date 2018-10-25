@@ -14,6 +14,7 @@ OBJS=	mosquitto.o \
 		conf_includedir.o \
 		context.o \
 		database.o \
+		handle_auth.o \
 		handle_connack.o \
 		handle_connect.o \
 		handle_ping.o \
@@ -77,6 +78,9 @@ context.o : context.c mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
 database.o : database.c mosquitto_broker_internal.h
+	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
+
+handle_auth.o : handle_auth.c mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
 handle_connack.o : handle_connack.c mosquitto_broker_internal.h

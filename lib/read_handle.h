@@ -28,6 +28,7 @@ int handle__packet(struct mosquitto *mosq);
 int handle__connack(struct mosquitto *mosq);
 int handle__pubackcomp(struct mosquitto *mosq, const char *type);
 int handle__publish(struct mosquitto *mosq);
+int handle__auth(struct mosquitto *mosq);
 #endif
 int handle__pubrec(struct mosquitto *mosq);
 int handle__pubrel(struct mosquitto_db *db, struct mosquitto *mosq);

@@ -532,6 +532,7 @@ int handle__disconnect(struct mosquitto_db *db, struct mosquitto *context);
 int handle__publish(struct mosquitto_db *db, struct mosquitto *context);
 int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context);
 int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context);
+int handle__auth(struct mosquitto_db *db, struct mosquitto *context);
 
 /* ============================================================
  * Database handling

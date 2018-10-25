@@ -57,6 +57,8 @@ int handle__packet(struct mosquitto *mosq)
 			return handle__suback(mosq);
 		case UNSUBACK:
 			return handle__unsuback(mosq);
+		case AUTH:
+			return handle__auth(mosq);
 		default:
 			/* If we don't recognise the command, return an error straight away. */
 			log__printf(mosq, MOSQ_LOG_ERR, "Error: Unrecognised command %d\n", (mosq->in_packet.command)&0xF0);

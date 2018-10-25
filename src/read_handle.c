@@ -65,6 +65,8 @@ int handle__packet(struct mosquitto_db *db, struct mosquitto *context)
 		case UNSUBACK:
 			return handle__unsuback(context);
 #endif
+		case AUTH:
+			return handle__auth(db, context);
 		default:
 			/* If we don't recognise the command, return an error straight away. */
 			return MOSQ_ERR_PROTOCOL;
