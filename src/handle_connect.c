@@ -304,7 +304,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		if(protocol_version == PROTOCOL_VERSION_v5){
 			rc = property__read_all(CMD_WILL, &context->in_packet, &will_struct->properties);
 			if(rc) return rc;
-			property__free_all(&will_struct->properties);
+			property__free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
 		}
 		if(packet__read_string(&context->in_packet, &will_topic, &slen)){
 			rc = 1;
@@ -721,9 +721,20 @@ handle_connect_error:
 
 int handle__disconnect(struct mosquitto_db *db, struct mosquitto *context)
 {
+	int rc;
+	struct mqtt5__property *properties = NULL;
+
 	if(!context){
 		return MOSQ_ERR_INVAL;
 	}
+
+	if(context->protocol == mosq_p_mqtt5){
+		rc = property__read_all(DISCONNECT, &context->in_packet, &properties);
+		if(rc) return rc;
+		property__free_all(&properties);
+	}
+	property__free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
+
 	if(context->in_packet.remaining_length != 0){
 		return MOSQ_ERR_PROTOCOL;
 	}

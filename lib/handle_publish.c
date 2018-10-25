@@ -23,8 +23,10 @@ Contributors:
 #include "mosquitto_internal.h"
 #include "logging_mosq.h"
 #include "memory_mosq.h"
+#include "mqtt_protocol.h"
 #include "messages_mosq.h"
 #include "packet_mosq.h"
+#include "property_mosq.h"
 #include "send_mosq.h"
 #include "time_mosq.h"
 
@@ -36,6 +38,7 @@ int handle__publish(struct mosquitto *mosq)
 	int rc = 0;
 	uint16_t mid;
 	int slen;
+	struct mqtt5__property *properties = NULL;
 
 	assert(mosq);
 
@@ -66,6 +69,13 @@ int handle__publish(struct mosquitto *mosq)
 		}
 		message->msg.mid = (int)mid;
 	}
+
+	if(mosq->protocol == mosq_p_mqtt5){
+		rc = property__read_all(PUBLISH, &mosq->in_packet, &properties);
+		if(rc) return rc;
+		property__free_all(&properties);
+	}
+	property__free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
 
 	message->msg.payloadlen = mosq->in_packet.remaining_length - mosq->in_packet.pos;
 	if(message->msg.payloadlen){

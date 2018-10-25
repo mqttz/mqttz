@@ -43,6 +43,7 @@ int handle__pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 	struct mosquitto_message_all *message = NULL;
 #endif
 	int rc;
+	struct mqtt5__property *properties = NULL;
 
 	assert(mosq);
 	if(mosq->protocol != mosq_p_mqtt31){
@@ -52,6 +53,14 @@ int handle__pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 	}
 	rc = packet__read_uint16(&mosq->in_packet, &mid);
 	if(rc) return rc;
+
+	if(mosq->protocol == mosq_p_mqtt5){
+		rc = property__read_all(PUBREL, &mosq->in_packet, &properties);
+		if(rc) return rc;
+		/* Immediately free, we don't do anything with Reason String or User Property at the moment */
+		property__free_all(&properties);
+	}
+
 #ifdef WITH_BROKER
 	log__printf(NULL, MOSQ_LOG_DEBUG, "Received PUBREL from %s (Mid: %d)", mosq->id, mid);
 

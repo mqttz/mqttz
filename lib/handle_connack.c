@@ -22,35 +22,46 @@ Contributors:
 #include "logging_mosq.h"
 #include "memory_mosq.h"
 #include "messages_mosq.h"
+#include "mqtt_protocol.h"
 #include "net_mosq.h"
 #include "packet_mosq.h"
+#include "property_mosq.h"
 #include "read_handle.h"
 
 int handle__connack(struct mosquitto *mosq)
 {
 	uint8_t connect_flags;
-	uint8_t result;
+	uint8_t reason_code;
 	int rc;
+	struct mqtt5__property *properties = NULL;
 
 	assert(mosq);
 	rc = packet__read_byte(&mosq->in_packet, &connect_flags);
 	if(rc) return rc;
-	rc = packet__read_byte(&mosq->in_packet, &result);
+	rc = packet__read_byte(&mosq->in_packet, &reason_code);
 	if(rc) return rc;
-	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received CONNACK (%d)", mosq->id, result);
+
+	if(mosq->protocol == mosq_p_mqtt5){
+		rc = property__read_all(CONNACK, &mosq->in_packet, &properties);
+		if(rc) return rc;
+		property__free_all(&properties);
+	}
+	property__free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
+
+	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received CONNACK (%d)", mosq->id, reason_code);
 	pthread_mutex_lock(&mosq->callback_mutex);
 	if(mosq->on_connect){
 		mosq->in_callback = true;
-		mosq->on_connect(mosq, mosq->userdata, result);
+		mosq->on_connect(mosq, mosq->userdata, reason_code);
 		mosq->in_callback = false;
 	}
 	if(mosq->on_connect_with_flags){
 		mosq->in_callback = true;
-		mosq->on_connect_with_flags(mosq, mosq->userdata, result, connect_flags);
+		mosq->on_connect_with_flags(mosq, mosq->userdata, reason_code, connect_flags);
 		mosq->in_callback = false;
 	}
 	pthread_mutex_unlock(&mosq->callback_mutex);
-	switch(result){
+	switch(reason_code){
 		case 0:
 			if(mosq->state != mosq_cs_disconnecting){
 				mosq->state = mosq_cs_connected;

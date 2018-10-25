@@ -24,18 +24,14 @@ Contributors:
 #include "mqtt_protocol.h"
 #include "packet_mosq.h"
 #include "send_mosq.h"
-/*
-#include "sys_tree.h"
-#include "time_mosq.h"
-#include "tls_mosq.h"
-#include "util_mosq.h"
-*/
 
 int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 {
 	uint16_t mid;
 	char *sub;
 	int slen;
+	int rc;
+	struct mqtt5__property *properties = NULL;
 
 	if(!context) return MOSQ_ERR_INVAL;
 	log__printf(NULL, MOSQ_LOG_DEBUG, "Received UNSUBSCRIBE from %s", context->id);
@@ -46,6 +42,13 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 		}
 	}
 	if(packet__read_uint16(&context->in_packet, &mid)) return 1;
+
+	if(context->protocol == mosq_p_mqtt5){
+		rc = property__read_all(UNSUBSCRIBE, &context->in_packet, &properties);
+		if(rc) return rc;
+		/* Immediately free, we don't do anything with User Property at the moment */
+		property__free_all(&properties);
+	}
 
 	if(context->protocol == mosq_p_mqtt311 || context->protocol == mosq_p_mqtt5){
 		if(context->in_packet.pos == context->in_packet.remaining_length){

@@ -31,6 +31,7 @@ Contributors:
 #include "mqtt_protocol.h"
 #include "net_mosq.h"
 #include "packet_mosq.h"
+#include "property_mosq.h"
 #include "read_handle.h"
 #include "send_mosq.h"
 #include "util_mosq.h"
@@ -40,6 +41,7 @@ int handle__unsuback(struct mosquitto *mosq)
 {
 	uint16_t mid;
 	int rc;
+	struct mqtt5__property *properties = NULL;
 
 	assert(mosq);
 #ifdef WITH_BROKER
@@ -49,6 +51,14 @@ int handle__unsuback(struct mosquitto *mosq)
 #endif
 	rc = packet__read_uint16(&mosq->in_packet, &mid);
 	if(rc) return rc;
+
+	if(mosq->protocol == mosq_p_mqtt5){
+		rc = property__read_all(UNSUBACK, &mosq->in_packet, &properties);
+		if(rc) return rc;
+		/* Immediately free, we don't do anything with Reason String or User Property at the moment */
+		property__free_all(&properties);
+	}
+
 #ifndef WITH_BROKER
 	pthread_mutex_lock(&mosq->callback_mutex);
 	if(mosq->on_unsubscribe){

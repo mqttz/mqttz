@@ -26,7 +26,9 @@ Contributors:
 #include "mosquitto_internal.h"
 #include "logging_mosq.h"
 #include "memory_mosq.h"
+#include "mqtt_protocol.h"
 #include "packet_mosq.h"
+#include "property_mosq.h"
 
 
 int handle__suback(struct mosquitto *mosq)
@@ -37,6 +39,7 @@ int handle__suback(struct mosquitto *mosq)
 	int qos_count;
 	int i = 0;
 	int rc;
+	struct mqtt5__property *properties = NULL;
 
 	assert(mosq);
 #ifdef WITH_BROKER
@@ -46,6 +49,13 @@ int handle__suback(struct mosquitto *mosq)
 #endif
 	rc = packet__read_uint16(&mosq->in_packet, &mid);
 	if(rc) return rc;
+
+	if(mosq->protocol == mosq_p_mqtt5){
+		rc = property__read_all(SUBACK, &mosq->in_packet, &properties);
+		if(rc) return rc;
+		/* Immediately free, we don't do anything with Reason String or User Property at the moment */
+		property__free_all(&properties);
+	}
 
 	qos_count = mosq->in_packet.remaining_length - mosq->in_packet.pos;
 	granted_qos = mosquitto__malloc(qos_count*sizeof(int));

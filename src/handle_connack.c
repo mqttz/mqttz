@@ -28,20 +28,30 @@ Contributors:
 
 int handle__connack(struct mosquitto_db *db, struct mosquitto *context)
 {
-	uint8_t byte;
-	uint8_t rc;
+	int rc;
+	uint8_t connect_acknowledge;
+	uint8_t reason_code;
 	int i;
 	char *notification_topic;
 	int notification_topic_len;
 	char notification_payload;
+	struct mqtt5__property *properties = NULL;
 
 	if(!context){
 		return MOSQ_ERR_INVAL;
 	}
 	log__printf(NULL, MOSQ_LOG_DEBUG, "Received CONNACK on connection %s.", context->id);
-	if(packet__read_byte(&context->in_packet, &byte)) return 1; // Reserved byte, not used
-	if(packet__read_byte(&context->in_packet, &rc)) return 1;
-	switch(rc){
+	if(packet__read_byte(&context->in_packet, &connect_acknowledge)) return 1;
+	if(packet__read_byte(&context->in_packet, &reason_code)) return 1;
+
+	if(context->protocol == mosq_p_mqtt5){
+		rc = property__read_all(CONNACK, &context->in_packet, &properties);
+		if(rc) return rc;
+		property__free_all(&properties);
+	}
+	property__free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
+
+	switch(reason_code){
 		case CONNACK_ACCEPTED:
 			if(context->bridge){
 				if(context->bridge->notifications){
