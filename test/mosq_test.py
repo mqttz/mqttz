@@ -363,12 +363,16 @@ def gen_connack(resv=0, rc=0, proto_ver=4):
 
     return packet
 
-def gen_publish(topic, qos, payload=None, retain=False, dup=False, mid=0):
+def gen_publish(topic, qos, payload=None, retain=False, dup=False, mid=0, proto_ver=4):
     rl = 2+len(topic)
     pack_format = "H"+str(len(topic))+"s"
     if qos > 0:
         rl = rl + 2
         pack_format = pack_format + "H"
+    if proto_ver == 5:
+        rl += 1
+        pack_format = pack_format + "B"
+
     if payload != None:
         rl = rl + len(payload)
         pack_format = pack_format + str(len(payload))+"s"
@@ -383,40 +387,72 @@ def gen_publish(topic, qos, payload=None, retain=False, dup=False, mid=0):
     if dup:
         cmd = cmd + 8
 
-    if qos > 0:
-        return struct.pack("!B" + str(len(rlpacked))+"s" + pack_format, cmd, rlpacked, len(topic), topic, mid, payload)
+    if proto_ver == 5:
+        if qos > 0:
+            return struct.pack("!B" + str(len(rlpacked))+"s" + pack_format, cmd, rlpacked, len(topic), topic, mid, 0, payload)
+        else:
+            return struct.pack("!B" + str(len(rlpacked))+"s" + pack_format, cmd, rlpacked, len(topic), topic, 0, payload)
     else:
-        return struct.pack("!B" + str(len(rlpacked))+"s" + pack_format, cmd, rlpacked, len(topic), topic, payload)
+        if qos > 0:
+            return struct.pack("!B" + str(len(rlpacked))+"s" + pack_format, cmd, rlpacked, len(topic), topic, mid, payload)
+        else:
+            return struct.pack("!B" + str(len(rlpacked))+"s" + pack_format, cmd, rlpacked, len(topic), topic, payload)
 
-def gen_puback(mid):
-    return struct.pack('!BBH', 64, 2, mid)
+def gen_puback(mid, proto_ver=4):
+    if proto_ver == 5:
+        return struct.pack('!BBHB', 64, 3, mid, 0)
+    else:
+        return struct.pack('!BBH', 64, 2, mid)
 
-def gen_pubrec(mid):
-    return struct.pack('!BBH', 80, 2, mid)
+def gen_pubrec(mid, proto_ver=4):
+    if proto_ver == 5:
+        return struct.pack('!BBHB', 80, 3, mid, 0)
+    else:
+        return struct.pack('!BBH', 80, 2, mid)
 
-def gen_pubrel(mid, dup=False):
+def gen_pubrel(mid, dup=False, proto_ver=4):
     if dup:
         cmd = 96+8+2
     else:
         cmd = 96+2
-    return struct.pack('!BBH', cmd, 2, mid)
+    if proto_ver == 5:
+        return struct.pack('!BBHB', cmd, 3, mid, 0)
+    else:
+        return struct.pack('!BBH', cmd, 2, mid)
 
-def gen_pubcomp(mid):
-    return struct.pack('!BBH', 112, 2, mid)
+def gen_pubcomp(mid, proto_ver=4):
+    if proto_ver == 5:
+        return struct.pack('!BBHB', 112, 3, mid, 0)
+    else:
+        return struct.pack('!BBH', 112, 2, mid)
 
-def gen_subscribe(mid, topic, qos):
-    pack_format = "!BBHH"+str(len(topic))+"sB"
-    return struct.pack(pack_format, 130, 2+2+len(topic)+1, mid, len(topic), topic, qos)
+def gen_subscribe(mid, topic, qos, proto_ver=4):
+    if proto_ver == 5:
+        pack_format = "!BBHBH"+str(len(topic))+"sB"
+        return struct.pack(pack_format, 130, 2+1+2+len(topic)+1, mid, 0, len(topic), topic, qos)
+    else:
+        pack_format = "!BBHH"+str(len(topic))+"sB"
+        return struct.pack(pack_format, 130, 2+2+len(topic)+1, mid, len(topic), topic, qos)
 
-def gen_suback(mid, qos):
-    return struct.pack('!BBHB', 144, 2+1, mid, qos)
+def gen_suback(mid, qos, proto_ver=4):
+    if proto_ver == 5:
+        return struct.pack('!BBHBB', 144, 2+1+1, mid, 0, qos)
+    else:
+        return struct.pack('!BBHB', 144, 2+1, mid, qos)
 
-def gen_unsubscribe(mid, topic):
-    pack_format = "!BBHH"+str(len(topic))+"s"
-    return struct.pack(pack_format, 162, 2+2+len(topic), mid, len(topic), topic)
+def gen_unsubscribe(mid, topic, proto_ver=4):
+    if proto_ver == 5:
+        pack_format = "!BBHBH"+str(len(topic))+"s"
+        return struct.pack(pack_format, 162, 2+2+len(topic)+1, mid, 0, len(topic), topic)
+    else:
+        pack_format = "!BBHH"+str(len(topic))+"s"
+        return struct.pack(pack_format, 162, 2+2+len(topic), mid, len(topic), topic)
 
-def gen_unsuback(mid):
-    return struct.pack('!BBH', 176, 2, mid)
+def gen_unsuback(mid, proto_ver=4):
+    if proto_ver == 5:
+        return struct.pack('!BBHB', 176, 3, mid, 0)
+    else:
+        return struct.pack('!BBH', 176, 2, mid)
 
 def gen_pingreq():
     return struct.pack('!BB', 192, 0)

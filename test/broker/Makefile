@@ -46,9 +46,13 @@ endif
 	./02-subpub-qos0.py
 	./02-subpub-qos1.py
 	./02-subpub-qos2.py
+	./02-subpub-qos0-v5.py
+	./02-subpub-qos1-v5.py
+	./02-subpub-qos2-v5.py
 	./02-unsubscribe-qos0.py
 	./02-unsubscribe-qos1.py
 	./02-unsubscribe-qos2.py
+	./02-unsubscribe-qos2-v5.py
 	./02-unsubscribe-invalid-no-topic.py
 	./02-subscribe-invalid-utf8.py
 	./02-subscribe-persistence-flipflop.py
