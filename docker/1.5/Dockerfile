@@ -10,14 +10,13 @@ ENV VERSION=1.5.3 \
 RUN set -x && \
 	 apk --no-cache add --virtual build-deps \
       build-base \
-      curl \
 	  gnupg \
       libressl-dev \
       libwebsockets-dev \
       util-linux-dev && \
-    curl -fSL https://mosquitto.org/files/source/mosquitto-${VERSION}.tar.gz -o /tmp/mosq.tar.gz && \
+    wget https://mosquitto.org/files/source/mosquitto-${VERSION}.tar.gz -O /tmp/mosq.tar.gz && \
 	echo "$DOWNLOAD_SHA256  /tmp/mosq.tar.gz" | sha256sum -c - && \
-    curl -fSL https://mosquitto.org/files/source/mosquitto-${VERSION}.tar.gz.asc -o /tmp/mosq.tar.gz.asc && \
+    wget https://mosquitto.org/files/source/mosquitto-${VERSION}.tar.gz.asc -O /tmp/mosq.tar.gz.asc && \
 	export GNUPGHOME="$(mktemp -d)" && \
 	found=''; \
 	for server in \
@@ -53,12 +52,11 @@ RUN set -x && \
 	install -d /usr/sbin/ && \
 	install -s -m755 /build/src/mosquitto /usr/sbin/mosquitto && \
 	install -m644 /build/mosquitto.conf /mosquitto/config/mosquitto.conf && \
-    sed -i -e 's/#log_dest stderr/log_dest syslog/' /mosquitto/config/mosquitto.conf && \
     chown -R mosquitto:mosquitto /mosquitto && \
-	apk del build-deps && \
 	apk --no-cache add \
       libuuid \
       libwebsockets && \
+	apk del build-deps && \
 	rm -rf /build /etc/apk /lib/apk
 
 VOLUME ["/mosquitto/data", "/mosquitto/log"]
