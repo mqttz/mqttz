@@ -29,7 +29,7 @@ static void byte_prop_read_helper(
 		CU_ASSERT_EQUAL(properties->value.i8, value_expected);
 		CU_ASSERT_PTR_EQUAL(properties->next, NULL);
 		CU_ASSERT_EQUAL(property__get_length_all(properties), 2);
-		property__free_all(&properties);
+		mosquitto_property_free_all(&properties);
 	}
 	CU_ASSERT_PTR_EQUAL(properties, NULL);
 }
@@ -85,7 +85,7 @@ static void int32_prop_read_helper(
 		CU_ASSERT_EQUAL(properties->value.i32, value_expected);
 		CU_ASSERT_PTR_EQUAL(properties->next, NULL);
 		CU_ASSERT_EQUAL(property__get_length_all(properties), 5);
-		property__free_all(&properties);
+		mosquitto_property_free_all(&properties);
 	}
 	CU_ASSERT_PTR_EQUAL(properties, NULL);
 }
@@ -135,7 +135,7 @@ static void int16_prop_read_helper(
 		CU_ASSERT_EQUAL(properties->value.i16, value_expected);
 		CU_ASSERT_PTR_EQUAL(properties->next, NULL);
 		CU_ASSERT_EQUAL(property__get_length_all(properties), 3);
-		property__free_all(&properties);
+		mosquitto_property_free_all(&properties);
 	}
 	CU_ASSERT_PTR_EQUAL(properties, NULL);
 }
@@ -181,7 +181,7 @@ static void string_prop_read_helper(
 		CU_ASSERT_STRING_EQUAL(properties->value.s.v, value_expected);
 		CU_ASSERT_PTR_EQUAL(properties->next, NULL);
 		CU_ASSERT_EQUAL(property__get_length_all(properties), 1+2+strlen(value_expected));
-		property__free_all(&properties);
+		mosquitto_property_free_all(&properties);
 	}
 	CU_ASSERT_PTR_EQUAL(properties, NULL);
 }
@@ -246,7 +246,7 @@ static void binary_prop_read_helper(
 		CU_ASSERT_EQUAL(memcmp(properties->value.bin.v, value_expected, len_expected), 0);
 		CU_ASSERT_PTR_EQUAL(properties->next, NULL);
 		CU_ASSERT_EQUAL(property__get_length_all(properties), 1+2+len_expected);
-		property__free_all(&properties);
+		mosquitto_property_free_all(&properties);
 	}
 	CU_ASSERT_PTR_EQUAL(properties, NULL);
 }
@@ -301,7 +301,7 @@ static void string_pair_prop_read_helper(
 			CU_ASSERT_PTR_NULL(properties->next);
 			CU_ASSERT_EQUAL(property__get_length_all(properties), 1+2+strlen(name_expected)+2+strlen(value_expected));
 		}
-		property__free_all(&properties);
+		mosquitto_property_free_all(&properties);
 	}
 	CU_ASSERT_PTR_NULL(properties);
 }
@@ -328,7 +328,7 @@ static void varint_prop_read_helper(
 		CU_ASSERT_EQUAL(properties->value.varint, value_expected);
 		CU_ASSERT_PTR_NULL(properties->next);
 		CU_ASSERT_EQUAL(property__get_length_all(properties), packet__varint_bytes(value_expected)+1);
-		property__free_all(&properties);
+		mosquitto_property_free_all(&properties);
 	}
 	CU_ASSERT_PTR_NULL(properties);
 }
@@ -367,7 +367,7 @@ static void packet_helper_reason_string_user_property(int command)
 		CU_ASSERT_STRING_EQUAL(p->name.v, "name");
 		CU_ASSERT_EQUAL(p->name.len, strlen("name"));
 
-		property__free_all(&properties);
+		mosquitto_property_free_all(&properties);
 	}
 }
 
@@ -1273,7 +1273,7 @@ static void TEST_packet_connect(void)
 	CU_ASSERT_EQUAL(p->value.bin.v[1], 2);
 	CU_ASSERT_EQUAL(p->value.s.len, 2);
 
-	property__free_all(&properties);
+	mosquitto_property_free_all(&properties);
 }
 
 static void TEST_packet_connack(void)
@@ -1406,7 +1406,7 @@ static void TEST_packet_connack(void)
 	CU_ASSERT_EQUAL(p->value.bin.v[1], 2);
 	CU_ASSERT_EQUAL(p->value.s.len, 2);
 
-	property__free_all(&properties);
+	mosquitto_property_free_all(&properties);
 }
 
 static void TEST_packet_publish(void)
@@ -1482,7 +1482,7 @@ static void TEST_packet_publish(void)
 	CU_ASSERT_STRING_EQUAL(p->value.s.v, "empty");
 	CU_ASSERT_EQUAL(p->value.s.len, strlen("empty"));
 
-	property__free_all(&properties);
+	mosquitto_property_free_all(&properties);
 }
 
 static void TEST_packet_puback(void)
@@ -1538,7 +1538,7 @@ static void TEST_packet_subscribe(void)
 	CU_ASSERT_EQUAL(p->identifier, PROP_SUBSCRIPTION_IDENTIFIER);
 	CU_ASSERT_EQUAL(p->value.varint, 0x00000004);
 
-	property__free_all(&properties);
+	mosquitto_property_free_all(&properties);
 }
 
 static void TEST_packet_suback(void)
@@ -1572,7 +1572,7 @@ static void TEST_packet_unsubscribe(void)
 	CU_ASSERT_STRING_EQUAL(p->name.v, "name");
 	CU_ASSERT_EQUAL(p->name.len, strlen("name"));
 
-	property__free_all(&properties);
+	mosquitto_property_free_all(&properties);
 }
 
 static void TEST_packet_unsuback(void)
@@ -1620,7 +1620,7 @@ static void TEST_packet_disconnect(void)
 	CU_ASSERT_STRING_EQUAL(p->name.v, "name");
 	CU_ASSERT_EQUAL(p->name.len, strlen("name"));
 
-	property__free_all(&properties);
+	mosquitto_property_free_all(&properties);
 }
 
 static void TEST_packet_auth(void)
@@ -1672,7 +1672,7 @@ static void TEST_packet_auth(void)
 	CU_ASSERT_STRING_EQUAL(p->name.v, "name");
 	CU_ASSERT_EQUAL(p->name.len, strlen("name"));
 
-	property__free_all(&properties);
+	mosquitto_property_free_all(&properties);
 }
 
 

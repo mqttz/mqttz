@@ -47,9 +47,9 @@ int handle__connack(struct mosquitto_db *db, struct mosquitto *context)
 	if(context->protocol == mosq_p_mqtt5){
 		rc = property__read_all(CONNACK, &context->in_packet, &properties);
 		if(rc) return rc;
-		property__free_all(&properties);
+		mosquitto_property_free_all(&properties);
 	}
-	property__free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
+	mosquitto_property_free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
 
 	switch(reason_code){
 		case CONNACK_ACCEPTED:

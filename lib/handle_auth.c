@@ -43,7 +43,7 @@ int handle__auth(struct mosquitto *mosq)
 
 	rc = property__read_all(AUTH, &mosq->in_packet, &properties);
 	if(rc) return rc;
-	property__free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
+	mosquitto_property_free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
 
 	return MOSQ_ERR_SUCCESS;
 }

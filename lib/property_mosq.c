@@ -161,7 +161,7 @@ int property__read_all(int command, struct mosquitto__packet *packet, struct mqt
 		rc = property__read(packet, &proplen, p); 
 		if(rc){
 			mosquitto__free(p);
-			property__free_all(properties);
+			mosquitto_property_free_all(properties);
 			return rc;
 		}
 
@@ -182,19 +182,19 @@ int property__read_all(int command, struct mosquitto__packet *packet, struct mqt
 				|| p->identifier == PROP_SHARED_SUB_AVAILABLE){
 
 			if(p->value.i8 > 1){
-				property__free_all(properties);
+				mosquitto_property_free_all(properties);
 				return MOSQ_ERR_PROTOCOL;
 			}
 		}else if(p->identifier == PROP_MAXIMUM_PACKET_SIZE){
 			if( p->value.i32 == 0){
-				property__free_all(properties);
+				mosquitto_property_free_all(properties);
 				return MOSQ_ERR_PROTOCOL;
 			}
 		}else if(p->identifier == PROP_RECEIVE_MAXIMUM
 				|| p->identifier == PROP_TOPIC_ALIAS){
 
 			if(p->value.i16 == 0){
-				property__free_all(properties);
+				mosquitto_property_free_all(properties);
 				return MOSQ_ERR_PROTOCOL;
 			}
 		}
@@ -208,7 +208,7 @@ int property__read_all(int command, struct mosquitto__packet *packet, struct mqt
 			if(current->identifier == tail->identifier
 					&& current->identifier != PROP_USER_PROPERTY){
 
-				property__free_all(properties);
+				mosquitto_property_free_all(properties);
 				return MOSQ_ERR_PROTOCOL;
 			}
 			tail = tail->next;
@@ -218,7 +218,7 @@ int property__read_all(int command, struct mosquitto__packet *packet, struct mqt
 
 	/* Check for properties on incorrect commands */
 	if(property__command_check(command, *properties)){
-		property__free_all(properties);
+		mosquitto_property_free_all(properties);
 		return MOSQ_ERR_PROTOCOL;
 	}
 	return MOSQ_ERR_SUCCESS;
@@ -276,7 +276,7 @@ void property__free(struct mqtt5__property **property)
 }
 
 
-void property__free_all(struct mqtt5__property **property)
+void mosquitto_property_free_all(struct mqtt5__property **property)
 {
 	struct mqtt5__property *p, *next;
 

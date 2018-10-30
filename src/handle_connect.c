@@ -244,9 +244,9 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	if(protocol_version == PROTOCOL_VERSION_v5){
 		rc = property__read_all(CONNECT, &context->in_packet, &properties);
 		if(rc) return rc;
-		property__free_all(&properties);
+		mosquitto_property_free_all(&properties);
 	}
-	property__free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
+	mosquitto_property_free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
 
 	if(packet__read_string(&context->in_packet, &client_id, &slen)){
 		rc = 1;
@@ -304,7 +304,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		if(protocol_version == PROTOCOL_VERSION_v5){
 			rc = property__read_all(CMD_WILL, &context->in_packet, &will_struct->properties);
 			if(rc) return rc;
-			property__free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
+			mosquitto_property_free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
 		}
 		if(packet__read_string(&context->in_packet, &will_topic, &slen)){
 			rc = 1;
@@ -709,7 +709,7 @@ handle_connect_error:
 	mosquitto__free(will_payload);
 	mosquitto__free(will_topic);
 	if(will_struct){
-		property__free_all(&will_struct->properties);
+		mosquitto_property_free_all(&will_struct->properties);
 	}
 	mosquitto__free(will_struct);
 #ifdef WITH_TLS
@@ -731,9 +731,9 @@ int handle__disconnect(struct mosquitto_db *db, struct mosquitto *context)
 	if(context->protocol == mosq_p_mqtt5){
 		rc = property__read_all(DISCONNECT, &context->in_packet, &properties);
 		if(rc) return rc;
-		property__free_all(&properties);
+		mosquitto_property_free_all(&properties);
 	}
-	property__free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
+	mosquitto_property_free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
 
 	if(context->in_packet.remaining_length != 0){
 		return MOSQ_ERR_PROTOCOL;

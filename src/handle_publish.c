@@ -194,7 +194,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 			}
 		}
 	}
-	property__free_all(&properties);
+	mosquitto_property_free_all(&properties);
 
 	payloadlen = context->in_packet.remaining_length - context->in_packet.pos;
 	G_PUB_BYTES_RECEIVED_INC(payloadlen);

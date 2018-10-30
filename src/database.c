@@ -207,7 +207,7 @@ void db__msg_store_remove(struct mosquitto_db *db, struct mosquitto_msg_store *s
 		mosquitto__free(store->dest_ids);
 	}
 	mosquitto__free(store->topic);
-	property__free_all(&store->properties);
+	mosquitto_property_free_all(&store->properties);
 	UHPA_FREE_PAYLOAD(store);
 	mosquitto__free(store);
 }
@@ -661,7 +661,7 @@ error:
 		mosquitto__free(temp->topic);
 		mosquitto__free(temp);
 	}
-	property__free_all(&properties);
+	mosquitto_property_free_all(&properties);
 	return rc;
 }
 

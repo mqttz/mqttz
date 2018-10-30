@@ -226,7 +226,7 @@ void context__send_will(struct mosquitto_db *db, struct mosquitto *ctxt)
 		}
 	}
 	if(ctxt->will){
-		property__free_all(&ctxt->will->properties);
+		mosquitto_property_free_all(&ctxt->will->properties);
 		mosquitto__free(ctxt->will->msg.topic);
 		mosquitto__free(ctxt->will->msg.payload);
 		mosquitto__free(ctxt->will);

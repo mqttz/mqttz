@@ -55,9 +55,9 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 	if(context->protocol == mosq_p_mqtt5){
 		rc = property__read_all(SUBSCRIBE, &context->in_packet, &properties);
 		if(rc) return rc;
-		property__free_all(&properties);
+		mosquitto_property_free_all(&properties);
 	}
-	property__free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
+	mosquitto_property_free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
 
 	while(context->in_packet.pos < context->in_packet.remaining_length){
 		sub = NULL;

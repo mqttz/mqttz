@@ -42,7 +42,6 @@ struct mqtt5__property {
 int property__read_all(int command, struct mosquitto__packet *packet, struct mqtt5__property **property);
 int property__write_all(struct mosquitto__packet *packet, struct mqtt5__property *property);
 void property__free(struct mqtt5__property **property);
-void property__free_all(struct mqtt5__property **property);
 
 int property__get_length(struct mqtt5__property *property);
 int property__get_length_all(struct mqtt5__property *property);

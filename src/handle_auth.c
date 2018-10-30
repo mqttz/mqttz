@@ -42,7 +42,7 @@ int handle__auth(struct mosquitto_db *db, struct mosquitto *context)
 
 	rc = property__read_all(AUTH, &context->in_packet, &properties);
 	if(rc) return rc;
-	property__free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
+	mosquitto_property_free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
 
 	return MOSQ_ERR_SUCCESS;
 }

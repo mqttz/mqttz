@@ -55,7 +55,7 @@ int handle__pubackcomp(struct mosquitto *mosq, const char *type)
 		rc = property__read_all(PUBACK, &mosq->in_packet, &properties);
 		if(rc) return rc;
 		/* Immediately free, we don't do anything with Reason String or User Property at the moment */
-		property__free_all(&properties);
+		mosquitto_property_free_all(&properties);
 	}
 
 #ifdef WITH_BROKER

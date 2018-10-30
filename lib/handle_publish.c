@@ -77,9 +77,9 @@ int handle__publish(struct mosquitto *mosq)
 	if(mosq->protocol == mosq_p_mqtt5){
 		rc = property__read_all(PUBLISH, &mosq->in_packet, &properties);
 		if(rc) return rc;
-		property__free_all(&properties);
+		mosquitto_property_free_all(&properties);
 	}
-	property__free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
+	mosquitto_property_free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
 
 	message->msg.payloadlen = mosq->in_packet.remaining_length - mosq->in_packet.pos;
 	if(message->msg.payloadlen){

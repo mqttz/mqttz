@@ -39,7 +39,7 @@ static void byte_prop_write_helper(
 		CU_ASSERT_EQUAL(properties->value.i8, value_expected);
 		CU_ASSERT_PTR_EQUAL(properties->next, NULL);
 		CU_ASSERT_EQUAL(property__get_length_all(properties), 2);
-		property__free_all(&properties);
+		mosquitto_property_free_all(&properties);
 	}
 	CU_ASSERT_PTR_EQUAL(properties, NULL);
 }
@@ -79,7 +79,7 @@ static void int32_prop_write_helper(
 		CU_ASSERT_EQUAL(properties->value.i32, value_expected);
 		CU_ASSERT_PTR_EQUAL(properties->next, NULL);
 		CU_ASSERT_EQUAL(property__get_length_all(properties), 5);
-		property__free_all(&properties);
+		mosquitto_property_free_all(&properties);
 	}
 	CU_ASSERT_PTR_EQUAL(properties, NULL);
 }
@@ -119,7 +119,7 @@ static void int16_prop_write_helper(
 		CU_ASSERT_EQUAL(properties->value.i16, value_expected);
 		CU_ASSERT_PTR_EQUAL(properties->next, NULL);
 		CU_ASSERT_EQUAL(property__get_length_all(properties), 3);
-		property__free_all(&properties);
+		mosquitto_property_free_all(&properties);
 	}
 	CU_ASSERT_PTR_EQUAL(properties, NULL);
 }
@@ -160,7 +160,7 @@ static void string_prop_write_helper(
 		CU_ASSERT_STRING_EQUAL(properties->value.s.v, value_expected);
 		CU_ASSERT_PTR_EQUAL(properties->next, NULL);
 		CU_ASSERT_EQUAL(property__get_length_all(properties), 1+2+strlen(value_expected));
-		property__free_all(&properties);
+		mosquitto_property_free_all(&properties);
 	}
 	CU_ASSERT_PTR_EQUAL(properties, NULL);
 	free(property.value.s.v);
@@ -205,7 +205,7 @@ static void binary_prop_write_helper(
 		CU_ASSERT_EQUAL(memcmp(properties->value.bin.v, value_expected, len_expected), 0);
 		CU_ASSERT_PTR_EQUAL(properties->next, NULL);
 		CU_ASSERT_EQUAL(property__get_length_all(properties), 1+2+len_expected);
-		property__free_all(&properties);
+		mosquitto_property_free_all(&properties);
 	}
 	CU_ASSERT_PTR_EQUAL(properties, NULL);
 	free(property.value.bin.v);
@@ -256,7 +256,7 @@ static void string_pair_prop_write_helper(
 			CU_ASSERT_PTR_NULL(properties->next);
 			CU_ASSERT_EQUAL(property__get_length_all(properties), 1+2+strlen(name_expected)+2+strlen(value_expected));
 		}
-		property__free_all(&properties);
+		mosquitto_property_free_all(&properties);
 	}
 	CU_ASSERT_PTR_NULL(properties);
 	free(property.value.s.v);
@@ -305,7 +305,7 @@ static void varint_prop_write_helper(
 		}else{
 			CU_FAIL("Incorrect varint value.");
 		}
-		property__free_all(&properties);
+		mosquitto_property_free_all(&properties);
 	}
 	CU_ASSERT_PTR_NULL(properties);
 }

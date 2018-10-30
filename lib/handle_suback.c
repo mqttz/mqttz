@@ -55,7 +55,7 @@ int handle__suback(struct mosquitto *mosq)
 		rc = property__read_all(SUBACK, &mosq->in_packet, &properties);
 		if(rc) return rc;
 		/* Immediately free, we don't do anything with Reason String or User Property at the moment */
-		property__free_all(&properties);
+		mosquitto_property_free_all(&properties);
 	}
 
 	qos_count = mosq->in_packet.remaining_length - mosq->in_packet.pos;

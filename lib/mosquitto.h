@@ -114,6 +114,7 @@ struct mosquitto_message{
 };
 
 struct mosquitto;
+typedef struct mqtt5__property mosquitto_property;
 
 /*
  * Topic: Threads
@@ -1872,6 +1873,29 @@ libmosq_EXPORT int mosquitto_subscribe_callback(
  *   MOSQ_ERR_MALFORMED_UTF8 - if str is not valid UTF-8
  */
 libmosq_EXPORT int mosquitto_validate_utf8(const char *str, int len);
+
+
+/* =============================================================================
+ *
+ * Section: Properties
+ *
+ * =============================================================================
+ */
+
+/*
+ * Function: mosquitto_property_free_all
+ *
+ * Free all properties from a list of properties. Frees the list and sets *properties to NULL.
+ *
+ * Parameters:
+ *   properties - list of properties to free
+ *
+ * Example:
+ *   mosquitto_properties *properties = NULL;
+ *   // Add properties
+ *   mosquitto_property_free_all(&properties);
+ */
+libmosq_EXPORT void mosquitto_property_free_all(mosquitto_property **properties);
 
 
 #ifdef __cplusplus

@@ -48,7 +48,7 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 		rc = property__read_all(UNSUBSCRIBE, &context->in_packet, &properties);
 		if(rc) return rc;
 		/* Immediately free, we don't do anything with User Property at the moment */
-		property__free_all(&properties);
+		mosquitto_property_free_all(&properties);
 	}
 
 	if(context->protocol == mosq_p_mqtt311 || context->protocol == mosq_p_mqtt5){
