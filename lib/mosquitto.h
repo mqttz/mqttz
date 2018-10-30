@@ -1897,6 +1897,20 @@ libmosq_EXPORT int mosquitto_validate_utf8(const char *str, int len);
  */
 libmosq_EXPORT void mosquitto_property_free_all(mosquitto_property **properties);
 
+/*
+ * Function: mosquitto_property_command_check
+ *
+ * Check whether a property identifier is valid for the given command.
+ *
+ * Parameters:
+ *   command - MQTT command (e.g. CMD_CONNECT)
+ *   identifier - MQTT property (e.g. MQTT_PROP_USER_PROPERTY)
+ *
+ * Returns:
+ *   MOSQ_ERR_SUCCESS - if the identifier is valid for command
+ *   MOSQ_ERR_PROTOCOL - if the identifier is not valid for use with command.
+ */
+int mosquitto_property_command_check(int command, int identifier);
 
 #ifdef __cplusplus
 }

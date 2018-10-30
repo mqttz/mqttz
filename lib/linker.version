@@ -96,4 +96,5 @@ MOSQ_1.6 {
 	global:
 		mosquitto_subscribe_multiple;
 		mosquitto_property_free_all;
+		mosquitto_property_command_check;
 } MOSQ_1.5;
