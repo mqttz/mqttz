@@ -40,7 +40,7 @@ int handle__auth(struct mosquitto_db *db, struct mosquitto *context)
 
 	if(packet__read_byte(&context->in_packet, &reason_code)) return 1;
 
-	rc = property__read_all(AUTH, &context->in_packet, &properties);
+	rc = property__read_all(CMD_AUTH, &context->in_packet, &properties);
 	if(rc) return rc;
 	mosquitto_property_free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
 

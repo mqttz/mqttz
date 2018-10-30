@@ -141,7 +141,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 
 	/* Handle properties */
 	if(context->protocol == mosq_p_mqtt5){
-		rc = property__read_all(PUBLISH, &context->in_packet, &properties);
+		rc = property__read_all(CMD_PUBLISH, &context->in_packet, &properties);
 		if(rc) return rc;
 
 		p = properties;
@@ -150,10 +150,10 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 		msg_properties_last = NULL;
 		while(p){
 			switch(p->identifier){
-				case PROP_PAYLOAD_FORMAT_INDICATOR:
-				case PROP_CORRELATION_DATA:
-				case PROP_USER_PROPERTY:
-				case PROP_CONTENT_TYPE:
+				case MQTT_PROP_PAYLOAD_FORMAT_INDICATOR:
+				case MQTT_PROP_CORRELATION_DATA:
+				case MQTT_PROP_USER_PROPERTY:
+				case MQTT_PROP_CONTENT_TYPE:
 					if(msg_properties){
 						msg_properties_last->next = p;
 						msg_properties_last = p;
@@ -172,19 +172,19 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 					}
 					break;
 
-				case PROP_TOPIC_ALIAS:
+				case MQTT_PROP_TOPIC_ALIAS:
 					p = p->next;
 					break;
 
-				case PROP_RESPONSE_TOPIC:
+				case MQTT_PROP_RESPONSE_TOPIC:
 					p = p->next;
 					break;
 
-				case PROP_MESSAGE_EXPIRY_INTERVAL:
+				case MQTT_PROP_MESSAGE_EXPIRY_INTERVAL:
 					p = p->next;
 					break;
 
-				case PROP_SUBSCRIPTION_IDENTIFIER:
+				case MQTT_PROP_SUBSCRIPTION_IDENTIFIER:
 					p = p->next;
 					break;
 

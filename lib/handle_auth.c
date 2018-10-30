@@ -41,7 +41,7 @@ int handle__auth(struct mosquitto *mosq)
 
 	if(packet__read_byte(&mosq->in_packet, &reason_code)) return 1;
 
-	rc = property__read_all(AUTH, &mosq->in_packet, &properties);
+	rc = property__read_all(CMD_AUTH, &mosq->in_packet, &properties);
 	if(rc) return rc;
 	mosquitto_property_free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
 

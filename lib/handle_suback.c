@@ -52,7 +52,7 @@ int handle__suback(struct mosquitto *mosq)
 	if(mid == 0) return MOSQ_ERR_PROTOCOL;
 
 	if(mosq->protocol == mosq_p_mqtt5){
-		rc = property__read_all(SUBACK, &mosq->in_packet, &properties);
+		rc = property__read_all(CMD_SUBACK, &mosq->in_packet, &properties);
 		if(rc) return rc;
 		/* Immediately free, we don't do anything with Reason String or User Property at the moment */
 		mosquitto_property_free_all(&properties);

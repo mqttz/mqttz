@@ -242,7 +242,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	if(protocol_version == PROTOCOL_VERSION_v5){
-		rc = property__read_all(CONNECT, &context->in_packet, &properties);
+		rc = property__read_all(CMD_CONNECT, &context->in_packet, &properties);
 		if(rc) return rc;
 		mosquitto_property_free_all(&properties);
 	}
@@ -729,7 +729,7 @@ int handle__disconnect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	if(context->protocol == mosq_p_mqtt5){
-		rc = property__read_all(DISCONNECT, &context->in_packet, &properties);
+		rc = property__read_all(CMD_DISCONNECT, &context->in_packet, &properties);
 		if(rc) return rc;
 		mosquitto_property_free_all(&properties);
 	}

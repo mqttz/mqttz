@@ -201,7 +201,7 @@ static void duplicate_string_helper(int identifier)
 	payload[7] = 1;
 	payload[8] = 'h';
 
-	string_prop_read_helper(PUBLISH, payload, 9, MOSQ_ERR_PROTOCOL, identifier, "");
+	string_prop_read_helper(CMD_PUBLISH, payload, 9, MOSQ_ERR_PROTOCOL, identifier, "");
 }
 
 static void bad_string_helper(int identifier)
@@ -217,7 +217,7 @@ static void bad_string_helper(int identifier)
 	payload[5] = 0; /* 0 in string not allowed */
 	payload[6] = 'h';
 
-	string_prop_read_helper(PUBLISH, payload, 7, MOSQ_ERR_MALFORMED_UTF8, identifier, "");
+	string_prop_read_helper(CMD_PUBLISH, payload, 7, MOSQ_ERR_MALFORMED_UTF8, identifier, "");
 }
 
 static void binary_prop_read_helper(
@@ -285,7 +285,7 @@ static void string_pair_prop_read_helper(
 	memset(&packet, 0, sizeof(struct mosquitto__packet));
 	packet.payload = payload;
 	packet.remaining_length = remaining_length;
-	rc = property__read_all(CONNECT, &packet, &properties);
+	rc = property__read_all(CMD_CONNECT, &packet, &properties);
 
 	CU_ASSERT_EQUAL(rc, rc_expected);
 	CU_ASSERT_EQUAL(packet.pos, remaining_length);
@@ -320,7 +320,7 @@ static void varint_prop_read_helper(
 	memset(&packet, 0, sizeof(struct mosquitto__packet));
 	packet.payload = payload;
 	packet.remaining_length = remaining_length;
-	rc = property__read_all(PUBLISH, &packet, &properties);
+	rc = property__read_all(CMD_PUBLISH, &packet, &properties);
 
 	CU_ASSERT_EQUAL(rc, rc_expected);
 	if(properties){
@@ -336,8 +336,8 @@ static void varint_prop_read_helper(
 static void packet_helper_reason_string_user_property(int command)
 {
 	uint8_t payload[24] = {23,
-		PROP_REASON_STRING, 0, 6, 'r', 'e', 'a', 's', 'o', 'n',
-		PROP_USER_PROPERTY, 0, 4, 'n', 'a', 'm', 'e', 0, 5, 'v', 'a', 'l', 'u', 'e'};
+		MQTT_PROP_REASON_STRING, 0, 6, 'r', 'e', 'a', 's', 'o', 'n',
+		MQTT_PROP_USER_PROPERTY, 0, 4, 'n', 'a', 'm', 'e', 0, 5, 'v', 'a', 'l', 'u', 'e'};
 
 	struct mosquitto__packet packet;
 	struct mqtt5__property *properties, *p;
@@ -354,14 +354,14 @@ static void packet_helper_reason_string_user_property(int command)
 		CU_ASSERT_PTR_NOT_NULL(properties->next);
 		p = properties;
 
-		CU_ASSERT_EQUAL(p->identifier, PROP_REASON_STRING);
+		CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_REASON_STRING);
 		CU_ASSERT_STRING_EQUAL(p->value.s.v, "reason");
 		CU_ASSERT_EQUAL(p->value.s.len, strlen("reason"));
 
 		p = p->next;
 		CU_ASSERT_PTR_NULL(p->next);
 
-		CU_ASSERT_EQUAL(p->identifier, PROP_USER_PROPERTY);
+		CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_USER_PROPERTY);
 		CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
 		CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
 		CU_ASSERT_STRING_EQUAL(p->name.v, "name");
@@ -386,7 +386,7 @@ static void TEST_no_properties(void)
 	memset(payload, 0, sizeof(payload));
 	packet.payload = payload;
 	packet.remaining_length = 1;
-	rc = property__read_all(CONNECT, &packet, &properties);
+	rc = property__read_all(CMD_CONNECT, &packet, &properties);
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
 	CU_ASSERT_PTR_EQUAL(properties, NULL);
 	CU_ASSERT_EQUAL(packet.pos, 1);
@@ -404,7 +404,7 @@ static void TEST_truncated(void)
 	memset(payload, 0, sizeof(payload));
 	packet.payload = payload;
 	packet.remaining_length = 0;
-	rc = property__read_all(CONNECT, &packet, &properties);
+	rc = property__read_all(CMD_CONNECT, &packet, &properties);
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_PROTOCOL);
 	CU_ASSERT_PTR_EQUAL(properties, NULL);
 	CU_ASSERT_EQUAL(packet.pos, 0);
@@ -415,7 +415,7 @@ static void TEST_truncated(void)
 	payload[0] = 2;
 	packet.payload = payload;
 	packet.remaining_length = 1;
-	rc = property__read_all(CONNECT, &packet, &properties);
+	rc = property__read_all(CMD_CONNECT, &packet, &properties);
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_PROTOCOL);
 	CU_ASSERT_PTR_EQUAL(properties, NULL);
 	CU_ASSERT_EQUAL(packet.pos, 1);
@@ -424,10 +424,10 @@ static void TEST_truncated(void)
 	memset(&packet, 0, sizeof(struct mosquitto__packet));
 	memset(payload, 0, sizeof(payload));
 	payload[0] = 4;
-	payload[1] = PROP_PAYLOAD_FORMAT_INDICATOR;
+	payload[1] = MQTT_PROP_PAYLOAD_FORMAT_INDICATOR;
 	packet.payload = payload;
 	packet.remaining_length = 2;
-	rc = property__read_all(CONNECT, &packet, &properties);
+	rc = property__read_all(CMD_CONNECT, &packet, &properties);
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_PROTOCOL);
 	CU_ASSERT_PTR_EQUAL(properties, NULL);
 	CU_ASSERT_EQUAL(packet.pos, 2);
@@ -450,7 +450,7 @@ static void TEST_invalid_property_id(void)
 	payload[0] = 4;
 	packet.payload = payload;
 	packet.remaining_length = 2;
-	rc = property__read_all(CONNECT, &packet, &properties);
+	rc = property__read_all(CMD_CONNECT, &packet, &properties);
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_MALFORMED_PACKET);
 	CU_ASSERT_PTR_EQUAL(properties, NULL);
 	CU_ASSERT_EQUAL(packet.pos, 2);
@@ -462,7 +462,7 @@ static void TEST_invalid_property_id(void)
 	payload[1] = 4;
 	packet.payload = payload;
 	packet.remaining_length = 2;
-	rc = property__read_all(CONNECT, &packet, &properties);
+	rc = property__read_all(CMD_CONNECT, &packet, &properties);
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_MALFORMED_PACKET);
 	CU_ASSERT_PTR_EQUAL(properties, NULL);
 	CU_ASSERT_EQUAL(packet.pos, 2);
@@ -478,10 +478,10 @@ static void TEST_single_payload_format_indicator(void)
 
 	memset(&payload, 0, sizeof(payload));
 	payload[0] = 2; /* Proplen = Identifier + byte */
-	payload[1] = PROP_PAYLOAD_FORMAT_INDICATOR;
+	payload[1] = MQTT_PROP_PAYLOAD_FORMAT_INDICATOR;
 	payload[2] = 1;
 
-	byte_prop_read_helper(PUBLISH, payload, 3, MOSQ_ERR_SUCCESS, PROP_PAYLOAD_FORMAT_INDICATOR, 1);
+	byte_prop_read_helper(CMD_PUBLISH, payload, 3, MOSQ_ERR_SUCCESS, MQTT_PROP_PAYLOAD_FORMAT_INDICATOR, 1);
 }
 
 static void TEST_single_request_problem_information(void)
@@ -490,10 +490,10 @@ static void TEST_single_request_problem_information(void)
 
 	memset(&payload, 0, sizeof(payload));
 	payload[0] = 2; /* Proplen = Identifier + byte */
-	payload[1] = PROP_REQUEST_PROBLEM_INFO;
+	payload[1] = MQTT_PROP_REQUEST_PROBLEM_INFORMATION;
 	payload[2] = 1;
 
-	byte_prop_read_helper(CONNECT, payload, 3, MOSQ_ERR_SUCCESS, PROP_REQUEST_PROBLEM_INFO, 1);
+	byte_prop_read_helper(CMD_CONNECT, payload, 3, MOSQ_ERR_SUCCESS, MQTT_PROP_REQUEST_PROBLEM_INFORMATION, 1);
 }
 
 static void TEST_single_request_response_information(void)
@@ -502,10 +502,10 @@ static void TEST_single_request_response_information(void)
 
 	memset(&payload, 0, sizeof(payload));
 	payload[0] = 2; /* Proplen = Identifier + byte */
-	payload[1] = PROP_REQUEST_RESPONSE_INFO;
+	payload[1] = MQTT_PROP_REQUEST_RESPONSE_INFORMATION;
 	payload[2] = 1;
 
-	byte_prop_read_helper(CONNECT, payload, 3, MOSQ_ERR_SUCCESS, PROP_REQUEST_RESPONSE_INFO, 1);
+	byte_prop_read_helper(CMD_CONNECT, payload, 3, MOSQ_ERR_SUCCESS, MQTT_PROP_REQUEST_RESPONSE_INFORMATION, 1);
 }
 
 static void TEST_single_maximum_qos(void)
@@ -514,10 +514,10 @@ static void TEST_single_maximum_qos(void)
 
 	memset(&payload, 0, sizeof(payload));
 	payload[0] = 2; /* Proplen = Identifier + byte */
-	payload[1] = PROP_MAXIMUM_QOS;
+	payload[1] = MQTT_PROP_MAXIMUM_QOS;
 	payload[2] = 1;
 
-	byte_prop_read_helper(CONNACK, payload, 3, MOSQ_ERR_SUCCESS, PROP_MAXIMUM_QOS, 1);
+	byte_prop_read_helper(CMD_CONNACK, payload, 3, MOSQ_ERR_SUCCESS, MQTT_PROP_MAXIMUM_QOS, 1);
 }
 
 static void TEST_single_retain_available(void)
@@ -526,10 +526,10 @@ static void TEST_single_retain_available(void)
 
 	memset(&payload, 0, sizeof(payload));
 	payload[0] = 2; /* Proplen = Identifier + byte */
-	payload[1] = PROP_RETAIN_AVAILABLE;
+	payload[1] = MQTT_PROP_RETAIN_AVAILABLE;
 	payload[2] = 1;
 
-	byte_prop_read_helper(CONNACK, payload, 3, MOSQ_ERR_SUCCESS, PROP_RETAIN_AVAILABLE, 1);
+	byte_prop_read_helper(CMD_CONNACK, payload, 3, MOSQ_ERR_SUCCESS, MQTT_PROP_RETAIN_AVAILABLE, 1);
 }
 
 static void TEST_single_wildcard_subscription_available(void)
@@ -538,10 +538,10 @@ static void TEST_single_wildcard_subscription_available(void)
 
 	memset(&payload, 0, sizeof(payload));
 	payload[0] = 2; /* Proplen = Identifier + byte */
-	payload[1] = PROP_WILDCARD_SUB_AVAILABLE;
+	payload[1] = MQTT_PROP_WILDCARD_SUB_AVAILABLE;
 	payload[2] = 0;
 
-	byte_prop_read_helper(CONNACK, payload, 3, MOSQ_ERR_SUCCESS, PROP_WILDCARD_SUB_AVAILABLE, 0);
+	byte_prop_read_helper(CMD_CONNACK, payload, 3, MOSQ_ERR_SUCCESS, MQTT_PROP_WILDCARD_SUB_AVAILABLE, 0);
 }
 
 static void TEST_single_subscription_identifier_available(void)
@@ -550,10 +550,10 @@ static void TEST_single_subscription_identifier_available(void)
 
 	memset(&payload, 0, sizeof(payload));
 	payload[0] = 2; /* Proplen = Identifier + byte */
-	payload[1] = PROP_SUBSCRIPTION_ID_AVAILABLE;
+	payload[1] = MQTT_PROP_SUBSCRIPTION_ID_AVAILABLE;
 	payload[2] = 0;
 
-	byte_prop_read_helper(CONNACK, payload, 3, MOSQ_ERR_SUCCESS, PROP_SUBSCRIPTION_ID_AVAILABLE, 0);
+	byte_prop_read_helper(CMD_CONNACK, payload, 3, MOSQ_ERR_SUCCESS, MQTT_PROP_SUBSCRIPTION_ID_AVAILABLE, 0);
 }
 
 static void TEST_single_shared_subscription_available(void)
@@ -562,10 +562,10 @@ static void TEST_single_shared_subscription_available(void)
 
 	memset(&payload, 0, sizeof(payload));
 	payload[0] = 2; /* Proplen = Identifier + byte */
-	payload[1] = PROP_SHARED_SUB_AVAILABLE;
+	payload[1] = MQTT_PROP_SHARED_SUB_AVAILABLE;
 	payload[2] = 1;
 
-	byte_prop_read_helper(CONNACK, payload, 3, MOSQ_ERR_SUCCESS, PROP_SHARED_SUB_AVAILABLE, 1);
+	byte_prop_read_helper(CMD_CONNACK, payload, 3, MOSQ_ERR_SUCCESS, MQTT_PROP_SHARED_SUB_AVAILABLE, 1);
 }
 
 static void TEST_single_message_expiry_interval(void)
@@ -574,13 +574,13 @@ static void TEST_single_message_expiry_interval(void)
 
 	memset(&payload, 0, sizeof(payload));
 	payload[0] = 5; /* Proplen = Identifier + int32 */
-	payload[1] = PROP_MESSAGE_EXPIRY_INTERVAL;
+	payload[1] = MQTT_PROP_MESSAGE_EXPIRY_INTERVAL;
 	payload[2] = 0x12;
 	payload[3] = 0x23;
 	payload[4] = 0x34;
 	payload[5] = 0x45;
 
-	int32_prop_read_helper(CMD_WILL, payload, 6, MOSQ_ERR_SUCCESS, PROP_MESSAGE_EXPIRY_INTERVAL, 0x12233445);
+	int32_prop_read_helper(CMD_WILL, payload, 6, MOSQ_ERR_SUCCESS, MQTT_PROP_MESSAGE_EXPIRY_INTERVAL, 0x12233445);
 }
 
 static void TEST_single_session_expiry_interval(void)
@@ -589,13 +589,13 @@ static void TEST_single_session_expiry_interval(void)
 
 	memset(&payload, 0, sizeof(payload));
 	payload[0] = 5; /* Proplen = Identifier + int32 */
-	payload[1] = PROP_SESSION_EXPIRY_INTERVAL;
+	payload[1] = MQTT_PROP_SESSION_EXPIRY_INTERVAL;
 	payload[2] = 0x45;
 	payload[3] = 0x34;
 	payload[4] = 0x23;
 	payload[5] = 0x12;
 
-	int32_prop_read_helper(CONNACK, payload, 6, MOSQ_ERR_SUCCESS, PROP_SESSION_EXPIRY_INTERVAL, 0x45342312);
+	int32_prop_read_helper(CMD_CONNACK, payload, 6, MOSQ_ERR_SUCCESS, MQTT_PROP_SESSION_EXPIRY_INTERVAL, 0x45342312);
 }
 
 static void TEST_single_will_delay_interval(void)
@@ -604,13 +604,13 @@ static void TEST_single_will_delay_interval(void)
 
 	memset(&payload, 0, sizeof(payload));
 	payload[0] = 5; /* Proplen = Identifier + int32 */
-	payload[1] = PROP_WILL_DELAY_INTERVAL;
+	payload[1] = MQTT_PROP_WILL_DELAY_INTERVAL;
 	payload[2] = 0x45;
 	payload[3] = 0x34;
 	payload[4] = 0x23;
 	payload[5] = 0x12;
 
-	int32_prop_read_helper(CMD_WILL, payload, 6, MOSQ_ERR_SUCCESS, PROP_WILL_DELAY_INTERVAL, 0x45342312);
+	int32_prop_read_helper(CMD_WILL, payload, 6, MOSQ_ERR_SUCCESS, MQTT_PROP_WILL_DELAY_INTERVAL, 0x45342312);
 }
 
 static void TEST_single_maximum_packet_size(void)
@@ -619,13 +619,13 @@ static void TEST_single_maximum_packet_size(void)
 
 	memset(&payload, 0, sizeof(payload));
 	payload[0] = 5; /* Proplen = Identifier + int32 */
-	payload[1] = PROP_MAXIMUM_PACKET_SIZE;
+	payload[1] = MQTT_PROP_MAXIMUM_PACKET_SIZE;
 	payload[2] = 0x45;
 	payload[3] = 0x34;
 	payload[4] = 0x23;
 	payload[5] = 0x12;
 
-	int32_prop_read_helper(CONNECT, payload, 6, MOSQ_ERR_SUCCESS, PROP_MAXIMUM_PACKET_SIZE, 0x45342312);
+	int32_prop_read_helper(CMD_CONNECT, payload, 6, MOSQ_ERR_SUCCESS, MQTT_PROP_MAXIMUM_PACKET_SIZE, 0x45342312);
 }
 
 static void TEST_single_server_keep_alive(void)
@@ -634,11 +634,11 @@ static void TEST_single_server_keep_alive(void)
 
 	memset(&payload, 0, sizeof(payload));
 	payload[0] = 3; /* Proplen = Identifier + int16 */
-	payload[1] = PROP_SERVER_KEEP_ALIVE;
+	payload[1] = MQTT_PROP_SERVER_KEEP_ALIVE;
 	payload[2] = 0x45;
 	payload[3] = 0x34;
 
-	int16_prop_read_helper(CONNACK, payload, 4, MOSQ_ERR_SUCCESS, PROP_SERVER_KEEP_ALIVE, 0x4534);
+	int16_prop_read_helper(CMD_CONNACK, payload, 4, MOSQ_ERR_SUCCESS, MQTT_PROP_SERVER_KEEP_ALIVE, 0x4534);
 }
 
 static void TEST_single_receive_maximum(void)
@@ -647,11 +647,11 @@ static void TEST_single_receive_maximum(void)
 
 	memset(&payload, 0, sizeof(payload));
 	payload[0] = 3; /* Proplen = Identifier + int16 */
-	payload[1] = PROP_RECEIVE_MAXIMUM;
+	payload[1] = MQTT_PROP_RECEIVE_MAXIMUM;
 	payload[2] = 0x68;
 	payload[3] = 0x42;
 
-	int16_prop_read_helper(CONNACK, payload, 4, MOSQ_ERR_SUCCESS, PROP_RECEIVE_MAXIMUM, 0x6842);
+	int16_prop_read_helper(CMD_CONNACK, payload, 4, MOSQ_ERR_SUCCESS, MQTT_PROP_RECEIVE_MAXIMUM, 0x6842);
 }
 
 static void TEST_single_topic_alias_maximum(void)
@@ -660,11 +660,11 @@ static void TEST_single_topic_alias_maximum(void)
 
 	memset(&payload, 0, sizeof(payload));
 	payload[0] = 3; /* Proplen = Identifier + int16 */
-	payload[1] = PROP_TOPIC_ALIAS_MAXIMUM;
+	payload[1] = MQTT_PROP_TOPIC_ALIAS_MAXIMUM;
 	payload[2] = 0x68;
 	payload[3] = 0x42;
 
-	int16_prop_read_helper(CONNECT, payload, 4, MOSQ_ERR_SUCCESS, PROP_TOPIC_ALIAS_MAXIMUM, 0x6842);
+	int16_prop_read_helper(CMD_CONNECT, payload, 4, MOSQ_ERR_SUCCESS, MQTT_PROP_TOPIC_ALIAS_MAXIMUM, 0x6842);
 }
 
 static void TEST_single_topic_alias(void)
@@ -673,11 +673,11 @@ static void TEST_single_topic_alias(void)
 
 	memset(&payload, 0, sizeof(payload));
 	payload[0] = 3; /* Proplen = Identifier + int16 */
-	payload[1] = PROP_TOPIC_ALIAS;
+	payload[1] = MQTT_PROP_TOPIC_ALIAS;
 	payload[2] = 0x68;
 	payload[3] = 0x42;
 
-	int16_prop_read_helper(PUBLISH, payload, 4, MOSQ_ERR_SUCCESS, PROP_TOPIC_ALIAS, 0x6842);
+	int16_prop_read_helper(CMD_PUBLISH, payload, 4, MOSQ_ERR_SUCCESS, MQTT_PROP_TOPIC_ALIAS, 0x6842);
 }
 
 static void TEST_single_content_type(void)
@@ -686,7 +686,7 @@ static void TEST_single_content_type(void)
 
 	memset(&payload, 0, sizeof(payload));
 	payload[0] = 8;
-	payload[1] = PROP_CONTENT_TYPE;
+	payload[1] = MQTT_PROP_CONTENT_TYPE;
 	payload[2] = 0x00;
 	payload[3] = 0x05;
 	payload[4] = 'h';
@@ -695,7 +695,7 @@ static void TEST_single_content_type(void)
 	payload[7] = 'l';
 	payload[8] = 'o';
 
-	string_prop_read_helper(PUBLISH, payload, 9, MOSQ_ERR_SUCCESS, PROP_CONTENT_TYPE, "hello");
+	string_prop_read_helper(CMD_PUBLISH, payload, 9, MOSQ_ERR_SUCCESS, MQTT_PROP_CONTENT_TYPE, "hello");
 }
 
 static void TEST_single_response_topic(void)
@@ -704,7 +704,7 @@ static void TEST_single_response_topic(void)
 
 	memset(&payload, 0, sizeof(payload));
 	payload[0] = 8;
-	payload[1] = PROP_RESPONSE_TOPIC;
+	payload[1] = MQTT_PROP_RESPONSE_TOPIC;
 	payload[2] = 0x00;
 	payload[3] = 0x05;
 	payload[4] = 'h';
@@ -713,7 +713,7 @@ static void TEST_single_response_topic(void)
 	payload[7] = 'l';
 	payload[8] = 'o';
 
-	string_prop_read_helper(CMD_WILL, payload, 9, MOSQ_ERR_SUCCESS, PROP_RESPONSE_TOPIC, "hello");
+	string_prop_read_helper(CMD_WILL, payload, 9, MOSQ_ERR_SUCCESS, MQTT_PROP_RESPONSE_TOPIC, "hello");
 }
 
 static void TEST_single_assigned_client_identifier(void)
@@ -722,7 +722,7 @@ static void TEST_single_assigned_client_identifier(void)
 
 	memset(&payload, 0, sizeof(payload));
 	payload[0] = 8;
-	payload[1] = PROP_ASSIGNED_CLIENT_IDENTIFIER;
+	payload[1] = MQTT_PROP_ASSIGNED_CLIENT_IDENTIFIER;
 	payload[2] = 0x00;
 	payload[3] = 0x05;
 	payload[4] = 'h';
@@ -731,7 +731,7 @@ static void TEST_single_assigned_client_identifier(void)
 	payload[7] = 'l';
 	payload[8] = 'o';
 
-	string_prop_read_helper(CONNACK, payload, 9, MOSQ_ERR_SUCCESS, PROP_ASSIGNED_CLIENT_IDENTIFIER, "hello");
+	string_prop_read_helper(CMD_CONNACK, payload, 9, MOSQ_ERR_SUCCESS, MQTT_PROP_ASSIGNED_CLIENT_IDENTIFIER, "hello");
 }
 
 static void TEST_single_authentication_method(void)
@@ -740,7 +740,7 @@ static void TEST_single_authentication_method(void)
 
 	memset(&payload, 0, sizeof(payload));
 	payload[0] = 8;
-	payload[1] = PROP_AUTHENTICATION_METHOD;
+	payload[1] = MQTT_PROP_AUTHENTICATION_METHOD;
 	payload[2] = 0x00;
 	payload[3] = 0x05;
 	payload[4] = 'h';
@@ -749,7 +749,7 @@ static void TEST_single_authentication_method(void)
 	payload[7] = 'l';
 	payload[8] = 'o';
 
-	string_prop_read_helper(AUTH, payload, 9, MOSQ_ERR_SUCCESS, PROP_AUTHENTICATION_METHOD, "hello");
+	string_prop_read_helper(CMD_AUTH, payload, 9, MOSQ_ERR_SUCCESS, MQTT_PROP_AUTHENTICATION_METHOD, "hello");
 }
 
 static void TEST_single_response_information(void)
@@ -758,7 +758,7 @@ static void TEST_single_response_information(void)
 
 	memset(&payload, 0, sizeof(payload));
 	payload[0] = 8;
-	payload[1] = PROP_RESPONSE_INFO;
+	payload[1] = MQTT_PROP_RESPONSE_INFORMATION;
 	payload[2] = 0x00;
 	payload[3] = 0x05;
 	payload[4] = 'h';
@@ -767,7 +767,7 @@ static void TEST_single_response_information(void)
 	payload[7] = 'l';
 	payload[8] = 'o';
 
-	string_prop_read_helper(CONNACK, payload, 9, MOSQ_ERR_SUCCESS, PROP_RESPONSE_INFO, "hello");
+	string_prop_read_helper(CMD_CONNACK, payload, 9, MOSQ_ERR_SUCCESS, MQTT_PROP_RESPONSE_INFORMATION, "hello");
 }
 
 static void TEST_single_server_reference(void)
@@ -776,7 +776,7 @@ static void TEST_single_server_reference(void)
 
 	memset(&payload, 0, sizeof(payload));
 	payload[0] = 8;
-	payload[1] = PROP_SERVER_REFERENCE;
+	payload[1] = MQTT_PROP_SERVER_REFERENCE;
 	payload[2] = 0x00;
 	payload[3] = 0x05;
 	payload[4] = 'h';
@@ -785,7 +785,7 @@ static void TEST_single_server_reference(void)
 	payload[7] = 'l';
 	payload[8] = 'o';
 
-	string_prop_read_helper(CONNACK, payload, 9, MOSQ_ERR_SUCCESS, PROP_SERVER_REFERENCE, "hello");
+	string_prop_read_helper(CMD_CONNACK, payload, 9, MOSQ_ERR_SUCCESS, MQTT_PROP_SERVER_REFERENCE, "hello");
 }
 
 static void TEST_single_reason_string(void)
@@ -794,7 +794,7 @@ static void TEST_single_reason_string(void)
 
 	memset(&payload, 0, sizeof(payload));
 	payload[0] = 8;
-	payload[1] = PROP_REASON_STRING;
+	payload[1] = MQTT_PROP_REASON_STRING;
 	payload[2] = 0x00;
 	payload[3] = 0x05;
 	payload[4] = 'h';
@@ -803,7 +803,7 @@ static void TEST_single_reason_string(void)
 	payload[7] = 'l';
 	payload[8] = 'o';
 
-	string_prop_read_helper(PUBCOMP, payload, 9, MOSQ_ERR_SUCCESS, PROP_REASON_STRING, "hello");
+	string_prop_read_helper(CMD_PUBCOMP, payload, 9, MOSQ_ERR_SUCCESS, MQTT_PROP_REASON_STRING, "hello");
 }
 
 static void TEST_single_correlation_data(void)
@@ -812,7 +812,7 @@ static void TEST_single_correlation_data(void)
 
 	memset(&payload, 0, sizeof(payload));
 	payload[0] = 8;
-	payload[1] = PROP_CORRELATION_DATA;
+	payload[1] = MQTT_PROP_CORRELATION_DATA;
 	payload[2] = 0x00;
 	payload[3] = 0x05;
 	payload[4] = 1;
@@ -821,7 +821,7 @@ static void TEST_single_correlation_data(void)
 	payload[7] = 'l';
 	payload[8] = 9;
 
-	binary_prop_read_helper(PUBLISH, payload, 9, MOSQ_ERR_SUCCESS, PROP_CORRELATION_DATA, &payload[4], 5);
+	binary_prop_read_helper(CMD_PUBLISH, payload, 9, MOSQ_ERR_SUCCESS, MQTT_PROP_CORRELATION_DATA, &payload[4], 5);
 }
 
 static void TEST_single_authentication_data(void)
@@ -830,7 +830,7 @@ static void TEST_single_authentication_data(void)
 
 	memset(&payload, 0, sizeof(payload));
 	payload[0] = 8;
-	payload[1] = PROP_AUTHENTICATION_DATA;
+	payload[1] = MQTT_PROP_AUTHENTICATION_DATA;
 	payload[2] = 0x00;
 	payload[3] = 0x05;
 	payload[4] = 1;
@@ -839,7 +839,7 @@ static void TEST_single_authentication_data(void)
 	payload[7] = 'l';
 	payload[8] = 9;
 
-	binary_prop_read_helper(CONNECT, payload, 9, MOSQ_ERR_SUCCESS, PROP_AUTHENTICATION_DATA, &payload[4], 5);
+	binary_prop_read_helper(CMD_CONNECT, payload, 9, MOSQ_ERR_SUCCESS, MQTT_PROP_AUTHENTICATION_DATA, &payload[4], 5);
 }
 
 static void TEST_single_user_property(void)
@@ -847,7 +847,7 @@ static void TEST_single_user_property(void)
 	uint8_t payload[20];
 
 	payload[0] = 9;
-	payload[1] = PROP_USER_PROPERTY;
+	payload[1] = MQTT_PROP_USER_PROPERTY;
 	payload[2] = 0;
 	payload[3] = 2;
 	payload[4] = 'z';
@@ -857,7 +857,7 @@ static void TEST_single_user_property(void)
 	payload[8] = 'b';
 	payload[9] = 'c';
 
-	string_pair_prop_read_helper(payload, 10, MOSQ_ERR_SUCCESS, PROP_USER_PROPERTY, "za", "bc", false);
+	string_pair_prop_read_helper(payload, 10, MOSQ_ERR_SUCCESS, MQTT_PROP_USER_PROPERTY, "za", "bc", false);
 }
 
 static void TEST_single_subscription_identifier(void)
@@ -865,57 +865,57 @@ static void TEST_single_subscription_identifier(void)
 	uint8_t payload[20];
 
 	payload[0] = 2;
-	payload[1] = PROP_SUBSCRIPTION_IDENTIFIER;
+	payload[1] = MQTT_PROP_SUBSCRIPTION_IDENTIFIER;
 	payload[2] = 0;
-	varint_prop_read_helper(payload, 3, MOSQ_ERR_SUCCESS, PROP_SUBSCRIPTION_IDENTIFIER, 0);
+	varint_prop_read_helper(payload, 3, MOSQ_ERR_SUCCESS, MQTT_PROP_SUBSCRIPTION_IDENTIFIER, 0);
 
 	payload[0] = 2;
-	payload[1] = PROP_SUBSCRIPTION_IDENTIFIER;
+	payload[1] = MQTT_PROP_SUBSCRIPTION_IDENTIFIER;
 	payload[2] = 0x7F;
-	varint_prop_read_helper(payload, 3, MOSQ_ERR_SUCCESS, PROP_SUBSCRIPTION_IDENTIFIER, 127);
+	varint_prop_read_helper(payload, 3, MOSQ_ERR_SUCCESS, MQTT_PROP_SUBSCRIPTION_IDENTIFIER, 127);
 
 	payload[0] = 3;
-	payload[1] = PROP_SUBSCRIPTION_IDENTIFIER;
+	payload[1] = MQTT_PROP_SUBSCRIPTION_IDENTIFIER;
 	payload[2] = 0x80;
 	payload[3] = 0x01;
-	varint_prop_read_helper(payload, 4, MOSQ_ERR_SUCCESS, PROP_SUBSCRIPTION_IDENTIFIER, 128);
+	varint_prop_read_helper(payload, 4, MOSQ_ERR_SUCCESS, MQTT_PROP_SUBSCRIPTION_IDENTIFIER, 128);
 
 	payload[0] = 3;
-	payload[1] = PROP_SUBSCRIPTION_IDENTIFIER;
+	payload[1] = MQTT_PROP_SUBSCRIPTION_IDENTIFIER;
 	payload[2] = 0xFF;
 	payload[3] = 0x7F;
-	varint_prop_read_helper(payload, 4, MOSQ_ERR_SUCCESS, PROP_SUBSCRIPTION_IDENTIFIER, 16383);
+	varint_prop_read_helper(payload, 4, MOSQ_ERR_SUCCESS, MQTT_PROP_SUBSCRIPTION_IDENTIFIER, 16383);
 
 	payload[0] = 4;
-	payload[1] = PROP_SUBSCRIPTION_IDENTIFIER;
+	payload[1] = MQTT_PROP_SUBSCRIPTION_IDENTIFIER;
 	payload[2] = 0x80;
 	payload[3] = 0x80;
 	payload[4] = 0x01;
-	varint_prop_read_helper(payload, 5, MOSQ_ERR_SUCCESS, PROP_SUBSCRIPTION_IDENTIFIER, 16384);
+	varint_prop_read_helper(payload, 5, MOSQ_ERR_SUCCESS, MQTT_PROP_SUBSCRIPTION_IDENTIFIER, 16384);
 
 	payload[0] = 4;
-	payload[1] = PROP_SUBSCRIPTION_IDENTIFIER;
+	payload[1] = MQTT_PROP_SUBSCRIPTION_IDENTIFIER;
 	payload[2] = 0xFF;
 	payload[3] = 0xFF;
 	payload[4] = 0x7F;
-	varint_prop_read_helper(payload, 5, MOSQ_ERR_SUCCESS, PROP_SUBSCRIPTION_IDENTIFIER, 2097151);
+	varint_prop_read_helper(payload, 5, MOSQ_ERR_SUCCESS, MQTT_PROP_SUBSCRIPTION_IDENTIFIER, 2097151);
 
 	payload[0] = 5;
-	payload[1] = PROP_SUBSCRIPTION_IDENTIFIER;
+	payload[1] = MQTT_PROP_SUBSCRIPTION_IDENTIFIER;
 	payload[2] = 0x80;
 	payload[3] = 0x80;
 	payload[4] = 0x80;
 	payload[5] = 0x01;
-	varint_prop_read_helper(payload, 6, MOSQ_ERR_SUCCESS, PROP_SUBSCRIPTION_IDENTIFIER, 2097152);
+	varint_prop_read_helper(payload, 6, MOSQ_ERR_SUCCESS, MQTT_PROP_SUBSCRIPTION_IDENTIFIER, 2097152);
 
 
 	payload[0] = 5;
-	payload[1] = PROP_SUBSCRIPTION_IDENTIFIER;
+	payload[1] = MQTT_PROP_SUBSCRIPTION_IDENTIFIER;
 	payload[2] = 0xFF;
 	payload[3] = 0xFF;
 	payload[4] = 0xFF;
 	payload[5] = 0x7F;
-	varint_prop_read_helper(payload, 6, MOSQ_ERR_SUCCESS, PROP_SUBSCRIPTION_IDENTIFIER, 268435455);
+	varint_prop_read_helper(payload, 6, MOSQ_ERR_SUCCESS, MQTT_PROP_SUBSCRIPTION_IDENTIFIER, 268435455);
 }
 
 /* ========================================================================
@@ -924,127 +924,127 @@ static void TEST_single_subscription_identifier(void)
 
 static void TEST_duplicate_payload_format_indicator(void)
 {
-	duplicate_byte_helper(PUBLISH, PROP_PAYLOAD_FORMAT_INDICATOR);
+	duplicate_byte_helper(CMD_PUBLISH, MQTT_PROP_PAYLOAD_FORMAT_INDICATOR);
 }
 
 static void TEST_duplicate_request_problem_information(void)
 {
-	duplicate_byte_helper(CONNECT, PROP_REQUEST_PROBLEM_INFO);
+	duplicate_byte_helper(CMD_CONNECT, MQTT_PROP_REQUEST_PROBLEM_INFORMATION);
 }
 
 static void TEST_duplicate_request_response_information(void)
 {
-	duplicate_byte_helper(CONNECT, PROP_REQUEST_RESPONSE_INFO);
+	duplicate_byte_helper(CMD_CONNECT, MQTT_PROP_REQUEST_RESPONSE_INFORMATION);
 }
 
 static void TEST_duplicate_maximum_qos(void)
 {
-	duplicate_byte_helper(CONNACK, PROP_MAXIMUM_QOS);
+	duplicate_byte_helper(CMD_CONNACK, MQTT_PROP_MAXIMUM_QOS);
 }
 
 static void TEST_duplicate_retain_available(void)
 {
-	duplicate_byte_helper(CONNACK, PROP_RETAIN_AVAILABLE);
+	duplicate_byte_helper(CMD_CONNACK, MQTT_PROP_RETAIN_AVAILABLE);
 }
 
 static void TEST_duplicate_wildcard_subscription_available(void)
 {
-	duplicate_byte_helper(CONNACK, PROP_WILDCARD_SUB_AVAILABLE);
+	duplicate_byte_helper(CMD_CONNACK, MQTT_PROP_WILDCARD_SUB_AVAILABLE);
 }
 
 static void TEST_duplicate_subscription_identifier_available(void)
 {
-	duplicate_byte_helper(CONNACK, PROP_SUBSCRIPTION_ID_AVAILABLE);
+	duplicate_byte_helper(CMD_CONNACK, MQTT_PROP_SUBSCRIPTION_ID_AVAILABLE);
 }
 
 static void TEST_duplicate_shared_subscription_available(void)
 {
-	duplicate_byte_helper(CONNACK, PROP_SHARED_SUB_AVAILABLE);
+	duplicate_byte_helper(CMD_CONNACK, MQTT_PROP_SHARED_SUB_AVAILABLE);
 }
 
 static void TEST_duplicate_message_expiry_interval(void)
 {
-	duplicate_int32_helper(PUBLISH, PROP_MESSAGE_EXPIRY_INTERVAL);
+	duplicate_int32_helper(CMD_PUBLISH, MQTT_PROP_MESSAGE_EXPIRY_INTERVAL);
 }
 
 static void TEST_duplicate_session_expiry_interval(void)
 {
-	duplicate_int32_helper(DISCONNECT, PROP_SESSION_EXPIRY_INTERVAL);
+	duplicate_int32_helper(CMD_DISCONNECT, MQTT_PROP_SESSION_EXPIRY_INTERVAL);
 }
 
 static void TEST_duplicate_will_delay_interval(void)
 {
-	duplicate_int32_helper(CMD_WILL, PROP_WILL_DELAY_INTERVAL);
+	duplicate_int32_helper(CMD_WILL, MQTT_PROP_WILL_DELAY_INTERVAL);
 }
 
 static void TEST_duplicate_maximum_packet_size(void)
 {
-	duplicate_int32_helper(CONNECT, PROP_MAXIMUM_PACKET_SIZE);
+	duplicate_int32_helper(CMD_CONNECT, MQTT_PROP_MAXIMUM_PACKET_SIZE);
 }
 
 static void TEST_duplicate_server_keep_alive(void)
 {
-	duplicate_int16_helper(CONNACK, PROP_SERVER_KEEP_ALIVE);
+	duplicate_int16_helper(CMD_CONNACK, MQTT_PROP_SERVER_KEEP_ALIVE);
 }
 
 static void TEST_duplicate_receive_maximum(void)
 {
-	duplicate_int16_helper(CONNACK, PROP_RECEIVE_MAXIMUM);
+	duplicate_int16_helper(CMD_CONNACK, MQTT_PROP_RECEIVE_MAXIMUM);
 }
 
 static void TEST_duplicate_topic_alias_maximum(void)
 {
-	duplicate_int16_helper(CONNECT, PROP_TOPIC_ALIAS_MAXIMUM);
+	duplicate_int16_helper(CMD_CONNECT, MQTT_PROP_TOPIC_ALIAS_MAXIMUM);
 }
 
 static void TEST_duplicate_topic_alias(void)
 {
-	duplicate_int16_helper(PUBLISH, PROP_TOPIC_ALIAS);
+	duplicate_int16_helper(CMD_PUBLISH, MQTT_PROP_TOPIC_ALIAS);
 }
 
 static void TEST_duplicate_content_type(void)
 {
-	duplicate_string_helper(PROP_CONTENT_TYPE);
+	duplicate_string_helper(MQTT_PROP_CONTENT_TYPE);
 }
 
 static void TEST_duplicate_response_topic(void)
 {
-	duplicate_string_helper(PROP_RESPONSE_TOPIC);
+	duplicate_string_helper(MQTT_PROP_RESPONSE_TOPIC);
 }
 
 static void TEST_duplicate_assigned_client_identifier(void)
 {
-	duplicate_string_helper(PROP_ASSIGNED_CLIENT_IDENTIFIER);
+	duplicate_string_helper(MQTT_PROP_ASSIGNED_CLIENT_IDENTIFIER);
 }
 
 static void TEST_duplicate_authentication_method(void)
 {
-	duplicate_string_helper(PROP_AUTHENTICATION_METHOD);
+	duplicate_string_helper(MQTT_PROP_AUTHENTICATION_METHOD);
 }
 
 static void TEST_duplicate_response_information(void)
 {
-	duplicate_string_helper(PROP_RESPONSE_INFO);
+	duplicate_string_helper(MQTT_PROP_RESPONSE_INFORMATION);
 }
 
 static void TEST_duplicate_server_reference(void)
 {
-	duplicate_string_helper(PROP_SERVER_REFERENCE);
+	duplicate_string_helper(MQTT_PROP_SERVER_REFERENCE);
 }
 
 static void TEST_duplicate_reason_string(void)
 {
-	duplicate_string_helper(PROP_REASON_STRING);
+	duplicate_string_helper(MQTT_PROP_REASON_STRING);
 }
 
 static void TEST_duplicate_correlation_data(void)
 {
-	duplicate_binary_helper(PUBLISH, PROP_CORRELATION_DATA);
+	duplicate_binary_helper(CMD_PUBLISH, MQTT_PROP_CORRELATION_DATA);
 }
 
 static void TEST_duplicate_authentication_data(void)
 {
-	duplicate_binary_helper(CONNACK, PROP_AUTHENTICATION_DATA);
+	duplicate_binary_helper(CMD_CONNACK, MQTT_PROP_AUTHENTICATION_DATA);
 }
 
 static void TEST_duplicate_user_property(void)
@@ -1053,7 +1053,7 @@ static void TEST_duplicate_user_property(void)
 
 	memset(&payload, 0, sizeof(payload));
 	payload[0] = 18; /* Proplen = (Identifier + byte)*2 */
-	payload[1] = PROP_USER_PROPERTY;
+	payload[1] = MQTT_PROP_USER_PROPERTY;
 	payload[2] = 0;
 	payload[3] = 2;
 	payload[4] = 'a';
@@ -1062,7 +1062,7 @@ static void TEST_duplicate_user_property(void)
 	payload[7] = 2;
 	payload[8] = 'g';
 	payload[9] = 'h';
-	payload[10] = PROP_USER_PROPERTY;
+	payload[10] = MQTT_PROP_USER_PROPERTY;
 	payload[11] = 0;
 	payload[12] = 2;
 	payload[13] = 'c';
@@ -1072,7 +1072,7 @@ static void TEST_duplicate_user_property(void)
 	payload[17] = 'e';
 	payload[18] = 'f';
 
-	string_pair_prop_read_helper(payload, 19, MOSQ_ERR_SUCCESS, PROP_USER_PROPERTY, "ab", "gh", true);
+	string_pair_prop_read_helper(payload, 19, MOSQ_ERR_SUCCESS, MQTT_PROP_USER_PROPERTY, "ab", "gh", true);
 }
 
 static void TEST_duplicate_subscription_identifier(void)
@@ -1081,13 +1081,13 @@ static void TEST_duplicate_subscription_identifier(void)
 
 	memset(&payload, 0, sizeof(payload));
 	payload[0] = 4; /* Proplen = (Identifier + byte)*2 */
-	payload[1] = PROP_SUBSCRIPTION_IDENTIFIER;
+	payload[1] = MQTT_PROP_SUBSCRIPTION_IDENTIFIER;
 	payload[2] = 0x80;
 	payload[3] = 0x02;
-	payload[4] = PROP_SUBSCRIPTION_IDENTIFIER;
+	payload[4] = MQTT_PROP_SUBSCRIPTION_IDENTIFIER;
 	payload[5] = 0x04;
 
-	varint_prop_read_helper(payload, 5, MOSQ_ERR_PROTOCOL, PROP_SUBSCRIPTION_IDENTIFIER, 0);
+	varint_prop_read_helper(payload, 5, MOSQ_ERR_PROTOCOL, MQTT_PROP_SUBSCRIPTION_IDENTIFIER, 0);
 }
 
 /* ========================================================================
@@ -1096,37 +1096,37 @@ static void TEST_duplicate_subscription_identifier(void)
 
 static void TEST_bad_request_problem_information(void)
 {
-	bad_byte_helper(CONNECT, PROP_REQUEST_PROBLEM_INFO);
+	bad_byte_helper(CMD_CONNECT, MQTT_PROP_REQUEST_PROBLEM_INFORMATION);
 }
 
 static void TEST_bad_request_response_information(void)
 {
-	bad_byte_helper(CONNECT, PROP_REQUEST_RESPONSE_INFO);
+	bad_byte_helper(CMD_CONNECT, MQTT_PROP_REQUEST_RESPONSE_INFORMATION);
 }
 
 static void TEST_bad_maximum_qos(void)
 {
-	bad_byte_helper(CONNACK, PROP_MAXIMUM_QOS);
+	bad_byte_helper(CMD_CONNACK, MQTT_PROP_MAXIMUM_QOS);
 }
 
 static void TEST_bad_retain_available(void)
 {
-	bad_byte_helper(CONNACK, PROP_RETAIN_AVAILABLE);
+	bad_byte_helper(CMD_CONNACK, MQTT_PROP_RETAIN_AVAILABLE);
 }
 
 static void TEST_bad_wildcard_sub_available(void)
 {
-	bad_byte_helper(CONNACK, PROP_WILDCARD_SUB_AVAILABLE);
+	bad_byte_helper(CMD_CONNACK, MQTT_PROP_WILDCARD_SUB_AVAILABLE);
 }
 
 static void TEST_bad_subscription_id_available(void)
 {
-	bad_byte_helper(CONNACK, PROP_SUBSCRIPTION_ID_AVAILABLE);
+	bad_byte_helper(CMD_CONNACK, MQTT_PROP_SUBSCRIPTION_ID_AVAILABLE);
 }
 
 static void TEST_bad_shared_sub_available(void)
 {
-	bad_byte_helper(CONNACK, PROP_SHARED_SUB_AVAILABLE);
+	bad_byte_helper(CMD_CONNACK, MQTT_PROP_SHARED_SUB_AVAILABLE);
 }
 
 static void TEST_bad_maximum_packet_size(void)
@@ -1135,13 +1135,13 @@ static void TEST_bad_maximum_packet_size(void)
 
 	memset(&payload, 0, sizeof(payload));
 	payload[0] = 5; /* Proplen = Identifier + int32 */
-	payload[1] = PROP_MAXIMUM_PACKET_SIZE;
+	payload[1] = MQTT_PROP_MAXIMUM_PACKET_SIZE;
 	payload[2] = 0;
 	payload[3] = 0;
 	payload[4] = 0;
 	payload[5] = 0; /* 0 is invalid */
 
-	int32_prop_read_helper(CONNACK, payload, 6, MOSQ_ERR_PROTOCOL, PROP_MAXIMUM_PACKET_SIZE, 0);
+	int32_prop_read_helper(CMD_CONNACK, payload, 6, MOSQ_ERR_PROTOCOL, MQTT_PROP_MAXIMUM_PACKET_SIZE, 0);
 }
 
 static void TEST_bad_receive_maximum(void)
@@ -1150,11 +1150,11 @@ static void TEST_bad_receive_maximum(void)
 
 	memset(&payload, 0, sizeof(payload));
 	payload[0] = 3; /* Proplen = Identifier + int16 */
-	payload[1] = PROP_RECEIVE_MAXIMUM;
+	payload[1] = MQTT_PROP_RECEIVE_MAXIMUM;
 	payload[2] = 0;
 	payload[3] = 0; /* 0 is invalid */
 
-	int32_prop_read_helper(CONNECT, payload, 4, MOSQ_ERR_PROTOCOL, PROP_RECEIVE_MAXIMUM, 0);
+	int32_prop_read_helper(CMD_CONNECT, payload, 4, MOSQ_ERR_PROTOCOL, MQTT_PROP_RECEIVE_MAXIMUM, 0);
 }
 
 static void TEST_bad_topic_alias(void)
@@ -1163,16 +1163,16 @@ static void TEST_bad_topic_alias(void)
 
 	memset(&payload, 0, sizeof(payload));
 	payload[0] = 3; /* Proplen = Identifier + int16 */
-	payload[1] = PROP_TOPIC_ALIAS;
+	payload[1] = MQTT_PROP_TOPIC_ALIAS;
 	payload[2] = 0;
 	payload[3] = 0; /* 0 is invalid */
 
-	int32_prop_read_helper(PUBLISH, payload, 4, MOSQ_ERR_PROTOCOL, PROP_TOPIC_ALIAS, 0);
+	int32_prop_read_helper(CMD_PUBLISH, payload, 4, MOSQ_ERR_PROTOCOL, MQTT_PROP_TOPIC_ALIAS, 0);
 }
 
 static void TEST_bad_content_type(void)
 {
-	bad_string_helper(PROP_CONTENT_TYPE);
+	bad_string_helper(MQTT_PROP_CONTENT_TYPE);
 }
 
 static void TEST_bad_subscription_identifier(void)
@@ -1181,14 +1181,14 @@ static void TEST_bad_subscription_identifier(void)
 
 	memset(&payload, 0, sizeof(payload));
 	payload[0] = 6;
-	payload[1] = PROP_SUBSCRIPTION_IDENTIFIER;
+	payload[1] = MQTT_PROP_SUBSCRIPTION_IDENTIFIER;
 	payload[2] = 0xFF;
 	payload[3] = 0xFF;
 	payload[4] = 0xFF;
 	payload[5] = 0xFF;
 	payload[6] = 0x01;
 
-	varint_prop_read_helper(payload, 7, MOSQ_ERR_PROTOCOL, PROP_SUBSCRIPTION_IDENTIFIER, 0);
+	varint_prop_read_helper(payload, 7, MOSQ_ERR_PROTOCOL, MQTT_PROP_SUBSCRIPTION_IDENTIFIER, 0);
 }
 
 /* ========================================================================
@@ -1198,15 +1198,15 @@ static void TEST_bad_subscription_identifier(void)
 static void TEST_packet_connect(void)
 {
 	uint8_t payload[] = {0,
-		PROP_SESSION_EXPIRY_INTERVAL, 0x12, 0x45, 0x00, 0x00,
-		PROP_RECEIVE_MAXIMUM, 0x00, 0x05,
-		PROP_MAXIMUM_PACKET_SIZE, 0x12, 0x45, 0x00, 0x00,
-		PROP_TOPIC_ALIAS_MAXIMUM, 0x00, 0x02,
-		PROP_REQUEST_PROBLEM_INFO, 1,
-		PROP_REQUEST_RESPONSE_INFO, 1,
-		PROP_USER_PROPERTY, 0, 4, 'n', 'a', 'm', 'e', 0, 5, 'v', 'a', 'l', 'u', 'e',
-		PROP_AUTHENTICATION_METHOD, 0x00, 0x04, 'n', 'o', 'n', 'e',
-		PROP_AUTHENTICATION_DATA, 0x00, 0x02, 1, 2};
+		MQTT_PROP_SESSION_EXPIRY_INTERVAL, 0x12, 0x45, 0x00, 0x00,
+		MQTT_PROP_RECEIVE_MAXIMUM, 0x00, 0x05,
+		MQTT_PROP_MAXIMUM_PACKET_SIZE, 0x12, 0x45, 0x00, 0x00,
+		MQTT_PROP_TOPIC_ALIAS_MAXIMUM, 0x00, 0x02,
+		MQTT_PROP_REQUEST_PROBLEM_INFORMATION, 1,
+		MQTT_PROP_REQUEST_RESPONSE_INFORMATION, 1,
+		MQTT_PROP_USER_PROPERTY, 0, 4, 'n', 'a', 'm', 'e', 0, 5, 'v', 'a', 'l', 'u', 'e',
+		MQTT_PROP_AUTHENTICATION_METHOD, 0x00, 0x04, 'n', 'o', 'n', 'e',
+		MQTT_PROP_AUTHENTICATION_DATA, 0x00, 0x02, 1, 2};
 
 	struct mosquitto__packet packet;
 	struct mqtt5__property *properties, *p;
@@ -1217,44 +1217,44 @@ static void TEST_packet_connect(void)
 	memset(&packet, 0, sizeof(struct mosquitto__packet));
 	packet.payload = payload;
 	packet.remaining_length = sizeof(payload);;
-	rc = property__read_all(CONNECT, &packet, &properties);
+	rc = property__read_all(CMD_CONNECT, &packet, &properties);
 
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
 	CU_ASSERT_PTR_NOT_NULL(properties->next);
 	p = properties;
 
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_SESSION_EXPIRY_INTERVAL);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_SESSION_EXPIRY_INTERVAL);
 	CU_ASSERT_EQUAL(p->value.i32, 0x12450000);
 
 	p = p->next;
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_RECEIVE_MAXIMUM);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_RECEIVE_MAXIMUM);
 	CU_ASSERT_EQUAL(p->value.i16, 0x0005);
 
 	p = p->next;
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_MAXIMUM_PACKET_SIZE);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_MAXIMUM_PACKET_SIZE);
 	CU_ASSERT_EQUAL(p->value.i32, 0x12450000);
 
 	p = p->next;
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_TOPIC_ALIAS_MAXIMUM);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_TOPIC_ALIAS_MAXIMUM);
 	CU_ASSERT_EQUAL(p->value.i16, 0x0002);
 
 	p = p->next;
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_REQUEST_PROBLEM_INFO);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_REQUEST_PROBLEM_INFORMATION);
 	CU_ASSERT_EQUAL(p->value.i8, 1);
 
 	p = p->next;
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_REQUEST_RESPONSE_INFO);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_REQUEST_RESPONSE_INFORMATION);
 	CU_ASSERT_EQUAL(p->value.i8, 1);
 
 	p = p->next;
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_USER_PROPERTY);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_USER_PROPERTY);
 	CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
 	CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
 	CU_ASSERT_STRING_EQUAL(p->name.v, "name");
@@ -1262,13 +1262,13 @@ static void TEST_packet_connect(void)
 
 	p = p->next;
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_AUTHENTICATION_METHOD);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_AUTHENTICATION_METHOD);
 	CU_ASSERT_STRING_EQUAL(p->value.s.v, "none");
 	CU_ASSERT_EQUAL(p->value.s.len, strlen("none"));
 
 	p = p->next;
 	CU_ASSERT_PTR_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_AUTHENTICATION_DATA);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_AUTHENTICATION_DATA);
 	CU_ASSERT_EQUAL(p->value.bin.v[0], 1);
 	CU_ASSERT_EQUAL(p->value.bin.v[1], 2);
 	CU_ASSERT_EQUAL(p->value.s.len, 2);
@@ -1279,23 +1279,23 @@ static void TEST_packet_connect(void)
 static void TEST_packet_connack(void)
 {
 	uint8_t payload[] = {0,
-		PROP_SESSION_EXPIRY_INTERVAL, 0x12, 0x45, 0x00, 0x00,
-		PROP_RECEIVE_MAXIMUM, 0x00, 0x05,
-		PROP_MAXIMUM_QOS, 1,
-		PROP_RETAIN_AVAILABLE, 0,
-		PROP_MAXIMUM_PACKET_SIZE, 0x12, 0x45, 0x00, 0x00,
-		PROP_ASSIGNED_CLIENT_IDENTIFIER, 0x00, 0x02, 'a', 'b',
-		PROP_TOPIC_ALIAS_MAXIMUM, 0x00, 0x02,
-		PROP_REASON_STRING, 0, 6, 'r', 'e', 'a', 's', 'o', 'n',
-		PROP_USER_PROPERTY, 0, 4, 'n', 'a', 'm', 'e', 0, 5, 'v', 'a', 'l', 'u', 'e',
-		PROP_WILDCARD_SUB_AVAILABLE, 0,
-		PROP_SUBSCRIPTION_ID_AVAILABLE, 0,
-		PROP_SHARED_SUB_AVAILABLE, 0,
-		PROP_SERVER_KEEP_ALIVE, 0x00, 0xFF,
-		PROP_RESPONSE_INFO, 0x00, 0x03, 'r', 's', 'p',
-		PROP_SERVER_REFERENCE, 0x00, 0x04, 's', 'e', 'r', 'v',
-		PROP_AUTHENTICATION_METHOD, 0x00, 0x04, 'n', 'o', 'n', 'e',
-		PROP_AUTHENTICATION_DATA, 0x00, 0x02, 1, 2};
+		MQTT_PROP_SESSION_EXPIRY_INTERVAL, 0x12, 0x45, 0x00, 0x00,
+		MQTT_PROP_RECEIVE_MAXIMUM, 0x00, 0x05,
+		MQTT_PROP_MAXIMUM_QOS, 1,
+		MQTT_PROP_RETAIN_AVAILABLE, 0,
+		MQTT_PROP_MAXIMUM_PACKET_SIZE, 0x12, 0x45, 0x00, 0x00,
+		MQTT_PROP_ASSIGNED_CLIENT_IDENTIFIER, 0x00, 0x02, 'a', 'b',
+		MQTT_PROP_TOPIC_ALIAS_MAXIMUM, 0x00, 0x02,
+		MQTT_PROP_REASON_STRING, 0, 6, 'r', 'e', 'a', 's', 'o', 'n',
+		MQTT_PROP_USER_PROPERTY, 0, 4, 'n', 'a', 'm', 'e', 0, 5, 'v', 'a', 'l', 'u', 'e',
+		MQTT_PROP_WILDCARD_SUB_AVAILABLE, 0,
+		MQTT_PROP_SUBSCRIPTION_ID_AVAILABLE, 0,
+		MQTT_PROP_SHARED_SUB_AVAILABLE, 0,
+		MQTT_PROP_SERVER_KEEP_ALIVE, 0x00, 0xFF,
+		MQTT_PROP_RESPONSE_INFORMATION, 0x00, 0x03, 'r', 's', 'p',
+		MQTT_PROP_SERVER_REFERENCE, 0x00, 0x04, 's', 'e', 'r', 'v',
+		MQTT_PROP_AUTHENTICATION_METHOD, 0x00, 0x04, 'n', 'o', 'n', 'e',
+		MQTT_PROP_AUTHENTICATION_DATA, 0x00, 0x02, 1, 2};
 
 	struct mosquitto__packet packet;
 	struct mqtt5__property *properties, *p;
@@ -1306,56 +1306,56 @@ static void TEST_packet_connack(void)
 	memset(&packet, 0, sizeof(struct mosquitto__packet));
 	packet.payload = payload;
 	packet.remaining_length = sizeof(payload);;
-	rc = property__read_all(CONNACK, &packet, &properties);
+	rc = property__read_all(CMD_CONNACK, &packet, &properties);
 
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
 	CU_ASSERT_PTR_NOT_NULL(properties->next);
 	p = properties;
 
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_SESSION_EXPIRY_INTERVAL);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_SESSION_EXPIRY_INTERVAL);
 	CU_ASSERT_EQUAL(p->value.i32, 0x12450000);
 
 	p = p->next;
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_RECEIVE_MAXIMUM);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_RECEIVE_MAXIMUM);
 	CU_ASSERT_EQUAL(p->value.i16, 0x0005);
 
 	p = p->next;
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_MAXIMUM_QOS);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_MAXIMUM_QOS);
 	CU_ASSERT_EQUAL(p->value.i8, 1);
 
 	p = p->next;
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_RETAIN_AVAILABLE);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_RETAIN_AVAILABLE);
 	CU_ASSERT_EQUAL(p->value.i8, 0);
 
 	p = p->next;
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_MAXIMUM_PACKET_SIZE);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_MAXIMUM_PACKET_SIZE);
 	CU_ASSERT_EQUAL(p->value.i32, 0x12450000);
 
 	p = p->next;
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_ASSIGNED_CLIENT_IDENTIFIER);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_ASSIGNED_CLIENT_IDENTIFIER);
 	CU_ASSERT_STRING_EQUAL(p->value.s.v, "ab");
 	CU_ASSERT_EQUAL(p->value.s.len, strlen("ab"));
 
 	p = p->next;
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_TOPIC_ALIAS_MAXIMUM);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_TOPIC_ALIAS_MAXIMUM);
 	CU_ASSERT_EQUAL(p->value.i16, 0x0002);
 
 	p = p->next;
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_REASON_STRING);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_REASON_STRING);
 	CU_ASSERT_STRING_EQUAL(p->value.s.v, "reason");
 	CU_ASSERT_EQUAL(p->value.s.len, strlen("reason"));
 
 	p = p->next;
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_USER_PROPERTY);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_USER_PROPERTY);
 	CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
 	CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
 	CU_ASSERT_STRING_EQUAL(p->name.v, "name");
@@ -1363,45 +1363,45 @@ static void TEST_packet_connack(void)
 
 	p = p->next;
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_WILDCARD_SUB_AVAILABLE);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_WILDCARD_SUB_AVAILABLE);
 	CU_ASSERT_EQUAL(p->value.i8, 0);
 
 	p = p->next;
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_SUBSCRIPTION_ID_AVAILABLE);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_SUBSCRIPTION_ID_AVAILABLE);
 	CU_ASSERT_EQUAL(p->value.i8, 0);
 
 	p = p->next;
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_SHARED_SUB_AVAILABLE);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_SHARED_SUB_AVAILABLE);
 	CU_ASSERT_EQUAL(p->value.i8, 0);
 
 	p = p->next;
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_SERVER_KEEP_ALIVE);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_SERVER_KEEP_ALIVE);
 	CU_ASSERT_EQUAL(p->value.i16, 0x00FF);
 
 	p = p->next;
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_RESPONSE_INFO);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_RESPONSE_INFORMATION);
 	CU_ASSERT_STRING_EQUAL(p->value.s.v, "rsp");
 	CU_ASSERT_EQUAL(p->value.s.len, strlen("rsp"));
 
 	p = p->next;
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_SERVER_REFERENCE);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_SERVER_REFERENCE);
 	CU_ASSERT_STRING_EQUAL(p->value.s.v, "serv");
 	CU_ASSERT_EQUAL(p->value.s.len, strlen("serv"));
 
 	p = p->next;
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_AUTHENTICATION_METHOD);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_AUTHENTICATION_METHOD);
 	CU_ASSERT_STRING_EQUAL(p->value.s.v, "none");
 	CU_ASSERT_EQUAL(p->value.s.len, strlen("none"));
 
 	p = p->next;
 	CU_ASSERT_PTR_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_AUTHENTICATION_DATA);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_AUTHENTICATION_DATA);
 	CU_ASSERT_EQUAL(p->value.bin.v[0], 1);
 	CU_ASSERT_EQUAL(p->value.bin.v[1], 2);
 	CU_ASSERT_EQUAL(p->value.s.len, 2);
@@ -1412,14 +1412,14 @@ static void TEST_packet_connack(void)
 static void TEST_packet_publish(void)
 {
 	uint8_t payload[] = {0,
-		PROP_PAYLOAD_FORMAT_INDICATOR, 1,
-		PROP_MESSAGE_EXPIRY_INTERVAL, 0x12, 0x45, 0x00, 0x00,
-		PROP_TOPIC_ALIAS, 0x00, 0x02,
-		PROP_RESPONSE_TOPIC, 0, 6, 'r', 'e', 's', 'p', 'o', 'n',
-		PROP_CORRELATION_DATA, 0x00, 0x02, 1, 2,
-		PROP_USER_PROPERTY, 0, 4, 'n', 'a', 'm', 'e', 0, 5, 'v', 'a', 'l', 'u', 'e',
-		PROP_SUBSCRIPTION_IDENTIFIER, 0x04,
-		PROP_CONTENT_TYPE, 0, 5, 'e', 'm', 'p', 't', 'y'};
+		MQTT_PROP_PAYLOAD_FORMAT_INDICATOR, 1,
+		MQTT_PROP_MESSAGE_EXPIRY_INTERVAL, 0x12, 0x45, 0x00, 0x00,
+		MQTT_PROP_TOPIC_ALIAS, 0x00, 0x02,
+		MQTT_PROP_RESPONSE_TOPIC, 0, 6, 'r', 'e', 's', 'p', 'o', 'n',
+		MQTT_PROP_CORRELATION_DATA, 0x00, 0x02, 1, 2,
+		MQTT_PROP_USER_PROPERTY, 0, 4, 'n', 'a', 'm', 'e', 0, 5, 'v', 'a', 'l', 'u', 'e',
+		MQTT_PROP_SUBSCRIPTION_IDENTIFIER, 0x04,
+		MQTT_PROP_CONTENT_TYPE, 0, 5, 'e', 'm', 'p', 't', 'y'};
 
 	struct mosquitto__packet packet;
 	struct mqtt5__property *properties, *p;
@@ -1430,42 +1430,42 @@ static void TEST_packet_publish(void)
 	memset(&packet, 0, sizeof(struct mosquitto__packet));
 	packet.payload = payload;
 	packet.remaining_length = sizeof(payload);;
-	rc = property__read_all(PUBLISH, &packet, &properties);
+	rc = property__read_all(CMD_PUBLISH, &packet, &properties);
 
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
 	CU_ASSERT_PTR_NOT_NULL(properties->next);
 	p = properties;
 
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_PAYLOAD_FORMAT_INDICATOR);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_PAYLOAD_FORMAT_INDICATOR);
 	CU_ASSERT_EQUAL(p->value.i8, 1);
 
 	p = p->next;
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_MESSAGE_EXPIRY_INTERVAL);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_MESSAGE_EXPIRY_INTERVAL);
 	CU_ASSERT_EQUAL(p->value.i32, 0x12450000);
 
 	p = p->next;
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_TOPIC_ALIAS);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_TOPIC_ALIAS);
 	CU_ASSERT_EQUAL(p->value.i16, 0x0002);
 
 	p = p->next;
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_RESPONSE_TOPIC);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_RESPONSE_TOPIC);
 	CU_ASSERT_STRING_EQUAL(p->value.s.v, "respon");
 	CU_ASSERT_EQUAL(p->value.s.len, strlen("respon"));
 
 	p = p->next;
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_CORRELATION_DATA);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_CORRELATION_DATA);
 	CU_ASSERT_EQUAL(p->value.bin.v[0], 1);
 	CU_ASSERT_EQUAL(p->value.bin.v[1], 2);
 	CU_ASSERT_EQUAL(p->value.bin.len, 2);
 
 	p = p->next;
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_USER_PROPERTY);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_USER_PROPERTY);
 	CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
 	CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
 	CU_ASSERT_STRING_EQUAL(p->name.v, "name");
@@ -1473,12 +1473,12 @@ static void TEST_packet_publish(void)
 
 	p = p->next;
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_SUBSCRIPTION_IDENTIFIER);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_SUBSCRIPTION_IDENTIFIER);
 	CU_ASSERT_EQUAL(p->value.varint, 0x00000004);
 
 	p = p->next;
 	CU_ASSERT_PTR_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_CONTENT_TYPE);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_CONTENT_TYPE);
 	CU_ASSERT_STRING_EQUAL(p->value.s.v, "empty");
 	CU_ASSERT_EQUAL(p->value.s.len, strlen("empty"));
 
@@ -1487,29 +1487,29 @@ static void TEST_packet_publish(void)
 
 static void TEST_packet_puback(void)
 {
-	packet_helper_reason_string_user_property(PUBACK);
+	packet_helper_reason_string_user_property(CMD_PUBACK);
 }
 
 static void TEST_packet_pubrec(void)
 {
-	packet_helper_reason_string_user_property(PUBREC);
+	packet_helper_reason_string_user_property(CMD_PUBREC);
 }
 
 static void TEST_packet_pubrel(void)
 {
-	packet_helper_reason_string_user_property(PUBREL);
+	packet_helper_reason_string_user_property(CMD_PUBREL);
 }
 
 static void TEST_packet_pubcomp(void)
 {
-	packet_helper_reason_string_user_property(PUBCOMP);
+	packet_helper_reason_string_user_property(CMD_PUBCOMP);
 }
 
 static void TEST_packet_subscribe(void)
 {
 	uint8_t payload[] = {0,
-		PROP_USER_PROPERTY, 0, 4, 'n', 'a', 'm', 'e', 0, 5, 'v', 'a', 'l', 'u', 'e',
-		PROP_SUBSCRIPTION_IDENTIFIER, 0x04};
+		MQTT_PROP_USER_PROPERTY, 0, 4, 'n', 'a', 'm', 'e', 0, 5, 'v', 'a', 'l', 'u', 'e',
+		MQTT_PROP_SUBSCRIPTION_IDENTIFIER, 0x04};
 
 	struct mosquitto__packet packet;
 	struct mqtt5__property *properties, *p;
@@ -1520,14 +1520,14 @@ static void TEST_packet_subscribe(void)
 	memset(&packet, 0, sizeof(struct mosquitto__packet));
 	packet.payload = payload;
 	packet.remaining_length = sizeof(payload);;
-	rc = property__read_all(SUBSCRIBE, &packet, &properties);
+	rc = property__read_all(CMD_SUBSCRIBE, &packet, &properties);
 
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
 	CU_ASSERT_PTR_NOT_NULL(properties->next);
 	p = properties;
 
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_USER_PROPERTY);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_USER_PROPERTY);
 	CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
 	CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
 	CU_ASSERT_STRING_EQUAL(p->name.v, "name");
@@ -1535,7 +1535,7 @@ static void TEST_packet_subscribe(void)
 
 	p = p->next;
 	CU_ASSERT_PTR_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_SUBSCRIPTION_IDENTIFIER);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_SUBSCRIPTION_IDENTIFIER);
 	CU_ASSERT_EQUAL(p->value.varint, 0x00000004);
 
 	mosquitto_property_free_all(&properties);
@@ -1543,13 +1543,13 @@ static void TEST_packet_subscribe(void)
 
 static void TEST_packet_suback(void)
 {
-	packet_helper_reason_string_user_property(SUBACK);
+	packet_helper_reason_string_user_property(CMD_SUBACK);
 }
 
 static void TEST_packet_unsubscribe(void)
 {
 	uint8_t payload[] = {0,
-		PROP_USER_PROPERTY, 0, 4, 'n', 'a', 'm', 'e', 0, 5, 'v', 'a', 'l', 'u', 'e'};
+		MQTT_PROP_USER_PROPERTY, 0, 4, 'n', 'a', 'm', 'e', 0, 5, 'v', 'a', 'l', 'u', 'e'};
 
 	struct mosquitto__packet packet;
 	struct mqtt5__property *properties, *p;
@@ -1560,13 +1560,13 @@ static void TEST_packet_unsubscribe(void)
 	memset(&packet, 0, sizeof(struct mosquitto__packet));
 	packet.payload = payload;
 	packet.remaining_length = sizeof(payload);;
-	rc = property__read_all(UNSUBSCRIBE, &packet, &properties);
+	rc = property__read_all(CMD_UNSUBSCRIBE, &packet, &properties);
 
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
 	p = properties;
 
 	CU_ASSERT_PTR_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_USER_PROPERTY);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_USER_PROPERTY);
 	CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
 	CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
 	CU_ASSERT_STRING_EQUAL(p->name.v, "name");
@@ -1577,15 +1577,15 @@ static void TEST_packet_unsubscribe(void)
 
 static void TEST_packet_unsuback(void)
 {
-	packet_helper_reason_string_user_property(UNSUBACK);
+	packet_helper_reason_string_user_property(CMD_UNSUBACK);
 }
 
 static void TEST_packet_disconnect(void)
 {
 	uint8_t payload[] = {0,
-		PROP_SESSION_EXPIRY_INTERVAL, 0x12, 0x45, 0x00, 0x00,
-		PROP_REASON_STRING, 0, 6, 'r', 'e', 'a', 's', 'o', 'n',
-		PROP_USER_PROPERTY, 0, 4, 'n', 'a', 'm', 'e', 0, 5, 'v', 'a', 'l', 'u', 'e'};
+		MQTT_PROP_SESSION_EXPIRY_INTERVAL, 0x12, 0x45, 0x00, 0x00,
+		MQTT_PROP_REASON_STRING, 0, 6, 'r', 'e', 'a', 's', 'o', 'n',
+		MQTT_PROP_USER_PROPERTY, 0, 4, 'n', 'a', 'm', 'e', 0, 5, 'v', 'a', 'l', 'u', 'e'};
 
 	struct mosquitto__packet packet;
 	struct mqtt5__property *properties, *p;
@@ -1596,25 +1596,25 @@ static void TEST_packet_disconnect(void)
 	memset(&packet, 0, sizeof(struct mosquitto__packet));
 	packet.payload = payload;
 	packet.remaining_length = sizeof(payload);;
-	rc = property__read_all(DISCONNECT, &packet, &properties);
+	rc = property__read_all(CMD_DISCONNECT, &packet, &properties);
 
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
 	CU_ASSERT_PTR_NOT_NULL(properties->next);
 	p = properties;
 
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_SESSION_EXPIRY_INTERVAL);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_SESSION_EXPIRY_INTERVAL);
 	CU_ASSERT_EQUAL(p->value.i32, 0x12450000);
 
 	p = p->next;
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_REASON_STRING);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_REASON_STRING);
 	CU_ASSERT_STRING_EQUAL(p->value.s.v, "reason");
 	CU_ASSERT_EQUAL(p->value.s.len, strlen("reason"));
 
 	p = p->next;
 	CU_ASSERT_PTR_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_USER_PROPERTY);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_USER_PROPERTY);
 	CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
 	CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
 	CU_ASSERT_STRING_EQUAL(p->name.v, "name");
@@ -1626,10 +1626,10 @@ static void TEST_packet_disconnect(void)
 static void TEST_packet_auth(void)
 {
 	uint8_t payload[] = {0,
-		PROP_AUTHENTICATION_METHOD, 0x00, 0x04, 'n', 'o', 'n', 'e',
-		PROP_AUTHENTICATION_DATA, 0x00, 0x02, 1, 2,
-		PROP_REASON_STRING, 0, 6, 'r', 'e', 'a', 's', 'o', 'n',
-		PROP_USER_PROPERTY, 0, 4, 'n', 'a', 'm', 'e', 0, 5, 'v', 'a', 'l', 'u', 'e'};
+		MQTT_PROP_AUTHENTICATION_METHOD, 0x00, 0x04, 'n', 'o', 'n', 'e',
+		MQTT_PROP_AUTHENTICATION_DATA, 0x00, 0x02, 1, 2,
+		MQTT_PROP_REASON_STRING, 0, 6, 'r', 'e', 'a', 's', 'o', 'n',
+		MQTT_PROP_USER_PROPERTY, 0, 4, 'n', 'a', 'm', 'e', 0, 5, 'v', 'a', 'l', 'u', 'e'};
 
 	struct mosquitto__packet packet;
 	struct mqtt5__property *properties, *p;
@@ -1640,33 +1640,33 @@ static void TEST_packet_auth(void)
 	memset(&packet, 0, sizeof(struct mosquitto__packet));
 	packet.payload = payload;
 	packet.remaining_length = sizeof(payload);;
-	rc = property__read_all(AUTH, &packet, &properties);
+	rc = property__read_all(CMD_AUTH, &packet, &properties);
 
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
 	CU_ASSERT_PTR_NOT_NULL(properties->next);
 	p = properties;
 
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_AUTHENTICATION_METHOD);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_AUTHENTICATION_METHOD);
 	CU_ASSERT_STRING_EQUAL(p->value.s.v, "none");
 	CU_ASSERT_EQUAL(p->value.s.len, strlen("none"));
 
 	p = p->next;
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_AUTHENTICATION_DATA);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_AUTHENTICATION_DATA);
 	CU_ASSERT_EQUAL(p->value.bin.v[0], 1);
 	CU_ASSERT_EQUAL(p->value.bin.v[1], 2);
 	CU_ASSERT_EQUAL(p->value.s.len, 2);
 
 	p = p->next;
 	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_REASON_STRING);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_REASON_STRING);
 	CU_ASSERT_STRING_EQUAL(p->value.s.v, "reason");
 	CU_ASSERT_EQUAL(p->value.s.len, strlen("reason"));
 
 	p = p->next;
 	CU_ASSERT_PTR_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, PROP_USER_PROPERTY);
+	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_USER_PROPERTY);
 	CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
 	CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
 	CU_ASSERT_STRING_EQUAL(p->name.v, "name");

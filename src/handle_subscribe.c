@@ -53,7 +53,7 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 	if(mid == 0) return MOSQ_ERR_PROTOCOL;
 
 	if(context->protocol == mosq_p_mqtt5){
-		rc = property__read_all(SUBSCRIBE, &context->in_packet, &properties);
+		rc = property__read_all(CMD_SUBSCRIBE, &context->in_packet, &properties);
 		if(rc) return rc;
 		mosquitto_property_free_all(&properties);
 	}

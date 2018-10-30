@@ -48,7 +48,7 @@ int send__pingreq(struct mosquitto *mosq)
 #else
 	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PINGREQ", mosq->id);
 #endif
-	rc = send__simple_command(mosq, PINGREQ);
+	rc = send__simple_command(mosq, CMD_PINGREQ);
 	if(rc == MOSQ_ERR_SUCCESS){
 		mosq->ping_t = mosquitto_time();
 	}
@@ -62,7 +62,7 @@ int send__pingresp(struct mosquitto *mosq)
 #else
 	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PINGRESP", mosq->id);
 #endif
-	return send__simple_command(mosq, PINGRESP);
+	return send__simple_command(mosq, CMD_PINGRESP);
 }
 
 int send__puback(struct mosquitto *mosq, uint16_t mid)
@@ -73,7 +73,7 @@ int send__puback(struct mosquitto *mosq, uint16_t mid)
 	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBACK (Mid: %d)", mosq->id, mid);
 #endif
 	/* We don't use Reason String or User Property yet. */
-	return send__command_with_mid(mosq, PUBACK, mid, false, NULL);
+	return send__command_with_mid(mosq, CMD_PUBACK, mid, false, NULL);
 }
 
 int send__pubcomp(struct mosquitto *mosq, uint16_t mid)
@@ -84,7 +84,7 @@ int send__pubcomp(struct mosquitto *mosq, uint16_t mid)
 	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBCOMP (Mid: %d)", mosq->id, mid);
 #endif
 	/* We don't use Reason String or User Property yet. */
-	return send__command_with_mid(mosq, PUBCOMP, mid, false, NULL);
+	return send__command_with_mid(mosq, CMD_PUBCOMP, mid, false, NULL);
 }
 
 
@@ -96,7 +96,7 @@ int send__pubrec(struct mosquitto *mosq, uint16_t mid)
 	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBREC (Mid: %d)", mosq->id, mid);
 #endif
 	/* We don't use Reason String or User Property yet. */
-	return send__command_with_mid(mosq, PUBREC, mid, false, NULL);
+	return send__command_with_mid(mosq, CMD_PUBREC, mid, false, NULL);
 }
 
 int send__pubrel(struct mosquitto *mosq, uint16_t mid)
@@ -107,7 +107,7 @@ int send__pubrel(struct mosquitto *mosq, uint16_t mid)
 	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBREL (Mid: %d)", mosq->id, mid);
 #endif
 	/* We don't use Reason String or User Property yet. */
-	return send__command_with_mid(mosq, PUBREL|2, mid, false, NULL);
+	return send__command_with_mid(mosq, CMD_PUBREL|2, mid, false, NULL);
 }
 
 /* For PUBACK, PUBCOMP, PUBREC, and PUBREL */

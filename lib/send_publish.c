@@ -155,7 +155,7 @@ int send__real_publish(struct mosquitto *mosq, uint16_t mid, const char *topic, 
 	if(!packet) return MOSQ_ERR_NOMEM;
 
 	packet->mid = mid;
-	packet->command = PUBLISH | ((dup&0x1)<<3) | (qos<<1) | retain;
+	packet->command = CMD_PUBLISH | ((dup&0x1)<<3) | (qos<<1) | retain;
 	packet->remaining_length = packetlen;
 	rc = packet__alloc(packet);
 	if(rc){

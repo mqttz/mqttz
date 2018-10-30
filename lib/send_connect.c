@@ -101,7 +101,7 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 		}
 	}
 
-	packet->command = CONNECT;
+	packet->command = CMD_CONNECT;
 	packet->remaining_length = headerlen + payloadlen;
 	rc = packet__alloc(packet);
 	if(rc){

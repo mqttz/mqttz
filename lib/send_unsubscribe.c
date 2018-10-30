@@ -55,7 +55,7 @@ int send__unsubscribe(struct mosquitto *mosq, int *mid, const char *topic)
 		packetlen += proplen + varbytes;
 	}
 
-	packet->command = UNSUBSCRIBE | (1<<1);
+	packet->command = CMD_UNSUBSCRIBE | (1<<1);
 	packet->remaining_length = packetlen;
 	rc = packet__alloc(packet);
 	if(rc){

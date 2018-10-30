@@ -207,7 +207,7 @@ int packet__write(struct mosquitto *mosq)
 		}
 
 		G_MSGS_SENT_INC(1);
-		if(((packet->command)&0xF6) == PUBLISH){
+		if(((packet->command)&0xF6) == CMD_PUBLISH){
 			G_PUB_MSGS_SENT_INC(1);
 #ifndef WITH_BROKER
 			pthread_mutex_lock(&mosq->callback_mutex);
@@ -218,7 +218,7 @@ int packet__write(struct mosquitto *mosq)
 				mosq->in_callback = false;
 			}
 			pthread_mutex_unlock(&mosq->callback_mutex);
-		}else if(((packet->command)&0xF0) == DISCONNECT){
+		}else if(((packet->command)&0xF0) == CMD_DISCONNECT){
 			/* FIXME what cleanup needs doing here?
 			 * incoming/outgoing messages? */
 			net__socket_close(mosq);
@@ -316,7 +316,7 @@ int packet__read(struct mosquitto *mosq)
 #ifdef WITH_BROKER
 			G_BYTES_RECEIVED_INC(1);
 			/* Clients must send CONNECT as their first command. */
-			if(!(mosq->bridge) && mosq->state == mosq_cs_new && (byte&0xF0) != CONNECT) return MOSQ_ERR_PROTOCOL;
+			if(!(mosq->bridge) && mosq->state == mosq_cs_new && (byte&0xF0) != CMD_CONNECT) return MOSQ_ERR_PROTOCOL;
 #endif
 		}else{
 			if(read_length == 0) return MOSQ_ERR_CONN_LOST; /* EOF */
@@ -421,7 +421,7 @@ int packet__read(struct mosquitto *mosq)
 	mosq->in_packet.pos = 0;
 #ifdef WITH_BROKER
 	G_MSGS_RECEIVED_INC(1);
-	if(((mosq->in_packet.command)&0xF5) == PUBLISH){
+	if(((mosq->in_packet.command)&0xF5) == CMD_PUBLISH){
 		G_PUB_MSGS_RECEIVED_INC(1);
 	}
 	rc = handle__packet(db, mosq);

@@ -51,7 +51,7 @@ int send__disconnect(struct mosquitto *mosq)
 	packet = mosquitto__calloc(1, sizeof(struct mosquitto__packet));
 	if(!packet) return MOSQ_ERR_NOMEM;
 
-	packet->command = DISCONNECT;
+	packet->command = CMD_DISCONNECT;
 	if(mosq->protocol == mosq_p_mqtt5){
 		proplen = property__get_length_all(properties);
 		varbytes = packet__varint_bytes(proplen);

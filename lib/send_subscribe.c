@@ -59,7 +59,7 @@ int send__subscribe(struct mosquitto *mosq, int *mid, int topic_count, const cha
 		packetlen += 2+strlen(topic[i]) + 1;
 	}
 
-	packet->command = SUBSCRIBE | (1<<1);
+	packet->command = CMD_SUBSCRIBE | (1<<1);
 	packet->remaining_length = packetlen;
 	rc = packet__alloc(packet);
 	if(rc){

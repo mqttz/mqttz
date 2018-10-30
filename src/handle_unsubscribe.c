@@ -45,7 +45,7 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 	if(mid == 0) return MOSQ_ERR_PROTOCOL;
 
 	if(context->protocol == mosq_p_mqtt5){
-		rc = property__read_all(UNSUBSCRIBE, &context->in_packet, &properties);
+		rc = property__read_all(CMD_UNSUBSCRIBE, &context->in_packet, &properties);
 		if(rc) return rc;
 		/* Immediately free, we don't do anything with User Property at the moment */
 		mosquitto_property_free_all(&properties);
@@ -92,6 +92,6 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 	log__printf(NULL, MOSQ_LOG_DEBUG, "Sending UNSUBACK to %s", context->id);
 
 	/* We don't use Reason String or User Property yet. */
-	return send__command_with_mid(context, UNSUBACK, mid, false, NULL);
+	return send__command_with_mid(context, CMD_UNSUBACK, mid, false, NULL);
 }
 

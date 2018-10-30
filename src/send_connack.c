@@ -41,7 +41,7 @@ int send__connack(struct mosquitto *context, int ack, int result)
 	packet = mosquitto__calloc(1, sizeof(struct mosquitto__packet));
 	if(!packet) return MOSQ_ERR_NOMEM;
 
-	packet->command = CONNACK;
+	packet->command = CMD_CONNACK;
 	packet->remaining_length = 2;
 	if(context->protocol == mosq_p_mqtt5){
 		proplen = property__get_length_all(properties);

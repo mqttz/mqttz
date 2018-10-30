@@ -42,7 +42,7 @@ int handle__connack(struct mosquitto *mosq)
 	if(rc) return rc;
 
 	if(mosq->protocol == mosq_p_mqtt5){
-		rc = property__read_all(CONNACK, &mosq->in_packet, &properties);
+		rc = property__read_all(CMD_CONNACK, &mosq->in_packet, &properties);
 		if(rc) return rc;
 		mosquitto_property_free_all(&properties);
 	}

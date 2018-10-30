@@ -37,27 +37,27 @@ int handle__packet(struct mosquitto *mosq)
 	assert(mosq);
 
 	switch((mosq->in_packet.command)&0xF0){
-		case PINGREQ:
+		case CMD_PINGREQ:
 			return handle__pingreq(mosq);
-		case PINGRESP:
+		case CMD_PINGRESP:
 			return handle__pingresp(mosq);
-		case PUBACK:
+		case CMD_PUBACK:
 			return handle__pubackcomp(mosq, "PUBACK");
-		case PUBCOMP:
+		case CMD_PUBCOMP:
 			return handle__pubackcomp(mosq, "PUBCOMP");
-		case PUBLISH:
+		case CMD_PUBLISH:
 			return handle__publish(mosq);
-		case PUBREC:
+		case CMD_PUBREC:
 			return handle__pubrec(mosq);
-		case PUBREL:
+		case CMD_PUBREL:
 			return handle__pubrel(NULL, mosq);
-		case CONNACK:
+		case CMD_CONNACK:
 			return handle__connack(mosq);
-		case SUBACK:
+		case CMD_SUBACK:
 			return handle__suback(mosq);
-		case UNSUBACK:
+		case CMD_UNSUBACK:
 			return handle__unsuback(mosq);
-		case AUTH:
+		case CMD_AUTH:
 			return handle__auth(mosq);
 		default:
 			/* If we don't recognise the command, return an error straight away. */
