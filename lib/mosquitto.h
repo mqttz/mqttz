@@ -1931,6 +1931,29 @@ libmosq_EXPORT void mosquitto_property_free_all(mosquitto_property **properties)
  */
 int mosquitto_property_command_check(int command, int identifier);
 
+/* Function: mosquitto_string_to_property_info
+ *
+ * Parse a property name string and convert to a property identifier and data type.
+ * The property name is as defined in the MQTT specification, with - as a
+ * separator, for example: payload-format-indicator.
+ *
+ * Parameters:
+ *	propname - the string to parse
+ *	identifier - pointer to an int to receive the property identifier
+ *	type - pointer to an int to receive the property type
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS - on success
+ *	MOSQ_ERR_INVAL - if the string does not match a property
+ *
+ * Example:
+ *	mosquitto_string_to_property_info("response-topic", &id, &type);
+ *	// id == MQTT_PROP_RESPONSE_TOPIC
+ *	// type == MQTT_PROP_TYPE_STRING
+ */
+int mosquitto_string_to_property_info(const char *propname, int *identifier, int *type);
+
+
 #ifdef __cplusplus
 }
 #endif

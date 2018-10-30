@@ -559,3 +559,92 @@ static int property__command_check(int command, struct mqtt5__property *properti
 	return MOSQ_ERR_SUCCESS;
 }
 
+
+int mosquitto_string_to_property_info(const char *propname, int *identifier, int *type)
+{
+	if(!strcasecmp(propname, "payload-format-indicator")){
+		*identifier = MQTT_PROP_PAYLOAD_FORMAT_INDICATOR;
+		*type = MQTT_PROP_TYPE_BYTE;
+	}else if(!strcasecmp(propname, "message-expiry-interval")){
+		*identifier = MQTT_PROP_MESSAGE_EXPIRY_INTERVAL;
+		*type = MQTT_PROP_TYPE_INT32;
+	}else if(!strcasecmp(propname, "content-type")){
+		*identifier = MQTT_PROP_CONTENT_TYPE;
+		*type = MQTT_PROP_TYPE_STRING;
+	}else if(!strcasecmp(propname, "response-topic")){
+		*identifier = MQTT_PROP_RESPONSE_TOPIC;
+		*type = MQTT_PROP_TYPE_STRING;
+	}else if(!strcasecmp(propname, "correlation-data")){
+		*identifier = MQTT_PROP_CORRELATION_DATA;
+		*type = MQTT_PROP_TYPE_BINARY;
+	}else if(!strcasecmp(propname, "subscription-identifier")){
+		*identifier = MQTT_PROP_SUBSCRIPTION_IDENTIFIER;
+		*type = MQTT_PROP_TYPE_VARINT;
+	}else if(!strcasecmp(propname, "session-expiry-interval")){
+		*identifier = MQTT_PROP_SESSION_EXPIRY_INTERVAL;
+		*type = MQTT_PROP_TYPE_INT32;
+	}else if(!strcasecmp(propname, "assigned-client-identifier")){
+		*identifier = MQTT_PROP_ASSIGNED_CLIENT_IDENTIFIER;
+		*type = MQTT_PROP_TYPE_STRING;
+	}else if(!strcasecmp(propname, "server-keep-alive")){
+		*identifier = MQTT_PROP_SERVER_KEEP_ALIVE;
+		*type = MQTT_PROP_TYPE_INT16;
+	}else if(!strcasecmp(propname, "authentication-method")){
+		*identifier = MQTT_PROP_AUTHENTICATION_METHOD;
+		*type = MQTT_PROP_TYPE_STRING;
+	}else if(!strcasecmp(propname, "authentication-data")){
+		*identifier = MQTT_PROP_AUTHENTICATION_DATA;
+		*type = MQTT_PROP_TYPE_BINARY;
+	}else if(!strcasecmp(propname, "request-problem-information")){
+		*identifier = MQTT_PROP_REQUEST_PROBLEM_INFORMATION;
+		*type = MQTT_PROP_TYPE_BYTE;
+	}else if(!strcasecmp(propname, "will-delay-interval")){
+		*identifier = MQTT_PROP_WILL_DELAY_INTERVAL;
+		*type = MQTT_PROP_TYPE_INT32;
+	}else if(!strcasecmp(propname, "request-response-information")){
+		*identifier = MQTT_PROP_REQUEST_RESPONSE_INFORMATION;
+		*type = MQTT_PROP_TYPE_BYTE;
+	}else if(!strcasecmp(propname, "response-information")){
+		*identifier = MQTT_PROP_RESPONSE_INFORMATION;
+		*type = MQTT_PROP_TYPE_STRING;
+	}else if(!strcasecmp(propname, "server-reference")){
+		*identifier = MQTT_PROP_SERVER_REFERENCE;
+		*type = MQTT_PROP_TYPE_STRING;
+	}else if(!strcasecmp(propname, "reason-string")){
+		*identifier = MQTT_PROP_REASON_STRING;
+		*type = MQTT_PROP_TYPE_STRING;
+	}else if(!strcasecmp(propname, "receive-maximum")){
+		*identifier = MQTT_PROP_RECEIVE_MAXIMUM;
+		*type = MQTT_PROP_TYPE_INT16;
+	}else if(!strcasecmp(propname, "topic-alias-maximum")){
+		*identifier = MQTT_PROP_TOPIC_ALIAS_MAXIMUM;
+		*type = MQTT_PROP_TYPE_INT16;
+	}else if(!strcasecmp(propname, "topic-alias")){
+		*identifier = MQTT_PROP_TOPIC_ALIAS;
+		*type = MQTT_PROP_TYPE_INT16;
+	}else if(!strcasecmp(propname, "maximum-qos")){
+		*identifier = MQTT_PROP_MAXIMUM_QOS;
+		*type = MQTT_PROP_TYPE_BYTE;
+	}else if(!strcasecmp(propname, "retain-available")){
+		*identifier = MQTT_PROP_RETAIN_AVAILABLE;
+		*type = MQTT_PROP_TYPE_BYTE;
+	}else if(!strcasecmp(propname, "user-property")){
+		*identifier = MQTT_PROP_USER_PROPERTY;
+		*type = MQTT_PROP_TYPE_STRING_PAIR;
+	}else if(!strcasecmp(propname, "maximum-packet-size")){
+		*identifier = MQTT_PROP_MAXIMUM_PACKET_SIZE;
+		*type = MQTT_PROP_TYPE_INT32;
+	}else if(!strcasecmp(propname, "wildcard-subscription-available")){
+		*identifier = MQTT_PROP_WILDCARD_SUB_AVAILABLE;
+		*type = MQTT_PROP_TYPE_BYTE;
+	}else if(!strcasecmp(propname, "subscription-identifier-available")){
+		*identifier = MQTT_PROP_SUBSCRIPTION_ID_AVAILABLE;
+		*type = MQTT_PROP_TYPE_BYTE;
+	}else if(!strcasecmp(propname, "shared-subscription-available")){
+		*identifier = MQTT_PROP_SHARED_SUB_AVAILABLE;
+		*type = MQTT_PROP_TYPE_BYTE;
+	}else{
+		return MOSQ_ERR_INVAL;
+	}
+	return MOSQ_ERR_SUCCESS;
+}
