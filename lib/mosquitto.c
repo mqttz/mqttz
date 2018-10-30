@@ -493,6 +493,40 @@ const char *mosquitto_reason_string(int reason_code)
 	}
 }
 
+
+int mosquitto_string_to_command(const char *str, int *cmd)
+{
+	if(!strcasecmp(str, "connect")){
+		*cmd = CMD_CONNECT;
+	}else if(!strcasecmp(str, "connack")){
+		*cmd = CMD_CONNACK;
+	}else if(!strcasecmp(str, "publish")){
+		*cmd = CMD_PUBLISH;
+	}else if(!strcasecmp(str, "puback")){
+		*cmd = CMD_PUBACK;
+	}else if(!strcasecmp(str, "pubrec")){
+		*cmd = CMD_PUBREC;
+	}else if(!strcasecmp(str, "pubrel")){
+		*cmd = CMD_PUBREL;
+	}else if(!strcasecmp(str, "pubcomp")){
+		*cmd = CMD_PUBCOMP;
+	}else if(!strcasecmp(str, "subscribe")){
+		*cmd = CMD_SUBSCRIBE;
+	}else if(!strcasecmp(str, "unsubscribe")){
+		*cmd = CMD_UNSUBSCRIBE;
+	}else if(!strcasecmp(str, "disconnect")){
+		*cmd = CMD_DISCONNECT;
+	}else if(!strcasecmp(str, "auth")){
+		*cmd = CMD_AUTH;
+	}else if(!strcasecmp(str, "will")){
+		*cmd = CMD_WILL;
+	}else{
+		return MOSQ_ERR_INVAL;
+	}
+	return MOSQ_ERR_SUCCESS;
+}
+
+
 int mosquitto_sub_topic_tokenise(const char *subtopic, char ***topics, int *count)
 {
 	int len;

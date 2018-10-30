@@ -1568,6 +1568,25 @@ libmosq_EXPORT const char *mosquitto_strerror(int mosq_errno);
  */
 libmosq_EXPORT const char *mosquitto_connack_string(int connack_code);
 
+/* Function: mosquitto_string_to_command
+ *
+ * Take a string input representing an MQTT command and convert it to the
+ * libmosquitto integer representation.
+ *
+ * Parameters:
+ *   str - the string to parse.
+ *   cmd - pointer to an int, for the result.
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS - on success
+ *	MOSQ_ERR_INVAL - on an invalid input.
+ *
+ * Example:
+ *  mosquitto_string_to_command("CONNECT", &cmd);
+ *  // cmd == CMD_CONNECT
+ */
+libmosq_EXPORT int mosquitto_string_to_command(const char *str, int *cmd);
+
 /*
  * Function: mosquitto_sub_topic_tokenise
  *

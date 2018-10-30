@@ -94,7 +94,8 @@ MOSQ_1.5 {
 
 MOSQ_1.6 {
 	global:
-		mosquitto_subscribe_multiple;
 		mosquitto_property_free_all;
 		mosquitto_property_command_check;
+		mosquitto_string_to_command;
+		mosquitto_subscribe_multiple;
 } MOSQ_1.5;
