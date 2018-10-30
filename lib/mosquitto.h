@@ -145,6 +145,12 @@ struct mosquitto;
  * mosquitto_publish()
  ***************************************************/
 
+
+/* ======================================================================
+ *
+ * Section: Library version, init, and cleanup
+ *
+ * ====================================================================== */
 /*
  * Function: mosquitto_lib_version
  *
@@ -197,6 +203,12 @@ libmosq_EXPORT int mosquitto_lib_init(void);
  */
 libmosq_EXPORT int mosquitto_lib_cleanup(void);
 
+
+/* ======================================================================
+ *
+ * Section: Client creation, destruction, and reinitialisation
+ *
+ * ====================================================================== */
 /*
  * Function: mosquitto_new
  *
@@ -270,6 +282,12 @@ libmosq_EXPORT void mosquitto_destroy(struct mosquitto *mosq);
  */
 libmosq_EXPORT int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_session, void *obj);
 
+
+/* ======================================================================
+ *
+ * Section: Will
+ *
+ * ====================================================================== */
 /*
  * Function: mosquitto_will_set
  *
@@ -311,6 +329,12 @@ libmosq_EXPORT int mosquitto_will_set(struct mosquitto *mosq, const char *topic,
  */
 libmosq_EXPORT int mosquitto_will_clear(struct mosquitto *mosq);
 
+
+/* ======================================================================
+ *
+ * Section: Username and password
+ *
+ * ====================================================================== */
 /*
  * Function: mosquitto_username_pw_set
  *
@@ -336,6 +360,12 @@ libmosq_EXPORT int mosquitto_will_clear(struct mosquitto *mosq);
  */
 libmosq_EXPORT int mosquitto_username_pw_set(struct mosquitto *mosq, const char *username, const char *password);
 
+
+/* ======================================================================
+ *
+ * Section: Connecting, reconnecting, disconnecting
+ *
+ * ====================================================================== */
 /*
  * Function: mosquitto_connect
  *
@@ -573,6 +603,12 @@ libmosq_EXPORT int mosquitto_reconnect_async(struct mosquitto *mosq);
  */
 libmosq_EXPORT int mosquitto_disconnect(struct mosquitto *mosq);
 
+
+/* ======================================================================
+ *
+ * Section: Publishing, subscribing, unsubscribing
+ *
+ * ====================================================================== */
 /*
  * Function: mosquitto_publish
  *
@@ -684,6 +720,12 @@ int mosquitto_subscribe_multiple(struct mosquitto *mosq, int *mid, int sub_count
  */
 libmosq_EXPORT int mosquitto_unsubscribe(struct mosquitto *mosq, int *mid, const char *sub);
 
+
+/* ======================================================================
+ *
+ * Section: Struct mosquitto_message helper functions
+ *
+ * ====================================================================== */
 /*
  * Function: mosquitto_message_copy
  *
@@ -730,6 +772,12 @@ libmosq_EXPORT void mosquitto_message_free(struct mosquitto_message **message);
  */
 libmosq_EXPORT void mosquitto_message_free_contents(struct mosquitto_message *message);
 
+
+/* ======================================================================
+ *
+ * Section: Network loop (managed by libmosquitto)
+ *
+ * ====================================================================== */
 /*
  * Function: mosquitto_loop
  *
@@ -856,20 +904,12 @@ libmosq_EXPORT int mosquitto_loop_start(struct mosquitto *mosq);
  */
 libmosq_EXPORT int mosquitto_loop_stop(struct mosquitto *mosq, bool force);
 
-/*
- * Function: mosquitto_socket
- *
- * Return the socket handle for a mosquitto instance. Useful if you want to
- * include a mosquitto client in your own select() calls.
- *
- * Parameters:
- *	mosq - a valid mosquitto instance.
- *
- * Returns:
- *	The socket for the mosquitto client or -1 on failure.
- */
-libmosq_EXPORT int mosquitto_socket(struct mosquitto *mosq);
 
+/* ======================================================================
+ *
+ * Section: Network loop (for use in other event loops)
+ *
+ * ====================================================================== */
 /*
  * Function: mosquitto_loop_read
  *
@@ -953,6 +993,26 @@ libmosq_EXPORT int mosquitto_loop_write(struct mosquitto *mosq, int max_packets)
  */
 libmosq_EXPORT int mosquitto_loop_misc(struct mosquitto *mosq);
 
+
+/* ======================================================================
+ *
+ * Section: Network loop (helper functions)
+ *
+ * ====================================================================== */
+/*
+ * Function: mosquitto_socket
+ *
+ * Return the socket handle for a mosquitto instance. Useful if you want to
+ * include a mosquitto client in your own select() calls.
+ *
+ * Parameters:
+ *	mosq - a valid mosquitto instance.
+ *
+ * Returns:
+ *	The socket for the mosquitto client or -1 on failure.
+ */
+libmosq_EXPORT int mosquitto_socket(struct mosquitto *mosq);
+
 /*
  * Function: mosquitto_want_write
  *
@@ -983,6 +1043,12 @@ libmosq_EXPORT bool mosquitto_want_write(struct mosquitto *mosq);
  */
 libmosq_EXPORT int mosquitto_threaded_set(struct mosquitto *mosq, bool threaded);
 
+
+/* ======================================================================
+ *
+ * Section: Client options
+ *
+ * ====================================================================== */
 /*
  * Function: mosquitto_opts_set
  *
@@ -1020,7 +1086,109 @@ libmosq_EXPORT int mosquitto_threaded_set(struct mosquitto *mosq, bool threaded)
  */
 libmosq_EXPORT int mosquitto_opts_set(struct mosquitto *mosq, enum mosq_opt_t option, void *value);
 
+/*
+ * Function: mosquitto_reconnect_delay_set
+ *
+ * Control the behaviour of the client when it has unexpectedly disconnected in
+ * <mosquitto_loop_forever> or after <mosquitto_loop_start>. The default
+ * behaviour if this function is not used is to repeatedly attempt to reconnect
+ * with a delay of 1 second until the connection succeeds.
+ *
+ * Use reconnect_delay parameter to change the delay between successive
+ * reconnection attempts. You may also enable exponential backoff of the time
+ * between reconnections by setting reconnect_exponential_backoff to true and
+ * set an upper bound on the delay with reconnect_delay_max.
+ *
+ * Example 1:
+ *	delay=2, delay_max=10, exponential_backoff=False
+ *	Delays would be: 2, 4, 6, 8, 10, 10, ...
+ *
+ * Example 2:
+ *	delay=3, delay_max=30, exponential_backoff=True
+ *	Delays would be: 3, 6, 12, 24, 30, 30, ...
+ *
+ * Parameters:
+ *  mosq -                          a valid mosquitto instance.
+ *  reconnect_delay -               the number of seconds to wait between
+ *                                  reconnects.
+ *  reconnect_delay_max -           the maximum number of seconds to wait
+ *                                  between reconnects.
+ *  reconnect_exponential_backoff - use exponential backoff between
+ *                                  reconnect attempts. Set to true to enable
+ *                                  exponential backoff.
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS - on success.
+ * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ */
+libmosq_EXPORT int mosquitto_reconnect_delay_set(struct mosquitto *mosq, unsigned int reconnect_delay, unsigned int reconnect_delay_max, bool reconnect_exponential_backoff);
 
+/*
+ * Function: mosquitto_max_inflight_messages_set
+ *
+ * Set the number of QoS 1 and 2 messages that can be "in flight" at one time.
+ * An in flight message is part way through its delivery flow. Attempts to send
+ * further messages with <mosquitto_publish> will result in the messages being
+ * queued until the number of in flight messages reduces.
+ *
+ * A higher number here results in greater message throughput, but if set
+ * higher than the maximum in flight messages on the broker may lead to
+ * delays in the messages being acknowledged.
+ *
+ * Set to 0 for no maximum.
+ *
+ * Parameters:
+ *  mosq -                  a valid mosquitto instance.
+ *  max_inflight_messages - the maximum number of inflight messages. Defaults
+ *                          to 20.
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS - on success.
+ * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ */
+libmosq_EXPORT int mosquitto_max_inflight_messages_set(struct mosquitto *mosq, unsigned int max_inflight_messages);
+
+/*
+ * Function: mosquitto_message_retry_set
+ *
+ * This function now has no effect.
+ */
+libmosq_EXPORT void mosquitto_message_retry_set(struct mosquitto *mosq, unsigned int message_retry);
+
+/*
+ * Function: mosquitto_user_data_set
+ *
+ * When <mosquitto_new> is called, the pointer given as the "obj" parameter
+ * will be passed to the callbacks as user data. The <mosquitto_user_data_set>
+ * function allows this obj parameter to be updated at any time. This function
+ * will not modify the memory pointed to by the current user data pointer. If
+ * it is dynamically allocated memory you must free it yourself.
+ *
+ * Parameters:
+ *  mosq - a valid mosquitto instance.
+ * 	obj -  A user pointer that will be passed as an argument to any callbacks
+ * 	       that are specified.
+ */
+libmosq_EXPORT void mosquitto_user_data_set(struct mosquitto *mosq, void *obj);
+
+/* Function: mosquitto_userdata
+ *
+ * Retrieve the "userdata" variable for a mosquitto client.
+ *
+ * Parameters:
+ * 	mosq - a valid mosquitto instance.
+ *
+ * Returns:
+ *	A pointer to the userdata member variable.
+ */
+libmosq_EXPORT void *mosquitto_userdata(struct mosquitto *mosq);
+
+
+/* ======================================================================
+ *
+ * Section: TLS support
+ *
+ * ====================================================================== */
 /*
  * Function: mosquitto_tls_set
  *
@@ -1162,6 +1330,12 @@ libmosq_EXPORT int mosquitto_tls_opts_set(struct mosquitto *mosq, int cert_reqs,
  */
 libmosq_EXPORT int mosquitto_tls_psk_set(struct mosquitto *mosq, const char *psk, const char *identity, const char *ciphers);
 
+
+/* ======================================================================
+ *
+ * Section: Callbacks
+ *
+ * ====================================================================== */
 /*
  * Function: mosquitto_connect_callback_set
  *
@@ -1334,90 +1508,6 @@ libmosq_EXPORT void mosquitto_unsubscribe_callback_set(struct mosquitto *mosq, v
  */
 libmosq_EXPORT void mosquitto_log_callback_set(struct mosquitto *mosq, void (*on_log)(struct mosquitto *, void *, int, const char *));
 
-/*
- * Function: mosquitto_reconnect_delay_set
- *
- * Control the behaviour of the client when it has unexpectedly disconnected in
- * <mosquitto_loop_forever> or after <mosquitto_loop_start>. The default
- * behaviour if this function is not used is to repeatedly attempt to reconnect
- * with a delay of 1 second until the connection succeeds.
- *
- * Use reconnect_delay parameter to change the delay between successive
- * reconnection attempts. You may also enable exponential backoff of the time
- * between reconnections by setting reconnect_exponential_backoff to true and
- * set an upper bound on the delay with reconnect_delay_max.
- *
- * Example 1:
- *	delay=2, delay_max=10, exponential_backoff=False
- *	Delays would be: 2, 4, 6, 8, 10, 10, ...
- *
- * Example 2:
- *	delay=3, delay_max=30, exponential_backoff=True
- *	Delays would be: 3, 6, 12, 24, 30, 30, ...
- *
- * Parameters:
- *  mosq -                          a valid mosquitto instance.
- *  reconnect_delay -               the number of seconds to wait between
- *                                  reconnects.
- *  reconnect_delay_max -           the maximum number of seconds to wait
- *                                  between reconnects.
- *  reconnect_exponential_backoff - use exponential backoff between
- *                                  reconnect attempts. Set to true to enable
- *                                  exponential backoff.
- *
- * Returns:
- *	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- */
-libmosq_EXPORT int mosquitto_reconnect_delay_set(struct mosquitto *mosq, unsigned int reconnect_delay, unsigned int reconnect_delay_max, bool reconnect_exponential_backoff);
-
-/*
- * Function: mosquitto_max_inflight_messages_set
- *
- * Set the number of QoS 1 and 2 messages that can be "in flight" at one time.
- * An in flight message is part way through its delivery flow. Attempts to send
- * further messages with <mosquitto_publish> will result in the messages being
- * queued until the number of in flight messages reduces.
- *
- * A higher number here results in greater message throughput, but if set
- * higher than the maximum in flight messages on the broker may lead to
- * delays in the messages being acknowledged.
- *
- * Set to 0 for no maximum.
- *
- * Parameters:
- *  mosq -                  a valid mosquitto instance.
- *  max_inflight_messages - the maximum number of inflight messages. Defaults
- *                          to 20.
- *
- * Returns:
- *	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- */
-libmosq_EXPORT int mosquitto_max_inflight_messages_set(struct mosquitto *mosq, unsigned int max_inflight_messages);
-
-/*
- * Function: mosquitto_message_retry_set
- *
- * This function now has no effect.
- */
-libmosq_EXPORT void mosquitto_message_retry_set(struct mosquitto *mosq, unsigned int message_retry);
-
-/*
- * Function: mosquitto_user_data_set
- *
- * When <mosquitto_new> is called, the pointer given as the "obj" parameter
- * will be passed to the callbacks as user data. The <mosquitto_user_data_set>
- * function allows this obj parameter to be updated at any time. This function
- * will not modify the memory pointed to by the current user data pointer. If
- * it is dynamically allocated memory you must free it yourself.
- *
- * Parameters:
- *  mosq - a valid mosquitto instance.
- * 	obj -  A user pointer that will be passed as an argument to any callbacks
- * 	       that are specified.
- */
-libmosq_EXPORT void mosquitto_user_data_set(struct mosquitto *mosq, void *obj);
 
 /* =============================================================================
  *
@@ -1442,6 +1532,7 @@ libmosq_EXPORT void mosquitto_user_data_set(struct mosquitto *mosq, void *obj);
  *              authenticating with the proxy.
  */
 libmosq_EXPORT int mosquitto_socks5_set(struct mosquitto *mosq, const char *host, int port, const char *username, const char *password);
+
 
 /* =============================================================================
  *
@@ -1782,18 +1873,6 @@ libmosq_EXPORT int mosquitto_subscribe_callback(
  */
 libmosq_EXPORT int mosquitto_validate_utf8(const char *str, int len);
 
-
-/* Function: mosquitto_userdata
- *
- * Retrieve the "userdata" variable for a mosquitto client.
- *
- * Parameters:
- * 	mosq - a valid mosquitto instance.
- *
- * Returns:
- *	A pointer to the userdata member variable.
- */
-libmosq_EXPORT void *mosquitto_userdata(struct mosquitto *mosq);
 
 #ifdef __cplusplus
 }
