@@ -73,7 +73,7 @@ int send__puback(struct mosquitto *mosq, uint16_t mid)
 	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBACK (Mid: %d)", mosq->id, mid);
 #endif
 	/* We don't use Reason String or User Property yet. */
-	return send__command_with_mid(mosq, CMD_PUBACK, mid, false, NULL);
+	return send__command_with_mid(mosq, CMD_PUBACK, mid, false, 0, NULL);
 }
 
 int send__pubcomp(struct mosquitto *mosq, uint16_t mid)
@@ -84,7 +84,7 @@ int send__pubcomp(struct mosquitto *mosq, uint16_t mid)
 	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBCOMP (Mid: %d)", mosq->id, mid);
 #endif
 	/* We don't use Reason String or User Property yet. */
-	return send__command_with_mid(mosq, CMD_PUBCOMP, mid, false, NULL);
+	return send__command_with_mid(mosq, CMD_PUBCOMP, mid, false, 0, NULL);
 }
 
 
@@ -96,7 +96,7 @@ int send__pubrec(struct mosquitto *mosq, uint16_t mid)
 	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBREC (Mid: %d)", mosq->id, mid);
 #endif
 	/* We don't use Reason String or User Property yet. */
-	return send__command_with_mid(mosq, CMD_PUBREC, mid, false, NULL);
+	return send__command_with_mid(mosq, CMD_PUBREC, mid, false, 0, NULL);
 }
 
 int send__pubrel(struct mosquitto *mosq, uint16_t mid)
@@ -107,11 +107,11 @@ int send__pubrel(struct mosquitto *mosq, uint16_t mid)
 	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBREL (Mid: %d)", mosq->id, mid);
 #endif
 	/* We don't use Reason String or User Property yet. */
-	return send__command_with_mid(mosq, CMD_PUBREL|2, mid, false, NULL);
+	return send__command_with_mid(mosq, CMD_PUBREL|2, mid, false, 0, NULL);
 }
 
 /* For PUBACK, PUBCOMP, PUBREC, and PUBREL */
-int send__command_with_mid(struct mosquitto *mosq, uint8_t command, uint16_t mid, bool dup, struct mqtt5__property *properties)
+int send__command_with_mid(struct mosquitto *mosq, uint8_t command, uint16_t mid, bool dup, uint8_t reason_code, struct mqtt5__property *properties)
 {
 	struct mosquitto__packet *packet = NULL;
 	int rc;
@@ -130,7 +130,8 @@ int send__command_with_mid(struct mosquitto *mosq, uint8_t command, uint16_t mid
 	if(mosq->protocol == mosq_p_mqtt5){
 		proplen = property__get_length_all(properties);
 		varbytes = packet__varint_bytes(proplen);
-		packet->remaining_length += varbytes + proplen;
+		/* 1 here is sizeof(reason_code) */
+		packet->remaining_length += 1 + varbytes + proplen;
 	}
 
 	rc = packet__alloc(packet);
@@ -142,6 +143,7 @@ int send__command_with_mid(struct mosquitto *mosq, uint8_t command, uint16_t mid
 	packet__write_uint16(packet, mid);
 
 	if(mosq->protocol == mosq_p_mqtt5){
+		packet__write_byte(packet, reason_code);
 		property__write_all(packet, properties);
 	}
 

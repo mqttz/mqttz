@@ -20,7 +20,7 @@ Contributors:
 #include "property_mosq.h"
 
 int send__simple_command(struct mosquitto *mosq, uint8_t command);
-int send__command_with_mid(struct mosquitto *mosq, uint8_t command, uint16_t mid, bool dup, struct mqtt5__property *properties);
+int send__command_with_mid(struct mosquitto *mosq, uint8_t command, uint16_t mid, bool dup, uint8_t reason_code, struct mqtt5__property *properties);
 int send__real_publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint32_t payloadlen, const void *payload, int qos, bool retain, bool dup, struct mqtt5__property *properties);
 
 int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session);
