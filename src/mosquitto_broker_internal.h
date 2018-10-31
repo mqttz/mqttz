@@ -512,6 +512,7 @@ int restore_privileges(void);
  * ============================================================ */
 int send__connack(struct mosquitto *context, int ack, int result);
 int send__suback(struct mosquitto *context, uint16_t mid, uint32_t payloadlen, const void *payload);
+int send__unsuback(struct mosquitto *context, uint16_t mid, const struct mqtt5__property *properties);
 
 /* ============================================================
  * Network functions

@@ -54,6 +54,7 @@ static char *username = NULL;
 static char *password = NULL;
 static bool disconnect_sent = false;
 static bool quiet = false;
+static struct mosq_config cfg;
 
 void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 {
@@ -64,10 +65,10 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 			case MSGMODE_CMD:
 			case MSGMODE_FILE:
 			case MSGMODE_STDIN_FILE:
-				rc = mosquitto_publish(mosq, &mid_sent, topic, msglen, message, qos, retain);
+				rc = mosquitto_publish_with_properties(mosq, &mid_sent, topic, msglen, message, qos, retain, cfg.publish_props);
 				break;
 			case MSGMODE_NULL:
-				rc = mosquitto_publish(mosq, &mid_sent, topic, 0, NULL, qos, retain);
+				rc = mosquitto_publish_with_properties(mosq, &mid_sent, topic, 0, NULL, qos, retain, cfg.publish_props);
 				break;
 			case MSGMODE_STDIN_LINE:
 				status = STATUS_CONNACK_RECVD;
@@ -230,6 +231,8 @@ void print_usage(void)
 #ifdef WITH_SOCKS
 	printf("                     [--proxy socks-url]\n");
 #endif
+	printf("                     [--property command identifier value]\n");
+	printf("                     [-y command identifier value]\n");
 	printf("       mosquitto_pub --help\n\n");
 	printf(" -A : bind the outgoing socket to this host/ip address. Use to control which interface\n");
 	printf("      the client communicates over.\n");
@@ -258,6 +261,7 @@ void print_usage(void)
 	printf(" -u : provide a username\n");
 	printf(" -V : specify the version of the MQTT protocol to use when connecting.\n");
 	printf("      Can be mqttv5, mqttv311 or mqttv31. Defaults to mqttv311.\n");
+	printf(" -y,--property : Add MQTT v5 properties. See the documentation for more details.\n");
 	printf(" --help : display this message.\n");
 	printf(" --quiet : don't print error messages.\n");
 	printf(" --will-payload : payload for the client Will, which is sent by the broker in case of\n");
@@ -290,12 +294,11 @@ void print_usage(void)
 	printf("           socks5h://[username[:password]@]hostname[:port]\n");
 	printf("           Only \"none\" and \"username\" authentication is supported.\n");
 #endif
-	printf("\nSee http://mosquitto.org/ for more information.\n\n");
+	printf("\nSee https://mosquitto.org/ for more information.\n\n");
 }
 
 int main(int argc, char *argv[])
 {
-	struct mosq_config cfg;
 	struct mosquitto *mosq = NULL;
 	int rc;
 	int rc2;
@@ -413,7 +416,7 @@ int main(int argc, char *argv[])
 					buf_len_actual = strlen(buf);
 					if(buf[buf_len_actual-1] == '\n'){
 						buf[buf_len_actual-1] = '\0';
-						rc2 = mosquitto_publish(mosq, &mid_sent, topic, buf_len_actual-1, buf, qos, retain);
+						rc2 = mosquitto_publish_with_properties(mosq, &mid_sent, topic, buf_len_actual-1, buf, qos, retain, cfg.publish_props);
 						if(rc2){
 							if(!quiet) fprintf(stderr, "Error: Publish returned %d, disconnecting.\n", rc2);
 							mosquitto_disconnect(mosq);

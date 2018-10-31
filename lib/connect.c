@@ -26,7 +26,7 @@ Contributors:
 #include "send_mosq.h"
 #include "socks_mosq.h"
 
-static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking);
+static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking, const struct mqtt5__property *properties);
 static int mosquitto__connect_init(struct mosquitto *mosq, const char *host, int port, int keepalive, const char *bind_address);
 
 
@@ -74,6 +74,11 @@ int mosquitto_connect(struct mosquitto *mosq, const char *host, int port, int ke
 
 int mosquitto_connect_bind(struct mosquitto *mosq, const char *host, int port, int keepalive, const char *bind_address)
 {
+	return mosquitto_connect_bind_with_properties(mosq, host, port, keepalive, bind_address, NULL);
+}
+
+int mosquitto_connect_bind_with_properties(struct mosquitto *mosq, const char *host, int port, int keepalive, const char *bind_address, const mosquitto_property *properties)
+{
 	int rc;
 	rc = mosquitto__connect_init(mosq, host, port, keepalive, bind_address);
 	if(rc) return rc;
@@ -82,7 +87,7 @@ int mosquitto_connect_bind(struct mosquitto *mosq, const char *host, int port, i
 	mosq->state = mosq_cs_new;
 	pthread_mutex_unlock(&mosq->state_mutex);
 
-	return mosquitto__reconnect(mosq, true);
+	return mosquitto__reconnect(mosq, true, properties);
 }
 
 
@@ -101,23 +106,23 @@ int mosquitto_connect_bind_async(struct mosquitto *mosq, const char *host, int p
 	mosq->state = mosq_cs_connect_async;
 	pthread_mutex_unlock(&mosq->state_mutex);
 
-	return mosquitto__reconnect(mosq, false);
+	return mosquitto__reconnect(mosq, false, NULL);
 }
 
 
 int mosquitto_reconnect_async(struct mosquitto *mosq)
 {
-	return mosquitto__reconnect(mosq, false);
+	return mosquitto__reconnect(mosq, false, NULL);
 }
 
 
 int mosquitto_reconnect(struct mosquitto *mosq)
 {
-	return mosquitto__reconnect(mosq, true);
+	return mosquitto__reconnect(mosq, true, NULL);
 }
 
 
-static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking)
+static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking, const mosquitto_property *properties)
 {
 	int rc;
 	struct mosquitto__packet *packet;
@@ -193,12 +198,17 @@ static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking)
 	}else
 #endif
 	{
-		return send__connect(mosq, mosq->keepalive, mosq->clean_session);
+		return send__connect(mosq, mosq->keepalive, mosq->clean_session, properties);
 	}
 }
 
 
 int mosquitto_disconnect(struct mosquitto *mosq)
+{
+	return mosquitto_disconnect_with_properties(mosq, NULL);
+}
+
+int mosquitto_disconnect_with_properties(struct mosquitto *mosq, const mosquitto_property *properties)
 {
 	if(!mosq) return MOSQ_ERR_INVAL;
 
@@ -207,6 +217,6 @@ int mosquitto_disconnect(struct mosquitto *mosq)
 	pthread_mutex_unlock(&mosq->state_mutex);
 
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
-	return send__disconnect(mosq);
+	return send__disconnect(mosq, properties);
 }
 

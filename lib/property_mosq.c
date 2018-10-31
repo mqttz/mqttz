@@ -290,11 +290,12 @@ void mosquitto_property_free_all(struct mqtt5__property **property)
 }
 
 
-int property__get_length(struct mqtt5__property *property)
+int property__get_length(const struct mqtt5__property *property)
 {
 	if(!property) return 0;
 
 	switch(property->identifier){
+		/* Byte */
 		case MQTT_PROP_PAYLOAD_FORMAT_INDICATOR:
 		case MQTT_PROP_REQUEST_PROBLEM_INFORMATION:
 		case MQTT_PROP_REQUEST_RESPONSE_INFORMATION:
@@ -305,18 +306,21 @@ int property__get_length(struct mqtt5__property *property)
 		case MQTT_PROP_SHARED_SUB_AVAILABLE:
 			return 2; /* 1 (identifier) + 1 byte */
 
+		/* uint16 */
 		case MQTT_PROP_SERVER_KEEP_ALIVE:
 		case MQTT_PROP_RECEIVE_MAXIMUM:
 		case MQTT_PROP_TOPIC_ALIAS_MAXIMUM:
 		case MQTT_PROP_TOPIC_ALIAS:
 			return 3; /* 1 (identifier) + 2 bytes */
 
+		/* uint32 */
 		case MQTT_PROP_MESSAGE_EXPIRY_INTERVAL:
 		case MQTT_PROP_WILL_DELAY_INTERVAL:
 		case MQTT_PROP_MAXIMUM_PACKET_SIZE:
 		case MQTT_PROP_SESSION_EXPIRY_INTERVAL:
-			return 5; /* 1 (identifier) + 5 bytes */
+			return 5; /* 1 (identifier) + 4 bytes */
 
+		/* varint */
 		case MQTT_PROP_SUBSCRIPTION_IDENTIFIER:
 			if(property->value.varint < 128){
 				return 2;
@@ -330,10 +334,12 @@ int property__get_length(struct mqtt5__property *property)
 				return 0;
 			}
 
+		/* binary */
 		case MQTT_PROP_CORRELATION_DATA:
 		case MQTT_PROP_AUTHENTICATION_DATA:
 			return 3 + property->value.bin.len; /* 1 + 2 bytes (len) + X bytes (payload) */
 
+		/* string */
 		case MQTT_PROP_CONTENT_TYPE:
 		case MQTT_PROP_RESPONSE_TOPIC:
 		case MQTT_PROP_ASSIGNED_CLIENT_IDENTIFIER:
@@ -343,6 +349,7 @@ int property__get_length(struct mqtt5__property *property)
 		case MQTT_PROP_REASON_STRING:
 			return 3 + property->value.s.len; /* 1 + 2 bytes (len) + X bytes (string) */
 
+		/* string pair */
 		case MQTT_PROP_USER_PROPERTY:
 			return 5 + property->value.s.len + property->name.len; /* 1 + 2*(2 bytes (len) + X bytes (string))*/
 
@@ -353,9 +360,9 @@ int property__get_length(struct mqtt5__property *property)
 }
 
 
-int property__get_length_all(struct mqtt5__property *property)
+int property__get_length_all(const struct mqtt5__property *property)
 {
-	struct mqtt5__property *p;
+	const struct mqtt5__property *p;
 	int len = 0;
 
 	p = property;
@@ -367,7 +374,7 @@ int property__get_length_all(struct mqtt5__property *property)
 }
 
 
-int property__write(struct mosquitto__packet *packet, struct mqtt5__property *property)
+int property__write(struct mosquitto__packet *packet, const struct mqtt5__property *property)
 {
 	int rc;
 
@@ -417,6 +424,7 @@ int property__write(struct mosquitto__packet *packet, struct mqtt5__property *pr
 		case MQTT_PROP_CORRELATION_DATA:
 			packet__write_uint16(packet, property->value.bin.len);
 			packet__write_bytes(packet, property->value.bin.v, property->value.bin.len);
+			break;
 
 		case MQTT_PROP_USER_PROPERTY:
 			packet__write_string(packet, property->name.v, property->name.len);
@@ -432,10 +440,10 @@ int property__write(struct mosquitto__packet *packet, struct mqtt5__property *pr
 }
 
 
-int property__write_all(struct mosquitto__packet *packet, struct mqtt5__property *properties)
+int property__write_all(struct mosquitto__packet *packet, const struct mqtt5__property *properties)
 {
 	int rc;
-	struct mqtt5__property *p;
+	const struct mqtt5__property *p;
 
 	rc = packet__write_varint(packet, property__get_length_all(properties));
 	if(rc) return rc;
@@ -646,5 +654,227 @@ int mosquitto_string_to_property_info(const char *propname, int *identifier, int
 	}else{
 		return MOSQ_ERR_INVAL;
 	}
+	return MOSQ_ERR_SUCCESS;
+}
+
+
+static void property__add(struct mqtt5__property **proplist, struct mqtt5__property *prop)
+{
+	struct mqtt5__property *p;
+
+	if(!(*proplist)){
+		*proplist = prop;
+	}
+
+	p = *proplist;
+	while(p->next){
+		p = p->next;
+	}
+	p->next = prop;
+	prop->next = NULL;
+}
+
+
+int mosquitto_property_add_byte(mosquitto_property **proplist, int identifier, uint8_t value)
+{
+	struct mqtt5__property *prop;
+
+	if(!proplist) return MOSQ_ERR_INVAL;
+	if(identifier != MQTT_PROP_PAYLOAD_FORMAT_INDICATOR
+			&& identifier != MQTT_PROP_REQUEST_PROBLEM_INFORMATION
+			&& identifier != MQTT_PROP_REQUEST_RESPONSE_INFORMATION
+			&& identifier != MQTT_PROP_MAXIMUM_QOS
+			&& identifier != MQTT_PROP_RETAIN_AVAILABLE
+			&& identifier != MQTT_PROP_WILDCARD_SUB_AVAILABLE
+			&& identifier != MQTT_PROP_SUBSCRIPTION_ID_AVAILABLE
+			&& identifier != MQTT_PROP_SHARED_SUB_AVAILABLE){
+		return MOSQ_ERR_INVAL;
+	}
+
+	prop = mosquitto__calloc(1, sizeof(struct mqtt5__property));
+	if(!prop) return MOSQ_ERR_NOMEM;
+
+	prop->identifier = identifier;
+	prop->value.i8 = value;
+
+	property__add(proplist, prop);
+	return MOSQ_ERR_SUCCESS;
+}
+
+
+int mosquitto_property_add_int16(mosquitto_property **proplist, int identifier, uint16_t value)
+{
+	struct mqtt5__property *prop;
+
+	if(!proplist) return MOSQ_ERR_INVAL;
+	if(identifier != MQTT_PROP_SERVER_KEEP_ALIVE
+			&& identifier != MQTT_PROP_RECEIVE_MAXIMUM
+			&& identifier != MQTT_PROP_TOPIC_ALIAS_MAXIMUM
+			&& identifier != MQTT_PROP_TOPIC_ALIAS){
+		return MOSQ_ERR_INVAL;
+	}
+
+	prop = mosquitto__calloc(1, sizeof(struct mqtt5__property));
+	if(!prop) return MOSQ_ERR_NOMEM;
+
+	prop->identifier = identifier;
+	prop->value.i16 = value;
+
+	property__add(proplist, prop);
+	return MOSQ_ERR_SUCCESS;
+}
+
+
+int mosquitto_property_add_int32(mosquitto_property **proplist, int identifier, uint32_t value)
+{
+	struct mqtt5__property *prop;
+
+	if(!proplist) return MOSQ_ERR_INVAL;
+	if(identifier != MQTT_PROP_MESSAGE_EXPIRY_INTERVAL
+			&& identifier != MQTT_PROP_SESSION_EXPIRY_INTERVAL
+			&& identifier != MQTT_PROP_WILL_DELAY_INTERVAL
+			&& identifier != MQTT_PROP_MAXIMUM_PACKET_SIZE){
+
+		return MOSQ_ERR_INVAL;
+	}
+
+	prop = mosquitto__calloc(1, sizeof(struct mqtt5__property));
+	if(!prop) return MOSQ_ERR_NOMEM;
+
+	prop->identifier = identifier;
+	prop->value.i32 = value;
+
+	property__add(proplist, prop);
+	return MOSQ_ERR_SUCCESS;
+}
+
+
+int mosquitto_property_add_varint(mosquitto_property **proplist, int identifier, uint32_t value)
+{
+	struct mqtt5__property *prop;
+
+	if(!proplist || value > 268435455) return MOSQ_ERR_INVAL;
+	if(identifier != MQTT_PROP_SUBSCRIPTION_IDENTIFIER) return MOSQ_ERR_INVAL;
+
+	prop = mosquitto__calloc(1, sizeof(struct mqtt5__property));
+	if(!prop) return MOSQ_ERR_NOMEM;
+
+	prop->identifier = identifier;
+	prop->value.varint = value;
+
+	property__add(proplist, prop);
+	return MOSQ_ERR_SUCCESS;
+}
+
+
+int mosquitto_property_add_binary(mosquitto_property **proplist, int identifier, const void *value, uint16_t len)
+{
+	struct mqtt5__property *prop;
+
+	if(!proplist) return MOSQ_ERR_INVAL;
+	if(identifier != MQTT_PROP_CORRELATION_DATA
+			&& identifier != MQTT_PROP_AUTHENTICATION_DATA){
+
+		return MOSQ_ERR_INVAL;
+	}
+
+	prop = mosquitto__calloc(1, sizeof(struct mqtt5__property));
+	if(!prop) return MOSQ_ERR_NOMEM;
+
+	prop->identifier = identifier;
+
+	if(len){
+		prop->value.bin.v = mosquitto__malloc(len);
+		if(!prop->value.bin.v){
+			mosquitto__free(prop);
+			return MOSQ_ERR_NOMEM;
+		}
+
+		memcpy(prop->value.bin.v, value, len);
+		prop->value.bin.len = len;
+	}
+
+	property__add(proplist, prop);
+	return MOSQ_ERR_SUCCESS;
+}
+
+
+int mosquitto_property_add_string(mosquitto_property **proplist, int identifier, const char *value)
+{
+	struct mqtt5__property *prop;
+
+	if(!proplist) return MOSQ_ERR_INVAL;
+	if(value){
+		if(mosquitto_validate_utf8(value, strlen(value))) return MOSQ_ERR_MALFORMED_UTF8;
+	}
+
+	if(identifier != MQTT_PROP_CONTENT_TYPE
+			&& identifier != MQTT_PROP_RESPONSE_TOPIC
+			&& identifier != MQTT_PROP_ASSIGNED_CLIENT_IDENTIFIER
+			&& identifier != MQTT_PROP_AUTHENTICATION_METHOD
+			&& identifier != MQTT_PROP_RESPONSE_INFORMATION
+			&& identifier != MQTT_PROP_SERVER_REFERENCE
+			&& identifier != MQTT_PROP_REASON_STRING){
+
+		return MOSQ_ERR_INVAL;
+	}
+
+	prop = mosquitto__calloc(1, sizeof(struct mqtt5__property));
+	if(!prop) return MOSQ_ERR_NOMEM;
+
+	prop->identifier = identifier;
+	if(value && strlen(value)){
+		prop->value.s.v = mosquitto__strdup(value);
+		if(!prop->value.s.v){
+			mosquitto__free(prop->name.v);
+			mosquitto__free(prop);
+			return MOSQ_ERR_NOMEM;
+		}
+		prop->value.s.len = strlen(value);
+	}
+
+	property__add(proplist, prop);
+	return MOSQ_ERR_SUCCESS;
+}
+
+
+int mosquitto_property_add_string_pair(mosquitto_property **proplist, int identifier, const char *name, const char *value)
+{
+	struct mqtt5__property *prop;
+
+	if(!proplist) return MOSQ_ERR_INVAL;
+	if(identifier != MQTT_PROP_USER_PROPERTY) return MOSQ_ERR_INVAL;
+	if(name){
+		if(mosquitto_validate_utf8(name, strlen(name))) return MOSQ_ERR_MALFORMED_UTF8;
+	}
+	if(value){
+		if(mosquitto_validate_utf8(value, strlen(value))) return MOSQ_ERR_MALFORMED_UTF8;
+	}
+
+	prop = mosquitto__calloc(1, sizeof(struct mqtt5__property));
+	if(!prop) return MOSQ_ERR_NOMEM;
+
+	prop->identifier = identifier;
+
+	if(name && strlen(name)){
+		prop->name.v = mosquitto__strdup(name);
+		if(!prop->name.v){
+			mosquitto__free(prop);
+			return MOSQ_ERR_NOMEM;
+		}
+		prop->name.len = strlen(name);
+	}
+
+	if(value && strlen(value)){
+		prop->value.s.v = mosquitto__strdup(value);
+		if(!prop->value.s.v){
+			mosquitto__free(prop->name.v);
+			mosquitto__free(prop);
+			return MOSQ_ERR_NOMEM;
+		}
+		prop->value.s.len = strlen(value);
+	}
+
+	property__add(proplist, prop);
 	return MOSQ_ERR_SUCCESS;
 }

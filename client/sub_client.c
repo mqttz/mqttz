@@ -96,7 +96,7 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 	cfg = (struct mosq_config *)obj;
 
 	if(!result){
-		mosquitto_subscribe_multiple(mosq, NULL, cfg->topic_count, cfg->topics, cfg->qos);
+		mosquitto_subscribe_multiple(mosq, NULL, cfg->topic_count, cfg->topics, cfg->qos, cfg->subscribe_props);
 
 		for(i=0; i<cfg->unsub_topic_count; i++){
 			mosquitto_unsubscribe(mosq, NULL, cfg->unsub_topics[i]);
@@ -165,6 +165,8 @@ void print_usage(void)
 #ifdef WITH_SOCKS
 	printf("                     [--proxy socks-url]\n");
 #endif
+	printf("                     [-y command identifier value]\n");
+	printf("                     [--property command identifier value]\n");
 	printf("       mosquitto_sub --help\n\n");
 	printf(" -A : bind the outgoing socket to this host/ip address. Use to control which interface\n");
 	printf("      the client communicates over.\n");
@@ -198,6 +200,7 @@ void print_usage(void)
 #ifndef WIN32
 	printf(" -W : Specifies a timeout in seconds how long to process incoming MQTT messages.\n");
 #endif
+	printf(" -y, --property : Add MQTT v5 properties. See the documentation for more details.\n");
 	printf(" --help : display this message.\n");
 	printf(" --quiet : don't print error messages.\n");
 	printf(" --retained-only : only handle messages with the retained flag set, and exit when the\n");

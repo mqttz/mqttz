@@ -52,6 +52,7 @@
 			<arg><option>-v</option></arg>
 			<arg><option>-V</option> <replaceable>protocol-version</replaceable></arg>
 			<arg><option>-W</option> <replaceable>message processing timeout</replaceable></arg>
+			<arg><option>-y</option> <replaceable>command</replaceable> <replaceable>identifier</replaceable> <replaceable>value</replaceable></arg>
 			<arg><option>--proxy</option> <replaceable>socks-url</replaceable></arg>
 			<arg><option>--quiet</option></arg>
 			<arg>
@@ -77,6 +78,7 @@
 					<arg><option>--tls-version</option> <replaceable>version</replaceable></arg>
 				</arg>
 			</group>
+			<arg><option>--property</option> <replaceable>command</replaceable> <replaceable>identifier</replaceable> <replaceable>value</replaceable></arg>
 		</cmdsynopsis>
 		<cmdsynopsis>
 			<command>mosquitto_sub</command>
@@ -341,6 +343,39 @@
 						the broker. Using this argument without also specifying
 						a username is invalid. See also the
 						<option>--username</option> option.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>--property</option></term>
+				<term><option>-y</option></term>
+				<listitem>
+					<para>Use an MQTT v5 property with this publish. If you use
+						this option, the client will be set to be an MQTT v5
+						client. This option has two forms:</para>
+					<para><option>--property command identifier value</option></para>
+					<para><option>--property command identifier name value</option></para>
+					<para><option>command</option> is the MQTT command/packet
+						identifier and can be one of CONNECT, PUBACK, PUBREC,
+						PUBCOMP, SUBSCRIBE, UNSUBSCRIBE, DISCONNECT, AUTH, or
+						WILL. The properties available for each command are
+						listed in the Properties section.</para>
+
+					<para><option>identifier</option> is the name of the
+						property to add. This is as described in the
+						specification, but with '-' as a word separator. For
+						example:
+						<option>payload-format-indicator</option>. More details
+						are in the Properties section.</para>
+
+					<para><option>value</option> is the value of the property
+						to add, with a data type that is property
+						specific.</para>
+
+					<para><option>name</option> is only used for the
+						<option>user-property</option> property as the first of
+						the two strings in the string pair. In that case,
+						<option>value</option> is the second of the strings in
+						the pair.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -701,6 +736,63 @@
 		a non-retained, zero length message with QoS 0.</para>
 		<para>Use the <option>--will-retain</option>, <option>--will-payload</option> and <option>--will-qos</option> arguments to
 		modify the other will parameters.</para>
+	</refsect1>
+
+	<refsect1>
+		<title>Properties</title>
+		<para>The <option>--property</option> option allows adding properties
+			to different stages of the mosquitto_sub run. The properties
+			supported for each command are as follows:</para>
+
+		<refsect2>
+			<title>Connect</title>
+			<itemizedlist>
+				<listitem><para><option>authentication-data</option> (binary data - note treated as a string in mosquitto_pub)</para></listitem>
+				<listitem><para><option>authentication-method</option> (UTF-8 string pair)</para></listitem>
+				<listitem><para><option>maximum-packet-size</option> (32-bit unsigned integer)</para></listitem>
+				<listitem><para><option>receive-maximum</option> (16-bit unsigned integer)</para></listitem>
+				<listitem><para><option>request-problem-information</option> (8-bit unsigned integer)</para></listitem>
+				<listitem><para><option>request-response-information</option> (8-bit unsigned integer)</para></listitem>
+				<listitem><para><option>session-expiry-interval</option> (32-bit unsigned integer)</para></listitem>
+				<listitem><para><option>topic-alias-maximum</option> (16-bit unsigned integer)</para></listitem>
+				<listitem><para><option>user-property</option> (UTF-8 string pair)</para></listitem>
+			</itemizedlist>
+		</refsect2>
+
+		<refsect2>
+			<title>Subscribe</title>
+			<itemizedlist>
+				<listitem><para><option>user-property</option> (UTF-8 string pair)</para></listitem>
+			</itemizedlist>
+		</refsect2>
+
+		<refsect2>
+			<title>Unsubscribe</title>
+			<itemizedlist>
+				<listitem><para><option>user-property</option> (UTF-8 string pair)</para></listitem>
+			</itemizedlist>
+		</refsect2>
+
+		<refsect2>
+			<title>Disconnect</title>
+			<itemizedlist>
+				<listitem><para><option>session-expiry-interval</option> (32-bit unsigned integer)</para></listitem>
+				<listitem><para><option>user-property</option> (UTF-8 string pair)</para></listitem>
+			</itemizedlist>
+		</refsect2>
+
+		<refsect2>
+			<title>Will properties</title>
+			<itemizedlist>
+				<listitem><para><option>content-type</option> (UTF-8 string)</para></listitem>
+				<listitem><para><option>correlation-data</option> (binary data - note treated as a string in mosquitto_pub)</para></listitem>
+				<listitem><para><option>message-expiry-interval</option> (32-bit unsigned integer)</para></listitem>
+				<listitem><para><option>payload-format-indicator</option> (8-bit unsigned integer)</para></listitem>
+				<listitem><para><option>response-topic</option> (UTF-8 string)</para></listitem>
+				<listitem><para><option>user-property</option> (UTF-8 string pair)</para></listitem>
+				<listitem><para><option>will-delay-interval</option> (32-bit unsigned integer)</para></listitem>
+			</itemizedlist>
+		</refsect2>
 	</refsect1>
 
 	<refsect1>

@@ -18,45 +18,30 @@ Contributors:
 
 #include <assert.h>
 
-#ifdef WITH_BROKER
-#  include "mosquitto_broker_internal.h"
-#endif
-
-#include "mosquitto.h"
-#include "mosquitto_internal.h"
-#include "logging_mosq.h"
-#include "memory_mosq.h"
+#include "mosquitto_broker_internal.h"
 #include "mqtt_protocol.h"
+#include "memory_mosq.h"
 #include "packet_mosq.h"
 #include "property_mosq.h"
-#include "send_mosq.h"
 
 
-int send__disconnect(struct mosquitto *mosq, const struct mqtt5__property *properties)
+int send__unsuback(struct mosquitto *mosq, uint16_t mid, const struct mqtt5__property *properties)
 {
 	struct mosquitto__packet *packet = NULL;
 	int rc;
 	int proplen, varbytes;
 
 	assert(mosq);
-#ifdef WITH_BROKER
-# ifdef WITH_BRIDGE
-	log__printf(mosq, MOSQ_LOG_DEBUG, "Bridge %s sending DISCONNECT", mosq->id);
-# endif
-#else
-	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending DISCONNECT", mosq->id);
-#endif
-	assert(mosq);
 	packet = mosquitto__calloc(1, sizeof(struct mosquitto__packet));
 	if(!packet) return MOSQ_ERR_NOMEM;
 
-	packet->command = CMD_DISCONNECT;
+	packet->command = CMD_UNSUBACK;
+	packet->remaining_length = 2;
+
 	if(mosq->protocol == mosq_p_mqtt5){
 		proplen = property__get_length_all(properties);
 		varbytes = packet__varint_bytes(proplen);
-		packet->remaining_length = proplen+varbytes;
-	}else{
-		packet->remaining_length = 0;
+		packet->remaining_length += varbytes + proplen;
 	}
 
 	rc = packet__alloc(packet);
@@ -64,10 +49,12 @@ int send__disconnect(struct mosquitto *mosq, const struct mqtt5__property *prope
 		mosquitto__free(packet);
 		return rc;
 	}
+
+	packet__write_uint16(packet, mid);
+
 	if(mosq->protocol == mosq_p_mqtt5){
 		property__write_all(packet, properties);
 	}
 
 	return packet__queue(mosq, packet);
 }
-

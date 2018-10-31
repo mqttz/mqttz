@@ -92,6 +92,12 @@ struct mosq_config {
 	char *socks5_username;
 	char *socks5_password;
 #endif
+	mosquitto_property *connect_props;
+	mosquitto_property *publish_props;
+	mosquitto_property *subscribe_props;
+	mosquitto_property *unsubscribe_props;
+	mosquitto_property *disconnect_props;
+	mosquitto_property *will_props;
 };
 
 int client_config_load(struct mosq_config *config, int pub_or_sub, int argc, char *argv[]);
@@ -99,5 +105,7 @@ void client_config_cleanup(struct mosq_config *cfg);
 int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg);
 int client_id_generate(struct mosq_config *cfg, const char *id_base);
 int client_connect(struct mosquitto *mosq, struct mosq_config *cfg);
+
+int cfg_parse_property(struct mosq_config *cfg, int argc, char *argv[], int *idx);
 
 #endif

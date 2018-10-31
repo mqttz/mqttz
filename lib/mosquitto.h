@@ -44,6 +44,7 @@ extern "C" {
 #endif
 
 #include <stddef.h>
+#include <stdint.h>
 
 #define LIBMOSQUITTO_MAJOR 1
 #define LIBMOSQUITTO_MINOR 5
@@ -424,6 +425,37 @@ libmosq_EXPORT int mosquitto_connect(struct mosquitto *mosq, const char *host, i
 libmosq_EXPORT int mosquitto_connect_bind(struct mosquitto *mosq, const char *host, int port, int keepalive, const char *bind_address);
 
 /*
+ * Function: mosquitto_connect_bind_with_properties
+ *
+ * Connect to an MQTT broker. This extends the functionality of
+ * <mosquitto_connect> by adding the bind_address parameter. Use this function
+ * if you need to restrict network communication over a particular interface.
+ *
+ * Parameters:
+ * 	mosq -         a valid mosquitto instance.
+ * 	host -         the hostname or ip address of the broker to connect to.
+ * 	port -         the network port to connect to. Usually 1883.
+ * 	keepalive -    the number of seconds after which the broker should send a PING
+ *                 message to the client if no other messages have been exchanged
+ *                 in that time.
+ *  bind_address - the hostname or ip address of the local network interface to
+ *                 bind to.
+ *  properties - the MQTT 5 properties for the connect (not for the Will).
+ *
+ * Returns:
+ * 	MOSQ_ERR_SUCCESS - on success.
+ * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ * 	MOSQ_ERR_ERRNO -   if a system call returned an error. The variable errno
+ *                     contains the error code, even on Windows.
+ *                     Use strerror_r() where available or FormatMessage() on
+ *                     Windows.
+ *
+ * See Also:
+ * 	<mosquitto_connect>, <mosquitto_connect_async>, <mosquitto_connect_bind_async>
+ */
+libmosq_EXPORT int mosquitto_connect_bind_with_properties(struct mosquitto *mosq, const char *host, int port, int keepalive, const char *bind_address, const mosquitto_property *properties);
+
+/*
  * Function: mosquitto_connect_async
  *
  * Connect to an MQTT broker. This is a non-blocking call. If you use
@@ -604,6 +636,26 @@ libmosq_EXPORT int mosquitto_reconnect_async(struct mosquitto *mosq);
  */
 libmosq_EXPORT int mosquitto_disconnect(struct mosquitto *mosq);
 
+/*
+ * Function: mosquitto_disconnect_with_properties
+ *
+ * Disconnect from the broker, with attached MQTT properties.
+ *
+ * Use <mosquitto_property_add_*> to create a list of properties, then attach
+ * them to this publish. Properties need freeing with
+ * <mosquitto_property_free_all>.
+ *
+ * Parameters:
+ *	mosq - a valid mosquitto instance.
+ * 	properties - a valid mosquitto_property list, or NULL.
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS - on success.
+ * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ * 	MOSQ_ERR_NO_CONN -  if the client isn't connected to a broker.
+ */
+libmosq_EXPORT int mosquitto_disconnect_with_properties(struct mosquitto *mosq, const mosquitto_property *properties);
+
 
 /* ======================================================================
  *
@@ -648,6 +700,58 @@ libmosq_EXPORT int mosquitto_disconnect(struct mosquitto *mosq);
  */
 libmosq_EXPORT int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int payloadlen, const void *payload, int qos, bool retain);
 
+
+/*
+ * Function: mosquitto_publish_with_properties
+ *
+ * Publish a message on a given topic, with attached MQTT properties.
+ *
+ * Use <mosquitto_property_add_*> to create a list of properties, then attach
+ * them to this publish. Properties need freeing with
+ * <mosquitto_property_free_all>.
+ *
+ * Requires the mosquitto instance to be connected with MQTT 5.
+ *
+ * Parameters:
+ * 	mosq -       a valid mosquitto instance.
+ * 	mid -        pointer to an int. If not NULL, the function will set this
+ *               to the message id of this particular message. This can be then
+ *               used with the publish callback to determine when the message
+ *               has been sent.
+ *               Note that although the MQTT protocol doesn't use message ids
+ *               for messages with QoS=0, libmosquitto assigns them message ids
+ *               so they can be tracked with this parameter.
+ *  topic -      null terminated string of the topic to publish to.
+ * 	payloadlen - the size of the payload (bytes). Valid values are between 0 and
+ *               268,435,455.
+ * 	payload -    pointer to the data to send. If payloadlen > 0 this must be a
+ *               valid memory location.
+ * 	qos -        integer value 0, 1 or 2 indicating the Quality of Service to be
+ *               used for the message.
+ * 	retain -     set to true to make the message retained.
+ * 	properties - a valid mosquitto_property list, or NULL.
+ *
+ * Returns:
+ * 	MOSQ_ERR_SUCCESS -        on success.
+ * 	MOSQ_ERR_INVAL -          if the input parameters were invalid.
+ * 	MOSQ_ERR_NOMEM -          if an out of memory condition occurred.
+ * 	MOSQ_ERR_NO_CONN -        if the client isn't connected to a broker.
+ *	MOSQ_ERR_PROTOCOL -       if there is a protocol error communicating with the
+ *                            broker.
+ * 	MOSQ_ERR_PAYLOAD_SIZE -   if payloadlen is too large.
+ * 	MOSQ_ERR_MALFORMED_UTF8 - if the topic is not valid UTF-8
+ */
+libmosq_EXPORT int mosquitto_publish_with_properties(
+		struct mosquitto *mosq,
+		int *mid,
+		const char *topic,
+		int payloadlen,
+		const void *payload,
+		int qos,
+		bool retain,
+		const mosquitto_property *properties);
+
+
 /*
  * Function: mosquitto_subscribe
  *
@@ -672,6 +776,37 @@ libmosq_EXPORT int mosquitto_publish(struct mosquitto *mosq, int *mid, const cha
 libmosq_EXPORT int mosquitto_subscribe(struct mosquitto *mosq, int *mid, const char *sub, int qos);
 
 /*
+ * Function: mosquitto_subscribe_with_properties
+ *
+ * Subscribe to a topic, with attached MQTT properties.
+ *
+ * Use <mosquitto_property_add_*> to create a list of properties, then attach
+ * them to this subscribe. Properties need freeing with
+ * <mosquitto_property_free_all>.
+ *
+ * Requires the mosquitto instance to be connected with MQTT 5.
+ *
+ *
+ * Parameters:
+ *	mosq - a valid mosquitto instance.
+ *	mid -  a pointer to an int. If not NULL, the function will set this to
+ *	       the message id of this particular message. This can be then used
+ *	       with the subscribe callback to determine when the message has been
+ *	       sent.
+ *	sub -  the subscription pattern.
+ *	qos -  the requested Quality of Service for this subscription.
+ * 	properties - a valid mosquitto_property list, or NULL.
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS -        on success.
+ * 	MOSQ_ERR_INVAL -          if the input parameters were invalid.
+ * 	MOSQ_ERR_NOMEM -          if an out of memory condition occurred.
+ * 	MOSQ_ERR_NO_CONN -        if the client isn't connected to a broker.
+ * 	MOSQ_ERR_MALFORMED_UTF8 - if the topic is not valid UTF-8
+ */
+libmosq_EXPORT int mosquitto_subscribe_with_properties(struct mosquitto *mosq, int *mid, const char *sub, int qos, const mosquitto_property *properties);
+
+/*
  * Function: mosquitto_subscribe_multiple
  *
  * Subscribe to multiple topics.
@@ -689,6 +824,8 @@ libmosq_EXPORT int mosquitto_subscribe(struct mosquitto *mosq, int *mid, const c
  *	       familiar with this, just think of it as a safer "char **",
  *	       equivalent to "const char *" for a simple string pointer.
  *	qos -  the requested Quality of Service for each subscription.
+ * 	properties - a valid mosquitto_property list, or NULL. Only used with MQTT
+ * 	             v5 clients.
  *
  * Returns:
  *	MOSQ_ERR_SUCCESS -        on success.
@@ -697,7 +834,7 @@ libmosq_EXPORT int mosquitto_subscribe(struct mosquitto *mosq, int *mid, const c
  * 	MOSQ_ERR_NO_CONN -        if the client isn't connected to a broker.
  * 	MOSQ_ERR_MALFORMED_UTF8 - if a topic is not valid UTF-8
  */
-int mosquitto_subscribe_multiple(struct mosquitto *mosq, int *mid, int sub_count, char *const *const sub, int qos);
+int mosquitto_subscribe_multiple(struct mosquitto *mosq, int *mid, int sub_count, char *const *const sub, int qos, const mosquitto_property *properties);
 
 /*
  * Function: mosquitto_unsubscribe
@@ -1901,6 +2038,179 @@ libmosq_EXPORT int mosquitto_validate_utf8(const char *str, int len);
  * =============================================================================
  */
 
+
+/*
+ * Function: mosquitto_property_add_byte
+ *
+ * Add a new byte property to a property list.
+ *
+ * If *proplist == NULL, a new list will be created, otherwise the new property
+ * will be appended to the list.
+ *
+ * Parameters:
+ *	proplist - pointer to mosquitto_property pointer, the list of properties
+ *	identifier - property identifier (e.g. MQTT_PROP_PAYLOAD_FORMAT_INDICATOR)
+ *	value - integer value for the new property
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS - on success
+ *	MOSQ_ERR_INVAL - if identifier is invalid, or if proplist is NULL
+ *	MOSQ_ERR_NOMEM - on out of memory
+ *
+ * Example:
+ *	mosquitto_property *proplist = NULL;
+ *	mosquitto_property_add_byte(&proplist, MQTT_PROP_PAYLOAD_FORMAT_IDENTIFIER, 1);
+ */
+libmosq_EXPORT int mosquitto_property_add_byte(mosquitto_property **proplist, int identifier, uint8_t value);
+
+/*
+ * Function: mosquitto_property_add_int16
+ *
+ * Add a new int16 property to a property list.
+ *
+ * If *proplist == NULL, a new list will be created, otherwise the new property
+ * will be appended to the list.
+ *
+ * Parameters:
+ *	proplist - pointer to mosquitto_property pointer, the list of properties
+ *	identifier - property identifier (e.g. MQTT_PROP_RECEIVE_MAXIMUM)
+ *	value - integer value for the new property
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS - on success
+ *	MOSQ_ERR_INVAL - if identifier is invalid, or if proplist is NULL
+ *	MOSQ_ERR_NOMEM - on out of memory
+ *
+ * Example:
+ *	mosquitto_property *proplist = NULL;
+ *	mosquitto_property_add_int16(&proplist, MQTT_PROP_RECEIVE_MAXIMUM, 1000);
+ */
+libmosq_EXPORT int mosquitto_property_add_int16(mosquitto_property **proplist, int identifier, uint16_t value);
+
+/*
+ * Function: mosquitto_property_add_int32
+ *
+ * Add a new int32 property to a property list.
+ *
+ * If *proplist == NULL, a new list will be created, otherwise the new property
+ * will be appended to the list.
+ *
+ * Parameters:
+ *	proplist - pointer to mosquitto_property pointer, the list of properties
+ *	identifier - property identifier (e.g. MQTT_PROP_MESSAGE_EXPIRY_INTERVAL)
+ *	value - integer value for the new property
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS - on success
+ *	MOSQ_ERR_INVAL - if identifier is invalid, or if proplist is NULL
+ *	MOSQ_ERR_NOMEM - on out of memory
+ *
+ * Example:
+ *	mosquitto_property *proplist = NULL;
+ *	mosquitto_property_add_int32(&proplist, MQTT_PROP_MESSAGE_EXPIRY_INTERVAL, 86400);
+ */
+libmosq_EXPORT int mosquitto_property_add_int32(mosquitto_property **proplist, int identifier, uint32_t value);
+
+/*
+ * Function: mosquitto_property_add_varint
+ *
+ * Add a new varint property to a property list.
+ *
+ * If *proplist == NULL, a new list will be created, otherwise the new property
+ * will be appended to the list.
+ *
+ * Parameters:
+ *	proplist - pointer to mosquitto_property pointer, the list of properties
+ *	identifier - property identifier (e.g. MQTT_PROP_SUBSCRIPTION_IDENTIFIER)
+ *	value - integer value for the new property
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS - on success
+ *	MOSQ_ERR_INVAL - if identifier is invalid, or if proplist is NULL
+ *	MOSQ_ERR_NOMEM - on out of memory
+ *
+ * Example:
+ *	mosquitto_property *proplist = NULL;
+ *	mosquitto_property_add_varint(&proplist, MQTT_PROP_SUBSCRIPTION_IDENTIFIER, 1);
+ */
+libmosq_EXPORT int mosquitto_property_add_varint(mosquitto_property **proplist, int identifier, uint32_t value);
+
+/*
+ * Function: mosquitto_property_add_binary
+ *
+ * Add a new binary property to a property list.
+ *
+ * If *proplist == NULL, a new list will be created, otherwise the new property
+ * will be appended to the list.
+ *
+ * Parameters:
+ *	proplist - pointer to mosquitto_property pointer, the list of properties
+ *	identifier - property identifier (e.g. MQTT_PROP_PAYLOAD_FORMAT_INDICATOR)
+ *	value - pointer to the property data
+ *	len - length of property data in bytes
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS - on success
+ *	MOSQ_ERR_INVAL - if identifier is invalid, or if proplist is NULL
+ *	MOSQ_ERR_NOMEM - on out of memory
+ *
+ * Example:
+ *	mosquitto_property *proplist = NULL;
+ *	mosquitto_property_add_binary(&proplist, MQTT_PROP_AUTHENTICATION_DATA, auth_data, auth_data_len);
+ */
+libmosq_EXPORT int mosquitto_property_add_binary(mosquitto_property **proplist, int identifier, const void *value, uint16_t len);
+
+/*
+ * Function: mosquitto_property_add_string
+ *
+ * Add a new string property to a property list.
+ *
+ * If *proplist == NULL, a new list will be created, otherwise the new property
+ * will be appended to the list.
+ *
+ * Parameters:
+ *	proplist - pointer to mosquitto_property pointer, the list of properties
+ *	identifier - property identifier (e.g. MQTT_PROP_CONTENT_TYPE)
+ *	value - string value for the new property, must be UTF-8 and zero terminated
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS - on success
+ *	MOSQ_ERR_INVAL - if identifier is invalid, if value is NULL, or if proplist is NULL
+ *	MOSQ_ERR_NOMEM - on out of memory
+ *	MOSQ_ERR_MALFORMED_UTF8 - value is not valid UTF-8.
+ *
+ * Example:
+ *	mosquitto_property *proplist = NULL;
+ *	mosquitto_property_add_string(&proplist, MQTT_PROP_CONTENT_TYPE, "application/json");
+ */
+libmosq_EXPORT int mosquitto_property_add_string(mosquitto_property **proplist, int identifier, const char *value);
+
+/*
+ * Function: mosquitto_property_add_string_pair
+ *
+ * Add a new string pair property to a property list.
+ *
+ * If *proplist == NULL, a new list will be created, otherwise the new property
+ * will be appended to the list.
+ *
+ * Parameters:
+ *	proplist - pointer to mosquitto_property pointer, the list of properties
+ *	identifier - property identifier (e.g. MQTT_PROP_USER_PROPERTY)
+ *	name - string name for the new property, must be UTF-8 and zero terminated
+ *	value - string value for the new property, must be UTF-8 and zero terminated
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS - on success
+ *	MOSQ_ERR_INVAL - if identifier is invalid, if name or value is NULL, or if proplist is NULL
+ *	MOSQ_ERR_NOMEM - on out of memory
+ *	MOSQ_ERR_MALFORMED_UTF8 - if name or value are not valid UTF-8.
+ *
+ * Example:
+ *	mosquitto_property *proplist = NULL;
+ *	mosquitto_property_add_string_pair(&proplist, MQTT_PROP_USER_PROPERTY, "client", "mosquitto_pub");
+ */
+libmosq_EXPORT int mosquitto_property_add_string_pair(mosquitto_property **proplist, int identifier, const char *name, const char *value);
+
 /*
  * Function: mosquitto_property_free_all
  *
@@ -1929,7 +2239,7 @@ libmosq_EXPORT void mosquitto_property_free_all(mosquitto_property **properties)
  *   MOSQ_ERR_SUCCESS - if the identifier is valid for command
  *   MOSQ_ERR_PROTOCOL - if the identifier is not valid for use with command.
  */
-int mosquitto_property_command_check(int command, int identifier);
+libmosq_EXPORT int mosquitto_property_command_check(int command, int identifier);
 
 /* Function: mosquitto_string_to_property_info
  *
@@ -1951,7 +2261,7 @@ int mosquitto_property_command_check(int command, int identifier);
  *	// id == MQTT_PROP_RESPONSE_TOPIC
  *	// type == MQTT_PROP_TYPE_STRING
  */
-int mosquitto_string_to_property_info(const char *propname, int *identifier, int *type);
+libmosq_EXPORT int mosquitto_string_to_property_info(const char *propname, int *identifier, int *type);
 
 
 #ifdef __cplusplus

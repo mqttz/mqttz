@@ -30,6 +30,11 @@ Contributors:
 
 int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int payloadlen, const void *payload, int qos, bool retain)
 {
+	return mosquitto_publish_with_properties(mosq, mid, topic, payloadlen, payload, qos, retain, NULL);
+}
+
+int mosquitto_publish_with_properties(struct mosquitto *mosq, int *mid, const char *topic, int payloadlen, const void *payload, int qos, bool retain, const mosquitto_property *properties)
+{
 	struct mosquitto_message_all *message;
 	uint16_t local_mid;
 	int queue_status;
@@ -49,7 +54,7 @@ int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int p
 	}
 
 	if(qos == 0){
-		return send__publish(mosq, local_mid, topic, payloadlen, payload, qos, retain, false, NULL);
+		return send__publish(mosq, local_mid, topic, payloadlen, payload, qos, retain, false, properties);
 	}else{
 		message = mosquitto__calloc(1, sizeof(struct mosquitto_message_all));
 		if(!message) return MOSQ_ERR_NOMEM;
@@ -87,7 +92,7 @@ int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int p
 				message->state = mosq_ms_wait_for_pubrec;
 			}
 			pthread_mutex_unlock(&mosq->out_message_mutex);
-			return send__publish(mosq, message->msg.mid, message->msg.topic, message->msg.payloadlen, message->msg.payload, message->msg.qos, message->msg.retain, message->dup, NULL);
+			return send__publish(mosq, message->msg.mid, message->msg.topic, message->msg.payloadlen, message->msg.payload, message->msg.qos, message->msg.retain, message->dup, properties);
 		}else{
 			message->state = mosq_ms_invalid;
 			pthread_mutex_unlock(&mosq->out_message_mutex);
@@ -99,17 +104,22 @@ int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int p
 
 int mosquitto_subscribe(struct mosquitto *mosq, int *mid, const char *sub, int qos)
 {
+	return mosquitto_subscribe_with_properties(mosq, mid, sub, qos, NULL);
+}
+
+int mosquitto_subscribe_with_properties(struct mosquitto *mosq, int *mid, const char *sub, int qos, const mosquitto_property *properties)
+{
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
 
 	if(mosquitto_sub_topic_check(sub)) return MOSQ_ERR_INVAL;
 	if(mosquitto_validate_utf8(sub, strlen(sub))) return MOSQ_ERR_MALFORMED_UTF8;
 
-	return send__subscribe(mosq, mid, 1, (char *const *const)&sub, qos);
+	return send__subscribe(mosq, mid, 1, (char *const *const)&sub, qos, properties);
 }
 
 
-int mosquitto_subscribe_multiple(struct mosquitto *mosq, int *mid, int sub_count, char *const *const sub, int qos)
+int mosquitto_subscribe_multiple(struct mosquitto *mosq, int *mid, int sub_count, char *const *const sub, int qos, const mosquitto_property *properties)
 {
 	int i;
 
@@ -122,7 +132,7 @@ int mosquitto_subscribe_multiple(struct mosquitto *mosq, int *mid, int sub_count
 		if(mosquitto_validate_utf8(sub[i], strlen(sub[i]))) return MOSQ_ERR_MALFORMED_UTF8;
 	}
 
-	return send__subscribe(mosq, mid, sub_count, sub, qos);
+	return send__subscribe(mosq, mid, sub_count, sub, qos, properties);
 }
 
 

@@ -256,7 +256,7 @@ int bridge__connect_step3(struct mosquitto_db *db, struct mosquitto *context)
 		context->bridge->primary_retry = mosquitto_time() + 5;
 	}
 
-	rc = send__connect(context, context->keepalive, context->clean_session);
+	rc = send__connect(context, context->keepalive, context->clean_session, NULL);
 	if(rc == MOSQ_ERR_SUCCESS){
 		return MOSQ_ERR_SUCCESS;
 	}else if(rc == MOSQ_ERR_ERRNO && errno == ENOTCONN){
@@ -375,7 +375,7 @@ int bridge__connect(struct mosquitto_db *db, struct mosquitto *context)
 
 	HASH_ADD(hh_sock, db->contexts_by_sock, sock, sizeof(context->sock), context);
 
-	rc2 = send__connect(context, context->keepalive, context->clean_session);
+	rc2 = send__connect(context, context->keepalive, context->clean_session, NULL);
 	if(rc2 == MOSQ_ERR_SUCCESS){
 		return rc;
 	}else if(rc2 == MOSQ_ERR_ERRNO && errno == ENOTCONN){

@@ -37,7 +37,7 @@ Contributors:
 #include "send_mosq.h"
 
 
-int send__publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint32_t payloadlen, const void *payload, int qos, bool retain, bool dup, struct mqtt5__property *properties)
+int send__publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint32_t payloadlen, const void *payload, int qos, bool retain, bool dup, const struct mqtt5__property *properties)
 {
 #ifdef WITH_BROKER
 	size_t len;
@@ -129,7 +129,7 @@ int send__publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint3
 }
 
 
-int send__real_publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint32_t payloadlen, const void *payload, int qos, bool retain, bool dup, struct mqtt5__property *properties)
+int send__real_publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint32_t payloadlen, const void *payload, int qos, bool retain, bool dup, const struct mqtt5__property *properties)
 {
 	struct mosquitto__packet *packet = NULL;
 	int packetlen;

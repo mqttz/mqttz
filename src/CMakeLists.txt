@@ -44,6 +44,7 @@ set (MOSQ_SRCS
 	send_suback.c
 	signals.c
 	../lib/send_subscribe.c
+	send_unsuback.c
 	../lib/send_unsubscribe.c
 	sys_tree.c sys_tree.h
 	../lib/time_mosq.c

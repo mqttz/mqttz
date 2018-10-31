@@ -179,6 +179,12 @@ void client_config_cleanup(struct mosq_config *cfg)
 	free(cfg->socks5_username);
 	free(cfg->socks5_password);
 #endif
+	mosquitto_property_free_all(&cfg->connect_props);
+	mosquitto_property_free_all(&cfg->publish_props);
+	mosquitto_property_free_all(&cfg->subscribe_props);
+	mosquitto_property_free_all(&cfg->unsubscribe_props);
+	mosquitto_property_free_all(&cfg->disconnect_props);
+	mosquitto_property_free_all(&cfg->will_props);
 }
 
 int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *argv[])
@@ -877,6 +883,12 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				goto unknown_option;
 			}
 			cfg->verbose = 1;
+		}else if(!strcmp(argv[i], "-y") || !strcmp(argv[i], "--property")){
+			i++;
+			if(cfg_parse_property(cfg, argc, argv, &i)){
+				return 1;
+			}
+			cfg->protocol_version = MQTT_PROTOCOL_V5;
 		}else{
 			goto unknown_option;
 		}
@@ -1006,10 +1018,10 @@ int client_connect(struct mosquitto *mosq, struct mosq_config *cfg)
 	if(cfg->use_srv){
 		rc = mosquitto_connect_srv(mosq, cfg->host, cfg->keepalive, cfg->bind_address);
 	}else{
-		rc = mosquitto_connect_bind(mosq, cfg->host, port, cfg->keepalive, cfg->bind_address);
+		rc = mosquitto_connect_bind_with_properties(mosq, cfg->host, port, cfg->keepalive, cfg->bind_address, cfg->connect_props);
 	}
 #else
-	rc = mosquitto_connect_bind(mosq, cfg->host, port, cfg->keepalive, cfg->bind_address);
+	rc = mosquitto_connect_bind_with_properties(mosq, cfg->host, port, cfg->keepalive, cfg->bind_address, cfg->connect_props);
 #endif
 	if(rc>0){
 		if(!cfg->quiet){

@@ -33,14 +33,13 @@ Contributors:
 #include "util_mosq.h"
 
 
-int send__subscribe(struct mosquitto *mosq, int *mid, int topic_count, const char **topic, int topic_qos)
+int send__subscribe(struct mosquitto *mosq, int *mid, int topic_count, const char **topic, int topic_qos, const struct mqtt5__property *properties)
 {
 	struct mosquitto__packet *packet = NULL;
 	uint32_t packetlen;
 	uint16_t local_mid;
 	int rc;
 	int i;
-	struct mqtt5__property *properties = NULL;
 	int proplen, varbytes;
 
 	assert(mosq);

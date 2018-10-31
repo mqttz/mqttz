@@ -371,6 +371,9 @@ def gen_publish(topic, qos, payload=None, retain=False, dup=False, mid=0, proto_
         pack_format = pack_format + "H"
 
     if proto_ver == 5:
+        if properties is None:
+            properties = struct.pack("!B", 0)
+
         rl += len(properties)
         # This will break if len(properties) > 127
         pack_format = pack_format + "%ds"%(len(properties))
@@ -400,33 +403,27 @@ def gen_publish(topic, qos, payload=None, retain=False, dup=False, mid=0, proto_
         else:
             return struct.pack("!B" + str(len(rlpacked))+"s" + pack_format, cmd, rlpacked, len(topic), topic, payload)
 
-def gen_puback(mid, proto_ver=4):
+def _gen_command_with_mid(cmd, mid, proto_ver=4, reason_code=0):
     if proto_ver == 5:
-        return struct.pack('!BBHB', 64, 3, mid, 0)
+        return struct.pack('!BBHBB', cmd, 4, mid, reason_code, 0)
     else:
-        return struct.pack('!BBH', 64, 2, mid)
+        return struct.pack('!BBH', cmd, 2, mid)
 
-def gen_pubrec(mid, proto_ver=4):
-    if proto_ver == 5:
-        return struct.pack('!BBHB', 80, 3, mid, 0)
-    else:
-        return struct.pack('!BBH', 80, 2, mid)
+def gen_puback(mid, proto_ver=4, reason_code=0):
+    return _gen_command_with_mid(64, mid, proto_ver, reason_code)
 
-def gen_pubrel(mid, dup=False, proto_ver=4):
+def gen_pubrec(mid, proto_ver=4, reason_code=0):
+    return _gen_command_with_mid(80, mid, proto_ver, reason_code)
+
+def gen_pubrel(mid, dup=False, proto_ver=4, reason_code=0):
     if dup:
         cmd = 96+8+2
     else:
         cmd = 96+2
-    if proto_ver == 5:
-        return struct.pack('!BBHB', cmd, 3, mid, 0)
-    else:
-        return struct.pack('!BBH', cmd, 2, mid)
+    return _gen_command_with_mid(cmd, mid, proto_ver, reason_code)
 
-def gen_pubcomp(mid, proto_ver=4):
-    if proto_ver == 5:
-        return struct.pack('!BBHB', 112, 3, mid, 0)
-    else:
-        return struct.pack('!BBH', 112, 2, mid)
+def gen_pubcomp(mid, proto_ver=4, reason_code=0):
+    return _gen_command_with_mid(112, mid, proto_ver, reason_code)
 
 def gen_subscribe(mid, topic, qos, proto_ver=4):
     if proto_ver == 5:
