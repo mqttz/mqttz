@@ -163,28 +163,31 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 					}
 					if(p_prev){
 						p_prev->next = p->next;
-						msg_properties_last->next = NULL;
 						p = p_prev->next;
 					}else{
 						properties = p->next;
-						msg_properties_last->next = NULL;
 						p = properties;
 					}
+					msg_properties_last->next = NULL;
 					break;
 
 				case MQTT_PROP_TOPIC_ALIAS:
+					p_prev = p;
 					p = p->next;
 					break;
 
 				case MQTT_PROP_RESPONSE_TOPIC:
+					p_prev = p;
 					p = p->next;
 					break;
 
 				case MQTT_PROP_MESSAGE_EXPIRY_INTERVAL:
+					p_prev = p;
 					p = p->next;
 					break;
 
 				case MQTT_PROP_SUBSCRIPTION_IDENTIFIER:
+					p_prev = p;
 					p = p->next;
 					break;
 
