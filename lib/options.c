@@ -31,8 +31,14 @@ Contributors:
 
 int mosquitto_will_set(struct mosquitto *mosq, const char *topic, int payloadlen, const void *payload, int qos, bool retain)
 {
+	return mosquitto_will_set_with_properties(mosq, topic, payloadlen, payload, qos, retain, NULL);
+}
+
+
+int mosquitto_will_set_with_properties(struct mosquitto *mosq, const char *topic, int payloadlen, const void *payload, int qos, bool retain, mosquitto_property *properties)
+{
 	if(!mosq) return MOSQ_ERR_INVAL;
-	return will__set(mosq, topic, payloadlen, payload, qos, retain);
+	return will__set(mosq, topic, payloadlen, payload, qos, retain, properties);
 }
 
 

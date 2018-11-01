@@ -159,7 +159,7 @@ int bridge__connect_step1(struct mosquitto_db *db, struct mosquitto *context)
 				context->bridge->initial_notification_done = true;
 			}
 			notification_payload = '0';
-			rc = will__set(context, context->bridge->notification_topic, 1, &notification_payload, 1, true);
+			rc = will__set(context, context->bridge->notification_topic, 1, &notification_payload, 1, true, NULL);
 			if(rc != MOSQ_ERR_SUCCESS){
 				return rc;
 			}
@@ -177,7 +177,7 @@ int bridge__connect_step1(struct mosquitto_db *db, struct mosquitto *context)
 			}
 
 			notification_payload = '0';
-			rc = will__set(context, notification_topic, 1, &notification_payload, 1, true);
+			rc = will__set(context, notification_topic, 1, &notification_payload, 1, true, NULL);
 			mosquitto__free(notification_topic);
 			if(rc != MOSQ_ERR_SUCCESS){
 				return rc;
@@ -327,7 +327,7 @@ int bridge__connect(struct mosquitto_db *db, struct mosquitto *context)
 
 			if (!context->bridge->notifications_local_only) {
 				notification_payload = '0';
-				rc = will__set(context, context->bridge->notification_topic, 1, &notification_payload, 1, true);
+				rc = will__set(context, context->bridge->notification_topic, 1, &notification_payload, 1, true, NULL);
 				if(rc != MOSQ_ERR_SUCCESS){
 					return rc;
 				}
@@ -347,7 +347,7 @@ int bridge__connect(struct mosquitto_db *db, struct mosquitto *context)
 
 			if (!context->bridge->notifications_local_only) {
 				notification_payload = '0';
-				rc = will__set(context, notification_topic, 1, &notification_payload, 1, true);
+				rc = will__set(context, notification_topic, 1, &notification_payload, 1, true, NULL);
 				mosquitto__free(notification_topic);
 				if(rc != MOSQ_ERR_SUCCESS){
 					return rc;

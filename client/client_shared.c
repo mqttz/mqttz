@@ -905,9 +905,11 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 {
 	int rc;
 
-	if(cfg->will_topic && mosquitto_will_set(mosq, cfg->will_topic,
+	mosquitto_opts_set(mosq, MOSQ_OPT_PROTOCOL_VERSION, &(cfg->protocol_version));
+
+	if(cfg->will_topic && mosquitto_will_set_with_properties(mosq, cfg->will_topic,
 				cfg->will_payloadlen, cfg->will_payload, cfg->will_qos,
-				cfg->will_retain)){
+				cfg->will_retain, cfg->will_props)){
 
 		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting will.\n");
 		mosquitto_lib_cleanup();
@@ -954,7 +956,6 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 		}
 	}
 #endif
-	mosquitto_opts_set(mosq, MOSQ_OPT_PROTOCOL_VERSION, &(cfg->protocol_version));
 	return MOSQ_ERR_SUCCESS;
 }
 

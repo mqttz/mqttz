@@ -33,10 +33,12 @@ Contributors:
 #include "read_handle.h"
 #include "send_mosq.h"
 #include "util_mosq.h"
+#include "will_mosq.h"
 
-int will__set(struct mosquitto *mosq, const char *topic, int payloadlen, const void *payload, int qos, bool retain)
+int will__set(struct mosquitto *mosq, const char *topic, int payloadlen, const void *payload, int qos, bool retain, mosquitto_property *properties)
 {
 	int rc = MOSQ_ERR_SUCCESS;
+	mosquitto_property *p;
 
 	if(!mosq || !topic) return MOSQ_ERR_INVAL;
 	if(payloadlen < 0 || payloadlen > MQTT_MAX_PAYLOAD) return MOSQ_ERR_PAYLOAD_SIZE;
@@ -45,9 +47,22 @@ int will__set(struct mosquitto *mosq, const char *topic, int payloadlen, const v
 	if(mosquitto_pub_topic_check(topic)) return MOSQ_ERR_INVAL;
 	if(mosquitto_validate_utf8(topic, strlen(topic))) return MOSQ_ERR_MALFORMED_UTF8;
 
+	if(properties){
+		if(mosq->protocol != mosq_p_mqtt5){
+			return MOSQ_ERR_NOT_SUPPORTED;
+		}
+		p = properties;
+		while(p){
+			rc = mosquitto_property_command_check(CMD_WILL, p->identifier);
+			if(rc) return rc;
+			p = p->next;
+		}
+	}
+
 	if(mosq->will){
 		mosquitto__free(mosq->will->msg.topic);
 		mosquitto__free(mosq->will->msg.payload);
+		mosquitto_property_free_all(&mosq->will->properties);
 		mosquitto__free(mosq->will);
 	}
 
@@ -75,6 +90,8 @@ int will__set(struct mosquitto *mosq, const char *topic, int payloadlen, const v
 	mosq->will->msg.qos = qos;
 	mosq->will->msg.retain = retain;
 
+	mosq->will->properties = properties;
+
 	return MOSQ_ERR_SUCCESS;
 
 cleanup:
@@ -98,6 +115,8 @@ int will__clear(struct mosquitto *mosq)
 
 	mosquitto__free(mosq->will->msg.payload);
 	mosq->will->msg.payload = NULL;
+
+	mosquitto_property_free_all(&mosq->will->properties);
 
 	mosquitto__free(mosq->will);
 	mosq->will = NULL;

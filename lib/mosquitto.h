@@ -317,6 +317,40 @@ libmosq_EXPORT int mosquitto_reinitialise(struct mosquitto *mosq, const char *id
 libmosq_EXPORT int mosquitto_will_set(struct mosquitto *mosq, const char *topic, int payloadlen, const void *payload, int qos, bool retain);
 
 /*
+ * Function: mosquitto_will_set_with_properties
+ *
+ * Configure will information for a mosquitto instance, with attached
+ * properties. By default, clients do not have a will.  This must be called
+ * before calling <mosquitto_connect>.
+ *
+ * Parameters:
+ * 	mosq -       a valid mosquitto instance.
+ * 	topic -      the topic on which to publish the will.
+ * 	payloadlen - the size of the payload (bytes). Valid values are between 0 and
+ *               268,435,455.
+ * 	payload -    pointer to the data to send. If payloadlen > 0 this must be a
+ *               valid memory location.
+ * 	qos -        integer value 0, 1 or 2 indicating the Quality of Service to be
+ *               used for the will.
+ * 	retain -     set to true to make the will a retained message.
+ * 	properties - list of MQTT 5 properties. Can be NULL. On success only, the
+ * 	             property list becomes the property of libmosquitto once this
+ * 	             function is called and will be freed by the library. The
+ * 	             property list must be freed by the application on error.
+ *
+ * Returns:
+ * 	MOSQ_ERR_SUCCESS -      on success.
+ * 	MOSQ_ERR_INVAL -          if the input parameters were invalid.
+ * 	MOSQ_ERR_NOMEM -          if an out of memory condition occurred.
+ * 	MOSQ_ERR_PAYLOAD_SIZE -   if payloadlen is too large.
+ * 	MOSQ_ERR_MALFORMED_UTF8 - if the topic is not valid UTF-8.
+ * 	MOSQ_ERR_NOT_SUPPORTED -  if properties is not NULL and the client is not
+ * 	                          using MQTT v5
+ * 	MOSQ_ERR_PROTOCOL -       if a property is invalid for use with wills.
+ */
+libmosq_EXPORT int mosquitto_will_set_with_properties(struct mosquitto *mosq, const char *topic, int payloadlen, const void *payload, int qos, bool retain, mosquitto_property *properties);
+
+/*
  * Function: mosquitto_will_clear
  *
  * Remove a previously configured will. This must be called before calling
