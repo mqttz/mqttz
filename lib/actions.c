@@ -38,14 +38,35 @@ int mosquitto_publish_with_properties(struct mosquitto *mosq, int *mid, const ch
 	struct mosquitto_message_all *message;
 	uint16_t local_mid;
 	int queue_status;
+	const mosquitto_property *p;
+	bool have_topic_alias;
 
-	if(!mosq || !topic || qos<0 || qos>2) return MOSQ_ERR_INVAL;
-	if(STREMPTY(topic)) return MOSQ_ERR_INVAL;
-	if(mosquitto_validate_utf8(topic, strlen(topic))) return MOSQ_ERR_MALFORMED_UTF8;
-	if(payloadlen < 0 || payloadlen > MQTT_MAX_PAYLOAD) return MOSQ_ERR_PAYLOAD_SIZE;
+	if(!mosq || qos<0 || qos>2) return MOSQ_ERR_INVAL;
+	if(!topic || STREMPTY(topic)){
+		if(topic) topic = NULL;
 
-	if(mosquitto_pub_topic_check(topic) != MOSQ_ERR_SUCCESS){
-		return MOSQ_ERR_INVAL;
+		if(mosq->protocol == mosq_p_mqtt5){
+			p = properties;
+			have_topic_alias = false;
+			while(p){
+				if(p->identifier == MQTT_PROP_TOPIC_ALIAS){
+					have_topic_alias = true;
+					break;
+				}
+				p = p->next;
+			}
+			if(have_topic_alias == false){
+				return MOSQ_ERR_INVAL;
+			}
+		}else{
+			return MOSQ_ERR_INVAL;
+		}
+	}else{
+		if(mosquitto_validate_utf8(topic, strlen(topic))) return MOSQ_ERR_MALFORMED_UTF8;
+		if(payloadlen < 0 || payloadlen > MQTT_MAX_PAYLOAD) return MOSQ_ERR_PAYLOAD_SIZE;
+		if(mosquitto_pub_topic_check(topic) != MOSQ_ERR_SUCCESS){
+			return MOSQ_ERR_INVAL;
+		}
 	}
 
 	local_mid = mosquitto__mid_generate(mosq);
@@ -62,10 +83,12 @@ int mosquitto_publish_with_properties(struct mosquitto *mosq, int *mid, const ch
 		message->next = NULL;
 		message->timestamp = mosquitto_time();
 		message->msg.mid = local_mid;
-		message->msg.topic = mosquitto__strdup(topic);
-		if(!message->msg.topic){
-			message__cleanup(&message);
-			return MOSQ_ERR_NOMEM;
+		if(topic){
+			message->msg.topic = mosquitto__strdup(topic);
+			if(!message->msg.topic){
+				message__cleanup(&message);
+				return MOSQ_ERR_NOMEM;
+			}
 		}
 		if(payloadlen){
 			message->msg.payloadlen = payloadlen;

@@ -55,6 +55,18 @@ static char *password = NULL;
 static bool disconnect_sent = false;
 static bool quiet = false;
 static struct mosq_config cfg;
+static bool first_publish = true;
+
+int my_publish(struct mosquitto *mosq, int *mid, const char *topic, int payloadlen, void *payload, int qos, bool retain)
+{
+	if(cfg.protocol_version == MQTT_PROTOCOL_V5 && cfg.have_topic_alias && first_publish == false){
+		return mosquitto_publish_with_properties(mosq, mid, NULL, payloadlen, payload, qos, retain, cfg.publish_props);
+	}else{
+		first_publish = false;
+		return mosquitto_publish_with_properties(mosq, mid, topic, payloadlen, payload, qos, retain, cfg.publish_props);
+	}
+}
+
 
 void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 {
@@ -65,10 +77,10 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 			case MSGMODE_CMD:
 			case MSGMODE_FILE:
 			case MSGMODE_STDIN_FILE:
-				rc = mosquitto_publish_with_properties(mosq, &mid_sent, topic, msglen, message, qos, retain, cfg.publish_props);
+				rc = my_publish(mosq, &mid_sent, topic, msglen, message, qos, retain);
 				break;
 			case MSGMODE_NULL:
-				rc = mosquitto_publish_with_properties(mosq, &mid_sent, topic, 0, NULL, qos, retain, cfg.publish_props);
+				rc = my_publish(mosq, &mid_sent, topic, 0, NULL, qos, retain);
 				break;
 			case MSGMODE_STDIN_LINE:
 				status = STATUS_CONNACK_RECVD;
@@ -416,7 +428,7 @@ int main(int argc, char *argv[])
 					buf_len_actual = strlen(buf);
 					if(buf[buf_len_actual-1] == '\n'){
 						buf[buf_len_actual-1] = '\0';
-						rc2 = mosquitto_publish_with_properties(mosq, &mid_sent, topic, buf_len_actual-1, buf, qos, retain, cfg.publish_props);
+						rc2 = my_publish(mosq, &mid_sent, topic, buf_len_actual-1, buf, qos, retain);
 						if(rc2){
 							if(!quiet) fprintf(stderr, "Error: Publish returned %d, disconnecting.\n", rc2);
 							mosquitto_disconnect_with_properties(mosq, cfg.disconnect_props);

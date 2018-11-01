@@ -98,6 +98,7 @@ struct mosq_config {
 	mosquitto_property *unsubscribe_props;
 	mosquitto_property *disconnect_props;
 	mosquitto_property *will_props;
+	bool have_topic_alias; /* pub */
 };
 
 int client_config_load(struct mosq_config *config, int pub_or_sub, int argc, char *argv[]);

@@ -51,7 +51,6 @@ int send__publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint3
 #endif
 #endif
 	assert(mosq);
-	assert(topic);
 
 #if defined(WITH_BROKER) && defined(WITH_WEBSOCKETS)
 	if(mosq->sock == INVALID_SOCKET && !mosq->wsi) return MOSQ_ERR_NO_CONN;
@@ -137,9 +136,12 @@ int send__real_publish(struct mosquitto *mosq, uint16_t mid, const char *topic, 
 	int rc;
 
 	assert(mosq);
-	assert(topic);
 
-	packetlen = 2+strlen(topic) + payloadlen;
+	if(topic){
+		packetlen = 2+strlen(topic) + payloadlen;
+	}else{
+		packetlen = 2 + payloadlen;
+	}
 	if(qos > 0) packetlen += 2; /* For message id */
 	if(mosq->protocol == mosq_p_mqtt5){
 		proplen = property__get_length_all(properties);
@@ -163,7 +165,11 @@ int send__real_publish(struct mosquitto *mosq, uint16_t mid, const char *topic, 
 		return rc;
 	}
 	/* Variable header (topic string) */
-	packet__write_string(packet, topic, strlen(topic));
+	if(topic){
+		packet__write_string(packet, topic, strlen(topic));
+	}else{
+		packet__write_uint16(packet, 0);
+	}
 	if(qos > 0){
 		packet__write_uint16(packet, mid);
 	}

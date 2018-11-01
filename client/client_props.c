@@ -112,6 +112,9 @@ int cfg_parse_property(struct mosq_config *cfg, int argc, char *argv[], int *idx
 			break;
 
 		case CMD_PUBLISH:
+			if(identifier == MQTT_PROP_TOPIC_ALIAS){
+				cfg->have_topic_alias = true;
+			}
 			if(identifier == MQTT_PROP_SUBSCRIPTION_IDENTIFIER){
 				fprintf(stderr, "Error: %s property not supported for %s in --property argument.\n\n", propname, cmdname);
 				return MOSQ_ERR_INVAL;
