@@ -184,7 +184,6 @@ void client_config_cleanup(struct mosq_config *cfg)
 	mosquitto_property_free_all(&cfg->subscribe_props);
 	mosquitto_property_free_all(&cfg->unsubscribe_props);
 	mosquitto_property_free_all(&cfg->disconnect_props);
-	mosquitto_property_free_all(&cfg->will_props);
 }
 
 int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *argv[])
@@ -339,7 +338,11 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 	}
 
 	if(!cfg->host){
-		cfg->host = "localhost";
+		cfg->host = strdup("localhost");
+		if(!cfg->host){
+			if(!cfg->quiet) fprintf(stderr, "Error: Out of memory.\n");
+			return 1;
+		}
 	}
 	return MOSQ_ERR_SUCCESS;
 }

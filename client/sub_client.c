@@ -235,27 +235,26 @@ int main(int argc, char *argv[])
 	
 	memset(&cfg, 0, sizeof(struct mosq_config));
 
+	mosquitto_lib_init();
+
 	rc = client_config_load(&cfg, CLIENT_SUB, argc, argv);
 	if(rc){
-		client_config_cleanup(&cfg);
 		if(rc == 2){
 			/* --help */
 			print_usage();
 		}else{
 			fprintf(stderr, "\nUse 'mosquitto_sub --help' to see usage.\n");
 		}
-		return 1;
+		goto cleanup;
 	}
 
 	if(cfg.no_retain && cfg.retained_only){
 		fprintf(stderr, "\nError: Combining '-R' and '--retained-only' makes no sense.\n");
-		return 1;
+		goto cleanup;
 	}
 
-	mosquitto_lib_init();
-
 	if(client_id_generate(&cfg, "mosqsub")){
-		return 1;
+		goto cleanup;
 	}
 
 	mosq = mosquitto_new(cfg.id, cfg.clean_session, &cfg);
@@ -268,11 +267,10 @@ int main(int argc, char *argv[])
 				if(!cfg.quiet) fprintf(stderr, "Error: Invalid id and/or clean_session.\n");
 				break;
 		}
-		mosquitto_lib_cleanup();
-		return 1;
+		goto cleanup;
 	}
 	if(client_opts_set(mosq, &cfg)){
-		return 1;
+		goto cleanup;
 	}
 	if(cfg.debug){
 		mosquitto_log_callback_set(mosq, my_log_callback);
@@ -282,7 +280,9 @@ int main(int argc, char *argv[])
 	mosquitto_message_callback_set(mosq, my_message_callback);
 
 	rc = client_connect(mosq, &cfg);
-	if(rc) return rc;
+	if(rc){
+		goto cleanup;
+	}
 
 #ifndef WIN32
 	sigact.sa_handler = my_signal_handler;
@@ -291,7 +291,7 @@ int main(int argc, char *argv[])
 
 	if(sigaction(SIGALRM, &sigact, NULL) == -1){
 		perror("sigaction");
-		return 1;
+		goto cleanup;
 	}
 
 	if(cfg.timeout){
@@ -307,9 +307,15 @@ int main(int argc, char *argv[])
 	if(cfg.msg_count>0 && rc == MOSQ_ERR_NO_CONN){
 		rc = 0;
 	}
+	client_config_cleanup(&cfg);
 	if(rc){
 		fprintf(stderr, "Error: %s\n", mosquitto_strerror(rc));
 	}
 	return rc;
+
+cleanup:
+	mosquitto_lib_cleanup();
+	client_config_cleanup(&cfg);
+	return 1;
 }
 

@@ -326,18 +326,18 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
+	mosquitto_lib_init();
+
 	memset(&cfg, 0, sizeof(struct mosq_config));
 	rc = client_config_load(&cfg, CLIENT_PUB, argc, argv);
 	if(rc){
-		client_config_cleanup(&cfg);
 		if(rc == 2){
 			/* --help */
 			print_usage();
 		}else{
 			fprintf(stderr, "\nUse 'mosquitto_pub --help' to see usage.\n");
 		}
-		free(buf);
-		return 1;
+		goto cleanup;
 	}
 
 	topic = cfg.topic;
@@ -353,38 +353,31 @@ int main(int argc, char *argv[])
 #ifndef WITH_THREADING
 	if(cfg.pub_mode == MSGMODE_STDIN_LINE){
 		fprintf(stderr, "Error: '-l' mode not available, threading support has not been compiled in.\n");
-		free(buf);
-		return 1;
+		goto cleanup;
 	}
 #endif
 
 	if(cfg.pub_mode == MSGMODE_STDIN_FILE){
 		if(load_stdin()){
 			fprintf(stderr, "Error loading input from stdin.\n");
-			free(buf);
-			return 1;
+			goto cleanup;
 		}
 	}else if(cfg.file_input){
 		if(load_file(cfg.file_input)){
 			fprintf(stderr, "Error loading input file \"%s\".\n", cfg.file_input);
-			free(buf);
-			return 1;
+			goto cleanup;
 		}
 	}
 
 	if(!topic || mode == MSGMODE_NONE){
 		fprintf(stderr, "Error: Both topic and message must be supplied.\n");
 		print_usage();
-		free(buf);
-		return 1;
+		goto cleanup;
 	}
 
 
-	mosquitto_lib_init();
-
 	if(client_id_generate(&cfg, "mosqpub")){
-		free(buf);
-		return 1;
+		goto cleanup;
 	}
 
 	mosq = mosquitto_new(cfg.id, true, NULL);
@@ -397,9 +390,7 @@ int main(int argc, char *argv[])
 				if(!quiet) fprintf(stderr, "Error: Invalid id.\n");
 				break;
 		}
-		mosquitto_lib_cleanup();
-		free(buf);
-		return 1;
+		goto cleanup;
 	}
 	if(cfg.debug){
 		mosquitto_log_callback_set(mosq, my_log_callback);
@@ -409,11 +400,12 @@ int main(int argc, char *argv[])
 	mosquitto_publish_callback_set(mosq, my_publish_callback);
 
 	if(client_opts_set(mosq, &cfg)){
-		free(buf);
-		return 1;
+		goto cleanup;
 	}
 	rc = client_connect(mosq, &cfg);
-	if(rc) return rc;
+	if(rc){
+		goto cleanup;
+	}
 
 	if(mode == MSGMODE_STDIN_LINE){
 		mosquitto_loop_start(mosq);
@@ -440,9 +432,8 @@ int main(int argc, char *argv[])
 						read_len = 1024;
 						buf2 = realloc(buf, buf_len);
 						if(!buf2){
-							free(buf);
 							fprintf(stderr, "Error: Out of memory.\n");
-							return 1;
+							goto cleanup;
 						}
 						buf = buf2;
 					}
@@ -487,9 +478,17 @@ int main(int argc, char *argv[])
 	}
 	mosquitto_destroy(mosq);
 	mosquitto_lib_cleanup();
+	client_config_cleanup(&cfg);
+	free(buf);
 
 	if(rc){
 		fprintf(stderr, "Error: %s\n", mosquitto_strerror(rc));
 	}
 	return rc;
+
+cleanup:
+	mosquitto_lib_cleanup();
+	client_config_cleanup(&cfg);
+	free(buf);
+	return 1;
 }
