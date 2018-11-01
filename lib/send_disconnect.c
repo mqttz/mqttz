@@ -32,7 +32,7 @@ Contributors:
 #include "send_mosq.h"
 
 
-int send__disconnect(struct mosquitto *mosq, const struct mqtt5__property *properties)
+int send__disconnect(struct mosquitto *mosq, const mosquitto_property *properties)
 {
 	struct mosquitto__packet *packet = NULL;
 	int rc;

@@ -41,7 +41,7 @@ int handle__unsuback(struct mosquitto *mosq)
 {
 	uint16_t mid;
 	int rc;
-	struct mqtt5__property *properties = NULL;
+	mosquitto_property *properties = NULL;
 
 	assert(mosq);
 #ifdef WITH_BROKER

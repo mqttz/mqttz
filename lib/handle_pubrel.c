@@ -43,7 +43,7 @@ int handle__pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 	struct mosquitto_message_all *message = NULL;
 #endif
 	int rc;
-	struct mqtt5__property *properties = NULL;
+	mosquitto_property *properties = NULL;
 
 	assert(mosq);
 	if(mosq->protocol != mosq_p_mqtt31){

@@ -28,7 +28,7 @@ int send__suback(struct mosquitto *context, uint16_t mid, uint32_t payloadlen, c
 {
 	struct mosquitto__packet *packet = NULL;
 	int rc;
-	struct mqtt5__property *properties = NULL;
+	mosquitto_property *properties = NULL;
 	int proplen, varbytes;
 
 	log__printf(NULL, MOSQ_LOG_DEBUG, "Sending SUBACK to %s", context->id);

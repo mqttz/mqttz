@@ -27,7 +27,7 @@ int send__connack(struct mosquitto *context, int ack, int result)
 {
 	struct mosquitto__packet *packet = NULL;
 	int rc;
-	struct mqtt5__property *properties = NULL;
+	mosquitto_property *properties = NULL;
 	int proplen, varbytes;
 
 	if(context){

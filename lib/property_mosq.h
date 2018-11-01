@@ -39,11 +39,11 @@ struct mqtt5__property {
 };
 
 
-int property__read_all(int command, struct mosquitto__packet *packet, struct mqtt5__property **property);
-int property__write_all(struct mosquitto__packet *packet, const struct mqtt5__property *property);
-void property__free(struct mqtt5__property **property);
+int property__read_all(int command, struct mosquitto__packet *packet, mosquitto_property **property);
+int property__write_all(struct mosquitto__packet *packet, const mosquitto_property *property);
+void property__free(mosquitto_property **property);
 
-int property__get_length(const struct mqtt5__property *property);
-int property__get_length_all(const struct mqtt5__property *property);
+int property__get_length(const mosquitto_property *property);
+int property__get_length_all(const mosquitto_property *property);
 
 #endif

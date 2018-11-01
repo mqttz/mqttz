@@ -27,7 +27,7 @@ Contributors:
 #include "send_mosq.h"
 #include "socks_mosq.h"
 
-static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking, const struct mqtt5__property *properties);
+static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking, const mosquitto_property *properties);
 static int mosquitto__connect_init(struct mosquitto *mosq, const char *host, int port, int keepalive, const char *bind_address);
 
 

@@ -111,7 +111,7 @@ int send__pubrel(struct mosquitto *mosq, uint16_t mid)
 }
 
 /* For PUBACK, PUBCOMP, PUBREC, and PUBREL */
-int send__command_with_mid(struct mosquitto *mosq, uint8_t command, uint16_t mid, bool dup, uint8_t reason_code, const struct mqtt5__property *properties)
+int send__command_with_mid(struct mosquitto *mosq, uint8_t command, uint16_t mid, bool dup, uint8_t reason_code, const mosquitto_property *properties)
 {
 	struct mosquitto__packet *packet = NULL;
 	int rc;

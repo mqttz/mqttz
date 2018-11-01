@@ -39,7 +39,7 @@ int handle__suback(struct mosquitto *mosq)
 	int qos_count;
 	int i = 0;
 	int rc;
-	struct mqtt5__property *properties = NULL;
+	mosquitto_property *properties = NULL;
 
 	assert(mosq);
 #ifdef WITH_BROKER

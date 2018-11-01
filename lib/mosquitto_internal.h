@@ -147,7 +147,7 @@ struct mosquitto__packet{
 
 struct mosquitto_message_all{
 	struct mosquitto_message_all *next;
-	struct mqtt5__property *properties;
+	mosquitto_property *properties;
 	time_t timestamp;
 	//enum mosquitto_msg_direction direction;
 	enum mosquitto_msg_state state;

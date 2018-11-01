@@ -38,7 +38,7 @@ int handle__publish(struct mosquitto *mosq)
 	int rc = 0;
 	uint16_t mid;
 	int slen;
-	struct mqtt5__property *properties = NULL;
+	mosquitto_property *properties = NULL;
 
 	assert(mosq);
 

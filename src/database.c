@@ -559,13 +559,13 @@ int db__messages_delete(struct mosquitto_db *db, struct mosquitto *context)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int db__messages_easy_queue(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain, struct mqtt5__property **properties)
+int db__messages_easy_queue(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain, mosquitto_property **properties)
 {
 	struct mosquitto_msg_store *stored;
 	char *source_id;
 	char *topic_heap;
 	mosquitto__payload_uhpa payload_uhpa;
-	struct mqtt5__property *local_properties = NULL;
+	mosquitto_property *local_properties = NULL;
 
 	assert(db);
 
@@ -596,7 +596,7 @@ int db__messages_easy_queue(struct mosquitto_db *db, struct mosquitto *context, 
 }
 
 /* This function requires topic to be allocated on the heap. Once called, it owns topic and will free it on error. Likewise payload and properties. */
-int db__message_store(struct mosquitto_db *db, const char *source, uint16_t source_mid, char *topic, int qos, uint32_t payloadlen, mosquitto__payload_uhpa *payload, int retain, struct mosquitto_msg_store **stored, uint32_t message_expiry_interval, struct mqtt5__property *properties, dbid_t store_id)
+int db__message_store(struct mosquitto_db *db, const char *source, uint16_t source_mid, char *topic, int qos, uint32_t payloadlen, mosquitto__payload_uhpa *payload, int retain, struct mosquitto_msg_store **stored, uint32_t message_expiry_interval, mosquitto_property *properties, dbid_t store_id)
 {
 	struct mosquitto_msg_store *temp = NULL;
 	int rc = MOSQ_ERR_SUCCESS;
@@ -871,7 +871,7 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 	uint32_t payloadlen;
 	const void *payload;
 	int msg_count = 0;
-	struct mqtt5__property *properties;
+	mosquitto_property *properties;
 	time_t now;
 
 	if(!context || context->sock == INVALID_SOCKET

@@ -27,7 +27,7 @@ Contributors:
 #include "property_mosq.h"
 
 
-int property__read(struct mosquitto__packet *packet, int32_t *len, struct mqtt5__property *property)
+int property__read(struct mosquitto__packet *packet, int32_t *len, mosquitto_property *property)
 {
 	int rc;
 	int32_t property_identifier;
@@ -43,7 +43,7 @@ int property__read(struct mosquitto__packet *packet, int32_t *len, struct mqtt5_
 	if(rc) return rc;
 	*len -= 1;
 
-	memset(property, 0, sizeof(struct mqtt5__property));
+	memset(property, 0, sizeof(mosquitto_property));
 
 	property->identifier = property_identifier;
 
@@ -139,11 +139,11 @@ int property__read(struct mosquitto__packet *packet, int32_t *len, struct mqtt5_
 }
 
 
-int property__read_all(int command, struct mosquitto__packet *packet, struct mqtt5__property **properties)
+int property__read_all(int command, struct mosquitto__packet *packet, mosquitto_property **properties)
 {
 	int rc;
 	int32_t proplen;
-	struct mqtt5__property *p, *tail = NULL;
+	mosquitto_property *p, *tail = NULL;
 
 	rc = packet__read_varint(packet, &proplen, NULL);
 	if(rc) return rc;
@@ -153,7 +153,7 @@ int property__read_all(int command, struct mosquitto__packet *packet, struct mqt
 	/* The order of properties must be preserved for some types, so keep the
 	 * same order for all */
 	while(proplen > 0){
-		p = mosquitto__calloc(1, sizeof(struct mqtt5__property));
+		p = mosquitto__calloc(1, sizeof(mosquitto_property));
 
 		rc = property__read(packet, &proplen, p); 
 		if(rc){
@@ -180,7 +180,7 @@ int property__read_all(int command, struct mosquitto__packet *packet, struct mqt
 }
 
 
-void property__free(struct mqtt5__property **property)
+void property__free(mosquitto_property **property)
 {
 	if(!property || !(*property)) return;
 
@@ -231,9 +231,9 @@ void property__free(struct mqtt5__property **property)
 }
 
 
-void mosquitto_property_free_all(struct mqtt5__property **property)
+void mosquitto_property_free_all(mosquitto_property **property)
 {
-	struct mqtt5__property *p, *next;
+	mosquitto_property *p, *next;
 
 	if(!property) return;
 
@@ -247,7 +247,7 @@ void mosquitto_property_free_all(struct mqtt5__property **property)
 }
 
 
-int property__get_length(const struct mqtt5__property *property)
+int property__get_length(const mosquitto_property *property)
 {
 	if(!property) return 0;
 
@@ -317,9 +317,9 @@ int property__get_length(const struct mqtt5__property *property)
 }
 
 
-int property__get_length_all(const struct mqtt5__property *property)
+int property__get_length_all(const mosquitto_property *property)
 {
-	const struct mqtt5__property *p;
+	const mosquitto_property *p;
 	int len = 0;
 
 	p = property;
@@ -331,7 +331,7 @@ int property__get_length_all(const struct mqtt5__property *property)
 }
 
 
-int property__write(struct mosquitto__packet *packet, const struct mqtt5__property *property)
+int property__write(struct mosquitto__packet *packet, const mosquitto_property *property)
 {
 	int rc;
 
@@ -397,10 +397,10 @@ int property__write(struct mosquitto__packet *packet, const struct mqtt5__proper
 }
 
 
-int property__write_all(struct mosquitto__packet *packet, const struct mqtt5__property *properties)
+int property__write_all(struct mosquitto__packet *packet, const mosquitto_property *properties)
 {
 	int rc;
-	const struct mqtt5__property *p;
+	const mosquitto_property *p;
 
 	rc = packet__write_varint(packet, property__get_length_all(properties));
 	if(rc) return rc;
@@ -600,9 +600,9 @@ int mosquitto_string_to_property_info(const char *propname, int *identifier, int
 }
 
 
-static void property__add(struct mqtt5__property **proplist, struct mqtt5__property *prop)
+static void property__add(mosquitto_property **proplist, struct mqtt5__property *prop)
 {
-	struct mqtt5__property *p;
+	mosquitto_property *p;
 
 	if(!(*proplist)){
 		*proplist = prop;
@@ -619,7 +619,7 @@ static void property__add(struct mqtt5__property **proplist, struct mqtt5__prope
 
 int mosquitto_property_add_byte(mosquitto_property **proplist, int identifier, uint8_t value)
 {
-	struct mqtt5__property *prop;
+	mosquitto_property *prop;
 
 	if(!proplist) return MOSQ_ERR_INVAL;
 	if(identifier != MQTT_PROP_PAYLOAD_FORMAT_INDICATOR
@@ -633,7 +633,7 @@ int mosquitto_property_add_byte(mosquitto_property **proplist, int identifier, u
 		return MOSQ_ERR_INVAL;
 	}
 
-	prop = mosquitto__calloc(1, sizeof(struct mqtt5__property));
+	prop = mosquitto__calloc(1, sizeof(mosquitto_property));
 	if(!prop) return MOSQ_ERR_NOMEM;
 
 	prop->identifier = identifier;
@@ -646,7 +646,7 @@ int mosquitto_property_add_byte(mosquitto_property **proplist, int identifier, u
 
 int mosquitto_property_add_int16(mosquitto_property **proplist, int identifier, uint16_t value)
 {
-	struct mqtt5__property *prop;
+	mosquitto_property *prop;
 
 	if(!proplist) return MOSQ_ERR_INVAL;
 	if(identifier != MQTT_PROP_SERVER_KEEP_ALIVE
@@ -656,7 +656,7 @@ int mosquitto_property_add_int16(mosquitto_property **proplist, int identifier, 
 		return MOSQ_ERR_INVAL;
 	}
 
-	prop = mosquitto__calloc(1, sizeof(struct mqtt5__property));
+	prop = mosquitto__calloc(1, sizeof(mosquitto_property));
 	if(!prop) return MOSQ_ERR_NOMEM;
 
 	prop->identifier = identifier;
@@ -669,7 +669,7 @@ int mosquitto_property_add_int16(mosquitto_property **proplist, int identifier, 
 
 int mosquitto_property_add_int32(mosquitto_property **proplist, int identifier, uint32_t value)
 {
-	struct mqtt5__property *prop;
+	mosquitto_property *prop;
 
 	if(!proplist) return MOSQ_ERR_INVAL;
 	if(identifier != MQTT_PROP_MESSAGE_EXPIRY_INTERVAL
@@ -680,7 +680,7 @@ int mosquitto_property_add_int32(mosquitto_property **proplist, int identifier, 
 		return MOSQ_ERR_INVAL;
 	}
 
-	prop = mosquitto__calloc(1, sizeof(struct mqtt5__property));
+	prop = mosquitto__calloc(1, sizeof(mosquitto_property));
 	if(!prop) return MOSQ_ERR_NOMEM;
 
 	prop->identifier = identifier;
@@ -693,12 +693,12 @@ int mosquitto_property_add_int32(mosquitto_property **proplist, int identifier, 
 
 int mosquitto_property_add_varint(mosquitto_property **proplist, int identifier, uint32_t value)
 {
-	struct mqtt5__property *prop;
+	mosquitto_property *prop;
 
 	if(!proplist || value > 268435455) return MOSQ_ERR_INVAL;
 	if(identifier != MQTT_PROP_SUBSCRIPTION_IDENTIFIER) return MOSQ_ERR_INVAL;
 
-	prop = mosquitto__calloc(1, sizeof(struct mqtt5__property));
+	prop = mosquitto__calloc(1, sizeof(mosquitto_property));
 	if(!prop) return MOSQ_ERR_NOMEM;
 
 	prop->identifier = identifier;
@@ -711,7 +711,7 @@ int mosquitto_property_add_varint(mosquitto_property **proplist, int identifier,
 
 int mosquitto_property_add_binary(mosquitto_property **proplist, int identifier, const void *value, uint16_t len)
 {
-	struct mqtt5__property *prop;
+	mosquitto_property *prop;
 
 	if(!proplist) return MOSQ_ERR_INVAL;
 	if(identifier != MQTT_PROP_CORRELATION_DATA
@@ -720,7 +720,7 @@ int mosquitto_property_add_binary(mosquitto_property **proplist, int identifier,
 		return MOSQ_ERR_INVAL;
 	}
 
-	prop = mosquitto__calloc(1, sizeof(struct mqtt5__property));
+	prop = mosquitto__calloc(1, sizeof(mosquitto_property));
 	if(!prop) return MOSQ_ERR_NOMEM;
 
 	prop->identifier = identifier;
@@ -743,7 +743,7 @@ int mosquitto_property_add_binary(mosquitto_property **proplist, int identifier,
 
 int mosquitto_property_add_string(mosquitto_property **proplist, int identifier, const char *value)
 {
-	struct mqtt5__property *prop;
+	mosquitto_property *prop;
 
 	if(!proplist) return MOSQ_ERR_INVAL;
 	if(value){
@@ -761,7 +761,7 @@ int mosquitto_property_add_string(mosquitto_property **proplist, int identifier,
 		return MOSQ_ERR_INVAL;
 	}
 
-	prop = mosquitto__calloc(1, sizeof(struct mqtt5__property));
+	prop = mosquitto__calloc(1, sizeof(mosquitto_property));
 	if(!prop) return MOSQ_ERR_NOMEM;
 
 	prop->identifier = identifier;
@@ -782,7 +782,7 @@ int mosquitto_property_add_string(mosquitto_property **proplist, int identifier,
 
 int mosquitto_property_add_string_pair(mosquitto_property **proplist, int identifier, const char *name, const char *value)
 {
-	struct mqtt5__property *prop;
+	mosquitto_property *prop;
 
 	if(!proplist) return MOSQ_ERR_INVAL;
 	if(identifier != MQTT_PROP_USER_PROPERTY) return MOSQ_ERR_INVAL;
@@ -793,7 +793,7 @@ int mosquitto_property_add_string_pair(mosquitto_property **proplist, int identi
 		if(mosquitto_validate_utf8(value, strlen(value))) return MOSQ_ERR_MALFORMED_UTF8;
 	}
 
-	prop = mosquitto__calloc(1, sizeof(struct mqtt5__property));
+	prop = mosquitto__calloc(1, sizeof(mosquitto_property));
 	if(!prop) return MOSQ_ERR_NOMEM;
 
 	prop->identifier = identifier;

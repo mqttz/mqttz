@@ -30,7 +30,7 @@ int handle__auth(struct mosquitto *mosq)
 {
 	int rc = 0;
 	uint8_t reason_code;
-	struct mqtt5__property *properties = NULL;
+	mosquitto_property *properties = NULL;
 
 	if(!mosq) return MOSQ_ERR_INVAL;
 	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received AUTH", mosq->id);

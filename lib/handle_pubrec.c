@@ -39,7 +39,7 @@ int handle__pubrec(struct mosquitto *mosq)
 {
 	uint16_t mid;
 	int rc;
-	struct mqtt5__property *properties = NULL;
+	mosquitto_property *properties = NULL;
 
 	assert(mosq);
 	rc = packet__read_uint16(&mosq->in_packet, &mid);

@@ -131,7 +131,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	struct mosquitto__subleaf *leaf;
 	int i;
 	struct mosquitto__security_options *security_opts;
-	struct mqtt5__property *properties = NULL;
+	mosquitto_property *properties = NULL;
 #ifdef WITH_TLS
 	X509 *client_cert = NULL;
 	X509_NAME *name;
@@ -722,7 +722,7 @@ handle_connect_error:
 int handle__disconnect(struct mosquitto_db *db, struct mosquitto *context)
 {
 	int rc;
-	struct mqtt5__property *properties = NULL;
+	mosquitto_property *properties = NULL;
 
 	if(!context){
 		return MOSQ_ERR_INVAL;

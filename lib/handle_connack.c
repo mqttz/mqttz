@@ -33,7 +33,7 @@ int handle__connack(struct mosquitto *mosq)
 	uint8_t connect_flags;
 	uint8_t reason_code;
 	int rc;
-	struct mqtt5__property *properties = NULL;
+	mosquitto_property *properties = NULL;
 
 	assert(mosq);
 	rc = packet__read_byte(&mosq->in_packet, &connect_flags);

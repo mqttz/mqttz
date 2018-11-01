@@ -45,9 +45,9 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	int len;
 	int slen;
 	char *topic_mount;
-	struct mqtt5__property *properties = NULL;
-	struct mqtt5__property *p, *p_prev;
-	struct mqtt5__property *msg_properties = NULL, *msg_properties_last;
+	mosquitto_property *properties = NULL;
+	mosquitto_property *p, *p_prev;
+	mosquitto_property *msg_properties = NULL, *msg_properties_last;
 	uint32_t message_expiry_interval = 0;
 
 #ifdef WITH_BRIDGE

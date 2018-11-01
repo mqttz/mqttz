@@ -12,12 +12,12 @@ static void byte_prop_write_helper(
 		int identifier,
 		uint8_t value_expected)
 {
-	struct mqtt5__property property;
+	mosquitto_property property;
 	struct mosquitto__packet packet;
-	struct mqtt5__property *properties;
+	mosquitto_property *properties;
 	int rc;
 
-	memset(&property, 0, sizeof(struct mqtt5__property));
+	memset(&property, 0, sizeof(mosquitto_property));
 
 	property.identifier = identifier;
 	property.value.i8 = value_expected;
@@ -52,12 +52,12 @@ static void int32_prop_write_helper(
 		int identifier,
 		uint32_t value_expected)
 {
-	struct mqtt5__property property;
+	mosquitto_property property;
 	struct mosquitto__packet packet;
-	struct mqtt5__property *properties;
+	mosquitto_property *properties;
 	int rc;
 
-	memset(&property, 0, sizeof(struct mqtt5__property));
+	memset(&property, 0, sizeof(mosquitto_property));
 
 	property.identifier = identifier;
 	property.value.i32 = value_expected;
@@ -92,12 +92,12 @@ static void int16_prop_write_helper(
 		int identifier,
 		uint16_t value_expected)
 {
-	struct mqtt5__property property;
+	mosquitto_property property;
 	struct mosquitto__packet packet;
-	struct mqtt5__property *properties;
+	mosquitto_property *properties;
 	int rc;
 
-	memset(&property, 0, sizeof(struct mqtt5__property));
+	memset(&property, 0, sizeof(mosquitto_property));
 
 	property.identifier = identifier;
 	property.value.i16 = value_expected;
@@ -131,12 +131,12 @@ static void string_prop_write_helper(
 		int identifier,
 		const char *value_expected)
 {
-	struct mqtt5__property property;
+	mosquitto_property property;
 	struct mosquitto__packet packet;
-	struct mqtt5__property *properties;
+	mosquitto_property *properties;
 	int rc;
 
-	memset(&property, 0, sizeof(struct mqtt5__property));
+	memset(&property, 0, sizeof(mosquitto_property));
 
 	property.identifier = identifier;
 	property.value.s.v = strdup(value_expected);
@@ -175,12 +175,12 @@ static void binary_prop_write_helper(
 		const uint8_t *value_expected,
 		int len_expected)
 {
-	struct mqtt5__property property;
+	mosquitto_property property;
 	struct mosquitto__packet packet;
-	struct mqtt5__property *properties;
+	mosquitto_property *properties;
 	int rc;
 
-	memset(&property, 0, sizeof(struct mqtt5__property));
+	memset(&property, 0, sizeof(mosquitto_property));
 
 	property.identifier = identifier;
 	property.value.bin.v = malloc(len_expected);
@@ -219,12 +219,12 @@ static void string_pair_prop_write_helper(
 		const char *value_expected,
 		bool expect_multiple)
 {
-	struct mqtt5__property property;
+	mosquitto_property property;
 	struct mosquitto__packet packet;
-	struct mqtt5__property *properties;
+	mosquitto_property *properties;
 	int rc;
 
-	memset(&property, 0, sizeof(struct mqtt5__property));
+	memset(&property, 0, sizeof(mosquitto_property));
 
 	property.identifier = identifier;
 	property.value.s.v = strdup(value_expected);
@@ -269,12 +269,12 @@ static void varint_prop_write_helper(
 		int identifier,
 		uint32_t value_expected)
 {
-	struct mqtt5__property property;
+	mosquitto_property property;
 	struct mosquitto__packet packet;
-	struct mqtt5__property *properties;
+	mosquitto_property *properties;
 	int rc;
 
-	memset(&property, 0, sizeof(struct mqtt5__property));
+	memset(&property, 0, sizeof(mosquitto_property));
 
 	property.identifier = identifier;
 	property.value.varint = value_expected;
@@ -316,12 +316,12 @@ static void varint_prop_write_helper(
 
 static void TEST_bad_identifier(void)
 {
-	struct mqtt5__property property;
+	mosquitto_property property;
 	struct mosquitto__packet packet;
 	uint8_t payload[10];
 	int rc;
 
-	memset(&property, 0, sizeof(struct mqtt5__property));
+	memset(&property, 0, sizeof(mosquitto_property));
 	memset(&packet, 0, sizeof(struct mosquitto__packet));
 	property.identifier = 0xFFFF;
 	packet.packet_length = 10;

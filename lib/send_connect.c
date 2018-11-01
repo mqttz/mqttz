@@ -31,7 +31,7 @@ Contributors:
 #include "packet_mosq.h"
 #include "property_mosq.h"
 
-int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session, const struct mqtt5__property *properties)
+int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session, const mosquitto_property *properties)
 {
 	struct mosquitto__packet *packet = NULL;
 	int payloadlen;

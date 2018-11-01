@@ -39,7 +39,7 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 	int len;
 	int slen;
 	char *sub_mount;
-	struct mqtt5__property *properties = NULL;
+	mosquitto_property *properties = NULL;
 
 	if(!context) return MOSQ_ERR_INVAL;
 	log__printf(NULL, MOSQ_LOG_DEBUG, "Received SUBSCRIBE from %s", context->id);

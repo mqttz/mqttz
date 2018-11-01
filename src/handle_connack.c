@@ -35,7 +35,7 @@ int handle__connack(struct mosquitto_db *db, struct mosquitto *context)
 	char *notification_topic;
 	int notification_topic_len;
 	char notification_payload;
-	struct mqtt5__property *properties = NULL;
+	mosquitto_property *properties = NULL;
 
 	if(!context){
 		return MOSQ_ERR_INVAL;

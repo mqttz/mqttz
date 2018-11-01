@@ -25,7 +25,7 @@ Contributors:
 #include "property_mosq.h"
 
 
-int send__unsuback(struct mosquitto *mosq, uint16_t mid, const struct mqtt5__property *properties)
+int send__unsuback(struct mosquitto *mosq, uint16_t mid, const mosquitto_property *properties)
 {
 	struct mosquitto__packet *packet = NULL;
 	int rc;
