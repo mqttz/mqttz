@@ -128,7 +128,7 @@ int cfg_parse_property(struct mosq_config *cfg, int argc, char *argv[], int *idx
 			break;
 
 		case CMD_UNSUBSCRIBE:
-			proplist = &cfg->subscribe_props;
+			proplist = &cfg->unsubscribe_props;
 			break;
 
 		case CMD_DISCONNECT:

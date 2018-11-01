@@ -29,17 +29,17 @@ Contributors:
 #include "mqtt_protocol.h"
 #include "packet_mosq.h"
 #include "property_mosq.h"
+#include "send_mosq.h"
 #include "util_mosq.h"
 
 
-int send__unsubscribe(struct mosquitto *mosq, int *mid, const char *topic)
+int send__unsubscribe(struct mosquitto *mosq, int *mid, const char *topic, const mosquitto_property *properties)
 {
 	/* FIXME - only deals with a single topic */
 	struct mosquitto__packet *packet = NULL;
 	uint32_t packetlen;
 	uint16_t local_mid;
 	int rc;
-	struct mqtt5__property *properties = NULL;
 	int proplen, varbytes;
 
 	assert(mosq);

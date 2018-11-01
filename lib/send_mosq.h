@@ -33,6 +33,6 @@ int send__publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint3
 int send__pubrec(struct mosquitto *mosq, uint16_t mid);
 int send__pubrel(struct mosquitto *mosq, uint16_t mid);
 int send__subscribe(struct mosquitto *mosq, int *mid, int topic_count, char *const *const topic, int topic_qos, const struct mqtt5__property *properties);
-int send__unsubscribe(struct mosquitto *mosq, int *mid, const char *topic);
+int send__unsubscribe(struct mosquitto *mosq, int *mid, const char *topic, const mosquitto_property *properties);
 
 #endif

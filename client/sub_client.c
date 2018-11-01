@@ -92,7 +92,7 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 		mosquitto_subscribe_multiple(mosq, NULL, cfg.topic_count, cfg.topics, cfg.qos, cfg.subscribe_props);
 
 		for(i=0; i<cfg.unsub_topic_count; i++){
-			mosquitto_unsubscribe(mosq, NULL, cfg.unsub_topics[i]);
+			mosquitto_unsubscribe_with_properties(mosq, NULL, cfg.unsub_topics[i], cfg.unsubscribe_props);
 		}
 	}else{
 		if(result && !cfg.quiet){

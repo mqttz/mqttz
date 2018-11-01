@@ -138,12 +138,17 @@ int mosquitto_subscribe_multiple(struct mosquitto *mosq, int *mid, int sub_count
 
 int mosquitto_unsubscribe(struct mosquitto *mosq, int *mid, const char *sub)
 {
+	return mosquitto_unsubscribe_with_properties(mosq, mid, sub, NULL);
+}
+
+int mosquitto_unsubscribe_with_properties(struct mosquitto *mosq, int *mid, const char *sub, const mosquitto_property *properties)
+{
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
 
 	if(mosquitto_sub_topic_check(sub)) return MOSQ_ERR_INVAL;
 	if(mosquitto_validate_utf8(sub, strlen(sub))) return MOSQ_ERR_MALFORMED_UTF8;
 
-	return send__unsubscribe(mosq, mid, sub);
+	return send__unsubscribe(mosq, mid, sub, properties);
 }
 

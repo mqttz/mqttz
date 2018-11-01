@@ -109,5 +109,7 @@ MOSQ_1.6 {
 		mosquitto_string_to_command;
 		mosquitto_string_to_property_info;
 		mosquitto_subscribe_multiple;
+		mosquitto_subscribe_with_properties;
+		mosquitto_unsubscribe_with_properties;
 		mosquitto_will_set_with_properties;
 } MOSQ_1.5;
