@@ -232,11 +232,12 @@ void print_usage(void)
 	printf("                     [--proxy socks-url]\n");
 #endif
 	printf("                     [--property command identifier value]\n");
-	printf("                     [-y command identifier value]\n");
+	printf("                     [-D command identifier value]\n");
 	printf("       mosquitto_pub --help\n\n");
 	printf(" -A : bind the outgoing socket to this host/ip address. Use to control which interface\n");
 	printf("      the client communicates over.\n");
 	printf(" -d : enable debug messages.\n");
+	printf(" -D : Define MQTT v5 properties. See the documentation for more details.\n");
 	printf(" -f : send the contents of a file as the message.\n");
 	printf(" -h : mqtt host to connect to. Defaults to localhost.\n");
 	printf(" -i : id to use for this client. Defaults to mosquitto_pub_ appended with the process id.\n");
@@ -261,7 +262,6 @@ void print_usage(void)
 	printf(" -u : provide a username\n");
 	printf(" -V : specify the version of the MQTT protocol to use when connecting.\n");
 	printf("      Can be mqttv5, mqttv311 or mqttv31. Defaults to mqttv311.\n");
-	printf(" -y,--property : Add MQTT v5 properties. See the documentation for more details.\n");
 	printf(" --help : display this message.\n");
 	printf(" --quiet : don't print error messages.\n");
 	printf(" --will-payload : payload for the client Will, which is sent by the broker in case of\n");

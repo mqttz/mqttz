@@ -466,6 +466,12 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 			}
 		}else if(!strcmp(argv[i], "-d") || !strcmp(argv[i], "--debug")){
 			cfg->debug = true;
+		}else if(!strcmp(argv[i], "-D") || !strcmp(argv[i], "--property")){
+			i++;
+			if(cfg_parse_property(cfg, argc, argv, &i)){
+				return 1;
+			}
+			cfg->protocol_version = MQTT_PROTOCOL_V5;
 		}else if(!strcmp(argv[i], "-f") || !strcmp(argv[i], "--file")){
 			if(pub_or_sub == CLIENT_SUB){
 				goto unknown_option;
@@ -883,12 +889,6 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				goto unknown_option;
 			}
 			cfg->verbose = 1;
-		}else if(!strcmp(argv[i], "-y") || !strcmp(argv[i], "--property")){
-			i++;
-			if(cfg_parse_property(cfg, argc, argv, &i)){
-				return 1;
-			}
-			cfg->protocol_version = MQTT_PROTOCOL_V5;
 		}else{
 			goto unknown_option;
 		}

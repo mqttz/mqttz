@@ -154,14 +154,14 @@ void print_usage(void)
 #ifdef WITH_SOCKS
 	printf("                     [--proxy socks-url]\n");
 #endif
-	printf("                     [-y command identifier value]\n");
-	printf("                     [--property command identifier value]\n");
+	printf("                     [-D command identifier value]\n");
 	printf("       mosquitto_sub --help\n\n");
 	printf(" -A : bind the outgoing socket to this host/ip address. Use to control which interface\n");
 	printf("      the client communicates over.\n");
 	printf(" -c : disable 'clean session' (store subscription and pending messages when client disconnects).\n");
 	printf(" -C : disconnect and exit after receiving the 'msg_count' messages.\n");
 	printf(" -d : enable debug messages.\n");
+	printf(" -D : Define MQTT v5 properties. See the documentation for more details.\n");
 	printf(" -E : Exit once all subscriptions have been acknowledged by the broker.\n");
 	printf(" -F : output format.\n");
 	printf(" -h : mqtt host to connect to. Defaults to localhost.\n");
@@ -189,7 +189,6 @@ void print_usage(void)
 #ifndef WIN32
 	printf(" -W : Specifies a timeout in seconds how long to process incoming MQTT messages.\n");
 #endif
-	printf(" -y, --property : Add MQTT v5 properties. See the documentation for more details.\n");
 	printf(" --help : display this message.\n");
 	printf(" --quiet : don't print error messages.\n");
 	printf(" --retained-only : only handle messages with the retained flag set, and exit when the\n");

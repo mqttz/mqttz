@@ -20,7 +20,7 @@
 			<group choice='req'>
 				<arg choice='plain'>
 					<arg><option>-h</option> <replaceable>hostname</replaceable></arg>
-					<arg><option>-p</option> <replaceable>port number</replaceable></arg>
+					<arg><option>-p</option> <replaceable>port-number</replaceable></arg>
 					<arg>
 						<arg><option>-u</option> <replaceable>username</replaceable></arg>
 						<arg><option>-P</option> <replaceable>password</replaceable></arg>
@@ -32,16 +32,17 @@
 					<arg choice='opt' rep='repeat'><option>-t</option> <replaceable>message-topic</replaceable></arg>
 				</arg>
 			</group>
-			<arg><option>-A</option> <replaceable>bind_address</replaceable></arg>
+			<arg><option>-A</option> <replaceable>bind-address</replaceable></arg>
 			<arg><option>-c</option></arg>
-			<arg><option>-C</option> <replaceable>msg count</replaceable></arg>
+			<arg><option>-C</option> <replaceable>msg-count</replaceable></arg>
 			<arg><option>-d</option></arg>
+			<arg><option>-D</option> <replaceable>command</replaceable> <replaceable>identifier</replaceable> <replaceable>value</replaceable></arg>
 			<arg><option>-E</option></arg>
-			<arg><option>-i</option> <replaceable>client_id</replaceable></arg>
-			<arg><option>-I</option> <replaceable>client id prefix</replaceable></arg>
-			<arg><option>-k</option> <replaceable>keepalive time</replaceable></arg>
+			<arg><option>-i</option> <replaceable>client-id</replaceable></arg>
+			<arg><option>-I</option> <replaceable>client-id-prefix</replaceable></arg>
+			<arg><option>-k</option> <replaceable>keepalive-time</replaceable></arg>
 			<arg><option>-N</option></arg>
-			<arg><option>-q</option> <replaceable>message QoS</replaceable></arg>
+			<arg><option>-q</option> <replaceable>message-QoS</replaceable></arg>
 			<group choice='opt'>
 				<arg choice='plain'><option>-R</option></arg>
 				<arg choice='plain'><option>--retained-only</option></arg>
@@ -51,8 +52,7 @@
 			<arg choice='opt' rep='repeat'><option>-U</option> <replaceable>unsub-topic</replaceable></arg>
 			<arg><option>-v</option></arg>
 			<arg><option>-V</option> <replaceable>protocol-version</replaceable></arg>
-			<arg><option>-W</option> <replaceable>message processing timeout</replaceable></arg>
-			<arg><option>-y</option> <replaceable>command</replaceable> <replaceable>identifier</replaceable> <replaceable>value</replaceable></arg>
+			<arg><option>-W</option> <replaceable>message-processing-timeout</replaceable></arg>
 			<arg><option>--proxy</option> <replaceable>socks-url</replaceable></arg>
 			<arg><option>--quiet</option></arg>
 			<arg>
@@ -78,7 +78,6 @@
 					<arg><option>--tls-version</option> <replaceable>version</replaceable></arg>
 				</arg>
 			</group>
-			<arg><option>--property</option> <replaceable>command</replaceable> <replaceable>identifier</replaceable> <replaceable>value</replaceable></arg>
 		</cmdsynopsis>
 		<cmdsynopsis>
 			<command>mosquitto_sub</command>
@@ -213,6 +212,40 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>-D</option></term>
+				<term><option>--property</option></term>
+				<listitem>
+					<para>Use an MQTT v5 property with this publish. If you use
+						this option, the client will be set to be an MQTT v5
+						client. This option has two forms:</para>
+					<para><option>-D command identifier value</option></para>
+					<para><option>-D command identifier name value</option></para>
+					<para><option>command</option> is the MQTT command/packet
+						identifier and can be one of CONNECT, PUBACK, PUBREC,
+						PUBCOMP, SUBSCRIBE, UNSUBSCRIBE, DISCONNECT, AUTH, or
+						WILL. The properties available for each command are
+						listed in the Properties section.</para>
+
+					<para><option>identifier</option> is the name of the
+						property to add. This is as described in the
+						specification, but with '-' as a word separator. For
+						example:
+						<option>payload-format-indicator</option>. More details
+						are in the <link linkend='properties'>Properties</link>
+						section.</para>
+
+					<para><option>value</option> is the value of the property
+						to add, with a data type that is property
+						specific.</para>
+
+					<para><option>name</option> is only used for the
+						<option>user-property</option> property as the first of
+						the two strings in the string pair. In that case,
+						<option>value</option> is the second of the strings in
+						the pair.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>-E</option></term>
 				<listitem>
 					<para>If this option is given,
@@ -343,39 +376,6 @@
 						the broker. Using this argument without also specifying
 						a username is invalid. See also the
 						<option>--username</option> option.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>--property</option></term>
-				<term><option>-y</option></term>
-				<listitem>
-					<para>Use an MQTT v5 property with this publish. If you use
-						this option, the client will be set to be an MQTT v5
-						client. This option has two forms:</para>
-					<para><option>--property command identifier value</option></para>
-					<para><option>--property command identifier name value</option></para>
-					<para><option>command</option> is the MQTT command/packet
-						identifier and can be one of CONNECT, PUBACK, PUBREC,
-						PUBCOMP, SUBSCRIBE, UNSUBSCRIBE, DISCONNECT, AUTH, or
-						WILL. The properties available for each command are
-						listed in the Properties section.</para>
-
-					<para><option>identifier</option> is the name of the
-						property to add. This is as described in the
-						specification, but with '-' as a word separator. For
-						example:
-						<option>payload-format-indicator</option>. More details
-						are in the Properties section.</para>
-
-					<para><option>value</option> is the value of the property
-						to add, with a data type that is property
-						specific.</para>
-
-					<para><option>name</option> is only used for the
-						<option>user-property</option> property as the first of
-						the two strings in the string pair. In that case,
-						<option>value</option> is the second of the strings in
-						the pair.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -738,11 +738,12 @@
 		modify the other will parameters.</para>
 	</refsect1>
 
-	<refsect1>
+	<refsect1 id='properties'>
 		<title>Properties</title>
-		<para>The <option>--property</option> option allows adding properties
-			to different stages of the mosquitto_sub run. The properties
-			supported for each command are as follows:</para>
+		<para>The <option>-D</option> / <option>--property</option> option
+			allows adding properties to different stages of the mosquitto_sub
+			run. The properties supported for each command are as
+			follows:</para>
 
 		<refsect2>
 			<title>Connect</title>
