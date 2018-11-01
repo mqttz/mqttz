@@ -94,7 +94,7 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 						break;
 				}
 			}
-			mosquitto_disconnect(mosq);
+			mosquitto_disconnect_with_properties(mosq, cfg.disconnect_props);
 		}
 	}else{
 		if(result && !quiet){
@@ -113,11 +113,11 @@ void my_publish_callback(struct mosquitto *mosq, void *obj, int mid)
 	last_mid_sent = mid;
 	if(mode == MSGMODE_STDIN_LINE){
 		if(mid == last_mid){
-			mosquitto_disconnect(mosq);
+			mosquitto_disconnect_with_properties(mosq, cfg.disconnect_props);
 			disconnect_sent = true;
 		}
 	}else if(disconnect_sent == false){
-		mosquitto_disconnect(mosq);
+		mosquitto_disconnect_with_properties(mosq, cfg.disconnect_props);
 		disconnect_sent = true;
 	}
 }
@@ -419,7 +419,7 @@ int main(int argc, char *argv[])
 						rc2 = mosquitto_publish_with_properties(mosq, &mid_sent, topic, buf_len_actual-1, buf, qos, retain, cfg.publish_props);
 						if(rc2){
 							if(!quiet) fprintf(stderr, "Error: Publish returned %d, disconnecting.\n", rc2);
-							mosquitto_disconnect(mosq);
+							mosquitto_disconnect_with_properties(mosq, cfg.disconnect_props);
 						}
 						break;
 					}else{
@@ -438,7 +438,7 @@ int main(int argc, char *argv[])
 				if(feof(stdin)){
 					if(last_mid == -1){
 						/* Empty file */
-						mosquitto_disconnect(mosq);
+						mosquitto_disconnect_with_properties(mosq, cfg.disconnect_props);
 						disconnect_sent = true;
 						status = STATUS_DISCONNECTING;
 					}else{
@@ -448,7 +448,7 @@ int main(int argc, char *argv[])
 				}
 			}else if(status == STATUS_WAITING){
 				if(last_mid_sent == last_mid && disconnect_sent == false){
-					mosquitto_disconnect(mosq);
+					mosquitto_disconnect_with_properties(mosq, cfg.disconnect_props);
 					disconnect_sent = true;
 				}
 #ifdef WIN32

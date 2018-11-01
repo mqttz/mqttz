@@ -34,6 +34,7 @@ Contributors:
 #include <mosquitto.h>
 #include "client_shared.h"
 
+static struct mosq_config cfg;
 bool process_messages = true;
 int msg_count = 0;
 struct mosquitto *mosq = NULL;
@@ -43,7 +44,7 @@ void my_signal_handler(int signum)
 {
 	if(signum == SIGALRM){
 		process_messages = false;
-		mosquitto_disconnect(mosq);
+		mosquitto_disconnect_with_properties(mosq, cfg.disconnect_props);
 	}
 }
 #endif
@@ -53,36 +54,32 @@ void print_message(struct mosq_config *cfg, const struct mosquitto_message *mess
 
 void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
 {
-	struct mosq_config *cfg;
 	int i;
 	bool res;
 
 	if(process_messages == false) return;
 
-	assert(obj);
-	cfg = (struct mosq_config *)obj;
-
-	if(cfg->retained_only && !message->retain && process_messages){
+	if(cfg.retained_only && !message->retain && process_messages){
 		process_messages = false;
-		mosquitto_disconnect(mosq);
+		mosquitto_disconnect_with_properties(mosq, cfg.disconnect_props);
 		return;
 	}
 
-	if(message->retain && cfg->no_retain) return;
-	if(cfg->filter_outs){
-		for(i=0; i<cfg->filter_out_count; i++){
-			mosquitto_topic_matches_sub(cfg->filter_outs[i], message->topic, &res);
+	if(message->retain && cfg.no_retain) return;
+	if(cfg.filter_outs){
+		for(i=0; i<cfg.filter_out_count; i++){
+			mosquitto_topic_matches_sub(cfg.filter_outs[i], message->topic, &res);
 			if(res) return;
 		}
 	}
 
-	print_message(cfg, message);
+	print_message(&cfg, message);
 
-	if(cfg->msg_count>0){
+	if(cfg.msg_count>0){
 		msg_count++;
-		if(cfg->msg_count == msg_count){
+		if(cfg.msg_count == msg_count){
 			process_messages = false;
-			mosquitto_disconnect(mosq);
+			mosquitto_disconnect_with_properties(mosq, cfg.disconnect_props);
 		}
 	}
 }
@@ -90,41 +87,33 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flags)
 {
 	int i;
-	struct mosq_config *cfg;
-
-	assert(obj);
-	cfg = (struct mosq_config *)obj;
 
 	if(!result){
-		mosquitto_subscribe_multiple(mosq, NULL, cfg->topic_count, cfg->topics, cfg->qos, cfg->subscribe_props);
+		mosquitto_subscribe_multiple(mosq, NULL, cfg.topic_count, cfg.topics, cfg.qos, cfg.subscribe_props);
 
-		for(i=0; i<cfg->unsub_topic_count; i++){
-			mosquitto_unsubscribe(mosq, NULL, cfg->unsub_topics[i]);
+		for(i=0; i<cfg.unsub_topic_count; i++){
+			mosquitto_unsubscribe(mosq, NULL, cfg.unsub_topics[i]);
 		}
 	}else{
-		if(result && !cfg->quiet){
+		if(result && !cfg.quiet){
 			fprintf(stderr, "%s\n", mosquitto_connack_string(result));
 		}
-		mosquitto_disconnect(mosq);
+		mosquitto_disconnect_with_properties(mosq, cfg.disconnect_props);
 	}
 }
 
 void my_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_count, const int *granted_qos)
 {
 	int i;
-	struct mosq_config *cfg;
 
-	assert(obj);
-	cfg = (struct mosq_config *)obj;
-
-	if(!cfg->quiet) printf("Subscribed (mid: %d): %d", mid, granted_qos[0]);
+	if(!cfg.quiet) printf("Subscribed (mid: %d): %d", mid, granted_qos[0]);
 	for(i=1; i<qos_count; i++){
-		if(!cfg->quiet) printf(", %d", granted_qos[i]);
+		if(!cfg.quiet) printf(", %d", granted_qos[i]);
 	}
-	if(!cfg->quiet) printf("\n");
+	if(!cfg.quiet) printf("\n");
 
-	if(cfg->exit_after_sub){
-		mosquitto_disconnect(mosq);
+	if(cfg.exit_after_sub){
+		mosquitto_disconnect_with_properties(mosq, cfg.disconnect_props);
 	}
 }
 
@@ -240,7 +229,6 @@ void print_usage(void)
 
 int main(int argc, char *argv[])
 {
-	struct mosq_config cfg;
 	int rc;
 #ifndef WIN32
 		struct sigaction sigact;

@@ -54,7 +54,8 @@ int send__disconnect(struct mosquitto *mosq, const struct mqtt5__property *prope
 	if(mosq->protocol == mosq_p_mqtt5){
 		proplen = property__get_length_all(properties);
 		varbytes = packet__varint_bytes(proplen);
-		packet->remaining_length = proplen+varbytes;
+		/* 1 here is the reason code */
+		packet->remaining_length = 1 + proplen + varbytes;
 	}else{
 		packet->remaining_length = 0;
 	}
@@ -65,6 +66,7 @@ int send__disconnect(struct mosquitto *mosq, const struct mqtt5__property *prope
 		return rc;
 	}
 	if(mosq->protocol == mosq_p_mqtt5){
+		packet__write_byte(packet, 0);
 		property__write_all(packet, properties);
 	}
 

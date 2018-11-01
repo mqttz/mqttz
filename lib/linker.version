@@ -95,6 +95,7 @@ MOSQ_1.5 {
 MOSQ_1.6 {
 	global:
 		mosquitto_connect_bind_with_properties;
+		mosquitto_disconnect_with_properties;
 		mosquitto_property_add_binary;
 		mosquitto_property_add_byte;
 		mosquitto_property_add_int16;
