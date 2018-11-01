@@ -590,13 +590,13 @@ int db__messages_easy_queue(struct mosquitto_db *db, struct mosquitto *context, 
 		local_properties = *properties;
 		*properties = NULL;
 	}
-	if(db__message_store(db, source_id, 0, topic_heap, qos, payloadlen, &payload_uhpa, retain, &stored, local_properties, 0)) return 1;
+	if(db__message_store(db, source_id, 0, topic_heap, qos, payloadlen, &payload_uhpa, retain, &stored, 0, local_properties, 0)) return 1;
 
 	return sub__messages_queue(db, source_id, topic_heap, qos, retain, &stored);
 }
 
 /* This function requires topic to be allocated on the heap. Once called, it owns topic and will free it on error. Likewise payload and properties. */
-int db__message_store(struct mosquitto_db *db, const char *source, uint16_t source_mid, char *topic, int qos, uint32_t payloadlen, mosquitto__payload_uhpa *payload, int retain, struct mosquitto_msg_store **stored, struct mqtt5__property *properties, dbid_t store_id)
+int db__message_store(struct mosquitto_db *db, const char *source, uint16_t source_mid, char *topic, int qos, uint32_t payloadlen, mosquitto__payload_uhpa *payload, int retain, struct mosquitto_msg_store **stored, uint32_t message_expiry_interval, struct mqtt5__property *properties, dbid_t store_id)
 {
 	struct mosquitto_msg_store *temp = NULL;
 	int rc = MOSQ_ERR_SUCCESS;
@@ -637,6 +637,11 @@ int db__message_store(struct mosquitto_db *db, const char *source, uint16_t sour
 		UHPA_MOVE(temp->payload, *payload, payloadlen);
 	}else{
 		temp->payload.ptr = NULL;
+	}
+	if(message_expiry_interval > 0){
+		temp->message_expiry_time = time(NULL) + message_expiry_interval;
+	}else{
+		temp->message_expiry_time = 0;
 	}
 
 	temp->dest_ids = NULL;
@@ -867,6 +872,7 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 	const void *payload;
 	int msg_count = 0;
 	struct mqtt5__property *properties;
+	time_t now;
 
 	if(!context || context->sock == INVALID_SOCKET
 			|| (context->state == mosq_cs_connected && !context->id)){
@@ -877,9 +883,15 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 		return MOSQ_ERR_SUCCESS;
 	}
 
+	now = time(NULL);
 	tail = context->inflight_msgs;
 	while(tail){
 		msg_count++;
+		if(tail->store->message_expiry_time && now > tail->store->message_expiry_time){
+			/* Message is expired, must not send. */
+			db__message_remove(db, context, &tail, last);
+			continue;
+		}
 		mid = tail->mid;
 		retries = tail->dup;
 		retain = tail->retain;
