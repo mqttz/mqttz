@@ -25,6 +25,7 @@ Contributors:
 #include "mosquitto.h"
 #include "mosquitto_internal.h"
 #include "memory_mosq.h"
+#include "mqtt_protocol.h"
 #include "util_mosq.h"
 #include "will_mosq.h"
 
@@ -37,7 +38,15 @@ int mosquitto_will_set(struct mosquitto *mosq, const char *topic, int payloadlen
 
 int mosquitto_will_set_with_properties(struct mosquitto *mosq, const char *topic, int payloadlen, const void *payload, int qos, bool retain, mosquitto_property *properties)
 {
+	int rc;
+
 	if(!mosq) return MOSQ_ERR_INVAL;
+
+	if(properties){
+		rc = mosquitto_property_check_all(CMD_WILL, properties);
+		if(rc) return rc;
+	}
+
 	return will__set(mosq, topic, payloadlen, payload, qos, retain, properties);
 }
 

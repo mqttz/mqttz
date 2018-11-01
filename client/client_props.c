@@ -85,7 +85,7 @@ int cfg_parse_property(struct mosq_config *cfg, int argc, char *argv[], int *idx
 		return MOSQ_ERR_INVAL;
 	}
 
-	if(mosquitto_property_command_check(cmd, identifier)){
+	if(mosquitto_property_check_command(cmd, identifier)){
 		fprintf(stderr, "Error: %s property not allow for %s in --property argument.\n\n", propname, cmdname);
 		return MOSQ_ERR_INVAL;
 	}

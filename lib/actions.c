@@ -40,6 +40,7 @@ int mosquitto_publish_with_properties(struct mosquitto *mosq, int *mid, const ch
 	int queue_status;
 	const mosquitto_property *p;
 	bool have_topic_alias;
+	int rc;
 
 	if(!mosq || qos<0 || qos>2) return MOSQ_ERR_INVAL;
 	if(!topic || STREMPTY(topic)){
@@ -67,6 +68,10 @@ int mosquitto_publish_with_properties(struct mosquitto *mosq, int *mid, const ch
 		if(mosquitto_pub_topic_check(topic) != MOSQ_ERR_SUCCESS){
 			return MOSQ_ERR_INVAL;
 		}
+	}
+	if(properties){
+		rc = mosquitto_property_check_all(CMD_PUBLISH, properties);
+		if(rc) return rc;
 	}
 
 	local_mid = mosquitto__mid_generate(mosq);
@@ -132,11 +137,18 @@ int mosquitto_subscribe(struct mosquitto *mosq, int *mid, const char *sub, int q
 
 int mosquitto_subscribe_with_properties(struct mosquitto *mosq, int *mid, const char *sub, int qos, const mosquitto_property *properties)
 {
+	int rc;
+
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
 
 	if(mosquitto_sub_topic_check(sub)) return MOSQ_ERR_INVAL;
 	if(mosquitto_validate_utf8(sub, strlen(sub))) return MOSQ_ERR_MALFORMED_UTF8;
+
+	if(properties){
+		rc = mosquitto_property_check_all(CMD_SUBSCRIBE, properties);
+		if(rc) return rc;
+	}
 
 	return send__subscribe(mosq, mid, 1, (char *const *const)&sub, qos, properties);
 }
@@ -145,10 +157,16 @@ int mosquitto_subscribe_with_properties(struct mosquitto *mosq, int *mid, const 
 int mosquitto_subscribe_multiple(struct mosquitto *mosq, int *mid, int sub_count, char *const *const sub, int qos, const mosquitto_property *properties)
 {
 	int i;
+	int rc;
 
 	if(!mosq || !sub_count || !sub) return MOSQ_ERR_INVAL;
 	if(qos < 0 || qos > 2) return MOSQ_ERR_INVAL;
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
+
+	if(mosq->protocol == mosq_p_mqtt5 && properties){
+		rc = mosquitto_property_check_all(CMD_SUBSCRIBE, properties);
+		if(rc) return rc;
+	}
 
 	for(i=0; i<sub_count; i++){
 		if(mosquitto_sub_topic_check(sub[i])) return MOSQ_ERR_INVAL;
@@ -166,12 +184,18 @@ int mosquitto_unsubscribe(struct mosquitto *mosq, int *mid, const char *sub)
 
 int mosquitto_unsubscribe_with_properties(struct mosquitto *mosq, int *mid, const char *sub, const mosquitto_property *properties)
 {
+	int rc;
+
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
 
 	if(mosquitto_sub_topic_check(sub)) return MOSQ_ERR_INVAL;
 	if(mosquitto_validate_utf8(sub, strlen(sub))) return MOSQ_ERR_MALFORMED_UTF8;
 
+	if(properties){
+		rc = mosquitto_property_check_all(CMD_PUBLISH, properties);
+		if(rc) return rc;
+	}
 	return send__unsubscribe(mosq, mid, sub, properties);
 }
 

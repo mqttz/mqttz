@@ -373,6 +373,8 @@ const char *mosquitto_strerror(int mosq_errno)
 			return "Proxy error.";
 		case MOSQ_ERR_MALFORMED_UTF8:
 			return "Malformed UTF-8";
+		case MOSQ_ERR_DUPLICATE_PROPERTY:
+			return "Duplicate property in property list";
 		default:
 			return "Unknown error.";
 	}

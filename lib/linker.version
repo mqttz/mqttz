@@ -104,7 +104,8 @@ MOSQ_1.6 {
 		mosquitto_property_add_string_pair;
 		mosquitto_property_add_varint;
 		mosquitto_property_free_all;
-		mosquitto_property_command_check;
+		mosquitto_property_check_command;
+		mosquitto_property_check_all;
 		mosquitto_publish_with_properties;
 		mosquitto_string_to_command;
 		mosquitto_string_to_property_info;

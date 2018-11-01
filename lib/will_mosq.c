@@ -53,7 +53,7 @@ int will__set(struct mosquitto *mosq, const char *topic, int payloadlen, const v
 		}
 		p = properties;
 		while(p){
-			rc = mosquitto_property_command_check(CMD_WILL, p->identifier);
+			rc = mosquitto_property_check_command(CMD_WILL, p->identifier);
 			if(rc) return rc;
 			p = p->next;
 		}

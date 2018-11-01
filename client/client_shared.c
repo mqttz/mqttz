@@ -32,6 +32,7 @@ Contributors:
 #endif
 
 #include <mosquitto.h>
+#include <mqtt_protocol.h>
 #include "client_shared.h"
 
 static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url);
@@ -184,6 +185,7 @@ void client_config_cleanup(struct mosq_config *cfg)
 	mosquitto_property_free_all(&cfg->subscribe_props);
 	mosquitto_property_free_all(&cfg->unsubscribe_props);
 	mosquitto_property_free_all(&cfg->disconnect_props);
+	mosquitto_property_free_all(&cfg->will_props);
 }
 
 int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *argv[])
@@ -344,6 +346,38 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 			return 1;
 		}
 	}
+
+	rc = mosquitto_property_check_all(CMD_CONNECT, cfg->connect_props);
+	if(rc){
+		if(!cfg->quiet) fprintf(stderr, "Error in CONNECT properties: %s\n", mosquitto_strerror(rc));
+		return 1;
+	}
+	rc = mosquitto_property_check_all(CMD_PUBLISH, cfg->publish_props);
+	if(rc){
+		if(!cfg->quiet) fprintf(stderr, "Error in PUBLISH properties: %s\n", mosquitto_strerror(rc));
+		return 1;
+	}
+	rc = mosquitto_property_check_all(CMD_SUBSCRIBE, cfg->subscribe_props);
+	if(rc){
+		if(!cfg->quiet) fprintf(stderr, "Error in SUBSCRIBE properties: %s\n", mosquitto_strerror(rc));
+		return 1;
+	}
+	rc = mosquitto_property_check_all(CMD_UNSUBSCRIBE, cfg->unsubscribe_props);
+	if(rc){
+		if(!cfg->quiet) fprintf(stderr, "Error in UNSUBSCRIBE properties: %s\n", mosquitto_strerror(rc));
+		return 1;
+	}
+	rc = mosquitto_property_check_all(CMD_DISCONNECT, cfg->disconnect_props);
+	if(rc){
+		if(!cfg->quiet) fprintf(stderr, "Error in DISCONNECT properties: %s\n", mosquitto_strerror(rc));
+		return 1;
+	}
+	rc = mosquitto_property_check_all(CMD_WILL, cfg->will_props);
+	if(rc){
+		if(!cfg->quiet) fprintf(stderr, "Error in Will properties: %s\n", mosquitto_strerror(rc));
+		return 1;
+	}
+
 	return MOSQ_ERR_SUCCESS;
 }
 
@@ -918,6 +952,8 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 		mosquitto_lib_cleanup();
 		return 1;
 	}
+	cfg->will_props = NULL;
+
 	if(cfg->username && mosquitto_username_pw_set(mosq, cfg->username, cfg->password)){
 		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting username and password.\n");
 		mosquitto_lib_cleanup();

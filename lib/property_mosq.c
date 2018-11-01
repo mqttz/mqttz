@@ -26,8 +26,6 @@ Contributors:
 #include "packet_mosq.h"
 #include "property_mosq.h"
 
-static int property__command_check(int command, struct mqtt5__property *properties);
-
 
 int property__read(struct mosquitto__packet *packet, int32_t *len, struct mqtt5__property *property)
 {
@@ -146,7 +144,6 @@ int property__read_all(int command, struct mosquitto__packet *packet, struct mqt
 	int rc;
 	int32_t proplen;
 	struct mqtt5__property *p, *tail = NULL;
-	struct mqtt5__property *current;
 
 	rc = packet__read_varint(packet, &proplen, NULL);
 	if(rc) return rc;
@@ -172,54 +169,12 @@ int property__read_all(int command, struct mosquitto__packet *packet, struct mqt
 		}
 		tail = p;
 
-		/* Validity checks */
-		if(p->identifier == MQTT_PROP_REQUEST_PROBLEM_INFORMATION
-				|| p->identifier == MQTT_PROP_REQUEST_RESPONSE_INFORMATION
-				|| p->identifier == MQTT_PROP_MAXIMUM_QOS
-				|| p->identifier == MQTT_PROP_RETAIN_AVAILABLE
-				|| p->identifier == MQTT_PROP_WILDCARD_SUB_AVAILABLE
-				|| p->identifier == MQTT_PROP_SUBSCRIPTION_ID_AVAILABLE
-				|| p->identifier == MQTT_PROP_SHARED_SUB_AVAILABLE){
-
-			if(p->value.i8 > 1){
-				mosquitto_property_free_all(properties);
-				return MOSQ_ERR_PROTOCOL;
-			}
-		}else if(p->identifier == MQTT_PROP_MAXIMUM_PACKET_SIZE){
-			if( p->value.i32 == 0){
-				mosquitto_property_free_all(properties);
-				return MOSQ_ERR_PROTOCOL;
-			}
-		}else if(p->identifier == MQTT_PROP_RECEIVE_MAXIMUM
-				|| p->identifier == MQTT_PROP_TOPIC_ALIAS){
-
-			if(p->value.i16 == 0){
-				mosquitto_property_free_all(properties);
-				return MOSQ_ERR_PROTOCOL;
-			}
-		}
 	}
 
-	/* Check for duplicates */
-	current = *properties;
-	while(current){
-		tail = current->next;
-		while(tail){
-			if(current->identifier == tail->identifier
-					&& current->identifier != MQTT_PROP_USER_PROPERTY){
-
-				mosquitto_property_free_all(properties);
-				return MOSQ_ERR_PROTOCOL;
-			}
-			tail = tail->next;
-		}
-		current = current->next;
-	}
-
-	/* Check for properties on incorrect commands */
-	if(property__command_check(command, *properties)){
+	rc = mosquitto_property_check_all(command, *properties);
+	if(rc){
 		mosquitto_property_free_all(properties);
-		return MOSQ_ERR_PROTOCOL;
+		return rc;
 	}
 	return MOSQ_ERR_SUCCESS;
 }
@@ -279,6 +234,8 @@ void property__free(struct mqtt5__property **property)
 void mosquitto_property_free_all(struct mqtt5__property **property)
 {
 	struct mqtt5__property *p, *next;
+
+	if(!property) return;
 
 	p = *property;
 	while(p){
@@ -459,7 +416,7 @@ int property__write_all(struct mosquitto__packet *packet, const struct mqtt5__pr
 }
 
 
-int mosquitto_property_command_check(int command, int identifier)
+int mosquitto_property_check_command(int command, int identifier)
 {
 	switch(identifier){
 		case MQTT_PROP_PAYLOAD_FORMAT_INDICATOR:
@@ -548,21 +505,6 @@ int mosquitto_property_command_check(int command, int identifier)
 
 		default:
 			return MOSQ_ERR_PROTOCOL;
-	}
-	return MOSQ_ERR_SUCCESS;
-}
-
-static int property__command_check(int command, struct mqtt5__property *properties)
-{
-	struct mqtt5__property *p;
-	int rc;
-
-	p = properties;
-	while(p){
-		rc = mosquitto_property_command_check(command, p->identifier);
-		if(rc) return rc;
-
-		p = p->next;
 	}
 	return MOSQ_ERR_SUCCESS;
 }
@@ -876,5 +818,58 @@ int mosquitto_property_add_string_pair(mosquitto_property **proplist, int identi
 	}
 
 	property__add(proplist, prop);
+	return MOSQ_ERR_SUCCESS;
+}
+
+int mosquitto_property_check_all(int command, const mosquitto_property *properties)
+{
+	const mosquitto_property *p, *tail;
+	int rc;
+
+	p = properties;
+
+	while(p){
+		/* Validity checks */
+		if(p->identifier == MQTT_PROP_REQUEST_PROBLEM_INFORMATION
+				|| p->identifier == MQTT_PROP_REQUEST_RESPONSE_INFORMATION
+				|| p->identifier == MQTT_PROP_MAXIMUM_QOS
+				|| p->identifier == MQTT_PROP_RETAIN_AVAILABLE
+				|| p->identifier == MQTT_PROP_WILDCARD_SUB_AVAILABLE
+				|| p->identifier == MQTT_PROP_SUBSCRIPTION_ID_AVAILABLE
+				|| p->identifier == MQTT_PROP_SHARED_SUB_AVAILABLE){
+
+			if(p->value.i8 > 1){
+				return MOSQ_ERR_PROTOCOL;
+			}
+		}else if(p->identifier == MQTT_PROP_MAXIMUM_PACKET_SIZE){
+			if( p->value.i32 == 0){
+				return MOSQ_ERR_PROTOCOL;
+			}
+		}else if(p->identifier == MQTT_PROP_RECEIVE_MAXIMUM
+				|| p->identifier == MQTT_PROP_TOPIC_ALIAS){
+
+			if(p->value.i16 == 0){
+				return MOSQ_ERR_PROTOCOL;
+			}
+		}
+
+		/* Check for properties on incorrect commands */
+		rc = mosquitto_property_check_command(command, p->identifier);
+		if(rc) return rc;
+
+		/* Check for duplicates */
+		tail = p->next;
+		while(tail){
+			if(p->identifier == tail->identifier
+					&& p->identifier != MQTT_PROP_USER_PROPERTY){
+
+				return MOSQ_ERR_DUPLICATE_PROPERTY;
+			}
+			tail = tail->next;
+		}
+
+		p = p->next;
+	}
+
 	return MOSQ_ERR_SUCCESS;
 }

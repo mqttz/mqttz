@@ -89,6 +89,7 @@ enum mosq_err_t {
 	MOSQ_ERR_KEEPALIVE = 19,
 	MOSQ_ERR_LOOKUP = 20,
 	MOSQ_ERR_MALFORMED_PACKET = 19,
+	MOSQ_ERR_DUPLICATE_PROPERTY = 20,
 };
 
 /* Error values */
@@ -347,6 +348,7 @@ libmosq_EXPORT int mosquitto_will_set(struct mosquitto *mosq, const char *topic,
  * 	MOSQ_ERR_NOT_SUPPORTED -  if properties is not NULL and the client is not
  * 	                          using MQTT v5
  * 	MOSQ_ERR_PROTOCOL -       if a property is invalid for use with wills.
+ *	MOSQ_ERR_DUPLICATE_PROPERTY - if a property is duplicated where it is forbidden.
  */
 libmosq_EXPORT int mosquitto_will_set_with_properties(struct mosquitto *mosq, const char *topic, int payloadlen, const void *payload, int qos, bool retain, mosquitto_property *properties);
 
@@ -483,6 +485,8 @@ libmosq_EXPORT int mosquitto_connect_bind(struct mosquitto *mosq, const char *ho
  *                     contains the error code, even on Windows.
  *                     Use strerror_r() where available or FormatMessage() on
  *                     Windows.
+ *	MOSQ_ERR_DUPLICATE_PROPERTY - if a property is duplicated where it is forbidden.
+ *	MOSQ_ERR_PROTOCOL - if any property is invalid for use with CONNECT.
  *
  * See Also:
  * 	<mosquitto_connect>, <mosquitto_connect_async>, <mosquitto_connect_bind_async>
@@ -687,6 +691,8 @@ libmosq_EXPORT int mosquitto_disconnect(struct mosquitto *mosq);
  *	MOSQ_ERR_SUCCESS - on success.
  * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
  * 	MOSQ_ERR_NO_CONN -  if the client isn't connected to a broker.
+ *	MOSQ_ERR_DUPLICATE_PROPERTY - if a property is duplicated where it is forbidden.
+ *	MOSQ_ERR_PROTOCOL - if any property is invalid for use with DISCONNECT.
  */
 libmosq_EXPORT int mosquitto_disconnect_with_properties(struct mosquitto *mosq, const mosquitto_property *properties);
 
@@ -774,6 +780,8 @@ libmosq_EXPORT int mosquitto_publish(struct mosquitto *mosq, int *mid, const cha
  *                            broker.
  * 	MOSQ_ERR_PAYLOAD_SIZE -   if payloadlen is too large.
  * 	MOSQ_ERR_MALFORMED_UTF8 - if the topic is not valid UTF-8
+ *	MOSQ_ERR_DUPLICATE_PROPERTY - if a property is duplicated where it is forbidden.
+ *	MOSQ_ERR_PROTOCOL - if any property is invalid for use with PUBLISH.
  */
 libmosq_EXPORT int mosquitto_publish_with_properties(
 		struct mosquitto *mosq,
@@ -837,6 +845,8 @@ libmosq_EXPORT int mosquitto_subscribe(struct mosquitto *mosq, int *mid, const c
  * 	MOSQ_ERR_NOMEM -          if an out of memory condition occurred.
  * 	MOSQ_ERR_NO_CONN -        if the client isn't connected to a broker.
  * 	MOSQ_ERR_MALFORMED_UTF8 - if the topic is not valid UTF-8
+ *	MOSQ_ERR_DUPLICATE_PROPERTY - if a property is duplicated where it is forbidden.
+ *	MOSQ_ERR_PROTOCOL - if any property is invalid for use with SUBSCRIBE.
  */
 libmosq_EXPORT int mosquitto_subscribe_with_properties(struct mosquitto *mosq, int *mid, const char *sub, int qos, const mosquitto_property *properties);
 
@@ -913,6 +923,8 @@ libmosq_EXPORT int mosquitto_unsubscribe(struct mosquitto *mosq, int *mid, const
  * 	MOSQ_ERR_NOMEM -          if an out of memory condition occurred.
  * 	MOSQ_ERR_NO_CONN -        if the client isn't connected to a broker.
  * 	MOSQ_ERR_MALFORMED_UTF8 - if the topic is not valid UTF-8
+ *	MOSQ_ERR_DUPLICATE_PROPERTY - if a property is duplicated where it is forbidden.
+ *	MOSQ_ERR_PROTOCOL - if any property is invalid for use with UNSUBSCRIBE.
  */
 libmosq_EXPORT int mosquitto_unsubscribe_with_properties(struct mosquitto *mosq, int *mid, const char *sub, const mosquitto_property *properties);
 
@@ -2285,7 +2297,7 @@ libmosq_EXPORT int mosquitto_property_add_string_pair(mosquitto_property **propl
 libmosq_EXPORT void mosquitto_property_free_all(mosquitto_property **properties);
 
 /*
- * Function: mosquitto_property_command_check
+ * Function: mosquitto_property_check_command
  *
  * Check whether a property identifier is valid for the given command.
  *
@@ -2297,7 +2309,30 @@ libmosq_EXPORT void mosquitto_property_free_all(mosquitto_property **properties)
  *   MOSQ_ERR_SUCCESS - if the identifier is valid for command
  *   MOSQ_ERR_PROTOCOL - if the identifier is not valid for use with command.
  */
-libmosq_EXPORT int mosquitto_property_command_check(int command, int identifier);
+libmosq_EXPORT int mosquitto_property_check_command(int command, int identifier);
+
+
+/*
+ * Function: mosquitto_property_check_all
+ *
+ * Check whether a list of properties are valid for a particular command,
+ * whether there are duplicates, and whether the values are valid where
+ * possible.
+ *
+ * Note that this function is used internally in the library whenever
+ * properties are passed to it, so in basic use this is not needed, but should
+ * be helpful to check property lists *before* the point of using them.
+ *
+ * Parameters:
+ *	command - MQTT command (e.g. CMD_CONNECT)
+ *	properties - list of MQTT properties to check.
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS - if all properties are valid
+ *	MOSQ_ERR_DUPLICATE_PROPERTY - if a property is duplicated where it is forbidden.
+ *	MOSQ_ERR_PROTOCOL - if any property is invalid
+ */
+libmosq_EXPORT int mosquitto_property_check_all(int command, const mosquitto_property *properties);
 
 /* Function: mosquitto_string_to_property_info
  *
