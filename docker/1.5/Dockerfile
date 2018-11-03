@@ -51,13 +51,14 @@ RUN set -x && \
     mkdir -p /mosquitto/config /mosquitto/data /mosquitto/log && \
 	install -d /usr/sbin/ && \
 	install -s -m755 /build/src/mosquitto /usr/sbin/mosquitto && \
+	install -s -m755 /build/src/mosquitto_passwd /usr/bin/mosquitto_passwd && \
 	install -m644 /build/mosquitto.conf /mosquitto/config/mosquitto.conf && \
     chown -R mosquitto:mosquitto /mosquitto && \
 	apk --no-cache add \
       libuuid \
       libwebsockets && \
 	apk del build-deps && \
-	rm -rf /build /etc/apk /lib/apk
+	rm -rf /build
 
 VOLUME ["/mosquitto/data", "/mosquitto/log"]
 
