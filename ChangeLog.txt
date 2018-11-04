@@ -1,6 +1,12 @@
 1.5.4 - 201810xx
 ================
 
+Broker:
+- Process all pending messages even when a client has disconnected. This means
+  a client that send a PUBLISH then DISCONNECT quickly, then disconnects will
+  have its DISCONNECT message processed properly and so no Will will be sent.
+  Closes #7.
+
 Library:
 - Fix memory leak that occurred if mosquitto_reconnect() was used when TLS
 errors were present. Closes #592.

@@ -813,14 +813,15 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 					continue;
 				}
 			}while(SSL_DATA_PENDING(context));
-		}
+		}else{
 #ifdef WITH_EPOLL
-		if(events & (EPOLLERR | EPOLLHUP)){
+			if(events & (EPOLLERR | EPOLLHUP)){
 #else
-		if(context->pollfd_index >= 0 && pollfds[context->pollfd_index].revents & (POLLERR | POLLNVAL | POLLHUP)){
+			if(context->pollfd_index >= 0 && pollfds[context->pollfd_index].revents & (POLLERR | POLLNVAL | POLLHUP)){
 #endif
-			do_disconnect(db, context);
-			continue;
+				do_disconnect(db, context);
+				continue;
+			}
 		}
 	}
 }
