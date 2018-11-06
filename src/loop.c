@@ -638,9 +638,11 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 			context->sock = INVALID_SOCKET;
 			context->pollfd_index = -1;
 		}
-		HASH_DELETE(hh_id, db->contexts_by_id, context);
-		context->old_id = context->id;
-		context->id = NULL;
+		if(context->id){
+			HASH_DELETE(hh_id, db->contexts_by_id, context);
+			context->old_id = context->id;
+			context->id = NULL;
+		}
 	}else
 #endif
 	{
