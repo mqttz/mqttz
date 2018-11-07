@@ -6,6 +6,7 @@ Broker:
   a client that send a PUBLISH then DISCONNECT quickly, then disconnects will
   have its DISCONNECT message processed properly and so no Will will be sent.
   Closes #7.
+- $SYS/broker/clients/disconnected should never be negative. Closes #287.
 
 Library:
 - Fix memory leak that occurred if mosquitto_reconnect() was used when TLS
@@ -14,6 +15,7 @@ errors were present. Closes #592.
 Build:
 - Fix clients not being compiled with threading support when using CMake.
   Closes #983.
+
 
 1.5.3 - 20180925
 ================

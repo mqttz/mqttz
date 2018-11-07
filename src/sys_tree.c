@@ -60,8 +60,8 @@ static void sys_tree__update_clients(struct mosquitto_db *db, char *buf)
 	static unsigned int client_count = -1;
 	static int clients_expired = -1;
 	static unsigned int client_max = 0;
-	static unsigned int disconnected_count = -1;
-	static unsigned int connected_count = -1;
+	static int disconnected_count = -1;
+	static int connected_count = -1;
 
 	unsigned int count_total, count_by_sock;
 
@@ -82,6 +82,13 @@ static void sys_tree__update_clients(struct mosquitto_db *db, char *buf)
 
 	if(disconnected_count != count_total-count_by_sock){
 		disconnected_count = count_total-count_by_sock;
+		if(disconnected_count < 0){
+			/* If a client has connected but not sent a CONNECT at this point,
+			 * then it is possible that count_by_sock will be bigger than
+			 * count_total, causing a negative number. This situation should
+			 * not last for long, so just cap at zero and ignore. */
+			disconnected_count = 0;
+		}
 		snprintf(buf, BUFLEN, "%d", disconnected_count);
 		db__messages_easy_queue(db, NULL, "$SYS/broker/clients/inactive", SYS_TREE_QOS, strlen(buf), buf, 1);
 		db__messages_easy_queue(db, NULL, "$SYS/broker/clients/disconnected", SYS_TREE_QOS, strlen(buf), buf, 1);
