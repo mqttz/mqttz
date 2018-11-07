@@ -147,20 +147,12 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 	}else{
 		if(mosq->sock != INVALID_SOCKET){
 			if(FD_ISSET(mosq->sock, &readfds)){
-#ifdef WITH_TLS
-				if(mosq->want_connect){
-					rc = net__socket_connect_tls(mosq);
-					if(rc) return rc;
-				}else
-#endif
-				{
-					do{
-						rc = mosquitto_loop_read(mosq, max_packets);
-						if(rc || mosq->sock == INVALID_SOCKET){
-							return rc;
-						}
-					}while(SSL_DATA_PENDING(mosq));
-				}
+				do{
+					rc = mosquitto_loop_read(mosq, max_packets);
+					if(rc || mosq->sock == INVALID_SOCKET){
+						return rc;
+					}
+				}while(SSL_DATA_PENDING(mosq));
 			}
 			if(mosq->sockpairR != INVALID_SOCKET && FD_ISSET(mosq->sockpairR, &readfds)){
 #ifndef WIN32
@@ -353,6 +345,12 @@ int mosquitto_loop_read(struct mosquitto *mosq, int max_packets)
 	int rc;
 	int i;
 	if(max_packets < 1) return MOSQ_ERR_INVAL;
+
+#ifdef WITH_TLS
+	if(mosq->want_connect){
+		return net__socket_connect_tls(mosq);
+	}
+#endif
 
 	pthread_mutex_lock(&mosq->out_message_mutex);
 	max_packets = mosq->out_queue_len;
