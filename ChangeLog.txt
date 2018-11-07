@@ -7,6 +7,8 @@ Broker:
   have its DISCONNECT message processed properly and so no Will will be sent.
   Closes #7.
 - $SYS/broker/clients/disconnected should never be negative. Closes #287.
+- Give better error message if a client sends a password without a username.
+  Closes #1015.
 
 Library:
 - Fix memory leak that occurred if mosquitto_reconnect() was used when TLS
