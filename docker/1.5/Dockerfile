@@ -5,15 +5,34 @@ LABEL maintainer="Roger Light <roger@atchoo.org>" \
 
 ENV VERSION=1.5.3 \
 	 DOWNLOAD_SHA256=3081a998d303a883b1cd064009beabc88aa9159e26f5258a4ae6007160491d10 \
-	 GPG_KEYS=A0D6EEA1DCAE49A635A3B2F0779B22DFB3E717B7
+	 GPG_KEYS=A0D6EEA1DCAE49A635A3B2F0779B22DFB3E717B7 \
+	 LWS_VERSION=2.4.2
 
 RUN set -x && \
 	 apk --no-cache add --virtual build-deps \
       build-base \
+      cmake \
 	  gnupg \
       libressl-dev \
-      libwebsockets-dev \
       util-linux-dev && \
+    wget https://github.com/warmcat/libwebsockets/archive/v${LWS_VERSION}.tar.gz -O /tmp/lws.tar.gz && \
+    mkdir -p /build/lws && \
+    tar --strip=1 -xf /tmp/lws.tar.gz -C /build/lws && \
+    rm /tmp/lws.tar.gz && \
+    cd /build/lws && \
+    cmake . \
+        -DCMAKE_BUILD_TYPE=MinSizeRel \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DLWS_IPV6=ON \
+        -DLWS_WITHOUT_BUILTIN_GETIFADDRS=ON \
+        -DLWS_WITHOUT_CLIENT=ON \
+        -DLWS_WITHOUT_EXTENSIONS=ON \
+        -DLWS_WITHOUT_TESTAPPS=ON \
+        -DLWS_WITH_SHARED=OFF \
+        -DLWS_WITH_ZIP_FOPS=OFF \
+        -DLWS_WITH_ZLIB=OFF && \
+    make -j "$(nproc)" && \
+    rm -rf /root/.cmake && \
     wget https://mosquitto.org/files/source/mosquitto-${VERSION}.tar.gz -O /tmp/mosq.tar.gz && \
 	echo "$DOWNLOAD_SHA256  /tmp/mosq.tar.gz" | sha256sum -c - && \
     wget https://mosquitto.org/files/source/mosquitto-${VERSION}.tar.gz.asc -O /tmp/mosq.tar.gz.asc && \
@@ -32,10 +51,12 @@ RUN set -x && \
 	gpg --batch --verify /tmp/mosq.tar.gz.asc /tmp/mosq.tar.gz && \
 	gpgconf --kill all && \
 	rm -rf "$GNUPGHOME" /tmp/mosq.tar.gz.asc && \
-	mkdir -p /build && \
-	tar --strip=1 -xf /tmp/mosq.tar.gz -C /build && \
+	mkdir -p /build/mosq && \
+	tar --strip=1 -xf /tmp/mosq.tar.gz -C /build/mosq && \
 	rm /tmp/mosq.tar.gz && \
-    make -C /build -j "$(nproc)" \
+    make -C /build/mosq -j "$(nproc)" \
+        CFLAGS="-Wall -O2 -I/build/lws/include -flto" \
+        LDFLAGS="-L/build/lws/lib -flto" \
       WITH_ADNS=no \
 	  WITH_DOCS=no \
       WITH_MEMORY_TRACKING=no \
@@ -50,13 +71,12 @@ RUN set -x && \
     adduser -S -D -H -h /var/empty -s /sbin/nologin -G mosquitto -g mosquitto mosquitto 2>/dev/null && \
     mkdir -p /mosquitto/config /mosquitto/data /mosquitto/log && \
 	install -d /usr/sbin/ && \
-	install -s -m755 /build/src/mosquitto /usr/sbin/mosquitto && \
-	install -s -m755 /build/src/mosquitto_passwd /usr/bin/mosquitto_passwd && \
-	install -m644 /build/mosquitto.conf /mosquitto/config/mosquitto.conf && \
+	install -s -m755 /build/mosq/src/mosquitto /usr/sbin/mosquitto && \
+	install -s -m755 /build/mosq/src/mosquitto_passwd /usr/bin/mosquitto_passwd && \
+	install -m644 /build/mosq/mosquitto.conf /mosquitto/config/mosquitto.conf && \
     chown -R mosquitto:mosquitto /mosquitto && \
 	apk --no-cache add \
-      libuuid \
-      libwebsockets && \
+      libuuid && \
 	apk del build-deps && \
 	rm -rf /build
 
