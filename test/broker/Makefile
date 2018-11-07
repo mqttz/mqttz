@@ -116,6 +116,7 @@ endif
 	./09-plugin-auth-unpwd-success.py
 	./09-plugin-auth-unpwd-fail.py
 	./09-plugin-auth-acl-sub.py
+	./09-plugin-auth-acl-sub-denied.py
 	./09-plugin-auth-v2-unpwd-success.py
 	./09-plugin-auth-v2-unpwd-fail.py
 	./09-plugin-auth-defer-unpwd-success.py

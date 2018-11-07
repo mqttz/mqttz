@@ -112,8 +112,8 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 			log__printf(NULL, MOSQ_LOG_DEBUG, "\t%s (QoS %d)", sub, qos);
 
 			if(context->protocol == mosq_p_mqtt311){
-				rc = mosquitto_acl_check(db, context, sub, 0, NULL, qos, false, MOSQ_ACL_SUBSCRIBE);
-				switch(rc){
+				rc2 = mosquitto_acl_check(db, context, sub, 0, NULL, qos, false, MOSQ_ACL_SUBSCRIBE);
+				switch(rc2){
 					case MOSQ_ERR_SUCCESS:
 						break;
 					case MOSQ_ERR_ACL_DENIED:
@@ -121,7 +121,7 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 						break;
 					default:
 						mosquitto__free(sub);
-						return rc;
+						return rc2;
 				}
 			}
 

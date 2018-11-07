@@ -33,6 +33,8 @@ Broker:
   removed. Closes #645.
 - Fix Windows version not starting if include_dir did not contain any files.
   Closes #566.
+- When an authentication plugin denied access to a SUBSCRIBE, the client would
+  be disconnected incorrectly. This has been fixed. Closes #1016.
 
 Build:
 - Various fixes to ease building.
