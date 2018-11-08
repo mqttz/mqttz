@@ -395,6 +395,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		if(context->protocol == mosq_p_mqtt311){
 			if(password_flag){
 				/* username_flag == 0 && password_flag == 1 is forbidden */
+				log__printf(NULL, MOSQ_LOG_ERR, "Protocol error from %s: password without username, closing connection.", client_id);
 				rc = MOSQ_ERR_PROTOCOL;
 				goto handle_connect_error;
 			}

@@ -1,3 +1,39 @@
+1.5.4 - 20181108
+================
+
+Security:
+- When using a TLS enabled websockets listener with "require_certificate"
+  enabled, the mosquitto broker does not correctly verify client certificates.
+  This is now fixed. All other security measures operate as expected, and in
+  particular non-websockets listeners are not affected by this. Closes #996.
+
+Broker:
+- Process all pending messages even when a client has disconnected. This means
+  a client that send a PUBLISH then DISCONNECT quickly, then disconnects will
+  have its DISCONNECT message processed properly and so no Will will be sent.
+  Closes #7.
+- $SYS/broker/clients/disconnected should never be negative. Closes #287.
+- Give better error message if a client sends a password without a username.
+  Closes #1015.
+- Fix bridge not honoring restart_timeout. Closes #1019.
+- Don't disconnect a client if an auth plugin denies access to SUBSCRIBE.
+  Closes #1016.
+
+Library:
+- Fix memory leak that occurred if mosquitto_reconnect() was used when TLS
+  errors were present. Closes #592.
+- Fix TLS connections when using an external event loop with
+  mosquitto_loop_read() and mosquitto_write(). Closes #990.
+
+Build:
+- Fix clients not being compiled with threading support when using CMake.
+  Closes #983.
+- Header fixes for FreeBSD. Closes #977.
+- Use _GNU_SOURCE to fix build errors in websockets and getaddrinfo usage.
+  Closes #862 and #933.
+- Fix builds on QNX 7.0.0. Closes #1018.
+
+
 1.5.3 - 20180925
 ================
 
@@ -16,6 +52,8 @@ Broker:
   removed. Closes #645.
 - Fix Windows version not starting if include_dir did not contain any files.
   Closes #566.
+- When an authentication plugin denied access to a SUBSCRIBE, the client would
+  be disconnected incorrectly. This has been fixed. Closes #1016.
 
 Build:
 - Various fixes to ease building.

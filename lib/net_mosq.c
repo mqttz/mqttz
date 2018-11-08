@@ -596,6 +596,9 @@ int net__socket_connect_step3(struct mosquitto *mosq, const char *host, uint16_t
 	if(rc) return rc;
 
 	if(mosq->ssl_ctx){
+		if(mosq->ssl){
+			SSL_free(mosq->ssl);
+		}
 		mosq->ssl = SSL_new(mosq->ssl_ctx);
 		if(!mosq->ssl){
 			COMPAT_CLOSE(mosq->sock);

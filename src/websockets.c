@@ -665,6 +665,14 @@ static int callback_http(struct libwebsocket_context *context,
 			}
 			break;
 
+#ifdef WITH_TLS
+		case LWS_CALLBACK_OPENSSL_PERFORM_CLIENT_CERT_VERIFICATION:
+			if(!len || (SSL_get_verify_result((SSL*)in) != X509_V_OK)){
+				return 1;
+			}
+			break;
+#endif
+
 		default:
 			return 0;
 	}

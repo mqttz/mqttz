@@ -15,6 +15,7 @@
 #  define _POSIX_C_SOURCE 200809L
 #endif
 
+#define _GNU_SOURCE
 
 /* ============================================================
  * Compatibility defines

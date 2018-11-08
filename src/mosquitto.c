@@ -91,7 +91,7 @@ int drop_privileges(struct mosquitto__config *config, bool temporary)
 {
 #if !defined(__CYGWIN__) && !defined(WIN32)
 	struct passwd *pwd;
-	char err[256];
+	char *err;
 	int rc;
 
 	const char *snap = getenv("SNAP_NAME");
@@ -108,7 +108,7 @@ int drop_privileges(struct mosquitto__config *config, bool temporary)
 				return 1;
 			}
 			if(initgroups(config->user, pwd->pw_gid) == -1){
-				strerror_r(errno, err, 256);
+				err = strerror(errno);
 				log__printf(NULL, MOSQ_LOG_ERR, "Error setting groups whilst dropping privileges: %s.", err);
 				return 1;
 			}
@@ -118,7 +118,7 @@ int drop_privileges(struct mosquitto__config *config, bool temporary)
 				rc = setgid(pwd->pw_gid);
 			}
 			if(rc == -1){
-				strerror_r(errno, err, 256);
+				err = strerror(errno);
 				log__printf(NULL, MOSQ_LOG_ERR, "Error setting gid whilst dropping privileges: %s.", err);
 				return 1;
 			}
@@ -128,7 +128,7 @@ int drop_privileges(struct mosquitto__config *config, bool temporary)
 				rc = setuid(pwd->pw_uid);
 			}
 			if(rc == -1){
-				strerror_r(errno, err, 256);
+				err = strerror(errno);
 				log__printf(NULL, MOSQ_LOG_ERR, "Error setting uid whilst dropping privileges: %s.", err);
 				return 1;
 			}
@@ -144,19 +144,19 @@ int drop_privileges(struct mosquitto__config *config, bool temporary)
 int restore_privileges(void)
 {
 #if !defined(__CYGWIN__) && !defined(WIN32)
-	char err[256];
+	char *err;
 	int rc;
 
 	if(getuid() == 0){
 		rc = setegid(0);
 		if(rc == -1){
-			strerror_r(errno, err, 256);
+			err = strerror(errno);
 			log__printf(NULL, MOSQ_LOG_ERR, "Error setting gid whilst restoring privileges: %s.", err);
 			return 1;
 		}
 		rc = seteuid(0);
 		if(rc == -1){
-			strerror_r(errno, err, 256);
+			err = strerror(errno);
 			log__printf(NULL, MOSQ_LOG_ERR, "Error setting uid whilst restoring privileges: %s.", err);
 			return 1;
 		}
@@ -169,12 +169,12 @@ int restore_privileges(void)
 void mosquitto__daemonise(void)
 {
 #ifndef WIN32
-	char err[256];
+	char *err;
 	pid_t pid;
 
 	pid = fork();
 	if(pid < 0){
-		strerror_r(errno, err, 256);
+		err = strerror(errno);
 		log__printf(NULL, MOSQ_LOG_ERR, "Error in fork: %s", err);
 		exit(1);
 	}
@@ -182,7 +182,7 @@ void mosquitto__daemonise(void)
 		exit(0);
 	}
 	if(setsid() < 0){
-		strerror_r(errno, err, 256);
+		err = strerror(errno);
 		log__printf(NULL, MOSQ_LOG_ERR, "Error in setsid: %s", err);
 		exit(1);
 	}
