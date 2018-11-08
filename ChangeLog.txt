@@ -1,5 +1,11 @@
-1.5.4 - 201810xx
+1.5.4 - 20181108
 ================
+
+Security:
+- When using a TLS enabled websockets listener with "require_certificate"
+  enabled, the mosquitto broker does not correctly verify client certificates.
+  This is now fixed. All other security measures operate as expected, and in
+  particular non-websockets listeners are not affected by this. Closes #996.
 
 Broker:
 - Process all pending messages even when a client has disconnected. This means
