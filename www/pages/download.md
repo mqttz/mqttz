@@ -11,8 +11,8 @@
 
 # Source
 
-* [mosquitto-1.5.3.tar.gz](https://mosquitto.org/files/source/mosquitto-1.5.3.tar.gz) (319kB) ([GPG signature](https://mosquitto.org/files/source/mosquitto-1.5.3.tar.gz.asc))
-* [mosquitto-1.5.3.tar.gz](https://www.eclipse.org/downloads/download.php?file=/mosquitto/source/mosquitto-1.5.3.tar.gz) (via Eclipse)
+* [mosquitto-1.5.4.tar.gz](https://mosquitto.org/files/source/mosquitto-1.5.4.tar.gz) (319kB) ([GPG signature](https://mosquitto.org/files/source/mosquitto-1.5.4.tar.gz.asc))
+* [mosquitto-1.5.4.tar.gz](https://www.eclipse.org/downloads/download.php?file=/mosquitto/source/mosquitto-1.5.4.tar.gz) (via Eclipse)
 * [Git source code repository](https://github.com/eclipse/mosquitto) (github.com)
 
 Older downloads are available at [https://mosquitto.org/files/](../files/)
@@ -25,8 +25,8 @@ distributions.
 
 ## Windows
 
-* [mosquitto-1.5.3-install-windows-x64.exe](https://www.eclipse.org/downloads/download.php?file=/mosquitto/binary/win64/mosquitto-1.5.3-install-windows-x64.exe) (~360 kB) (64-bit build, Windows Vista and up, built with Visual Studio Community 2017)
-* [mosquitto-1.5.3-install-windows-x32.exe](https://www.eclipse.org/downloads/download.php?file=/mosquitto/binary/win32/mosquitto-1.5.3-install-windows-x86.exe) (~360 kB) (32-bit build, Windows Vista and up, built with Visual Studio Community 2017)
+* [mosquitto-1.5.4-install-windows-x64.exe](https://www.eclipse.org/downloads/download.php?file=/mosquitto/binary/win64/mosquitto-1.5.4-install-windows-x64.exe) (~360 kB) (64-bit build, Windows Vista and up, built with Visual Studio Community 2017)
+* [mosquitto-1.5.4-install-windows-x32.exe](https://www.eclipse.org/downloads/download.php?file=/mosquitto/binary/win32/mosquitto-1.5.4-install-windows-x86.exe) (~360 kB) (32-bit build, Windows Vista and up, built with Visual Studio Community 2017)
 
 See also readme-windows.txt after installing.
 
@@ -51,16 +51,6 @@ The available packages are: mosquitto, mosquitto-clients, libmosquitto1, libmosq
 * There are also Debian repositories provided by the mosquitto project, as
   described at <https://mosquitto.org/2013/01/mosquitto-debian-repository>
 
-## openSUSE
-Download the repository config file for your openSUSE version from below and
-copy it to /etc/zypp/repos.d/ You'll now be able to install and keep mosquitto
-up to date using the normal package management tools.
-
-The available packages are: mosquitto, mosquitto-clients, libmosquitto1, libmosquitto-devel, libmosquittopp1, libmosquittopp-devel, python-mosquitto.
-
-* [openSUSE 13.2](https://download.opensuse.org/repositories/home:/oojah:/mqtt/openSUSE_13.2/home:oojah:mqtt.repo)
-* [openSUSE 13.1](https://download.opensuse.org/repositories/home:/oojah:/mqtt/openSUSE_13.1/home:oojah:mqtt.repo)
-
 ## Raspberry Pi
 Mosquitto is available through the main repository.
 
@@ -76,15 +66,6 @@ The available packages are: mosquitto, mosquitto-clients, libmosquitto1, libmosq
 * [RHEL 7](https://download.opensuse.org/repositories/home:/oojah:/mqtt/RedHat_RHEL-7/home:oojah:mqtt.repo)
 * [RHEL 6](https://download.opensuse.org/repositories/home:/oojah:/mqtt/RedHat_RHEL-6/home:oojah:mqtt.repo)
 
-## SUSE Linux Enterprise Server
-Add the appropriate repository to your package config from the list below, then install mosquitto from your normal package management tools.
-
-* [SLE 15](https://download.opensuse.org/repositories/home:/oojah:/mqtt/SLE_15/)
-* [SLE 12 SP3](https://download.opensuse.org/repositories/home:/oojah:/mqtt/SLE_12_SP3/)
-* [SLE 12 SP2](https://download.opensuse.org/repositories/home:/oojah:/mqtt/SLE_12_SP2/)
-* [SLE 12 SP1](https://download.opensuse.org/repositories/home:/oojah:/mqtt/SLE_12_SP1/)
-* [SLE 12](https://download.opensuse.org/repositories/home:/oojah:/mqtt/SLE_123/)
-
 ## Ubuntu
 Mosquitto is available in the Ubuntu repositories so you can install as with
 any other package. If you are on an earlier version of Ubuntu or want a more
@@ -98,24 +79,9 @@ from your package manager.
 
 # Other packages known to exist
 
-## Arch Linux
-* Mosquitto can be found in the community repository.
-
-## Fedora
-Mosquitto is now available from Fedora directly. Use `yum install mosquitto`,
-or search for "mosquitto" to find the related packages.
-
-## FreeBSD
-Mosquitto is available for FreeBSD: https://www.freshports.org/net/mosquitto/
-
-## Gentoo
-Use `emerge mosquitto`
-
-## OpenWrt
-If you're using a trunk snapshot use `opkg update; opkg install mosquitto`
-
-Karl Palsson maintains a set of feeds that may be more up to date than the
-current OpenWrt version:
-
-* https://github.com/remakeelectric/owrt_pub_feeds
-
+* Arch Linux
+* Fedora
+* FreeBSD
+* Gentoo
+* OpenWrt
+* OpenSUSE
