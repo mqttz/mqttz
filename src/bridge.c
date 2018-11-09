@@ -44,6 +44,9 @@ Contributors:
 
 #ifdef WITH_BRIDGE
 
+static void bridge_backoff_step(struct mosquitto *context);
+static void bridge__backoff_reset(struct mosquitto *context);
+
 int bridge__new(struct mosquitto_db *db, struct mosquitto__bridge *bridge)
 {
 	struct mosquitto *new_context = NULL;
@@ -160,6 +163,9 @@ int bridge__connect_step1(struct mosquitto_db *db, struct mosquitto *context)
 		}
 	}
 
+	/* prepare backoff for a possible failure. Restart timeout will be reset if connection gets established */
+	bridge_backoff_step(context);
+
 	if(context->bridge->notifications){
 		if(context->bridge->notification_topic){
 			if(!context->bridge->initial_notification_done){
@@ -267,8 +273,10 @@ int bridge__connect_step3(struct mosquitto_db *db, struct mosquitto *context)
 
 	rc = send__connect(context, context->keepalive, context->clean_start, NULL);
 	if(rc == MOSQ_ERR_SUCCESS){
+		bridge__backoff_reset(context);
 		return MOSQ_ERR_SUCCESS;
 	}else if(rc == MOSQ_ERR_ERRNO && errno == ENOTCONN){
+		bridge__backoff_reset(context);
 		return MOSQ_ERR_SUCCESS;
 	}else{
 		if(rc == MOSQ_ERR_TLS){
@@ -335,6 +343,9 @@ int bridge__connect(struct mosquitto_db *db, struct mosquitto *context)
 		}
 	}
 
+	/* prepare backoff for a possible failure. Restart timeout will be reset if connection gets established */
+	bridge_backoff_step(context);
+
 	if(context->bridge->notifications){
 		if(context->bridge->notification_topic){
 			if(!context->bridge->initial_notification_done){
@@ -395,8 +406,10 @@ int bridge__connect(struct mosquitto_db *db, struct mosquitto *context)
 
 	rc2 = send__connect(context, context->keepalive, context->clean_start, NULL);
 	if(rc2 == MOSQ_ERR_SUCCESS){
+		bridge__backoff_reset(context);
 		return rc;
 	}else if(rc2 == MOSQ_ERR_ERRNO && errno == ENOTCONN){
+		bridge__backoff_reset(context);
 		return MOSQ_ERR_SUCCESS;
 	}else{
 		if(rc2 == MOSQ_ERR_TLS){
@@ -433,6 +446,43 @@ void bridge__packet_cleanup(struct mosquitto *context)
 	context->out_packet_last = NULL;
 
 	packet__cleanup(&(context->in_packet));
+}
+
+static int rand_between(int base, int cap)
+{
+	return (rand() % (cap - base)) + base;
+}
+
+static void bridge_backoff_step(struct mosquitto *context)
+{
+	struct mosquitto__bridge *bridge;
+	if(!context || !context->bridge) return;
+
+	bridge = context->bridge;
+
+	/* skip if not using backoff */
+	if(bridge->backoff_cap){
+		/* “Decorrelated Jitter” calculation, according to:
+		 * https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
+		 */
+		bridge->restart_timeout = rand_between(bridge->backoff_base, bridge->restart_timeout * 3);
+		if(bridge->restart_timeout > bridge->backoff_cap){
+			bridge->restart_timeout = bridge->backoff_cap;
+		}
+	}
+}
+
+static void bridge__backoff_reset(struct mosquitto *context)
+{
+	struct mosquitto__bridge *bridge;
+	if(!context || !context->bridge) return;
+
+	bridge = context->bridge;
+
+	/* skip if not using backoff */
+	if(bridge->backoff_cap){
+		bridge->restart_timeout = bridge->backoff_base;
+	}
 }
 
 #endif
