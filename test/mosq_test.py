@@ -78,6 +78,8 @@ def packet_matches(name, recvd, expected):
             print("Expected: "+to_string(expected))
         except struct.error:
             print("Expected (not decoded, len=%d): %s" % (len(expected), expected))
+            for i in range(0, len(expected)):
+                print('%c'%(expected[i]),)
 
         return 0
     else:
@@ -459,8 +461,11 @@ def gen_pingreq():
 def gen_pingresp():
     return struct.pack('!BB', 208, 0)
 
-def gen_disconnect():
-    return struct.pack('!BB', 224, 0)
+def gen_disconnect(proto_ver=4):
+    if proto_ver == 5:
+        return struct.pack('!BBBB', 224, 2, 0, 0)
+    else:
+        return struct.pack('!BB', 224, 0)
 
 def pack_remaining_length(remaining_length):
     s = ""

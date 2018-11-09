@@ -20,7 +20,7 @@ test-compile-c :
 test-compile-cpp : 
 	$(MAKE) -C cpp
 
-c cpp : test-compile
+c : test-compile
 	./01-con-discon-success.py $@/01-con-discon-success.test
 	./01-will-set.py $@/01-will-set.test
 	./01-unpwd-set.py $@/01-unpwd-set.test
@@ -49,6 +49,7 @@ ifeq ($(WITH_TLS),yes)
 	#./08-ssl-fake-cacert.py $@/08-ssl-fake-cacert.test
 endif
 	./09-util-topic-tokenise.py $@/09-util-topic-tokenise.test
+	./11-prop-send-payload-format.py $@/11-prop-send-payload-format.test
 
 clean : 
 	$(MAKE) -C c clean
