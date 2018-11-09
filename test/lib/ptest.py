@@ -31,8 +31,7 @@ tests = [
     ('./08-ssl-connect-cert-auth.py', 'c/08-ssl-connect-cert-auth.test'),
     ('./08-ssl-connect-no-auth.py', 'c/08-ssl-connect-no-auth.test'),
     ('./09-util-topic-tokenise.py', 'c/09-util-topic-tokenise.test'),
-    ('./09-util-utf8-validate.py', 'c/09-util-utf8-validate.test'),
-    ('./11-prop-send-payload-format.py', 'c/11/prop-send-payload-format.py'),
+    ('./11-prop-send-payload-format.py', 'c/11-prop-send-payload-format.test'),
 
     ('./01-con-discon-success.py', 'cpp/01-con-discon-success.test'),
     ('./01-keepalive-pingreq.py', 'cpp/01-keepalive-pingreq.test'),
