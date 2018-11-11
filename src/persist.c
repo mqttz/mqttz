@@ -356,7 +356,7 @@ int persist__backup(struct mosquitto_db *db, bool shutdown)
 	uint32_t i32temp;
 	uint16_t i16temp;
 	uint8_t i8temp;
-	char err[256];
+	char *err;
 	char *outfile = NULL;
 	int len;
 
@@ -477,7 +477,7 @@ int persist__backup(struct mosquitto_db *db, bool shutdown)
 	return rc;
 error:
 	mosquitto__free(outfile);
-	strerror_r(errno, err, 256);
+	err = strerror(errno);
 	log__printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
 	if(db_fptr) fclose(db_fptr);
 	return 1;
@@ -596,7 +596,7 @@ static int persist__client_msg_chunk_restore(struct mosquitto_db *db, FILE *db_f
 	uint8_t qos, retain, direction, state, dup;
 	char *client_id = NULL;
 	int rc;
-	char err[256];
+	char *err;
 
 	read_e(db_fptr, &i16temp, sizeof(uint16_t));
 	slen = ntohs(i16temp);
@@ -631,7 +631,7 @@ static int persist__client_msg_chunk_restore(struct mosquitto_db *db, FILE *db_f
 
 	return rc;
 error:
-	strerror_r(errno, err, 256);
+	err = strerror(errno);
 	log__printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
 	fclose(db_fptr);
 	mosquitto__free(client_id);
@@ -650,7 +650,7 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 	int rc = 0;
 	struct mosquitto_msg_store *stored = NULL;
 	struct mosquitto_msg_store_load *load;
-	char err[256];
+	char *err;
 
 	payload.ptr = NULL;
 
@@ -734,7 +734,7 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 		return rc;
 	}
 error:
-	strerror_r(errno, err, 256);
+	err = strerror(errno);
 	log__printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
 	fclose(db_fptr);
 	mosquitto__free(source_id);
@@ -747,10 +747,10 @@ static int persist__retain_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 {
 	dbid_t i64temp, store_id;
 	struct mosquitto_msg_store_load *load;
-	char err[256];
+	char *err;
 
 	if(fread(&i64temp, sizeof(dbid_t), 1, db_fptr) != 1){
-		strerror_r(errno, err, 256);
+		err = strerror(errno);
 		log__printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
 		fclose(db_fptr);
 		return 1;
@@ -773,7 +773,7 @@ static int persist__sub_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 	char *client_id;
 	char *topic;
 	int rc = 0;
-	char err[256];
+	char *err;
 
 	read_e(db_fptr, &i16temp, sizeof(uint16_t));
 	slen = ntohs(i16temp);
@@ -807,7 +807,7 @@ static int persist__sub_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 
 	return rc;
 error:
-	strerror_r(errno, err, 256);
+	err = strerror(errno);
 	log__printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
 	fclose(db_fptr);
 	return 1;
@@ -824,7 +824,7 @@ int persist__restore(struct mosquitto_db *db)
 	uint16_t i16temp, chunk;
 	uint8_t i8temp;
 	ssize_t rlen;
-	char err[256];
+	char *err;
 	struct mosquitto_msg_store_load *load, *load_tmp;
 
 	assert(db);
@@ -919,7 +919,7 @@ int persist__restore(struct mosquitto_db *db)
 	}
 	return rc;
 error:
-	strerror_r(errno, err, 256);
+	err = strerror(errno);
 	log__printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
 	if(fptr) fclose(fptr);
 	return 1;

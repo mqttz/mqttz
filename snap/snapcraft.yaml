@@ -1,5 +1,5 @@
 name: mosquitto
-version: 1.5.3
+version: 1.5.4
 summary: Eclipse Mosquitto MQTT broker
 description: This is a message broker that supports version 3.1 and 3.1.1 of the MQTT
     protocol.
@@ -25,6 +25,9 @@ apps:
   sub:
     command: usr/bin/mosquitto_sub
     plugs: [network]
+
+  passwd:
+    command: usr/bin/mosquitto_passwd
 
 
 parts:
@@ -63,10 +66,14 @@ parts:
       - usr/sbin/mosquitto
       - usr/bin/mosquitto_pub
       - usr/bin/mosquitto_sub
+      - usr/bin/mosquitto_passwd
       - usr/lib/libmosquitto.so*
       - lib/*-linux-gnu/libcrypto.so*
       - lib/*-linux-gnu/libssl.so*
       - lib/*-linux-gnu/libuuid.so*
+      - usr/include/mosquitto.h
+      - usr/include/mosquitto_broker.h
+      - usr/include/mosquitto_plugin.h
 
   lws:
     plugin: cmake

@@ -422,8 +422,8 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 #else
 						{
 							rc = bridge__connect(db, context);
+							context->bridge->restart_t = 0;
 							if(rc == MOSQ_ERR_SUCCESS){
-								context->bridge->restart_t = 0;
 								if(context->bridge->round_robin == false && context->bridge->cur_address != 0){
 									context->bridge->primary_retry = now + 5;
 								}
@@ -638,9 +638,11 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 			context->sock = INVALID_SOCKET;
 			context->pollfd_index = -1;
 		}
-		HASH_DELETE(hh_id, db->contexts_by_id, context);
-		context->old_id = context->id;
-		context->id = NULL;
+		if(context->id){
+			HASH_DELETE(hh_id, db->contexts_by_id, context);
+			context->old_id = context->id;
+			context->id = NULL;
+		}
 	}else
 #endif
 	{
@@ -811,14 +813,15 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 					continue;
 				}
 			}while(SSL_DATA_PENDING(context));
-		}
+		}else{
 #ifdef WITH_EPOLL
-		if(events & (EPOLLERR | EPOLLHUP)){
+			if(events & (EPOLLERR | EPOLLHUP)){
 #else
-		if(context->pollfd_index >= 0 && pollfds[context->pollfd_index].revents & (POLLERR | POLLNVAL | POLLHUP)){
+			if(context->pollfd_index >= 0 && pollfds[context->pollfd_index].revents & (POLLERR | POLLNVAL | POLLHUP)){
 #endif
-			do_disconnect(db, context);
-			continue;
+				do_disconnect(db, context);
+				continue;
+			}
 		}
 	}
 }

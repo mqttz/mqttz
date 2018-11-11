@@ -81,18 +81,16 @@ void net__broker_cleanup(void)
 
 static void net__print_error(int log, const char *format_str)
 {
-#ifdef WIN32
 	char *buf;
 
+#ifdef WIN32
 	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
 			NULL, WSAGetLastError(), LANG_NEUTRAL, &buf, 0, NULL);
 
 	log__printf(NULL, log, format_str, buf);
 	LocalFree(buf);
 #else
-	char buf[256];
-
-	strerror_r(errno, buf, 256);
+	buf = strerror(errno);
 	log__printf(NULL, log, format_str, buf);
 #endif
 }

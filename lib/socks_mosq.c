@@ -21,8 +21,15 @@ Contributors:
 #include <limits.h>
 #ifdef WIN32
 #  include <ws2tcpip.h>
+#elif __QNX__
+#  include <sys/socket.h>
+#  include <netinet/in.h>
 #else
 #  include <arpa/inet.h>
+#endif
+#ifdef __FreeBSD__
+#  include <sys/socket.h>
+#  include <netinet/in.h>
 #endif
 
 #include "mosquitto_internal.h"
