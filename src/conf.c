@@ -446,6 +446,7 @@ int config__parse_args(struct mosquitto_db *db, struct mosquitto__config *config
 			|| config->default_listener.max_connections != -1
 			|| config->default_listener.mount_point
 			|| config->default_listener.protocol != mp_mqtt
+			|| config->default_listener.socket_domain
 			|| config->default_listener.security_options.password_file
 			|| config->default_listener.security_options.psk_file
 			|| config->default_listener.security_options.auth_plugin_config_count
@@ -476,6 +477,7 @@ int config__parse_args(struct mosquitto_db *db, struct mosquitto__config *config
 		}
 		config->listeners[config->listener_count-1].max_connections = config->default_listener.max_connections;
 		config->listeners[config->listener_count-1].protocol = config->default_listener.protocol;
+		config->listeners[config->listener_count-1].socket_domain = config->default_listener.socket_domain;
 		config->listeners[config->listener_count-1].client_count = 0;
 		config->listeners[config->listener_count-1].socks = NULL;
 		config->listeners[config->listener_count-1].sock_count = 0;
@@ -1773,6 +1775,22 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 #else
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
+				}else if(!strcmp(token, "socket_domain")){
+					if(reload) continue; // Listeners not valid for reloading.
+					token = strtok_r(NULL, " ", &saveptr);
+					if(token){
+						if(!strcmp(token, "ipv4")){
+							cur_listener->socket_domain = AF_INET;
+						}else if(!strcmp(token, "ipv6")){
+							cur_listener->socket_domain = AF_INET6;
+						}else{
+							log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid socket_domain value \"%s\" in configuration.", token);
+							return MOSQ_ERR_INVAL;
+						}
+					}else{
+						log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty socket_domain value in configuration.");
+						return MOSQ_ERR_INVAL;
+					}
 				}else if(!strcmp(token, "store_clean_interval")){
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: store_clean_interval is no longer needed.");
 				}else if(!strcmp(token, "sys_interval")){

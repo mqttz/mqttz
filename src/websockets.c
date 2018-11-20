@@ -729,6 +729,9 @@ struct libwebsocket_context *mosq_websockets_init(struct mosquitto__listener *li
 #if LWS_LIBRARY_VERSION_MAJOR>1
 	info.options |= LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
 #endif
+	if(listener->socket_domain == AF_INET){
+		info.options |= LWS_SERVER_OPTION_DISABLE_IPV6;
+	}
 
 	user = mosquitto__calloc(1, sizeof(struct libws_mqtt_hack));
 	if(!user){

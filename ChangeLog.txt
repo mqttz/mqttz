@@ -1,6 +1,12 @@
 1.5.5 - 201812xx
 ================
 
+Broker:
+- Add `socket_domain` option to allow listeners to disable IPv6 support.
+  This is required to work around a problem in libwebsockets that means
+  sockets only listen on IPv6 by default if IPv6 support is compiled in.
+  Closes #1004.
+
 Client:
 - Always print leading zeros in mosquitto_sub when output format is hex.
   Closes #1066.
