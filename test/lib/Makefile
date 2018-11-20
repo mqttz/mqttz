@@ -38,6 +38,8 @@ c cpp : test-compile
 	./03-publish-c2b-qos2-disconnect.py $@/03-publish-c2b-qos2-disconnect.test
 	./03-publish-b2c-qos1.py $@/03-publish-b2c-qos1.test
 	./03-publish-b2c-qos2.py $@/03-publish-b2c-qos2.test
+	./03-request-response.py $@/03-request-response.test
+	./03-request-response-correlation.py $@/03-request-response-correlation.test
 	./04-retain-qos0.py $@/04-retain-qos0.test
 ifeq ($(WITH_TLS),yes)
 	./08-ssl-connect-no-auth.py $@/08-ssl-connect-no-auth.test

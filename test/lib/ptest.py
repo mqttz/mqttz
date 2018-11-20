@@ -23,14 +23,14 @@ tests = [
     ('./03-publish-c2b-qos2.py', 'c/03-publish-c2b-qos2.test'),
     ('./03-publish-qos0-no-payload.py', 'c/03-publish-qos0-no-payload.test'),
     ('./03-publish-qos0.py', 'c/03-publish-qos0.test'),
+    ('./03-request-response.py', 'c/03-request-response.test'),
+    ('./03-request-response-correlation.py', 'c/03-request-response-correlation.test'),
     ('./04-retain-qos0.py', 'c/04-retain-qos0.test'),
     ('./08-ssl-bad-cacert.py', 'c/08-ssl-bad-cacert.test'),
     ('./08-ssl-connect-cert-auth-enc.py', 'c/08-ssl-connect-cert-auth-enc.test'),
     ('./08-ssl-connect-cert-auth.py', 'c/08-ssl-connect-cert-auth.test'),
     ('./08-ssl-connect-no-auth.py', 'c/08-ssl-connect-no-auth.test'),
-    ('./09-util-topic-matching.py', 'c/09-util-topic-matching.test'),
     ('./09-util-topic-tokenise.py', 'c/09-util-topic-tokenise.test'),
-    ('./09-util-utf8-validate.py', 'c/09-util-utf8-validate.test'),
 
     ('./01-con-discon-success.py', 'cpp/01-con-discon-success.test'),
     ('./01-keepalive-pingreq.py', 'cpp/01-keepalive-pingreq.test'),
@@ -54,9 +54,7 @@ tests = [
     ('./08-ssl-connect-cert-auth-enc.py', 'cpp/08-ssl-connect-cert-auth-enc.test'),
     ('./08-ssl-connect-cert-auth.py', 'cpp/08-ssl-connect-cert-auth.test'),
     ('./08-ssl-connect-no-auth.py', 'cpp/08-ssl-connect-no-auth.test'),
-    ('./09-util-topic-matching.py', 'cpp/09-util-topic-matching.test'),
     ('./09-util-topic-tokenise.py', 'cpp/09-util-topic-tokenise.test'),
-    ('./09-util-utf8-validate.py', 'cpp/09-util-utf8-validate.test'),
     ]
 
 minport = 1888
