@@ -56,18 +56,25 @@ int handle__unsuback(struct mosquitto *mosq)
 	if(mosq->protocol == mosq_p_mqtt5){
 		rc = property__read_all(CMD_UNSUBACK, &mosq->in_packet, &properties);
 		if(rc) return rc;
-		/* Immediately free, we don't do anything with Reason String or User Property at the moment */
-		mosquitto_property_free_all(&properties);
 	}
 
-#ifndef WITH_BROKER
+#ifdef WITH_BROKER
+	/* Immediately free, we don't do anything with Reason String or User Property at the moment */
+	mosquitto_property_free_all(&properties);
+#else
 	pthread_mutex_lock(&mosq->callback_mutex);
 	if(mosq->on_unsubscribe){
 		mosq->in_callback = true;
 		mosq->on_unsubscribe(mosq, mosq->userdata, mid);
 		mosq->in_callback = false;
 	}
+	if(mosq->on_unsubscribe_v5){
+		mosq->in_callback = true;
+		mosq->on_unsubscribe_v5(mosq, mosq->userdata, mid, properties);
+		mosq->in_callback = false;
+	}
 	pthread_mutex_unlock(&mosq->callback_mutex);
+	mosquitto_property_free_all(&properties);
 #endif
 
 	return MOSQ_ERR_SUCCESS;

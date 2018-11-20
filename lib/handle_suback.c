@@ -54,8 +54,6 @@ int handle__suback(struct mosquitto *mosq)
 	if(mosq->protocol == mosq_p_mqtt5){
 		rc = property__read_all(CMD_SUBACK, &mosq->in_packet, &properties);
 		if(rc) return rc;
-		/* Immediately free, we don't do anything with Reason String or User Property at the moment */
-		mosquitto_property_free_all(&properties);
 	}
 
 	qos_count = mosq->in_packet.remaining_length - mosq->in_packet.pos;
@@ -70,14 +68,23 @@ int handle__suback(struct mosquitto *mosq)
 		granted_qos[i] = (int)qos;
 		i++;
 	}
-#ifndef WITH_BROKER
+#ifdef WITH_BROKER
+	/* Immediately free, we don't do anything with Reason String or User Property at the moment */
+	mosquitto_property_free_all(&properties);
+#else
 	pthread_mutex_lock(&mosq->callback_mutex);
 	if(mosq->on_subscribe){
 		mosq->in_callback = true;
 		mosq->on_subscribe(mosq, mosq->userdata, mid, qos_count, granted_qos);
 		mosq->in_callback = false;
 	}
+	if(mosq->on_subscribe_v5){
+		mosq->in_callback = true;
+		mosq->on_subscribe_v5(mosq, mosq->userdata, mid, qos_count, granted_qos, properties);
+		mosq->in_callback = false;
+	}
 	pthread_mutex_unlock(&mosq->callback_mutex);
+	mosquitto_property_free_all(&properties);
 #endif
 	mosquitto__free(granted_qos);
 

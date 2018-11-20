@@ -54,12 +54,13 @@ int handle__pubackcomp(struct mosquitto *mosq, const char *type)
 	if(mosq->protocol == mosq_p_mqtt5){
 		rc = property__read_all(CMD_PUBACK, &mosq->in_packet, &properties);
 		if(rc) return rc;
-		/* Immediately free, we don't do anything with Reason String or User Property at the moment */
-		mosquitto_property_free_all(&properties);
 	}
 
 #ifdef WITH_BROKER
 	log__printf(NULL, MOSQ_LOG_DEBUG, "Received %s from %s (Mid: %d)", type, mosq->id, mid);
+
+	/* Immediately free, we don't do anything with Reason String or User Property at the moment */
+	mosquitto_property_free_all(&properties);
 
 	if(mid){
 		rc = db__message_delete(db, mosq, mid, mosq_md_out);
@@ -81,7 +82,13 @@ int handle__pubackcomp(struct mosquitto *mosq, const char *type)
 			mosq->on_publish(mosq, mosq->userdata, mid);
 			mosq->in_callback = false;
 		}
+		if(mosq->on_publish_v5){
+			mosq->in_callback = true;
+			mosq->on_publish_v5(mosq, mosq->userdata, mid, properties);
+			mosq->in_callback = false;
+		}
 		pthread_mutex_unlock(&mosq->callback_mutex);
+		mosquitto_property_free_all(&properties);
 	}
 #endif
 

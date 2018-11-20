@@ -79,18 +79,19 @@ int handle__publish(struct mosquitto *mosq)
 		if(rc) return rc;
 		mosquitto_property_free_all(&properties);
 	}
-	mosquitto_property_free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
 
 	message->msg.payloadlen = mosq->in_packet.remaining_length - mosq->in_packet.pos;
 	if(message->msg.payloadlen){
 		message->msg.payload = mosquitto__calloc(message->msg.payloadlen+1, sizeof(uint8_t));
 		if(!message->msg.payload){
 			message__cleanup(&message);
+			mosquitto_property_free_all(&properties);
 			return MOSQ_ERR_NOMEM;
 		}
 		rc = packet__read_bytes(&mosq->in_packet, message->msg.payload, message->msg.payloadlen);
 		if(rc){
 			message__cleanup(&message);
+			mosquitto_property_free_all(&properties);
 			return rc;
 		}
 	}
@@ -109,8 +110,14 @@ int handle__publish(struct mosquitto *mosq)
 				mosq->on_message(mosq, mosq->userdata, &message->msg);
 				mosq->in_callback = false;
 			}
+			if(mosq->on_message_v5){
+				mosq->in_callback = true;
+				mosq->on_message_v5(mosq, mosq->userdata, &message->msg, properties);
+				mosq->in_callback = false;
+			}
 			pthread_mutex_unlock(&mosq->callback_mutex);
 			message__cleanup(&message);
+			mosquitto_property_free_all(&properties);
 			return MOSQ_ERR_SUCCESS;
 		case 1:
 			rc = send__puback(mosq, message->msg.mid);
@@ -120,8 +127,14 @@ int handle__publish(struct mosquitto *mosq)
 				mosq->on_message(mosq, mosq->userdata, &message->msg);
 				mosq->in_callback = false;
 			}
+			if(mosq->on_message_v5){
+				mosq->in_callback = true;
+				mosq->on_message_v5(mosq, mosq->userdata, &message->msg, properties);
+				mosq->in_callback = false;
+			}
 			pthread_mutex_unlock(&mosq->callback_mutex);
 			message__cleanup(&message);
+			mosquitto_property_free_all(&properties);
 			return rc;
 		case 2:
 			rc = send__pubrec(mosq, message->msg.mid);
@@ -129,9 +142,11 @@ int handle__publish(struct mosquitto *mosq)
 			message->state = mosq_ms_wait_for_pubrel;
 			message__queue(mosq, message, mosq_md_in);
 			pthread_mutex_unlock(&mosq->in_message_mutex);
+			mosquitto_property_free_all(&properties);
 			return rc;
 		default:
 			message__cleanup(&message);
+			mosquitto_property_free_all(&properties);
 			return MOSQ_ERR_PROTOCOL;
 	}
 }

@@ -254,11 +254,17 @@ struct mosquitto {
 	struct mosquitto_message_all *out_messages_last;
 	void (*on_connect)(struct mosquitto *, void *userdata, int rc);
 	void (*on_connect_with_flags)(struct mosquitto *, void *userdata, int rc, int flags);
+	void (*on_connect_v5)(struct mosquitto *, void *userdata, int rc, int flags, const mosquitto_property *props);
 	void (*on_disconnect)(struct mosquitto *, void *userdata, int rc);
+	void (*on_disconnect_v5)(struct mosquitto *, void *userdata, int rc, const mosquitto_property *props);
 	void (*on_publish)(struct mosquitto *, void *userdata, int mid);
+	void (*on_publish_v5)(struct mosquitto *, void *userdata, int mid, const mosquitto_property *props);
 	void (*on_message)(struct mosquitto *, void *userdata, const struct mosquitto_message *message);
+	void (*on_message_v5)(struct mosquitto *, void *userdata, const struct mosquitto_message *message, const mosquitto_property *props);
 	void (*on_subscribe)(struct mosquitto *, void *userdata, int mid, int qos_count, const int *granted_qos);
+	void (*on_subscribe_v5)(struct mosquitto *, void *userdata, int mid, int qos_count, const int *granted_qos, const mosquitto_property *props);
 	void (*on_unsubscribe)(struct mosquitto *, void *userdata, int mid);
+	void (*on_unsubscribe_v5)(struct mosquitto *, void *userdata, int mid, const mosquitto_property *props);
 	void (*on_log)(struct mosquitto *, void *userdata, int level, const char *str);
 	//void (*on_error)();
 	char *host;

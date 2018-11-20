@@ -107,6 +107,11 @@ void mosquitto__check_keepalive(struct mosquitto *mosq)
 				mosq->on_disconnect(mosq, mosq->userdata, rc);
 				mosq->in_callback = false;
 			}
+			if(mosq->on_disconnect_v5){
+				mosq->in_callback = true;
+				mosq->on_disconnect_v5(mosq, mosq->userdata, rc, NULL);
+				mosq->in_callback = false;
+			}
 			pthread_mutex_unlock(&mosq->callback_mutex);
 #endif
 		}

@@ -58,12 +58,13 @@ int handle__pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 	if(mosq->protocol == mosq_p_mqtt5){
 		rc = property__read_all(CMD_PUBREL, &mosq->in_packet, &properties);
 		if(rc) return rc;
-		/* Immediately free, we don't do anything with Reason String or User Property at the moment */
-		mosquitto_property_free_all(&properties);
 	}
 
 #ifdef WITH_BROKER
 	log__printf(NULL, MOSQ_LOG_DEBUG, "Received PUBREL from %s (Mid: %d)", mosq->id, mid);
+
+	/* Immediately free, we don't do anything with Reason String or User Property at the moment */
+	mosquitto_property_free_all(&properties);
 
 	if(db__message_release(db, mosq, mid, mosq_md_in)){
 		/* Message not found. Still send a PUBCOMP anyway because this could be
@@ -82,7 +83,13 @@ int handle__pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 			mosq->on_message(mosq, mosq->userdata, &message->msg);
 			mosq->in_callback = false;
 		}
+		if(mosq->on_message_v5){
+			mosq->in_callback = true;
+			mosq->on_message_v5(mosq, mosq->userdata, &message->msg, properties);
+			mosq->in_callback = false;
+		}
 		pthread_mutex_unlock(&mosq->callback_mutex);
+		mosquitto_property_free_all(&properties);
 		message__cleanup(&message);
 	}
 #endif

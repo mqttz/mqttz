@@ -46,7 +46,6 @@ int handle__connack(struct mosquitto *mosq)
 		if(rc) return rc;
 		mosquitto_property_free_all(&properties);
 	}
-	mosquitto_property_free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
 
 	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received CONNACK (%d)", mosq->id, reason_code);
 	pthread_mutex_lock(&mosq->callback_mutex);
@@ -60,7 +59,13 @@ int handle__connack(struct mosquitto *mosq)
 		mosq->on_connect_with_flags(mosq, mosq->userdata, reason_code, connect_flags);
 		mosq->in_callback = false;
 	}
+	if(mosq->on_connect_v5){
+		mosq->in_callback = true;
+		mosq->on_connect_v5(mosq, mosq->userdata, reason_code, connect_flags, properties);
+		mosq->in_callback = false;
+	}
 	pthread_mutex_unlock(&mosq->callback_mutex);
+	mosquitto_property_free_all(&properties);
 	switch(reason_code){
 		case 0:
 			if(mosq->state != mosq_cs_disconnecting){

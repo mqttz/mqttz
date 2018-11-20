@@ -113,4 +113,10 @@ MOSQ_1.6 {
 		mosquitto_subscribe_with_properties;
 		mosquitto_unsubscribe_with_properties;
 		mosquitto_will_set_with_properties;
+		mosquitto_connect_v5_callback_set;
+		mosquitto_disconnect_v5_callback_set;
+		mosquitto_publish_v5_callback_set;
+		mosquitto_message_v5_callback_set;
+		mosquitto_subscribe_v5_callback_set;
+		mosquitto_unsubscribe_v5_callback_set;
 } MOSQ_1.5;

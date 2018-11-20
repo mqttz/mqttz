@@ -319,6 +319,11 @@ int mosquitto_loop_misc(struct mosquitto *mosq)
 			mosq->on_disconnect(mosq, mosq->userdata, rc);
 			mosq->in_callback = false;
 		}
+		if(mosq->on_disconnect_v5){
+			mosq->in_callback = true;
+			mosq->on_disconnect_v5(mosq, mosq->userdata, rc, NULL);
+			mosq->in_callback = false;
+		}
 		pthread_mutex_unlock(&mosq->callback_mutex);
 		return MOSQ_ERR_CONN_LOST;
 	}
@@ -339,6 +344,11 @@ static int mosquitto__loop_rc_handle(struct mosquitto *mosq, int rc)
 		if(mosq->on_disconnect){
 			mosq->in_callback = true;
 			mosq->on_disconnect(mosq, mosq->userdata, rc);
+			mosq->in_callback = false;
+		}
+		if(mosq->on_disconnect_v5){
+			mosq->in_callback = true;
+			mosq->on_disconnect_v5(mosq, mosq->userdata, rc, NULL);
 			mosq->in_callback = false;
 		}
 		pthread_mutex_unlock(&mosq->callback_mutex);

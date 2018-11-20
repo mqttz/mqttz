@@ -217,6 +217,12 @@ int packet__write(struct mosquitto *mosq)
 				mosq->on_publish(mosq, mosq->userdata, packet->mid);
 				mosq->in_callback = false;
 			}
+			if(mosq->on_publish_v5){
+				/* This is a QoS=0 message */
+				mosq->in_callback = true;
+				mosq->on_publish_v5(mosq, mosq->userdata, packet->mid, NULL);
+				mosq->in_callback = false;
+			}
 			pthread_mutex_unlock(&mosq->callback_mutex);
 		}else if(((packet->command)&0xF0) == CMD_DISCONNECT){
 			/* FIXME what cleanup needs doing here?
@@ -248,6 +254,11 @@ int packet__write(struct mosquitto *mosq)
 			if(mosq->on_disconnect){
 				mosq->in_callback = true;
 				mosq->on_disconnect(mosq, mosq->userdata, MOSQ_ERR_SUCCESS);
+				mosq->in_callback = false;
+			}
+			if(mosq->on_disconnect_v5){
+				mosq->in_callback = true;
+				mosq->on_disconnect_v5(mosq, mosq->userdata, MOSQ_ERR_SUCCESS, NULL);
 				mosq->in_callback = false;
 			}
 			pthread_mutex_unlock(&mosq->callback_mutex);

@@ -1594,6 +1594,32 @@ libmosq_EXPORT void mosquitto_connect_callback_set(struct mosquitto *mosq, void 
 libmosq_EXPORT void mosquitto_connect_with_flags_callback_set(struct mosquitto *mosq, void (*on_connect)(struct mosquitto *, void *, int, int));
 
 /*
+ * Function: mosquitto_connect_v5_callback_set
+ *
+ * Set the connect callback. This is called when the broker sends a CONNACK
+ * message in response to a connection.
+ *
+ * Parameters:
+ *  mosq -       a valid mosquitto instance.
+ *  on_connect - a callback function in the following form:
+ *               void callback(struct mosquitto *mosq, void *obj, int rc)
+ *
+ * Callback Parameters:
+ *  mosq - the mosquitto instance making the callback.
+ *  obj - the user data provided in <mosquitto_new>
+ *  rc -  the return code of the connection response, one of:
+ * * 0 - success
+ * * 1 - connection refused (unacceptable protocol version)
+ * * 2 - connection refused (identifier rejected)
+ * * 3 - connection refused (broker unavailable)
+ * * 4-255 - reserved for future use
+ *  flags - the connect flags.
+ *  props - list of MQTT 5 properties, or NULL
+ *
+ */
+libmosq_EXPORT void mosquitto_connect_v5_callback_set(struct mosquitto *mosq, void (*on_connect)(struct mosquitto *, void *, int, int, const mosquitto_property *props));
+
+/*
  * Function: mosquitto_disconnect_callback_set
  *
  * Set the disconnect callback. This is called when the broker has received the
@@ -1614,6 +1640,27 @@ libmosq_EXPORT void mosquitto_connect_with_flags_callback_set(struct mosquitto *
 libmosq_EXPORT void mosquitto_disconnect_callback_set(struct mosquitto *mosq, void (*on_disconnect)(struct mosquitto *, void *, int));
 
 /*
+ * Function: mosquitto_disconnect_v5_callback_set
+ *
+ * Set the disconnect callback. This is called when the broker has received the
+ * DISCONNECT command and has disconnected the client.
+ *
+ * Parameters:
+ *  mosq -          a valid mosquitto instance.
+ *  on_disconnect - a callback function in the following form:
+ *                  void callback(struct mosquitto *mosq, void *obj)
+ *
+ * Callback Parameters:
+ *  mosq - the mosquitto instance making the callback.
+ *  obj -  the user data provided in <mosquitto_new>
+ *  rc -   integer value indicating the reason for the disconnect. A value of 0
+ *         means the client has called <mosquitto_disconnect>. Any other value
+ *         indicates that the disconnect is unexpected.
+ *  props - list of MQTT 5 properties, or NULL
+ */
+libmosq_EXPORT void mosquitto_disconnect_v5_callback_set(struct mosquitto *mosq, void (*on_disconnect)(struct mosquitto *, void *, int, const mosquitto_property *));
+
+/*
  * Function: mosquitto_publish_callback_set
  *
  * Set the publish callback. This is called when a message initiated with
@@ -1630,6 +1677,25 @@ libmosq_EXPORT void mosquitto_disconnect_callback_set(struct mosquitto *mosq, vo
  *  mid -  the message id of the sent message.
  */
 libmosq_EXPORT void mosquitto_publish_callback_set(struct mosquitto *mosq, void (*on_publish)(struct mosquitto *, void *, int));
+
+/*
+ * Function: mosquitto_publish_v5_callback_set
+ *
+ * Set the publish callback. This is called when a message initiated with
+ * <mosquitto_publish> has been sent to the broker successfully.
+ *
+ * Parameters:
+ *  mosq -       a valid mosquitto instance.
+ *  on_publish - a callback function in the following form:
+ *               void callback(struct mosquitto *mosq, void *obj, int mid)
+ *
+ * Callback Parameters:
+ *  mosq - the mosquitto instance making the callback.
+ *  obj -  the user data provided in <mosquitto_new>
+ *  mid -  the message id of the sent message.
+ *  props - list of MQTT 5 properties, or NULL
+ */
+libmosq_EXPORT void mosquitto_publish_v5_callback_set(struct mosquitto *mosq, void (*on_publish)(struct mosquitto *, void *, int, const mosquitto_property *));
 
 /*
  * Function: mosquitto_message_callback_set
@@ -1655,6 +1721,30 @@ libmosq_EXPORT void mosquitto_publish_callback_set(struct mosquitto *mosq, void 
 libmosq_EXPORT void mosquitto_message_callback_set(struct mosquitto *mosq, void (*on_message)(struct mosquitto *, void *, const struct mosquitto_message *));
 
 /*
+ * Function: mosquitto_message_v5_callback_set
+ *
+ * Set the message callback. This is called when a message is received from the
+ * broker.
+ *
+ * Parameters:
+ *  mosq -       a valid mosquitto instance.
+ *  on_message - a callback function in the following form:
+ *               void callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
+ *
+ * Callback Parameters:
+ *  mosq -    the mosquitto instance making the callback.
+ *  obj -     the user data provided in <mosquitto_new>
+ *  message - the message data. This variable and associated memory will be
+ *            freed by the library after the callback completes. The client
+ *            should make copies of any of the data it requires.
+ *  props - list of MQTT 5 properties, or NULL
+ *
+ * See Also:
+ * 	<mosquitto_message_copy>
+ */
+libmosq_EXPORT void mosquitto_message_v5_callback_set(struct mosquitto *mosq, void (*on_message)(struct mosquitto *, void *, const struct mosquitto_message *, const mosquitto_property *));
+
+/*
  * Function: mosquitto_subscribe_callback_set
  *
  * Set the subscribe callback. This is called when the broker responds to a
@@ -1676,6 +1766,28 @@ libmosq_EXPORT void mosquitto_message_callback_set(struct mosquitto *mosq, void 
 libmosq_EXPORT void mosquitto_subscribe_callback_set(struct mosquitto *mosq, void (*on_subscribe)(struct mosquitto *, void *, int, int, const int *));
 
 /*
+ * Function: mosquitto_subscribe_v5_callback_set
+ *
+ * Set the subscribe callback. This is called when the broker responds to a
+ * subscription request.
+ *
+ * Parameters:
+ *  mosq -         a valid mosquitto instance.
+ *  on_subscribe - a callback function in the following form:
+ *                 void callback(struct mosquitto *mosq, void *obj, int mid, int qos_count, const int *granted_qos)
+ *
+ * Callback Parameters:
+ *  mosq -        the mosquitto instance making the callback.
+ *  obj -         the user data provided in <mosquitto_new>
+ *  mid -         the message id of the subscribe message.
+ *  qos_count -   the number of granted subscriptions (size of granted_qos).
+ *  granted_qos - an array of integers indicating the granted QoS for each of
+ *                the subscriptions.
+ *  props - list of MQTT 5 properties, or NULL
+ */
+libmosq_EXPORT void mosquitto_subscribe_v5_callback_set(struct mosquitto *mosq, void (*on_subscribe)(struct mosquitto *, void *, int, int, const int *, const mosquitto_property *));
+
+/*
  * Function: mosquitto_unsubscribe_callback_set
  *
  * Set the unsubscribe callback. This is called when the broker responds to a
@@ -1692,6 +1804,25 @@ libmosq_EXPORT void mosquitto_subscribe_callback_set(struct mosquitto *mosq, voi
  *  mid -  the message id of the unsubscribe message.
  */
 libmosq_EXPORT void mosquitto_unsubscribe_callback_set(struct mosquitto *mosq, void (*on_unsubscribe)(struct mosquitto *, void *, int));
+
+/*
+ * Function: mosquitto_unsubscribe_v5_callback_set
+ *
+ * Set the unsubscribe callback. This is called when the broker responds to a
+ * unsubscription request.
+ *
+ * Parameters:
+ *  mosq -           a valid mosquitto instance.
+ *  on_unsubscribe - a callback function in the following form:
+ *                   void callback(struct mosquitto *mosq, void *obj, int mid)
+ *
+ * Callback Parameters:
+ *  mosq - the mosquitto instance making the callback.
+ *  obj -  the user data provided in <mosquitto_new>
+ *  mid -  the message id of the unsubscribe message.
+ *  props - list of MQTT 5 properties, or NULL
+ */
+libmosq_EXPORT void mosquitto_unsubscribe_v5_callback_set(struct mosquitto *mosq, void (*on_unsubscribe)(struct mosquitto *, void *, int, const mosquitto_property *));
 
 /*
  * Function: mosquitto_log_callback_set
