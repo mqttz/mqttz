@@ -287,7 +287,7 @@ static int persist__subs_retain_write(struct mosquitto_db *db, FILE *db_fptr, st
 
 	sub = node->subs;
 	while(sub){
-		if(sub->context->clean_session == false){
+		if(sub->context->clean_session == false && sub->context->id){
 			length = htonl(2+strlen(sub->context->id) + 2+strlen(thistopic) + sizeof(uint8_t));
 
 			i16temp = htons(DB_CHUNK_SUB);
