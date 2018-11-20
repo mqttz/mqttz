@@ -2413,6 +2413,152 @@ libmosq_EXPORT int mosquitto_property_add_string(mosquitto_property **proplist, 
 libmosq_EXPORT int mosquitto_property_add_string_pair(mosquitto_property **proplist, int identifier, const char *name, const char *value);
 
 /*
+ * Function: mosquitto_property_get_property
+ *
+ * Retrieve a property matching an identifier, from a property list. This
+ * function can search for multiple entries of an identifier by using the
+ * returned value and skip_first.
+ *
+ * Parameters:
+ *	proplist - mosquitto_property pointer, the list of properties
+ *	identifier - property identifier (e.g. MQTT_PROP_PAYLOAD_FORMAT_INDICATOR)
+ *	skip_first - boolean that indicates whether the first item in the list
+ *	             should be ignored or not.
+ *
+ * Returns:
+ *	A valid property pointer if the property is found
+ *	NULL, if the property is not found, or proplist is NULL.
+ *
+ * Example:
+ *	// proplist is obtained from a callback
+ *	mosquitto_property *prop;
+ *	prop = mosquitto_property_get_property(proplist, MQTT_PROP_USER_PROPERTY, false);
+ *	while(prop){
+ *		mosquitto_property_read_string_pair(prop, &key, &value);
+ *		printf("key: %s value: %s\n", key, value);
+ *
+ *		prop = mosquitto_property_get_property(prop, MQTT_PROP_USER_PROPERTY, true);
+ *	}
+ */
+libmosq_EXPORT const mosquitto_property *mosquitto_property_get_property(const mosquitto_property *proplist, int identifier, bool skip_first);
+
+/*
+ * Function: mosquitto_property_read_byte
+ *
+ * Read a byte property value from a property.
+ *
+ * Parameters:
+ *	property - property to read
+ *	value - pointer to integer, for the property to be stored in
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS - on success
+ *	MOSQ_ERR_INVAL - if property or value is NULL, or if property is not a byte
+ */
+libmosq_EXPORT int mosquitto_property_read_byte(const mosquitto_property *property, uint8_t *value);
+
+/*
+ * Function: mosquitto_property_read_int16
+ *
+ * Read an int16 property value from a property.
+ *
+ * Parameters:
+ *	property - property to read
+ *	value - pointer to integer, for the property to be stored in
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS - on success
+ *	MOSQ_ERR_INVAL - if property or value is NULL, or if property is not a uint16
+ */
+libmosq_EXPORT int mosquitto_property_read_int16(const mosquitto_property *property, uint16_t *value);
+
+/*
+ * Function: mosquitto_property_read_int32
+ *
+ * Read an int32 property value from a property.
+ *
+ * Parameters:
+ *	property - pointer to mosquitto_property pointer, the list of properties
+ *	value - pointer to integer, for the property to be stored in
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS - on success
+ *	MOSQ_ERR_INVAL - if property or value is NULL, or if property is not an int32
+ */
+libmosq_EXPORT int mosquitto_property_read_int32(const mosquitto_property *property, uint32_t *value);
+
+/*
+ * Function: mosquitto_property_read_varint
+ *
+ * Read a varint property value from a property.
+ *
+ * Parameters:
+ *	property - property to read
+ *	value - pointer to integer, for the property to be stored in
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS - on success
+ *	MOSQ_ERR_INVAL - if property or value is NULL, or if property is not a varint
+ */
+libmosq_EXPORT int mosquitto_property_read_varint(const mosquitto_property *property, uint32_t *value);
+
+/*
+ * Function: mosquitto_property_read_binary
+ *
+ * Read a binary property value from a property.
+ *
+ * On success, value must be free()'d by the application.
+ *
+ * Parameters:
+ *	property - property to read
+ *	value - pointer to void pointer, for the property data to be stored in
+ *	len - int pointer to store the data length
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS - on success
+ *	MOSQ_ERR_INVAL - if property, len, or value is NULL, or if property is not a binary type
+ *	MOSQ_ERR_NOMEM - on out of memory
+ */
+libmosq_EXPORT int mosquitto_property_read_binary(const mosquitto_property *property, void **value, int *len);
+
+/*
+ * Function: mosquitto_property_read_string
+ *
+ * Read a string property value from a property.
+ *
+ * On success, value must be free()'d by the application.
+ *
+ * Parameters:
+ *	property - property to read
+ *	value - pointer to char*, for the property data to be stored in
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS - on success
+ *	MOSQ_ERR_INVAL - if property or value is NULL, or if property is not a string
+ *	MOSQ_ERR_NOMEM - on out of memory
+ */
+libmosq_EXPORT int mosquitto_property_read_string(const mosquitto_property *property, char **value);
+
+/*
+ * Function: mosquitto_property_read_string_pair
+ *
+ * Read a string pair property value pair from a property.
+ *
+ * On success, name and value must be free()'d by the application.
+ *
+ * Parameters:
+ *	property - property to read
+ *	name - pointer to char* for the name property data to be stored in
+ *	value - pointer to char* for the value property data to be stored in
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS - on success
+ *	MOSQ_ERR_INVAL - if property, name, or value is NULL, or if property is not a string pair
+ *	MOSQ_ERR_NOMEM - on out of memory
+ */
+libmosq_EXPORT int mosquitto_property_read_string_pair(const mosquitto_property *property, char **name, char **value);
+
+/*
  * Function: mosquitto_property_free_all
  *
  * Free all properties from a list of properties. Frees the list and sets *properties to NULL.

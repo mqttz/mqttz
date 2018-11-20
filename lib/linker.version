@@ -95,7 +95,10 @@ MOSQ_1.5 {
 MOSQ_1.6 {
 	global:
 		mosquitto_connect_bind_with_properties;
+		mosquitto_connect_v5_callback_set;
+		mosquitto_disconnect_v5_callback_set;
 		mosquitto_disconnect_with_properties;
+		mosquitto_message_v5_callback_set;
 		mosquitto_property_add_binary;
 		mosquitto_property_add_byte;
 		mosquitto_property_add_int16;
@@ -103,20 +106,25 @@ MOSQ_1.6 {
 		mosquitto_property_add_string;
 		mosquitto_property_add_string_pair;
 		mosquitto_property_add_varint;
+		mosquitto_property_get_property;
+		mosquitto_property_read_binary;
+		mosquitto_property_read_byte;
+		mosquitto_property_read_int16;
+		mosquitto_property_read_int32;
+		mosquitto_property_read_string;
+		mosquitto_property_read_string_pair;
+		mosquitto_property_read_varint;
 		mosquitto_property_free_all;
 		mosquitto_property_check_command;
 		mosquitto_property_check_all;
+		mosquitto_publish_v5_callback_set;
 		mosquitto_publish_with_properties;
 		mosquitto_string_to_command;
 		mosquitto_string_to_property_info;
 		mosquitto_subscribe_multiple;
+		mosquitto_subscribe_v5_callback_set;
 		mosquitto_subscribe_with_properties;
+		mosquitto_unsubscribe_v5_callback_set;
 		mosquitto_unsubscribe_with_properties;
 		mosquitto_will_set_with_properties;
-		mosquitto_connect_v5_callback_set;
-		mosquitto_disconnect_v5_callback_set;
-		mosquitto_publish_v5_callback_set;
-		mosquitto_message_v5_callback_set;
-		mosquitto_subscribe_v5_callback_set;
-		mosquitto_unsubscribe_v5_callback_set;
 } MOSQ_1.5;
