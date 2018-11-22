@@ -8,6 +8,7 @@ MOSQ_OBJS=mosquitto.o \
 		  connect.o \
 		  handle_auth.o \
 		  handle_connack.o \
+		  handle_disconnect.o \
 		  handle_ping.o \
 		  handle_pubackcomp.o \
 		  handle_publish.o \
@@ -99,6 +100,9 @@ handle_auth.o : handle_auth.c read_handle.h
 	${CROSS_COMPILE}$(CC) $(LIB_CFLAGS) -c $< -o $@
 
 handle_connack.o : handle_connack.c read_handle.h
+	${CROSS_COMPILE}$(CC) $(LIB_CFLAGS) -c $< -o $@
+
+handle_disconnect.o : handle_disconnect.c read_handle.h
 	${CROSS_COMPILE}$(CC) $(LIB_CFLAGS) -c $< -o $@
 
 handle_publish.o : handle_publish.c read_handle.h

@@ -57,6 +57,8 @@ int handle__packet(struct mosquitto *mosq)
 			return handle__suback(mosq);
 		case CMD_UNSUBACK:
 			return handle__unsuback(mosq);
+		case CMD_DISCONNECT:
+			return handle__disconnect(mosq);
 		case CMD_AUTH:
 			return handle__auth(mosq);
 		default:
