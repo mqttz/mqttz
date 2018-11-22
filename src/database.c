@@ -575,6 +575,10 @@ int db__messages_easy_queue(struct mosquitto_db *db, struct mosquitto *context, 
 	topic_heap = mosquitto__strdup(topic);
 	if(!topic_heap) return MOSQ_ERR_INVAL;
 
+	if(db->config->retain_available == false){
+		retain = 0;
+	}
+
 	if(UHPA_ALLOC(payload_uhpa, payloadlen) == 0){
 		mosquitto__free(topic_heap);
 		return MOSQ_ERR_NOMEM;

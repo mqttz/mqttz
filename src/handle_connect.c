@@ -236,6 +236,14 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	password_flag = connect_flags & 0x40;
 	username_flag = connect_flags & 0x80;
 
+	if(will && will_retain && db->config->retain_available == false){
+		if(protocol_version == mosq_p_mqtt5){
+			send__connack(db, context, 0, MQTT_RC_RETAIN_NOT_SUPPORTED);
+		}
+		rc = 1;
+		goto handle_connect_error;
+	}
+
 	if(packet__read_uint16(&context->in_packet, &(context->keepalive))){
 		rc = 1;
 		goto handle_connect_error;

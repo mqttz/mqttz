@@ -68,6 +68,13 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	}
 	retain = (header & 0x01);
 
+	if(retain && db->config->retain_available == false){
+		if(context->protocol == mosq_p_mqtt5){
+			send__disconnect(context, MQTT_RC_RETAIN_NOT_SUPPORTED, NULL);
+		}
+		return 1;
+	}
+
 	if(packet__read_string(&context->in_packet, &topic, &slen)) return 1;
 	if(!slen){
 		/* Invalid publish topic, disconnect client. */

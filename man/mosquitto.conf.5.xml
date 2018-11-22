@@ -629,6 +629,16 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>retain_available</option> [ true | false ]</term>
+				<listitem>
+					<para>If set to false, then retained messages are not
+						supported. Clients that send a message with the retain
+						bit will be disconnected if this option is set to
+						false. Defaults to true.</para>
+					<para>Reloaded on reload signal.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>retained_persistence</option> [ true | false ]</term>
 				<listitem>
 					<para>This is a synonym of the <option>persistence</option>

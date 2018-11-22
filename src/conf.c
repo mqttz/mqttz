@@ -219,6 +219,7 @@ static void config__init_reload(struct mosquitto_db *db, struct mosquitto__confi
 	config->persistence_file = NULL;
 	config->persistent_client_expiration = 0;
 	config->queue_qos0_messages = false;
+	config->retain_available = true;
 	config->set_tcp_nodelay = false;
 	config->sys_interval = 10;
 	config->upgrade_outgoing_qos = false;
@@ -1729,6 +1730,8 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 #else
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
+				}else if(!strcmp(token, "retain_available")){
+					if(conf__parse_bool(&token, token, &config->retain_available, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "retry_interval")){
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: The retry_interval option is no longer available.");
 				}else if(!strcmp(token, "round_robin")){

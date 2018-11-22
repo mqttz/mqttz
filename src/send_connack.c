@@ -44,6 +44,13 @@ int send__connack(struct mosquitto_db *db, struct mosquitto *context, int ack, i
 	packet->command = CMD_CONNACK;
 	packet->remaining_length = 2;
 	if(context->protocol == mosq_p_mqtt5){
+		if(reason_code < 128 && db->config->retain_available == false){
+			rc = mosquitto_property_add_byte(&properties, MQTT_PROP_RETAIN_AVAILABLE, 0);
+			if(rc){
+				mosquitto__free(packet);
+				return rc;
+			}
+		}
 		proplen = property__get_length_all(properties);
 		varbytes = packet__varint_bytes(proplen);
 		packet->remaining_length += proplen + varbytes;
