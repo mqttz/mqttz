@@ -69,6 +69,7 @@ endif
 	#./03-publish-qos1-queued-bytes.py
 	./03-publish-invalid-utf8.py
 	./03-publish-dollar.py
+	./03-publish-qos1-retain-disabled.py
 
 04 :
 	./04-retain-qos0.py

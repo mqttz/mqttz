@@ -359,13 +359,13 @@ def gen_connect(client_id, clean_session=True, keepalive=60, username=None, pass
             packet = packet + struct.pack("!H"+str(len(password))+"s", len(password), password)
     return packet
 
-def gen_connack(resv=0, rc=0, proto_ver=4):
+def gen_connack(resv=0, rc=0, proto_ver=4, properties=None):
     if proto_ver == 5:
-        props = mqtt5_props.gen_byte_prop(mqtt5_props.PROP_SHARED_SUB_AVAILABLE, 0)
-        props += mqtt5_props.gen_byte_prop(mqtt5_props.PROP_SUBSCRIPTION_ID_AVAILABLE, 0)
-        props = mqtt5_props.prop_finalise(props)
+        properties += mqtt5_props.gen_byte_prop(mqtt5_props.PROP_SHARED_SUB_AVAILABLE, 0)
+        properties += mqtt5_props.gen_byte_prop(mqtt5_props.PROP_SUBSCRIPTION_ID_AVAILABLE, 0)
+        properties = mqtt5_props.prop_finalise(properties)
 
-        packet = struct.pack('!BBBB', 32, 2+len(props), resv, rc) + props
+        packet = struct.pack('!BBBB', 32, 2+len(properties), resv, rc) + properties
     else:
         packet = struct.pack('!BBBB', 32, 2, resv, rc);
 
@@ -467,9 +467,9 @@ def gen_pingreq():
 def gen_pingresp():
     return struct.pack('!BB', 208, 0)
 
-def gen_disconnect(proto_ver=4):
+def gen_disconnect(reason_code=0, proto_ver=4):
     if proto_ver == 5:
-        return struct.pack('!BBBB', 224, 2, 0, 0)
+        return struct.pack('!BBBB', 224, 2, reason_code, 0)
     else:
         return struct.pack('!BB', 224, 0)
 

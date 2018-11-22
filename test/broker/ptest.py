@@ -51,6 +51,7 @@ tests = [
     #(1, './03-publish-qos1-queued-bytes.py'),
     (1, './03-publish-invalid-utf8.py'),
     (1, './03-publish-dollar.py'),
+    (1, './03-publish-qos1-retain-disabled.py'),
 
     (1, './04-retain-qos0.py'),
     (1, './04-retain-qos0-fresh.py'),
