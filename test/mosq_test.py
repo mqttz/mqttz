@@ -6,6 +6,8 @@ import struct
 import sys
 import time
 
+import mqtt5_props
+
 def start_broker(filename, cmd=None, port=0, use_conf=False):
     delay = 0.1
 
@@ -359,7 +361,11 @@ def gen_connect(client_id, clean_session=True, keepalive=60, username=None, pass
 
 def gen_connack(resv=0, rc=0, proto_ver=4):
     if proto_ver == 5:
-        packet = struct.pack('!BBBBB', 32, 3, resv, rc, 0);
+        props = mqtt5_props.gen_byte_prop(mqtt5_props.PROP_SHARED_SUB_AVAILABLE, 0)
+        props += mqtt5_props.gen_byte_prop(mqtt5_props.PROP_SUBSCRIPTION_ID_AVAILABLE, 0)
+        props = mqtt5_props.prop_finalise(props)
+
+        packet = struct.pack('!BBBB', 32, 2+len(props), resv, rc) + props
     else:
         packet = struct.pack('!BBBB', 32, 2, resv, rc);
 

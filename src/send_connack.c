@@ -51,6 +51,18 @@ int send__connack(struct mosquitto_db *db, struct mosquitto *context, int ack, i
 				return rc;
 			}
 		}
+		/* FIXME - disable support until available */
+		rc = mosquitto_property_add_byte(&properties, MQTT_PROP_SHARED_SUB_AVAILABLE, 0);
+		if(rc){
+			mosquitto__free(packet);
+			return rc;
+		}
+		rc = mosquitto_property_add_byte(&properties, MQTT_PROP_SUBSCRIPTION_ID_AVAILABLE, 0);
+		if(rc){
+			mosquitto__free(packet);
+			return rc;
+		}
+
 		proplen = property__get_length_all(properties);
 		varbytes = packet__varint_bytes(proplen);
 		packet->remaining_length += proplen + varbytes;
