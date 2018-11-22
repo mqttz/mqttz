@@ -230,6 +230,6 @@ int mosquitto_disconnect_with_properties(struct mosquitto *mosq, const mosquitto
 	pthread_mutex_unlock(&mosq->state_mutex);
 
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
-	return send__disconnect(mosq, properties);
+	return send__disconnect(mosq, reason_code, properties);
 }
 

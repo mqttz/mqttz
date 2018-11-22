@@ -24,7 +24,7 @@ int send__command_with_mid(struct mosquitto *mosq, uint8_t command, uint16_t mid
 int send__real_publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint32_t payloadlen, const void *payload, int qos, bool retain, bool dup, const mosquitto_property *properties);
 
 int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session, const mosquitto_property *properties);
-int send__disconnect(struct mosquitto *mosq, const mosquitto_property *properties);
+int send__disconnect(struct mosquitto *mosq, uint8_t reason_code, const mosquitto_property *properties);
 int send__pingreq(struct mosquitto *mosq);
 int send__pingresp(struct mosquitto *mosq);
 int send__puback(struct mosquitto *mosq, uint16_t mid);
