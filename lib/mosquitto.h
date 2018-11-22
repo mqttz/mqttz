@@ -1906,6 +1906,19 @@ libmosq_EXPORT const char *mosquitto_strerror(int mosq_errno);
  */
 libmosq_EXPORT const char *mosquitto_connack_string(int connack_code);
 
+/*
+ * Function: mosquitto_reason_string
+ *
+ * Call to obtain a const string description of an MQTT reason code.
+ *
+ * Parameters:
+ *	reason_code - an MQTT reason code.
+ *
+ * Returns:
+ *	A constant string describing the reason.
+ */
+libmosq_EXPORT const char *mosquitto_reason_string(int reason_code);
+
 /* Function: mosquitto_string_to_command
  *
  * Take a string input representing an MQTT command and convert it to the

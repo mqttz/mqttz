@@ -119,6 +119,7 @@ MOSQ_1.6 {
 		mosquitto_property_check_all;
 		mosquitto_publish_v5_callback_set;
 		mosquitto_publish_with_properties;
+		mosquitto_reason_string;
 		mosquitto_string_to_command;
 		mosquitto_string_to_property_info;
 		mosquitto_subscribe_multiple;
