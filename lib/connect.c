@@ -233,3 +233,42 @@ int mosquitto_disconnect_with_properties(struct mosquitto *mosq, int reason_code
 	return send__disconnect(mosq, reason_code, properties);
 }
 
+
+void do_client_disconnect(struct mosquitto *mosq, int reason_code)
+{
+	pthread_mutex_lock(&mosq->state_mutex);
+	mosq->state = mosq_cs_disconnecting;
+	pthread_mutex_unlock(&mosq->state_mutex);
+
+	net__socket_close(mosq);
+
+	/* Free data and reset values */
+	pthread_mutex_lock(&mosq->out_packet_mutex);
+	mosq->current_out_packet = mosq->out_packet;
+	if(mosq->out_packet){
+		mosq->out_packet = mosq->out_packet->next;
+		if(!mosq->out_packet){
+			mosq->out_packet_last = NULL;
+		}
+	}
+	pthread_mutex_unlock(&mosq->out_packet_mutex);
+
+	pthread_mutex_lock(&mosq->msgtime_mutex);
+	mosq->next_msg_out = mosquitto_time() + mosq->keepalive;
+	pthread_mutex_unlock(&mosq->msgtime_mutex);
+
+	pthread_mutex_lock(&mosq->callback_mutex);
+	if(mosq->on_disconnect){
+		mosq->in_callback = true;
+		mosq->on_disconnect(mosq, mosq->userdata, reason_code);
+		mosq->in_callback = false;
+	}
+	if(mosq->on_disconnect_v5){
+		mosq->in_callback = true;
+		mosq->on_disconnect_v5(mosq, mosq->userdata, reason_code, NULL);
+		mosq->in_callback = false;
+	}
+	pthread_mutex_unlock(&mosq->callback_mutex);
+	pthread_mutex_unlock(&mosq->current_out_packet_mutex);
+}
+
