@@ -23,7 +23,7 @@ Contributors:
 #include "property_mosq.h"
 #include "util_mosq.h"
 
-int send__connack(struct mosquitto *context, int ack, int result)
+int send__connack(struct mosquitto_db *db, struct mosquitto *context, int ack, int reason_code)
 {
 	struct mosquitto__packet *packet = NULL;
 	int rc;
@@ -32,9 +32,9 @@ int send__connack(struct mosquitto *context, int ack, int result)
 
 	if(context){
 		if(context->id){
-			log__printf(NULL, MOSQ_LOG_DEBUG, "Sending CONNACK to %s (%d, %d)", context->id, ack, result);
+			log__printf(NULL, MOSQ_LOG_DEBUG, "Sending CONNACK to %s (%d, %d)", context->id, ack, reason_code);
 		}else{
-			log__printf(NULL, MOSQ_LOG_DEBUG, "Sending CONNACK to %s (%d, %d)", context->address, ack, result);
+			log__printf(NULL, MOSQ_LOG_DEBUG, "Sending CONNACK to %s (%d, %d)", context->address, ack, reason_code);
 		}
 	}
 
@@ -54,10 +54,11 @@ int send__connack(struct mosquitto *context, int ack, int result)
 		return rc;
 	}
 	packet__write_byte(packet, ack);
-	packet__write_byte(packet, result);
+	packet__write_byte(packet, reason_code);
 	if(context->protocol == mosq_p_mqtt5){
 		property__write_all(packet, properties);
 	}
+	mosquitto_property_free_all(&properties);
 
 	return packet__queue(context, packet);
 }

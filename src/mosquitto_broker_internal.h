@@ -511,7 +511,7 @@ int restore_privileges(void);
 /* ============================================================
  * Server send functions
  * ============================================================ */
-int send__connack(struct mosquitto *context, int ack, int result);
+int send__connack(struct mosquitto_db *db, struct mosquitto *context, int ack, int reason_code);
 int send__suback(struct mosquitto *context, uint16_t mid, uint32_t payloadlen, const void *payload);
 int send__unsuback(struct mosquitto *context, uint16_t mid, const mosquitto_property *properties);
 
