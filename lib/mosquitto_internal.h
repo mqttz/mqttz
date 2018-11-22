@@ -296,7 +296,7 @@ struct mosquitto {
 
 #define STREMPTY(str) (str[0] == '\0')
 
-void do_client_disconnect(struct mosquitto *mosq, int reason_code);
+void do_client_disconnect(struct mosquitto *mosq, int reason_code, const mosquitto_property *properties);
 
 #endif
 

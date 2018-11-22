@@ -225,7 +225,7 @@ int packet__write(struct mosquitto *mosq)
 			}
 			pthread_mutex_unlock(&mosq->callback_mutex);
 		}else if(((packet->command)&0xF0) == CMD_DISCONNECT){
-			do_client_disconnect(mosq, MOSQ_ERR_SUCCESS);
+			do_client_disconnect(mosq, MOSQ_ERR_SUCCESS, NULL);
 			packet__cleanup(packet);
 			mosquitto__free(packet);
 			return MOSQ_ERR_SUCCESS;

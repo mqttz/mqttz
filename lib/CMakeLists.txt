@@ -37,6 +37,7 @@ set(C_SRC
 	connect.c
 	handle_auth.c
 	handle_connack.c
+	handle_disconnect.c
 	handle_ping.c
 	handle_pubackcomp.c
 	handle_publish.c
