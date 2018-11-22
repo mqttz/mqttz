@@ -22,7 +22,7 @@ void on_subscribe(struct mosquitto *mosq, void *obj, int mid, int qos_count, con
 	mosquitto_property *props = NULL;
 	mosquitto_property_add_string(&props, MQTT_PROP_RESPONSE_TOPIC, "response/topic");
 	mosquitto_property_add_binary(&props, MQTT_PROP_CORRELATION_DATA, "corridor", 8);
-	mosquitto_publish_with_properties(mosq, NULL, "request/topic", 6, "action", 0, 0, props);
+	mosquitto_publish_v5(mosq, NULL, "request/topic", 6, "action", 0, 0, props);
 	mosquitto_property_free_all(&props);
 }
 

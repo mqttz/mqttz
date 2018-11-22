@@ -318,7 +318,7 @@ libmosq_EXPORT int mosquitto_reinitialise(struct mosquitto *mosq, const char *id
 libmosq_EXPORT int mosquitto_will_set(struct mosquitto *mosq, const char *topic, int payloadlen, const void *payload, int qos, bool retain);
 
 /*
- * Function: mosquitto_will_set_with_properties
+ * Function: mosquitto_will_set_v5
  *
  * Configure will information for a mosquitto instance, with attached
  * properties. By default, clients do not have a will.  This must be called
@@ -350,7 +350,7 @@ libmosq_EXPORT int mosquitto_will_set(struct mosquitto *mosq, const char *topic,
  * 	MOSQ_ERR_PROTOCOL -       if a property is invalid for use with wills.
  *	MOSQ_ERR_DUPLICATE_PROPERTY - if a property is duplicated where it is forbidden.
  */
-libmosq_EXPORT int mosquitto_will_set_with_properties(struct mosquitto *mosq, const char *topic, int payloadlen, const void *payload, int qos, bool retain, mosquitto_property *properties);
+libmosq_EXPORT int mosquitto_will_set_v5(struct mosquitto *mosq, const char *topic, int payloadlen, const void *payload, int qos, bool retain, mosquitto_property *properties);
 
 /*
  * Function: mosquitto_will_clear
@@ -461,7 +461,7 @@ libmosq_EXPORT int mosquitto_connect(struct mosquitto *mosq, const char *host, i
 libmosq_EXPORT int mosquitto_connect_bind(struct mosquitto *mosq, const char *host, int port, int keepalive, const char *bind_address);
 
 /*
- * Function: mosquitto_connect_bind_with_properties
+ * Function: mosquitto_connect_bind_v5
  *
  * Connect to an MQTT broker. This extends the functionality of
  * <mosquitto_connect> by adding the bind_address parameter. Use this function
@@ -491,7 +491,7 @@ libmosq_EXPORT int mosquitto_connect_bind(struct mosquitto *mosq, const char *ho
  * See Also:
  * 	<mosquitto_connect>, <mosquitto_connect_async>, <mosquitto_connect_bind_async>
  */
-libmosq_EXPORT int mosquitto_connect_bind_with_properties(struct mosquitto *mosq, const char *host, int port, int keepalive, const char *bind_address, const mosquitto_property *properties);
+libmosq_EXPORT int mosquitto_connect_bind_v5(struct mosquitto *mosq, const char *host, int port, int keepalive, const char *bind_address, const mosquitto_property *properties);
 
 /*
  * Function: mosquitto_connect_async
@@ -675,7 +675,7 @@ libmosq_EXPORT int mosquitto_reconnect_async(struct mosquitto *mosq);
 libmosq_EXPORT int mosquitto_disconnect(struct mosquitto *mosq);
 
 /*
- * Function: mosquitto_disconnect_with_properties
+ * Function: mosquitto_disconnect_v5
  *
  * Disconnect from the broker, with attached MQTT properties.
  *
@@ -695,7 +695,7 @@ libmosq_EXPORT int mosquitto_disconnect(struct mosquitto *mosq);
  *	MOSQ_ERR_DUPLICATE_PROPERTY - if a property is duplicated where it is forbidden.
  *	MOSQ_ERR_PROTOCOL - if any property is invalid for use with DISCONNECT.
  */
-libmosq_EXPORT int mosquitto_disconnect_with_properties(struct mosquitto *mosq, int reason_code, const mosquitto_property *properties);
+libmosq_EXPORT int mosquitto_disconnect_v5(struct mosquitto *mosq, int reason_code, const mosquitto_property *properties);
 
 
 /* ======================================================================
@@ -743,7 +743,7 @@ libmosq_EXPORT int mosquitto_publish(struct mosquitto *mosq, int *mid, const cha
 
 
 /*
- * Function: mosquitto_publish_with_properties
+ * Function: mosquitto_publish_v5
  *
  * Publish a message on a given topic, with attached MQTT properties.
  *
@@ -784,7 +784,7 @@ libmosq_EXPORT int mosquitto_publish(struct mosquitto *mosq, int *mid, const cha
  *	MOSQ_ERR_DUPLICATE_PROPERTY - if a property is duplicated where it is forbidden.
  *	MOSQ_ERR_PROTOCOL - if any property is invalid for use with PUBLISH.
  */
-libmosq_EXPORT int mosquitto_publish_with_properties(
+libmosq_EXPORT int mosquitto_publish_v5(
 		struct mosquitto *mosq,
 		int *mid,
 		const char *topic,
@@ -819,7 +819,7 @@ libmosq_EXPORT int mosquitto_publish_with_properties(
 libmosq_EXPORT int mosquitto_subscribe(struct mosquitto *mosq, int *mid, const char *sub, int qos);
 
 /*
- * Function: mosquitto_subscribe_with_properties
+ * Function: mosquitto_subscribe_v5
  *
  * Subscribe to a topic, with attached MQTT properties.
  *
@@ -849,7 +849,7 @@ libmosq_EXPORT int mosquitto_subscribe(struct mosquitto *mosq, int *mid, const c
  *	MOSQ_ERR_DUPLICATE_PROPERTY - if a property is duplicated where it is forbidden.
  *	MOSQ_ERR_PROTOCOL - if any property is invalid for use with SUBSCRIBE.
  */
-libmosq_EXPORT int mosquitto_subscribe_with_properties(struct mosquitto *mosq, int *mid, const char *sub, int qos, const mosquitto_property *properties);
+libmosq_EXPORT int mosquitto_subscribe_v5(struct mosquitto *mosq, int *mid, const char *sub, int qos, const mosquitto_property *properties);
 
 /*
  * Function: mosquitto_subscribe_multiple
@@ -904,7 +904,7 @@ int mosquitto_subscribe_multiple(struct mosquitto *mosq, int *mid, int sub_count
 libmosq_EXPORT int mosquitto_unsubscribe(struct mosquitto *mosq, int *mid, const char *sub);
 
 /*
- * Function: mosquitto_unsubscribe_with_properties
+ * Function: mosquitto_unsubscribe_v5
  *
  * Unsubscribe from a topic, with attached MQTT properties.
  *
@@ -927,7 +927,7 @@ libmosq_EXPORT int mosquitto_unsubscribe(struct mosquitto *mosq, int *mid, const
  *	MOSQ_ERR_DUPLICATE_PROPERTY - if a property is duplicated where it is forbidden.
  *	MOSQ_ERR_PROTOCOL - if any property is invalid for use with UNSUBSCRIBE.
  */
-libmosq_EXPORT int mosquitto_unsubscribe_with_properties(struct mosquitto *mosq, int *mid, const char *sub, const mosquitto_property *properties);
+libmosq_EXPORT int mosquitto_unsubscribe_v5(struct mosquitto *mosq, int *mid, const char *sub, const mosquitto_property *properties);
 
 
 /* ======================================================================

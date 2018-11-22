@@ -75,10 +75,10 @@ int mosquitto_connect(struct mosquitto *mosq, const char *host, int port, int ke
 
 int mosquitto_connect_bind(struct mosquitto *mosq, const char *host, int port, int keepalive, const char *bind_address)
 {
-	return mosquitto_connect_bind_with_properties(mosq, host, port, keepalive, bind_address, NULL);
+	return mosquitto_connect_bind_v5(mosq, host, port, keepalive, bind_address, NULL);
 }
 
-int mosquitto_connect_bind_with_properties(struct mosquitto *mosq, const char *host, int port, int keepalive, const char *bind_address, const mosquitto_property *properties)
+int mosquitto_connect_bind_v5(struct mosquitto *mosq, const char *host, int port, int keepalive, const char *bind_address, const mosquitto_property *properties)
 {
 	int rc;
 
@@ -212,10 +212,10 @@ static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking, const mos
 
 int mosquitto_disconnect(struct mosquitto *mosq)
 {
-	return mosquitto_disconnect_with_properties(mosq, 0, NULL);
+	return mosquitto_disconnect_v5(mosq, 0, NULL);
 }
 
-int mosquitto_disconnect_with_properties(struct mosquitto *mosq, int reason_code, const mosquitto_property *properties)
+int mosquitto_disconnect_v5(struct mosquitto *mosq, int reason_code, const mosquitto_property *properties)
 {
 	int rc;
 	if(!mosq) return MOSQ_ERR_INVAL;

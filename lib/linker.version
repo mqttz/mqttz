@@ -94,10 +94,10 @@ MOSQ_1.5 {
 
 MOSQ_1.6 {
 	global:
-		mosquitto_connect_bind_with_properties;
+		mosquitto_connect_bind_v5;
 		mosquitto_connect_v5_callback_set;
 		mosquitto_disconnect_v5_callback_set;
-		mosquitto_disconnect_with_properties;
+		mosquitto_disconnect_v5;
 		mosquitto_message_v5_callback_set;
 		mosquitto_property_add_binary;
 		mosquitto_property_add_byte;
@@ -118,14 +118,14 @@ MOSQ_1.6 {
 		mosquitto_property_check_command;
 		mosquitto_property_check_all;
 		mosquitto_publish_v5_callback_set;
-		mosquitto_publish_with_properties;
+		mosquitto_publish_v5;
 		mosquitto_reason_string;
 		mosquitto_string_to_command;
 		mosquitto_string_to_property_info;
 		mosquitto_subscribe_multiple;
 		mosquitto_subscribe_v5_callback_set;
-		mosquitto_subscribe_with_properties;
+		mosquitto_subscribe_v5;
 		mosquitto_unsubscribe_v5_callback_set;
-		mosquitto_unsubscribe_with_properties;
-		mosquitto_will_set_with_properties;
+		mosquitto_unsubscribe_v5;
+		mosquitto_will_set_v5;
 } MOSQ_1.5;

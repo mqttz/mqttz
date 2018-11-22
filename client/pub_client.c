@@ -40,10 +40,10 @@ static bool first_publish = true;
 int my_publish(struct mosquitto *mosq, int *mid, const char *topic, int payloadlen, void *payload, int qos, bool retain)
 {
 	if(cfg.protocol_version == MQTT_PROTOCOL_V5 && cfg.have_topic_alias && first_publish == false){
-		return mosquitto_publish_with_properties(mosq, mid, NULL, payloadlen, payload, qos, retain, cfg.publish_props);
+		return mosquitto_publish_v5(mosq, mid, NULL, payloadlen, payload, qos, retain, cfg.publish_props);
 	}else{
 		first_publish = false;
-		return mosquitto_publish_with_properties(mosq, mid, topic, payloadlen, payload, qos, retain, cfg.publish_props);
+		return mosquitto_publish_v5(mosq, mid, topic, payloadlen, payload, qos, retain, cfg.publish_props);
 	}
 }
 
@@ -86,7 +86,7 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 						break;
 				}
 			}
-			mosquitto_disconnect_with_properties(mosq, 0, cfg.disconnect_props);
+			mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
 		}
 	}else{
 		if(result && !cfg.quiet){

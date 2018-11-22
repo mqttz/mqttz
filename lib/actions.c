@@ -30,10 +30,10 @@ Contributors:
 
 int mosquitto_publish(struct mosquitto *mosq, int *mid, const char *topic, int payloadlen, const void *payload, int qos, bool retain)
 {
-	return mosquitto_publish_with_properties(mosq, mid, topic, payloadlen, payload, qos, retain, NULL);
+	return mosquitto_publish_v5(mosq, mid, topic, payloadlen, payload, qos, retain, NULL);
 }
 
-int mosquitto_publish_with_properties(struct mosquitto *mosq, int *mid, const char *topic, int payloadlen, const void *payload, int qos, bool retain, const mosquitto_property *properties)
+int mosquitto_publish_v5(struct mosquitto *mosq, int *mid, const char *topic, int payloadlen, const void *payload, int qos, bool retain, const mosquitto_property *properties)
 {
 	struct mosquitto_message_all *message;
 	uint16_t local_mid;
@@ -132,10 +132,10 @@ int mosquitto_publish_with_properties(struct mosquitto *mosq, int *mid, const ch
 
 int mosquitto_subscribe(struct mosquitto *mosq, int *mid, const char *sub, int qos)
 {
-	return mosquitto_subscribe_with_properties(mosq, mid, sub, qos, NULL);
+	return mosquitto_subscribe_v5(mosq, mid, sub, qos, NULL);
 }
 
-int mosquitto_subscribe_with_properties(struct mosquitto *mosq, int *mid, const char *sub, int qos, const mosquitto_property *properties)
+int mosquitto_subscribe_v5(struct mosquitto *mosq, int *mid, const char *sub, int qos, const mosquitto_property *properties)
 {
 	int rc;
 
@@ -179,10 +179,10 @@ int mosquitto_subscribe_multiple(struct mosquitto *mosq, int *mid, int sub_count
 
 int mosquitto_unsubscribe(struct mosquitto *mosq, int *mid, const char *sub)
 {
-	return mosquitto_unsubscribe_with_properties(mosq, mid, sub, NULL);
+	return mosquitto_unsubscribe_v5(mosq, mid, sub, NULL);
 }
 
-int mosquitto_unsubscribe_with_properties(struct mosquitto *mosq, int *mid, const char *sub, const mosquitto_property *properties)
+int mosquitto_unsubscribe_v5(struct mosquitto *mosq, int *mid, const char *sub, const mosquitto_property *properties)
 {
 	int rc;
 

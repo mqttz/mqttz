@@ -944,7 +944,7 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 
 	mosquitto_opts_set(mosq, MOSQ_OPT_PROTOCOL_VERSION, &(cfg->protocol_version));
 
-	if(cfg->will_topic && mosquitto_will_set_with_properties(mosq, cfg->will_topic,
+	if(cfg->will_topic && mosquitto_will_set_v5(mosq, cfg->will_topic,
 				cfg->will_payloadlen, cfg->will_payload, cfg->will_qos,
 				cfg->will_retain, cfg->will_props)){
 
@@ -1058,10 +1058,10 @@ int client_connect(struct mosquitto *mosq, struct mosq_config *cfg)
 	if(cfg->use_srv){
 		rc = mosquitto_connect_srv(mosq, cfg->host, cfg->keepalive, cfg->bind_address);
 	}else{
-		rc = mosquitto_connect_bind_with_properties(mosq, cfg->host, port, cfg->keepalive, cfg->bind_address, cfg->connect_props);
+		rc = mosquitto_connect_bind_v5(mosq, cfg->host, port, cfg->keepalive, cfg->bind_address, cfg->connect_props);
 	}
 #else
-	rc = mosquitto_connect_bind_with_properties(mosq, cfg->host, port, cfg->keepalive, cfg->bind_address, cfg->connect_props);
+	rc = mosquitto_connect_bind_v5(mosq, cfg->host, port, cfg->keepalive, cfg->bind_address, cfg->connect_props);
 #endif
 	if(rc>0){
 		if(!cfg->quiet){
