@@ -177,7 +177,7 @@ int pub_shared_loop(struct mosquitto *mosq)
 			if(status == STATUS_CONNACK_RECVD){
 				pos = 0;
 				read_len = buf_len;
-				while(fgets(&buf[pos], read_len, stdin)){
+				while(connected && fgets(&buf[pos], read_len, stdin)){
 					buf_len_actual = strlen(buf);
 					if(buf[buf_len_actual-1] == '\n'){
 						buf[buf_len_actual-1] = '\0';
