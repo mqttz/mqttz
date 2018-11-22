@@ -90,7 +90,11 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 		}
 	}else{
 		if(result && !cfg.quiet){
-			fprintf(stderr, "%s\n", mosquitto_connack_string(result));
+			if(cfg.protocol_version == MQTT_PROTOCOL_V5){
+				fprintf(stderr, "%s\n", mosquitto_reason_string(result));
+			}else{
+				fprintf(stderr, "%s\n", mosquitto_connack_string(result));
+			}
 		}
 	}
 }
