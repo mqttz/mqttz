@@ -212,10 +212,10 @@ static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking, const mos
 
 int mosquitto_disconnect(struct mosquitto *mosq)
 {
-	return mosquitto_disconnect_with_properties(mosq, NULL);
+	return mosquitto_disconnect_with_properties(mosq, 0, NULL);
 }
 
-int mosquitto_disconnect_with_properties(struct mosquitto *mosq, const mosquitto_property *properties)
+int mosquitto_disconnect_with_properties(struct mosquitto *mosq, int reason_code, const mosquitto_property *properties)
 {
 	int rc;
 	if(!mosq) return MOSQ_ERR_INVAL;

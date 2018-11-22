@@ -685,6 +685,7 @@ libmosq_EXPORT int mosquitto_disconnect(struct mosquitto *mosq);
  *
  * Parameters:
  *	mosq - a valid mosquitto instance.
+ *	reason_code - the disconnect reason code.
  * 	properties - a valid mosquitto_property list, or NULL.
  *
  * Returns:
@@ -694,7 +695,7 @@ libmosq_EXPORT int mosquitto_disconnect(struct mosquitto *mosq);
  *	MOSQ_ERR_DUPLICATE_PROPERTY - if a property is duplicated where it is forbidden.
  *	MOSQ_ERR_PROTOCOL - if any property is invalid for use with DISCONNECT.
  */
-libmosq_EXPORT int mosquitto_disconnect_with_properties(struct mosquitto *mosq, const mosquitto_property *properties);
+libmosq_EXPORT int mosquitto_disconnect_with_properties(struct mosquitto *mosq, int reason_code, const mosquitto_property *properties);
 
 
 /* ======================================================================

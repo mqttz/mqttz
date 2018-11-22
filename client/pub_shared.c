@@ -30,6 +30,7 @@ Contributors:
 #endif
 
 #include <mosquitto.h>
+#include <mqtt_protocol.h>
 #include "client_shared.h"
 #include "pub_shared.h"
 
@@ -56,11 +57,11 @@ void my_publish_callback(struct mosquitto *mosq, void *obj, int mid)
 	last_mid_sent = mid;
 	if(cfg.pub_mode == MSGMODE_STDIN_LINE){
 		if(mid == last_mid){
-			mosquitto_disconnect_with_properties(mosq, cfg.disconnect_props);
+			mosquitto_disconnect_with_properties(mosq, 0, cfg.disconnect_props);
 			disconnect_sent = true;
 		}
 	}else if(disconnect_sent == false){
-		mosquitto_disconnect_with_properties(mosq, cfg.disconnect_props);
+		mosquitto_disconnect_with_properties(mosq, 0, cfg.disconnect_props);
 		disconnect_sent = true;
 	}
 }
@@ -183,7 +184,7 @@ int pub_shared_loop(struct mosquitto *mosq)
 						rc2 = my_publish(mosq, &mid_sent, cfg.topic, buf_len_actual-1, buf, cfg.qos, cfg.retain);
 						if(rc2){
 							if(!cfg.quiet) fprintf(stderr, "Error: Publish returned %d, disconnecting.\n", rc2);
-							mosquitto_disconnect_with_properties(mosq, cfg.disconnect_props);
+							mosquitto_disconnect_with_properties(mosq, MQTT_RC_DISCONNECT_WITH_WILL_MSG, cfg.disconnect_props);
 						}
 						break;
 					}else{
@@ -201,7 +202,7 @@ int pub_shared_loop(struct mosquitto *mosq)
 				if(feof(stdin)){
 					if(last_mid == -1){
 						/* Empty file */
-						mosquitto_disconnect_with_properties(mosq, cfg.disconnect_props);
+						mosquitto_disconnect_with_properties(mosq, 0, cfg.disconnect_props);
 						disconnect_sent = true;
 						status = STATUS_DISCONNECTING;
 					}else{
@@ -211,7 +212,7 @@ int pub_shared_loop(struct mosquitto *mosq)
 				}
 			}else if(status == STATUS_WAITING){
 				if(last_mid_sent == last_mid && disconnect_sent == false){
-					mosquitto_disconnect_with_properties(mosq, cfg.disconnect_props);
+					mosquitto_disconnect_with_properties(mosq, 0, cfg.disconnect_props);
 					disconnect_sent = true;
 				}
 #ifdef WIN32

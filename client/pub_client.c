@@ -86,7 +86,7 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 						break;
 				}
 			}
-			mosquitto_disconnect_with_properties(mosq, cfg.disconnect_props);
+			mosquitto_disconnect_with_properties(mosq, 0, cfg.disconnect_props);
 		}
 	}else{
 		if(result && !cfg.quiet){

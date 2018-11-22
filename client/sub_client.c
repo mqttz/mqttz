@@ -32,6 +32,7 @@ Contributors:
 #endif
 
 #include <mosquitto.h>
+#include <mqtt_protocol.h>
 #include "client_shared.h"
 
 static struct mosq_config cfg;
@@ -44,7 +45,7 @@ void my_signal_handler(int signum)
 {
 	if(signum == SIGALRM){
 		process_messages = false;
-		mosquitto_disconnect_with_properties(mosq, cfg.disconnect_props);
+		mosquitto_disconnect_with_properties(mosq, MQTT_RC_DISCONNECT_WITH_WILL_MSG, cfg.disconnect_props);
 	}
 }
 #endif
@@ -61,7 +62,7 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 
 	if(cfg.retained_only && !message->retain && process_messages){
 		process_messages = false;
-		mosquitto_disconnect_with_properties(mosq, cfg.disconnect_props);
+		mosquitto_disconnect_with_properties(mosq, 0, cfg.disconnect_props);
 		return;
 	}
 
@@ -79,7 +80,7 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 		msg_count++;
 		if(cfg.msg_count == msg_count){
 			process_messages = false;
-			mosquitto_disconnect_with_properties(mosq, cfg.disconnect_props);
+			mosquitto_disconnect_with_properties(mosq, 0, cfg.disconnect_props);
 		}
 	}
 }
@@ -98,7 +99,7 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 		if(result && !cfg.quiet){
 			fprintf(stderr, "%s\n", mosquitto_connack_string(result));
 		}
-		mosquitto_disconnect_with_properties(mosq, cfg.disconnect_props);
+		mosquitto_disconnect_with_properties(mosq, 0, cfg.disconnect_props);
 	}
 }
 
@@ -113,7 +114,7 @@ void my_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_c
 	if(!cfg.quiet) printf("\n");
 
 	if(cfg.exit_after_sub){
-		mosquitto_disconnect_with_properties(mosq, cfg.disconnect_props);
+		mosquitto_disconnect_with_properties(mosq, 0, cfg.disconnect_props);
 	}
 }
 
