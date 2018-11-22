@@ -47,7 +47,7 @@ static bool disconnect_sent = false;
 static char *buf = NULL;
 static int buf_len = 1024;
 
-void my_disconnect_callback(struct mosquitto *mosq, void *obj, int rc)
+void my_disconnect_callback(struct mosquitto *mosq, void *obj, int rc, const mosquitto_property *properties)
 {
 	connected = false;
 }

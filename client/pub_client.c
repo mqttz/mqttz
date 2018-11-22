@@ -259,7 +259,7 @@ int main(int argc, char *argv[])
 		mosquitto_log_callback_set(mosq, my_log_callback);
 	}
 	mosquitto_connect_callback_set(mosq, my_connect_callback);
-	mosquitto_disconnect_callback_set(mosq, my_disconnect_callback);
+	mosquitto_disconnect_v5_callback_set(mosq, my_disconnect_callback);
 	mosquitto_publish_callback_set(mosq, my_publish_callback);
 
 	if(client_opts_set(mosq, &cfg)){
