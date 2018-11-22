@@ -35,7 +35,6 @@ Contributors:
 
 /* Global variables for use in callbacks. See sub_client.c for an example of
  * using a struct to hold variables for use in callbacks. */
-static struct mosq_config cfg;
 static bool first_publish = true;
 
 int my_publish(struct mosquitto *mosq, int *mid, const char *topic, int payloadlen, void *payload, int qos, bool retain)

@@ -37,12 +37,13 @@ Contributors:
  * using a struct to hold variables for use in callbacks. */
 int mid_sent = 0;
 int status = STATUS_CONNECTING;
+struct mosq_config cfg;
+
 static int last_mid = -1;
 static int last_mid_sent = -1;
 static bool connected = true;
 static bool disconnect_sent = false;
-static struct mosq_config cfg;
-static char *buf;
+static char *buf = NULL;
 static int buf_len = 1024;
 
 void my_disconnect_callback(struct mosquitto *mosq, void *obj, int rc)
@@ -162,13 +163,16 @@ int pub_shared_loop(struct mosquitto *mosq)
 	int rc, rc2;
 	char *buf2;
 	int buf_len_actual;
+	int mode;
 
-	if(cfg.pub_mode == MSGMODE_STDIN_LINE){
+	mode = cfg.pub_mode;
+
+	if(mode == MSGMODE_STDIN_LINE){
 		mosquitto_loop_start(mosq);
 	}
 
 	do{
-		if(cfg.pub_mode == MSGMODE_STDIN_LINE){
+		if(mode == MSGMODE_STDIN_LINE){
 			if(status == STATUS_CONNACK_RECVD){
 				pos = 0;
 				read_len = buf_len;
@@ -225,7 +229,7 @@ int pub_shared_loop(struct mosquitto *mosq)
 		}
 	}while(rc == MOSQ_ERR_SUCCESS && connected);
 
-	if(cfg.pub_mode == MSGMODE_STDIN_LINE){
+	if(mode == MSGMODE_STDIN_LINE){
 		mosquitto_loop_stop(mosq, false);
 	}
 	return 0;

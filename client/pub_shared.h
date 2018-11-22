@@ -23,6 +23,7 @@ Contributors:
 
 extern int mid_sent;
 extern int status;
+extern struct mosq_config cfg;
 
 
 void my_connect_callback(struct mosquitto *mosq, void *obj, int result);
