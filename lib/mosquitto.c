@@ -64,12 +64,12 @@ int mosquitto_lib_cleanup(void)
 	return MOSQ_ERR_SUCCESS;
 }
 
-struct mosquitto *mosquitto_new(const char *id, bool clean_session, void *userdata)
+struct mosquitto *mosquitto_new(const char *id, bool clean_start, void *userdata)
 {
 	struct mosquitto *mosq = NULL;
 	int rc;
 
-	if(clean_session == false && id == NULL){
+	if(clean_start == false && id == NULL){
 		errno = EINVAL;
 		return NULL;
 	}
@@ -86,7 +86,7 @@ struct mosquitto *mosquitto_new(const char *id, bool clean_session, void *userda
 #ifdef WITH_THREADING
 		mosq->thread_id = pthread_self();
 #endif
-		rc = mosquitto_reinitialise(mosq, id, clean_session, userdata);
+		rc = mosquitto_reinitialise(mosq, id, clean_start, userdata);
 		if(rc){
 			mosquitto_destroy(mosq);
 			if(rc == MOSQ_ERR_INVAL){
@@ -102,13 +102,13 @@ struct mosquitto *mosquitto_new(const char *id, bool clean_session, void *userda
 	return mosq;
 }
 
-int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_session, void *userdata)
+int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_start, void *userdata)
 {
 	int i;
 
 	if(!mosq) return MOSQ_ERR_INVAL;
 
-	if(clean_session == false && id == NULL){
+	if(clean_start == false && id == NULL){
 		return MOSQ_ERR_INVAL;
 	}
 
@@ -125,7 +125,7 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 	mosq->sockpairR = INVALID_SOCKET;
 	mosq->sockpairW = INVALID_SOCKET;
 	mosq->keepalive = 60;
-	mosq->clean_session = clean_session;
+	mosq->clean_start = clean_start;
 	if(id){
 		if(STREMPTY(id)){
 			return MOSQ_ERR_INVAL;

@@ -205,7 +205,7 @@ static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking, const mos
 	}else
 #endif
 	{
-		return send__connect(mosq, mosq->keepalive, mosq->clean_session, properties);
+		return send__connect(mosq, mosq->keepalive, mosq->clean_start, properties);
 	}
 }
 

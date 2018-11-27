@@ -124,18 +124,18 @@ int bridge__connect_step1(struct mosquitto_db *db, struct mosquitto *context)
 	context->last_msg_in = mosquitto_time();
 	context->next_msg_out = mosquitto_time() + context->bridge->keepalive;
 	context->keepalive = context->bridge->keepalive;
-	context->clean_session = context->bridge->clean_session;
+	context->clean_start = context->bridge->clean_start;
 	context->in_packet.payload = NULL;
 	context->ping_t = 0;
 	context->bridge->lazy_reconnect = false;
 	bridge__packet_cleanup(context);
 	db__message_reconnect_reset(db, context);
 
-	if(context->clean_session){
+	if(context->clean_start){
 		db__messages_delete(db, context);
 	}
 
-	/* Delete all local subscriptions even for clean_session==false. We don't
+	/* Delete all local subscriptions even for clean_start==false. We don't
 	 * remove any messages and the next loop carries out the resubscription
 	 * anyway. This means any unwanted subs will be removed.
 	 */
@@ -256,7 +256,7 @@ int bridge__connect_step3(struct mosquitto_db *db, struct mosquitto *context)
 		context->bridge->primary_retry = mosquitto_time() + 5;
 	}
 
-	rc = send__connect(context, context->keepalive, context->clean_session, NULL);
+	rc = send__connect(context, context->keepalive, context->clean_start, NULL);
 	if(rc == MOSQ_ERR_SUCCESS){
 		return MOSQ_ERR_SUCCESS;
 	}else if(rc == MOSQ_ERR_ERRNO && errno == ENOTCONN){
@@ -290,18 +290,18 @@ int bridge__connect(struct mosquitto_db *db, struct mosquitto *context)
 	context->last_msg_in = mosquitto_time();
 	context->next_msg_out = mosquitto_time() + context->bridge->keepalive;
 	context->keepalive = context->bridge->keepalive;
-	context->clean_session = context->bridge->clean_session;
+	context->clean_start = context->bridge->clean_start;
 	context->in_packet.payload = NULL;
 	context->ping_t = 0;
 	context->bridge->lazy_reconnect = false;
 	bridge__packet_cleanup(context);
 	db__message_reconnect_reset(db, context);
 
-	if(context->clean_session){
+	if(context->clean_start){
 		db__messages_delete(db, context);
 	}
 
-	/* Delete all local subscriptions even for clean_session==false. We don't
+	/* Delete all local subscriptions even for clean_start==false. We don't
 	 * remove any messages and the next loop carries out the resubscription
 	 * anyway. This means any unwanted subs will be removed.
 	 */
@@ -375,7 +375,7 @@ int bridge__connect(struct mosquitto_db *db, struct mosquitto *context)
 
 	HASH_ADD(hh_sock, db->contexts_by_sock, sock, sizeof(context->sock), context);
 
-	rc2 = send__connect(context, context->keepalive, context->clean_session, NULL);
+	rc2 = send__connect(context, context->keepalive, context->clean_start, NULL);
 	if(rc2 == MOSQ_ERR_SUCCESS){
 		return rc;
 	}else if(rc2 == MOSQ_ERR_ERRNO && errno == ENOTCONN){

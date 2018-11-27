@@ -208,7 +208,7 @@ struct mosquitto {
 	pthread_mutex_t mid_mutex;
 	pthread_t thread_id;
 #endif
-	bool clean_session;
+	bool clean_start;
 #ifdef WITH_BROKER
 	char *old_id; /* for when a duplicate client connects, but we still want to
 					 know what the id was */

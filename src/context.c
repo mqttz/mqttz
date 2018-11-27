@@ -41,7 +41,7 @@ struct mosquitto *context__init(struct mosquitto_db *db, mosq_sock_t sock)
 	context->last_msg_in = mosquitto_time();
 	context->next_msg_out = mosquitto_time() + 60;
 	context->keepalive = 60; /* Default to 60s */
-	context->clean_session = true;
+	context->clean_start = true;
 	context->disconnect_t = 0;
 	context->id = NULL;
 	context->last_mid = 0;
@@ -144,7 +144,7 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 	context->password = NULL;
 
 	net__socket_close(db, context);
-	if((do_free || context->clean_session) && db){
+	if((do_free || context->clean_start) && db){
 		sub__clean_session(db, context);
 		db__messages_delete(db, context);
 	}
@@ -178,7 +178,7 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 		context->out_packet = context->out_packet->next;
 		mosquitto__free(packet);
 	}
-	if(do_free || context->clean_session){
+	if(do_free || context->clean_start){
 		msg = context->inflight_msgs;
 		while(msg){
 			next = msg->next;

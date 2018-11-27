@@ -417,7 +417,7 @@ int socks5__read(struct mosquitto *mosq)
 			/* Auth passed */
 			packet__cleanup(&mosq->in_packet);
 			mosq->state = mosq_cs_new;
-			return send__connect(mosq, mosq->keepalive, mosq->clean_session, NULL);
+			return send__connect(mosq, mosq->keepalive, mosq->clean_start, NULL);
 		}else{
 			i = mosq->in_packet.payload[1];
 			packet__cleanup(&mosq->in_packet);

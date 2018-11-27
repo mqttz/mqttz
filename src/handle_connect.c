@@ -120,7 +120,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	char *will_topic_mount;
 	uint16_t will_payloadlen;
 	struct mosquitto_message_all *will_struct = NULL;
-	uint8_t will, will_retain, will_qos, clean_session;
+	uint8_t will, will_retain, will_qos, clean_start;
 	uint8_t username_flag, password_flag;
 	char *username = NULL, *password = NULL;
 	int rc;
@@ -223,7 +223,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		}
 	}
 
-	clean_session = (connect_flags & 0x02) >> 1;
+	clean_start = (connect_flags & 0x02) >> 1;
 	will = connect_flags & 0x04;
 	will_qos = (connect_flags & 0x18) >> 3;
 	if(will_qos == 3){
@@ -276,7 +276,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			}else{
 				allow_zero_length_clientid = db->config->security_options.allow_zero_length_clientid;
 			}
-			if(clean_session == 0 || allow_zero_length_clientid == false){
+			if(clean_start == 0 || allow_zero_length_clientid == false){
 				send__connack(db, context, 0, CONNACK_REFUSED_IDENTIFIER_REJECTED);
 				rc = MOSQ_ERR_PROTOCOL;
 				goto handle_connect_error;
@@ -577,14 +577,14 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		}
 
 		if(context->protocol == mosq_p_mqtt311 || context->protocol == mosq_p_mqtt5){
-			if(clean_session == 0){
+			if(clean_start == 0){
 				connect_ack |= 0x01;
 			}
 		}
 
-		context->clean_session = clean_session;
+		context->clean_start = clean_start;
 
-		if(context->clean_session == false && found_context->clean_session == false){
+		if(context->clean_start == false && found_context->clean_start == false){
 			if(found_context->inflight_msgs || found_context->queued_msgs){
 				context->inflight_msgs = found_context->inflight_msgs;
 				context->queued_msgs = found_context->queued_msgs;
@@ -611,7 +611,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			}
 		}
 
-		found_context->clean_session = true;
+		found_context->clean_start = true;
 		found_context->state = mosq_cs_duplicate;
 		do_disconnect(db, found_context);
 	}
@@ -664,15 +664,15 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	if(db->config->connection_messages == true){
 		if(context->is_bridge){
 			if(context->username){
-				log__printf(NULL, MOSQ_LOG_NOTICE, "New bridge connected from %s as %s (c%d, k%d, u'%s').", context->address, client_id, clean_session, context->keepalive, context->username);
+				log__printf(NULL, MOSQ_LOG_NOTICE, "New bridge connected from %s as %s (c%d, k%d, u'%s').", context->address, client_id, clean_start, context->keepalive, context->username);
 			}else{
-				log__printf(NULL, MOSQ_LOG_NOTICE, "New bridge connected from %s as %s (c%d, k%d).", context->address, client_id, clean_session, context->keepalive);
+				log__printf(NULL, MOSQ_LOG_NOTICE, "New bridge connected from %s as %s (c%d, k%d).", context->address, client_id, clean_start, context->keepalive);
 			}
 		}else{
 			if(context->username){
-				log__printf(NULL, MOSQ_LOG_NOTICE, "New client connected from %s as %s (c%d, k%d, u'%s').", context->address, client_id, clean_session, context->keepalive, context->username);
+				log__printf(NULL, MOSQ_LOG_NOTICE, "New client connected from %s as %s (c%d, k%d, u'%s').", context->address, client_id, clean_start, context->keepalive, context->username);
 			}else{
-				log__printf(NULL, MOSQ_LOG_NOTICE, "New client connected from %s as %s (p%d, c%d, k%d).", context->address, client_id, context->protocol, clean_session, context->keepalive);
+				log__printf(NULL, MOSQ_LOG_NOTICE, "New client connected from %s as %s (p%d, c%d, k%d).", context->address, client_id, context->protocol, clean_start, context->keepalive);
 			}
 		}
 
@@ -690,7 +690,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 
 	context->id = client_id;
 	client_id = NULL;
-	context->clean_session = clean_session;
+	context->clean_start = clean_start;
 	context->ping_t = 0;
 	context->is_dropping = false;
 	if((protocol_version&0x80) == 0x80){
@@ -703,7 +703,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	HASH_ADD_KEYPTR(hh_id, db->contexts_by_id, context->id, strlen(context->id), context);
 
 #ifdef WITH_PERSISTENCE
-	if(!clean_session){
+	if(!clean_start){
 		db->persistence_changes++;
 	}
 #endif

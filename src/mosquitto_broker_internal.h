@@ -435,7 +435,7 @@ struct mosquitto__bridge{
 	bool round_robin;
 	bool try_private;
 	bool try_private_accepted;
-	bool clean_session;
+	bool clean_start;
 	int keepalive;
 	struct mosquitto__bridge_topic *topics;
 	int topic_count;

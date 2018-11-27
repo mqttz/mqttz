@@ -55,7 +55,7 @@ static struct mosquitto *persist__find_or_add_context(struct mosquitto_db *db, c
 			return NULL;
 		}
 
-		context->clean_session = false;
+		context->clean_start = false;
 
 		HASH_ADD_KEYPTR(hh_id, db->contexts_by_id, context->id, strlen(context->id), context);
 	}
@@ -234,7 +234,7 @@ static int persist__client_write(struct mosquitto_db *db, FILE *db_fptr)
 	assert(db_fptr);
 
 	HASH_ITER(hh_id, db->contexts_by_id, context, ctxt_tmp){
-		if(context && context->clean_session == false){
+		if(context && context->clean_start == false){
 			length = htonl(2+strlen(context->id) + sizeof(uint16_t) + sizeof(time_t));
 
 			i16temp = htons(DB_CHUNK_CLIENT);
@@ -287,7 +287,7 @@ static int persist__subs_retain_write(struct mosquitto_db *db, FILE *db_fptr, st
 
 	sub = node->subs;
 	while(sub){
-		if(sub->context->clean_session == false){
+		if(sub->context->clean_start == false){
 			length = htonl(2+strlen(sub->context->id) + 2+strlen(thistopic) + sizeof(uint8_t));
 
 			i16temp = htons(DB_CHUNK_SUB);
