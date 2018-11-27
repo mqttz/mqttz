@@ -310,7 +310,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 
 #ifdef WITH_SYS_TREE
 				g_msgs_sent++;
-				if(((packet->command)&0xF6) == PUBLISH){
+				if(((packet->command)&0xF6) == CMD_PUBLISH){
 					g_pub_msgs_sent++;
 				}
 #endif
@@ -350,7 +350,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 					mosq->in_packet.command = buf[pos];
 					pos++;
 					/* Clients must send CONNECT as their first command. */
-					if(mosq->state == mosq_cs_new && (mosq->in_packet.command&0xF0) != CONNECT){
+					if(mosq->state == mosq_cs_new && (mosq->in_packet.command&0xF0) != CMD_CONNECT){
 						return -1;
 					}
 				}
@@ -401,7 +401,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 
 #ifdef WITH_SYS_TREE
 				G_MSGS_RECEIVED_INC(1);
-				if(((mosq->in_packet.command)&0xF5) == PUBLISH){
+				if(((mosq->in_packet.command)&0xF5) == CMD_PUBLISH){
 					G_PUB_MSGS_RECEIVED_INC(1);
 				}
 #endif
