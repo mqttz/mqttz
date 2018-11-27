@@ -254,6 +254,8 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		if(rc) return rc;
 		mosquitto_property_free_all(&properties);
 	}
+	property__process_connect(context, properties);
+
 	mosquitto_property_free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
 
 	if(packet__read_string(&context->in_packet, &client_id, &slen)){
@@ -727,9 +729,11 @@ handle_connect_error:
 	return rc;
 }
 
+
 int handle__disconnect(struct mosquitto_db *db, struct mosquitto *context)
 {
 	int rc;
+	uint8_t reason_code;
 	mosquitto_property *properties = NULL;
 
 	if(!context){
@@ -737,9 +741,19 @@ int handle__disconnect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	if(context->protocol == mosq_p_mqtt5){
+		/* FIXME - must handle reason code */
+		rc = packet__read_byte(&context->in_packet, &reason_code);
+		if(rc) return rc;
 		rc = property__read_all(CMD_DISCONNECT, &context->in_packet, &properties);
 		if(rc) return rc;
+	}
+	rc = property__process_disconnect(context, properties);
+	if(rc){
+		if(rc == MOSQ_ERR_PROTOCOL){
+			send__disconnect(context, MQTT_RC_PROTOCOL_ERROR, NULL);
+		}
 		mosquitto_property_free_all(&properties);
+		return rc;
 	}
 	mosquitto_property_free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
 

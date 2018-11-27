@@ -105,6 +105,7 @@ tests = [
     (2, './10-listener-mount-point.py'),
 
     (1, './11-persistent-subscription.py'),
+	(1, './12-prop-session-expiry-invalid.py'),
     ]
 
 minport = 1888

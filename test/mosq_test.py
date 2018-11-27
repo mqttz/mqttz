@@ -298,7 +298,7 @@ def to_string(packet):
         # Reserved
         return "0xF0"
 
-def gen_connect(client_id, clean_session=True, keepalive=60, username=None, password=None, will_topic=None, will_qos=0, will_retain=False, will_payload="", proto_ver=4, connect_reserved=False, properties=None):
+def gen_connect(client_id, clean_session=True, keepalive=60, username=None, password=None, will_topic=None, will_qos=0, will_retain=False, will_payload="", proto_ver=4, connect_reserved=False, properties=""):
     if (proto_ver&0x7F) == 3 or proto_ver == 0:
         remaining_length = 12
     elif (proto_ver&0x7F) == 4 or proto_ver == 5:
@@ -318,7 +318,9 @@ def gen_connect(client_id, clean_session=True, keepalive=60, username=None, pass
         connect_flags = connect_flags | 0x02
 
     if proto_ver == 5:
-        remaining_length += 1
+        if properties == "":
+            properties = struct.pack("B", 0)
+        remaining_length += len(properties)
 
     if will_topic != None:
         remaining_length = remaining_length + 2+len(will_topic) + 2+len(will_payload)
@@ -341,7 +343,7 @@ def gen_connect(client_id, clean_session=True, keepalive=60, username=None, pass
         packet = packet + struct.pack("!H4sBBH", len("MQTT"), "MQTT", proto_ver, connect_flags, keepalive)
 
     if proto_ver == 5:
-        packet += struct.pack("B", 0)
+        packet += properties
 
     if client_id != None:
         packet = packet + struct.pack("!H"+str(len(client_id))+"s", len(client_id), client_id)
@@ -467,9 +469,12 @@ def gen_pingreq():
 def gen_pingresp():
     return struct.pack('!BB', 208, 0)
 
-def gen_disconnect(reason_code=0, proto_ver=4):
+def gen_disconnect(reason_code=0, proto_ver=4, properties=""):
     if proto_ver == 5:
-        return struct.pack('!BBBB', 224, 2, reason_code, 0)
+        if properties == "":
+            properties = struct.pack("B", 0)
+
+        return struct.pack('!BBB', 224, 1+len(properties), reason_code) + properties
     else:
         return struct.pack('!BB', 224, 0)
 

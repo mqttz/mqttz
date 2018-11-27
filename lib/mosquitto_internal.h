@@ -209,6 +209,7 @@ struct mosquitto {
 	pthread_t thread_id;
 #endif
 	bool clean_start;
+	uint32_t session_expiry_interval;
 #ifdef WITH_BROKER
 	char *old_id; /* for when a duplicate client connects, but we still want to
 					 know what the id was */

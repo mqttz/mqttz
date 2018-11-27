@@ -609,6 +609,12 @@ void bridge__packet_cleanup(struct mosquitto *context);
 #endif
 
 /* ============================================================
+ * Property related functions
+ * ============================================================ */
+int property__process_connect(struct mosquitto *context, mosquitto_property *props);
+int property__process_disconnect(struct mosquitto *context, mosquitto_property *props);
+
+/* ============================================================
  * Security related functions
  * ============================================================ */
 int mosquitto_security_module_init(struct mosquitto_db *db);
