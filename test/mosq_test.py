@@ -359,7 +359,7 @@ def gen_connect(client_id, clean_session=True, keepalive=60, username=None, pass
             packet = packet + struct.pack("!H"+str(len(password))+"s", len(password), password)
     return packet
 
-def gen_connack(resv=0, rc=0, proto_ver=4, properties=None):
+def gen_connack(resv=0, rc=0, proto_ver=4, properties=""):
     if proto_ver == 5:
         properties += mqtt5_props.gen_byte_prop(mqtt5_props.PROP_SHARED_SUB_AVAILABLE, 0)
         properties += mqtt5_props.gen_byte_prop(mqtt5_props.PROP_SUBSCRIPTION_ID_AVAILABLE, 0)
