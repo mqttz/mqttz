@@ -90,6 +90,7 @@ enum mosq_err_t {
 	MOSQ_ERR_LOOKUP = 20,
 	MOSQ_ERR_MALFORMED_PACKET = 19,
 	MOSQ_ERR_DUPLICATE_PROPERTY = 20,
+	MOSQ_ERR_TLS_HANDSHAKE = 21,
 };
 
 /* Error values */
@@ -2586,6 +2587,20 @@ libmosq_EXPORT int mosquitto_property_read_string_pair(const mosquitto_property 
  *   mosquitto_property_free_all(&properties);
  */
 libmosq_EXPORT void mosquitto_property_free_all(mosquitto_property **properties);
+
+/*
+ * Function: mosquitto_property_copy_all
+ *
+ * Parameters:
+ *    dest : pointer for new property list
+ *    src : property list
+ *
+ * Returns:
+ *    MOSQ_ERR_SUCCESS - on successful copy
+ *    MOSQ_ERR_INVAL - if dest is NULL
+ *    MOSQ_ERR_NOMEM - on out of memory (dest will be set to NULL)
+ */
+libmosq_EXPORT int mosquitto_property_copy_all(mosquitto_property **dest, const mosquitto_property *src);
 
 /*
  * Function: mosquitto_property_check_command

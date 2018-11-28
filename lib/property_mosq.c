@@ -1020,3 +1020,110 @@ int mosquitto_property_read_string_pair(const mosquitto_property *property, char
 
 	return MOSQ_ERR_SUCCESS;
 }
+
+
+int mosquitto_property_copy_all(mosquitto_property **dest, const mosquitto_property *src)
+{
+	mosquitto_property *pnew, *plast = NULL;
+
+	if(!src) return MOSQ_ERR_SUCCESS;
+	if(!dest) return MOSQ_ERR_INVAL;
+
+	*dest = NULL;
+
+	while(src){
+		pnew = calloc(1, sizeof(mosquitto_property));
+		if(!pnew){
+			mosquitto_property_free_all(dest);
+			return MOSQ_ERR_NOMEM;
+		}
+		if(plast){
+			plast->next = pnew;
+		}else{
+			*dest = pnew;
+		}
+		plast = pnew;
+
+		pnew->identifier = src->identifier;
+		switch(pnew->identifier){
+			case MQTT_PROP_PAYLOAD_FORMAT_INDICATOR:
+			case MQTT_PROP_REQUEST_PROBLEM_INFORMATION:
+			case MQTT_PROP_REQUEST_RESPONSE_INFORMATION:
+			case MQTT_PROP_MAXIMUM_QOS:
+			case MQTT_PROP_RETAIN_AVAILABLE:
+			case MQTT_PROP_WILDCARD_SUB_AVAILABLE:
+			case MQTT_PROP_SUBSCRIPTION_ID_AVAILABLE:
+			case MQTT_PROP_SHARED_SUB_AVAILABLE:
+				pnew->value.i8 = src->value.i8;
+				break;
+
+			case MQTT_PROP_SERVER_KEEP_ALIVE:
+			case MQTT_PROP_RECEIVE_MAXIMUM:
+			case MQTT_PROP_TOPIC_ALIAS_MAXIMUM:
+			case MQTT_PROP_TOPIC_ALIAS:
+				pnew->value.i16 = src->value.i16;
+				break;
+
+			case MQTT_PROP_MESSAGE_EXPIRY_INTERVAL:
+			case MQTT_PROP_SESSION_EXPIRY_INTERVAL:
+			case MQTT_PROP_WILL_DELAY_INTERVAL:
+			case MQTT_PROP_MAXIMUM_PACKET_SIZE:
+				pnew->value.i32 = src->value.i32;
+				break;
+
+			case MQTT_PROP_SUBSCRIPTION_IDENTIFIER:
+				pnew->value.varint = src->value.varint;
+				break;
+
+			case MQTT_PROP_CONTENT_TYPE:
+			case MQTT_PROP_RESPONSE_TOPIC:
+			case MQTT_PROP_ASSIGNED_CLIENT_IDENTIFIER:
+			case MQTT_PROP_AUTHENTICATION_METHOD:
+			case MQTT_PROP_RESPONSE_INFORMATION:
+			case MQTT_PROP_SERVER_REFERENCE:
+			case MQTT_PROP_REASON_STRING:
+				pnew->value.s.len = src->value.s.len;
+				pnew->value.s.v = strdup(src->value.s.v);
+				if(!pnew->value.s.v){
+					mosquitto_property_free_all(dest);
+					return MOSQ_ERR_NOMEM;
+				}
+				break;
+
+			case MQTT_PROP_AUTHENTICATION_DATA:
+			case MQTT_PROP_CORRELATION_DATA:
+				pnew->value.bin.len = src->value.bin.len;
+				pnew->value.bin.v = malloc(pnew->value.bin.len);
+				if(!pnew->value.bin.v){
+					mosquitto_property_free_all(dest);
+					return MOSQ_ERR_NOMEM;
+				}
+				memcpy(pnew->value.bin.v, src->value.bin.v, pnew->value.bin.len);
+				break;
+
+			case MQTT_PROP_USER_PROPERTY:
+				pnew->value.s.len = src->value.s.len;
+				pnew->value.s.v = strdup(src->value.s.v);
+				if(!pnew->value.s.v){
+					mosquitto_property_free_all(dest);
+					return MOSQ_ERR_NOMEM;
+				}
+
+				pnew->name.len = src->name.len;
+				pnew->name.v = strdup(src->name.v);
+				if(!pnew->name.v){
+					mosquitto_property_free_all(dest);
+					return MOSQ_ERR_NOMEM;
+				}
+				break;
+
+			default:
+				mosquitto_property_free_all(dest);
+				return MOSQ_ERR_INVAL;
+		}
+
+		src = src->next;
+	}
+
+	return MOSQ_ERR_SUCCESS;
+}
