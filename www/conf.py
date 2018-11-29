@@ -87,6 +87,7 @@ NAVIGATION_LINKS = {
         #("/sponsoring/", "Sponsoring"),
         (
             (
+                ("/roadmap/", "Roadmap"),
                 ("/api/", "API"),
                 ("/man/libmosquitto-3.html", "libmosquitto"),
                 ("/man/mosquitto-8.html", "mosquitto"),
