@@ -44,7 +44,6 @@ int handle__connack(struct mosquitto *mosq)
 	if(mosq->protocol == mosq_p_mqtt5){
 		rc = property__read_all(CMD_CONNACK, &mosq->in_packet, &properties);
 		if(rc) return rc;
-		mosquitto_property_free_all(&properties);
 	}
 
 	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received CONNACK (%d)", mosq->id, reason_code);
