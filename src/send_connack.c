@@ -23,12 +23,17 @@ Contributors:
 #include "property_mosq.h"
 #include "util_mosq.h"
 
-int send__connack(struct mosquitto_db *db, struct mosquitto *context, int ack, int reason_code)
+int send__connack(struct mosquitto_db *db, struct mosquitto *context, int ack, int reason_code, const mosquitto_property *properties)
 {
 	struct mosquitto__packet *packet = NULL;
 	int rc;
-	mosquitto_property *properties = NULL;
+	mosquitto_property *connack_props = NULL;
 	int proplen, varbytes;
+
+	rc = mosquitto_property_copy_all(&connack_props, properties);
+	if(rc){
+		return rc;
+	}
 
 	if(context){
 		if(context->id){
@@ -45,25 +50,25 @@ int send__connack(struct mosquitto_db *db, struct mosquitto *context, int ack, i
 	packet->remaining_length = 2;
 	if(context->protocol == mosq_p_mqtt5){
 		if(reason_code < 128 && db->config->retain_available == false){
-			rc = mosquitto_property_add_byte(&properties, MQTT_PROP_RETAIN_AVAILABLE, 0);
+			rc = mosquitto_property_add_byte(&connack_props, MQTT_PROP_RETAIN_AVAILABLE, 0);
 			if(rc){
 				mosquitto__free(packet);
 				return rc;
 			}
 		}
 		/* FIXME - disable support until available */
-		rc = mosquitto_property_add_byte(&properties, MQTT_PROP_SHARED_SUB_AVAILABLE, 0);
+		rc = mosquitto_property_add_byte(&connack_props, MQTT_PROP_SHARED_SUB_AVAILABLE, 0);
 		if(rc){
 			mosquitto__free(packet);
 			return rc;
 		}
-		rc = mosquitto_property_add_byte(&properties, MQTT_PROP_SUBSCRIPTION_ID_AVAILABLE, 0);
+		rc = mosquitto_property_add_byte(&connack_props, MQTT_PROP_SUBSCRIPTION_ID_AVAILABLE, 0);
 		if(rc){
 			mosquitto__free(packet);
 			return rc;
 		}
 
-		proplen = property__get_length_all(properties);
+		proplen = property__get_length_all(connack_props);
 		varbytes = packet__varint_bytes(proplen);
 		packet->remaining_length += proplen + varbytes;
 	}
@@ -75,9 +80,9 @@ int send__connack(struct mosquitto_db *db, struct mosquitto *context, int ack, i
 	packet__write_byte(packet, ack);
 	packet__write_byte(packet, reason_code);
 	if(context->protocol == mosq_p_mqtt5){
-		property__write_all(packet, properties);
+		property__write_all(packet, connack_props);
 	}
-	mosquitto_property_free_all(&properties);
+	mosquitto_property_free_all(&connack_props);
 
 	return packet__queue(context, packet);
 }
