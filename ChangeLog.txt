@@ -1,3 +1,11 @@
+1.5.5 - 201812xx
+================
+
+Client:
+- Always print leading zeros in mosquitto_sub when output format is hex.
+  Closes #1066.
+
+
 1.5.4 - 20181108
 ================
 
