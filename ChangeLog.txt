@@ -10,6 +10,9 @@ Broker:
   because this can lead to confusing "Protocol not supported" errors if the
   network is down. Closes #1062.
 
+Library:
+- Fix reconnect delay backoff behaviour. Closes #1027.
+
 Client:
 - Always print leading zeros in mosquitto_sub when output format is hex.
   Closes #1066.

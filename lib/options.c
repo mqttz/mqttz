@@ -76,6 +76,8 @@ int mosquitto_reconnect_delay_set(struct mosquitto *mosq, unsigned int reconnect
 {
 	if(!mosq) return MOSQ_ERR_INVAL;
 	
+	if(reconnect_delay == 0) reconnect_delay = 1;
+
 	mosq->reconnect_delay = reconnect_delay;
 	mosq->reconnect_delay_max = reconnect_delay_max;
 	mosq->reconnect_exponential_backoff = reconnect_exponential_backoff;
