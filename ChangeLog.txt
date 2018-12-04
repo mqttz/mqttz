@@ -6,6 +6,9 @@ Broker:
   This is required to work around a problem in libwebsockets that means
   sockets only listen on IPv6 by default if IPv6 support is compiled in.
   Closes #1004.
+- When using ADNS, don't ask for all network protocols when connecting,
+  because this can lead to confusing "Protocol not supported" errors if the
+  network is down. Closes #1062.
 
 Client:
 - Always print leading zeros in mosquitto_sub when output format is hex.
