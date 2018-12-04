@@ -818,6 +818,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 					conf__set_cur_security_options(config, cur_listener, &cur_security_options);
 					if(conf__parse_bool(&token, "allow_zero_length_clientid", &cur_security_options->allow_zero_length_clientid, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strncmp(token, "auth_opt_", 9)){
+					if(reload) continue; // Auth plugin not currently valid for reloading.
 					if(!cur_auth_plugin_config){
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: An auth_opt_ option exists in the config file without an auth_plugin.");
 						return MOSQ_ERR_INVAL;

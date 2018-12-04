@@ -11,6 +11,8 @@ Broker:
   network is down. Closes #1062.
 - Fix outgoing retained messages not being sent by bridges on initial
   connection. Closes #1040.
+- Don't reload auth_opt_ options on reload, to match the behaviour of the
+  other plugin options. Closes #1068.
 
 Library:
 - Fix reconnect delay backoff behaviour. Closes #1027.
