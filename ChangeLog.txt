@@ -9,6 +9,8 @@ Broker:
 - When using ADNS, don't ask for all network protocols when connecting,
   because this can lead to confusing "Protocol not supported" errors if the
   network is down. Closes #1062.
+- Fix outgoing retained messages not being sent by bridges on initial
+  connection. Closes #1040.
 
 Library:
 - Fix reconnect delay backoff behaviour. Closes #1027.
