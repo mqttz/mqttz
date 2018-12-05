@@ -32,7 +32,6 @@ tests = [
     (1, './02-subpub-qos0-v5.py'),
     (1, './02-subpub-qos1-v5.py'),
     (1, './02-subpub-qos2-v5.py'),
-	(1, './02-subpub-qos0-payload-format-v5.py'),
     (1, './02-unsubscribe-qos0.py'),
     (1, './02-unsubscribe-qos1.py'),
     (1, './02-unsubscribe-qos2.py'),
@@ -105,7 +104,10 @@ tests = [
     (2, './10-listener-mount-point.py'),
 
     (1, './11-persistent-subscription.py'),
+
 	(1, './12-prop-session-expiry-invalid.py'),
+	(1, './12-prop-subpub-payload-format.py'),
+	(1, './12-prop-subpub-content-type.py'),
     ]
 
 minport = 1888

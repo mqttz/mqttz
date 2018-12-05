@@ -53,7 +53,6 @@ endif
 	./02-unsubscribe-qos1.py
 	./02-unsubscribe-qos2.py
 	./02-unsubscribe-qos2-v5.py
-	./02-subpub-qos0-payload-format-v5.py
 	./02-unsubscribe-invalid-no-topic.py
 	./02-subscribe-invalid-utf8.py
 	./02-subscribe-persistence-flipflop.py
@@ -138,3 +137,5 @@ endif
 
 12 :
 	./12-prop-session-expiry-invalid.py
+	./12-prop-subpub-payload-format.py
+	./12-prop-subpub-content-type.py

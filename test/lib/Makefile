@@ -50,6 +50,7 @@ ifeq ($(WITH_TLS),yes)
 endif
 	./09-util-topic-tokenise.py $@/09-util-topic-tokenise.test
 	./11-prop-send-payload-format.py $@/11-prop-send-payload-format.test
+	./11-prop-send-content-type.py $@/11-prop-send-content-type.test
 
 clean : 
 	$(MAKE) -C c clean
