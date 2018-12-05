@@ -48,7 +48,7 @@ int my_publish(struct mosquitto *mosq, int *mid, const char *topic, int payloadl
 }
 
 
-void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
+void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flags, const mosquitto_property *properties)
 {
 	int rc = MOSQ_ERR_SUCCESS;
 
@@ -262,7 +262,7 @@ int main(int argc, char *argv[])
 	if(cfg.debug){
 		mosquitto_log_callback_set(mosq, my_log_callback);
 	}
-	mosquitto_connect_callback_set(mosq, my_connect_callback);
+	mosquitto_connect_v5_callback_set(mosq, my_connect_callback);
 	mosquitto_disconnect_v5_callback_set(mosq, my_disconnect_callback);
 	mosquitto_publish_callback_set(mosq, my_publish_callback);
 

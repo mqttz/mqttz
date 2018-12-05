@@ -1011,7 +1011,7 @@ int client_id_generate(struct mosq_config *cfg, const char *id_base)
 			return 1;
 		}
 		snprintf(cfg->id, strlen(cfg->id_prefix)+10, "%s%d", cfg->id_prefix, getpid());
-	}else if(!cfg->id){
+	}else if(!cfg->id && (cfg->protocol_version == MQTT_PROTOCOL_V31 || cfg->protocol_version == MQTT_PROTOCOL_V311)){
 		hostname[0] = '\0';
 		gethostname(hostname, 256);
 		hostname[255] = '\0';

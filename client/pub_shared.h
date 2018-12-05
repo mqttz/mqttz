@@ -26,7 +26,7 @@ extern int status;
 extern struct mosq_config cfg;
 
 
-void my_connect_callback(struct mosquitto *mosq, void *obj, int result);
+void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flags, const mosquitto_property *properties);
 void my_disconnect_callback(struct mosquitto *mosq, void *obj, int rc, const mosquitto_property *properties);
 void my_publish_callback(struct mosquitto *mosq, void *obj, int mid);
 void my_log_callback(struct mosquitto *mosq, void *obj, int level, const char *str);
