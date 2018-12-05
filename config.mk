@@ -64,10 +64,6 @@ WITH_SYSTEMD:=no
 # Build with SRV lookup support.
 WITH_SRV:=no
 
-# Build using libuuid for clientid generation (Linux only - please report if
-# supported on your platform).
-WITH_UUID:=yes
-
 # Build with websockets support on the broker.
 WITH_WEBSOCKETS:=no
 
@@ -207,13 +203,6 @@ endif
 ifeq ($(WITH_SOCKS),yes)
 	LIB_CFLAGS:=$(LIB_CFLAGS) -DWITH_SOCKS
 	CLIENT_CFLAGS:=$(CLIENT_CFLAGS) -DWITH_SOCKS
-endif
-
-ifeq ($(WITH_UUID),yes)
-	ifeq ($(UNAME),Linux)
-		BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_UUID
-		BROKER_LIBS:=$(BROKER_LIBS) -luuid
-	endif
 endif
 
 ifeq ($(WITH_BRIDGE),yes)

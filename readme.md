@@ -66,7 +66,6 @@ already be built. Use `make binary` to skip building the man pages, or install
 ### Build Dependencies
 
 * c-ares (libc-ares-dev on Debian based systems) - disable with `make WITH_SRV=no`
-* libuuid (uuid-dev) - disable with `make WITH_UUID=no`
 * libwebsockets (libwebsockets-dev) - enable with `make WITH_WEBSOCKETS=yes`
 * openssl (libssl-dev on Debian based systems) - disable with `make WITH_TLS=no`
 * xsltproc (xsltproc and docbook-xsl on Debian based systems) - only needed when building from git sources - disable with `make WITH_DOCS=no`

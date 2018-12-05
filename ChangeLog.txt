@@ -1,6 +1,10 @@
 1.6 - 2018xxxx
 ==============
 
+Broker features:
+- Improved general support for broker generated client ids. Removed libuuid
+  dependency.
+
 Client library features:
 - Add mosquitto_subscribe_multiple() for sending subscriptions to multiple
   topics in one command.

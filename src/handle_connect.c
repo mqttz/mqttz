@@ -30,28 +30,75 @@ Contributors:
 #include "tls_mosq.h"
 #include "util_mosq.h"
 
-#ifdef WITH_UUID
-#  include <uuid/uuid.h>
+#ifdef WITH_TLS
+#  include <openssl/rand.h>
+#endif
+
+#ifdef __linux__
+#  include <sys/random.h>
 #endif
 
 #ifdef WITH_WEBSOCKETS
 #  include <libwebsockets.h>
 #endif
 
+
+static int random_16_bytes(uint8_t *bytes)
+{
+	int rc = MOSQ_ERR_UNKNOWN;
+
+#ifdef WITH_TLS
+	if(RAND_bytes(bytes, 16) == 1){
+		rc = MOSQ_ERR_SUCCESS;
+	}
+#else
+#  ifdef __GLIBC__
+	if(getrandom(bytes, 16, 0) == 0){
+		rc = MOSQ_ERR_SUCCESS;
+	}
+#  elif defined(WIN32)
+	HRYPTPROV provider;
+
+	if(!CryptAcquireContext(&provider, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT)){
+		return MOSQ_ERR_UNKNOWN;
+	}
+
+	if(CryptGenRandom(provider, 16, bytes)){
+		rc = MOSQ_ERR_SUCCESS;
+	}
+
+	CryptReleaseContext(provider, 0);
+#  else
+	int i;
+
+	for(i=0; i<16; i++){
+		bytes[i] = (uint8_t )(random()&0xFF);
+	}
+	rc = MOSQ_ERR_SUCCESS;
+#  endif
+#endif
+	return rc;
+}
+
+static char nibble_to_hex(uint8_t value)
+{
+	if(value < 0x0A){
+		return '0'+value;
+	}else{
+		return 'A'+value-0x0A;
+	}
+}
+
 static char *client_id_gen(struct mosquitto_db *db, int *idlen, const char *auto_id_prefix, int auto_id_prefix_len)
 {
 	char *client_id;
-#ifdef WITH_UUID
-	uuid_t uuid;
-#else
+	uint8_t rnd[16];
 	int i;
-#endif
+	int pos;
 
-#ifdef WITH_UUID
+	if(random_16_bytes(rnd)) return NULL;
+
 	*idlen = 36 + auto_id_prefix_len;
-#else
-	*idlen = 64 + auto_id_prefix_len;
-#endif
 
 	client_id = (char *)mosquitto__calloc((*idlen) + 1, sizeof(char));
 	if(!client_id){
@@ -61,16 +108,17 @@ static char *client_id_gen(struct mosquitto_db *db, int *idlen, const char *auto
 		memcpy(client_id, auto_id_prefix, auto_id_prefix_len);
 	}
 
-
-#ifdef WITH_UUID
-	uuid_generate_random(uuid);
-	uuid_unparse_lower(uuid, &client_id[auto_id_prefix_len]);
-#else
-	for(i=0; i<64; i++){
-		client_id[i+auto_id_prefix_len] = (rand()%73)+48;
+	pos = 0;
+	for(i=0; i<16; i++){
+		client_id[auto_id_prefix_len + pos + 0] = nibble_to_hex(rnd[i] & 0x0F);
+		client_id[auto_id_prefix_len + pos + 1] = nibble_to_hex((rnd[i] >> 4) & 0x0F);
+		pos += 2;
+		if(pos == 8 || pos == 13 || pos == 18 || pos == 23){
+			client_id[auto_id_prefix_len + pos] = '-';
+			pos++;
+		}
 	}
-	client_id[i] = '\0';
-#endif
+
 	return client_id;
 }
 

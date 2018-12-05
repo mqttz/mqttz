@@ -3,7 +3,6 @@ are optional.
 
 * openssl
 * c-ares (for DNS-SRV support, disabled by default)
-* libuuid (from util-linux, can be disabled)
 * tcp-wrappers (optional, package name libwrap0-dev)
 * libwebsockets (optional, disabled by default, version 1.3 and above)
 * On Windows, a pthreads library is required if threading support is to be

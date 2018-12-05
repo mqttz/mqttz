@@ -160,15 +160,6 @@ if (${WITH_WEBSOCKETS} STREQUAL ON)
 	endif (${STATIC_WEBSOCKETS} STREQUAL ON)
 endif (${WITH_WEBSOCKETS} STREQUAL ON)
 
-# Simple detect libuuid
-if(NOT APPLE)
-	FIND_PATH(UUID_HEADER uuid/uuid.h)
-	if (UUID_HEADER)
-		add_definitions(-DWITH_UUID)
-		set (MOSQ_LIBS ${MOSQ_LIBS} uuid)
-	endif (UUID_HEADER)
-endif(NOT APPLE)
-
 add_executable(mosquitto ${MOSQ_SRCS})
 target_link_libraries(mosquitto ${MOSQ_LIBS})
 
