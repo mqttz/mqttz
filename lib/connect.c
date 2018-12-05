@@ -33,8 +33,26 @@ static int mosquitto__connect_init(struct mosquitto *mosq, const char *host, int
 
 static int mosquitto__connect_init(struct mosquitto *mosq, const char *host, int port, int keepalive, const char *bind_address)
 {
+	int i;
+
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(!host || port <= 0) return MOSQ_ERR_INVAL;
+
+	if(mosq->id == NULL && (mosq->protocol == mosq_p_mqtt31 || mosq->protocol == mosq_p_mqtt311)){
+		mosq->id = (char *)mosquitto__calloc(24, sizeof(char));
+		if(!mosq->id){
+			return MOSQ_ERR_NOMEM;
+		}
+		mosq->id[0] = 'm';
+		mosq->id[1] = 'o';
+		mosq->id[2] = 's';
+		mosq->id[3] = 'q';
+		mosq->id[4] = '/';
+
+		for(i=5; i<23; i++){
+			mosq->id[i] = (random()%73)+48;
+		}
+	}
 
 	mosquitto__free(mosq->host);
 	mosq->host = mosquitto__strdup(host);

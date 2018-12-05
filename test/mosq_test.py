@@ -308,6 +308,8 @@ def gen_connect(client_id, clean_session=True, keepalive=60, username=None, pass
 
     if client_id != None:
         remaining_length = remaining_length + 2+len(client_id)
+    else:
+        remaining_length = remaining_length + 2
 
     connect_flags = 0
 
@@ -347,6 +349,8 @@ def gen_connect(client_id, clean_session=True, keepalive=60, username=None, pass
 
     if client_id != None:
         packet = packet + struct.pack("!H"+str(len(client_id))+"s", len(client_id), client_id)
+    else:
+        packet = packet + struct.pack("!H", 0)
 
     if will_topic != None:
         packet = packet + struct.pack("!H"+str(len(will_topic))+"s", len(will_topic), will_topic)

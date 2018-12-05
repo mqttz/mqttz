@@ -44,7 +44,8 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 	int proplen, varbytes;
 
 	assert(mosq);
-	assert(mosq->id);
+
+	if(mosq->protocol == mosq_p_mqtt31 && !mosq->id) return MOSQ_ERR_PROTOCOL;
 
 #if defined(WITH_BROKER) && defined(WITH_BRIDGE)
 	if(mosq->bridge){
@@ -81,7 +82,11 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 	packet = mosquitto__calloc(1, sizeof(struct mosquitto__packet));
 	if(!packet) return MOSQ_ERR_NOMEM;
 
-	payloadlen = 2+strlen(clientid);
+	if(clientid){
+		payloadlen = 2+strlen(clientid);
+	}else{
+		payloadlen = 2;
+	}
 	if(mosq->will){
 		will = 1;
 		assert(mosq->will->msg.topic);
@@ -140,7 +145,11 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 	}
 
 	/* Payload */
-	packet__write_string(packet, clientid, strlen(clientid));
+	if(clientid){
+		packet__write_string(packet, clientid, strlen(clientid));
+	}else{
+		packet__write_uint16(packet, 0);
+	}
 	if(will){
 		if(mosq->protocol == mosq_p_mqtt5){
 			/* Write will properties */

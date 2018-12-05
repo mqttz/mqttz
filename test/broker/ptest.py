@@ -108,6 +108,7 @@ tests = [
 	(1, './12-prop-session-expiry-invalid.py'),
 	(1, './12-prop-subpub-payload-format.py'),
 	(1, './12-prop-subpub-content-type.py'),
+	(1, './12-prop-assigned-client-identifier.py'),
     ]
 
 minport = 1888
