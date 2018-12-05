@@ -13,6 +13,7 @@ Broker:
   connection. Closes #1040.
 - Don't reload auth_opt_ options on reload, to match the behaviour of the
   other plugin options. Closes #1068.
+- Print message on error when installing/uninstalling as a Windows service.
 
 Library:
 - Fix reconnect delay backoff behaviour. Closes #1027.
