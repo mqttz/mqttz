@@ -2066,8 +2066,10 @@ static int config__check(struct mosquitto__config *config)
 {
 	/* Checks that are easy to make after the config has been loaded. */
 
+	int i;
+
 #ifdef WITH_BRIDGE
-	int i, j;
+	int j;
 	struct mosquitto__bridge *bridge1, *bridge2;
 	char hostname[256];
 	int len;
@@ -2115,6 +2117,28 @@ static int config__check(struct mosquitto__config *config)
 		}
 	}
 #endif
+
+	/* Default to auto_id_prefix = 'auto-' if none set. */
+	if(config->per_listener_settings){
+		for(i=0; i<config->listener_count; i++){
+			if(!config->listeners[i].security_options.auto_id_prefix){
+				config->listeners[i].security_options.auto_id_prefix = mosquitto__strdup("auto-");
+				if(!config->listeners[i].security_options.auto_id_prefix){
+					return MOSQ_ERR_NOMEM;
+				}
+				config->listeners[i].security_options.auto_id_prefix_len = strlen("auto-");
+			}
+		}
+	}else{
+		if(!config->security_options.auto_id_prefix){
+			config->security_options.auto_id_prefix = mosquitto__strdup("auto-");
+			if(!config->security_options.auto_id_prefix){
+				return MOSQ_ERR_NOMEM;
+			}
+			config->security_options.auto_id_prefix_len = strlen("auto-");
+		}
+	}
+
 	return MOSQ_ERR_SUCCESS;
 }
 

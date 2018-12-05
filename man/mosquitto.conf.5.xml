@@ -262,7 +262,7 @@
 						<replaceable>true</replaceable>, this option allows you
 						to set a string that will be prefixed to the
 						automatically generated client ids to aid visibility in
-						logs. Defaults to no prefix.</para>
+						logs. Defaults to <option>auto-</option>.</para>
 					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
