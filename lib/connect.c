@@ -149,10 +149,26 @@ int mosquitto_reconnect(struct mosquitto *mosq)
 
 static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking, const mosquitto_property *properties)
 {
+	const mosquitto_property *outgoing_properties = NULL;
+	mosquitto_property local_property;
 	int rc;
 	struct mosquitto__packet *packet;
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(!mosq->host || mosq->port <= 0) return MOSQ_ERR_INVAL;
+	if(mosq->protocol != mosq_p_mqtt5 && properties) return MOSQ_ERR_NOT_SUPPORTED;
+
+	if(properties){
+		if(properties->client_generated){
+			outgoing_properties = properties;
+		}else{
+			memcpy(&local_property, properties, sizeof(mosquitto_property));
+			local_property.client_generated = true;
+			local_property.next = NULL;
+			outgoing_properties = &local_property;
+		}
+		rc = mosquitto_property_check_all(CMD_DISCONNECT, outgoing_properties);
+		if(rc) return rc;
+	}
 
 	pthread_mutex_lock(&mosq->state_mutex);
 #ifdef WITH_SOCKS
@@ -223,7 +239,7 @@ static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking, const mos
 	}else
 #endif
 	{
-		return send__connect(mosq, mosq->keepalive, mosq->clean_start, properties);
+		return send__connect(mosq, mosq->keepalive, mosq->clean_start, outgoing_properties);
 	}
 }
 
@@ -235,11 +251,22 @@ int mosquitto_disconnect(struct mosquitto *mosq)
 
 int mosquitto_disconnect_v5(struct mosquitto *mosq, int reason_code, const mosquitto_property *properties)
 {
+	const mosquitto_property *outgoing_properties = NULL;
+	mosquitto_property local_property;
 	int rc;
 	if(!mosq) return MOSQ_ERR_INVAL;
+	if(mosq->protocol != mosq_p_mqtt5 && properties) return MOSQ_ERR_NOT_SUPPORTED;
 
 	if(properties){
-		rc = mosquitto_property_check_all(CMD_DISCONNECT, properties);
+		if(properties->client_generated){
+			outgoing_properties = properties;
+		}else{
+			memcpy(&local_property, properties, sizeof(mosquitto_property));
+			local_property.client_generated = true;
+			local_property.next = NULL;
+			outgoing_properties = &local_property;
+		}
+		rc = mosquitto_property_check_all(CMD_DISCONNECT, outgoing_properties);
 		if(rc) return rc;
 	}
 
@@ -248,7 +275,7 @@ int mosquitto_disconnect_v5(struct mosquitto *mosq, int reason_code, const mosqu
 	pthread_mutex_unlock(&mosq->state_mutex);
 
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
-	return send__disconnect(mosq, reason_code, properties);
+	return send__disconnect(mosq, reason_code, outgoing_properties);
 }
 
 

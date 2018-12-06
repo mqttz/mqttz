@@ -34,7 +34,7 @@ int handle__connack(struct mosquitto *mosq)
 	uint8_t reason_code;
 	int rc;
 	mosquitto_property *properties = NULL;
-	const mosquitto_property *prop;
+	char *clientid = NULL;
 
 	assert(mosq);
 	rc = packet__read_byte(&mosq->in_packet, &connect_flags);
@@ -47,30 +47,21 @@ int handle__connack(struct mosquitto *mosq)
 		if(rc) return rc;
 	}
 
-	prop = mosquitto_property_get_property(properties, MQTT_PROP_ASSIGNED_CLIENT_IDENTIFIER, false);
-	if(prop){
+	mosquitto_property_read_string(properties, MQTT_PROP_ASSIGNED_CLIENT_IDENTIFIER, &clientid, false);
+	if(clientid){
 		if(mosq->id){
 			/* We've been sent a client identifier but already have one. This
 			 * shouldn't happen. */
+			free(clientid);
 			mosquitto_property_free_all(&properties);
 			return MOSQ_ERR_PROTOCOL;
 		}else{
-			rc = mosquitto_property_read_string(prop, &mosq->id);
-			if(rc){
-				mosquitto_property_free_all(&properties);
-				return rc;
-			}
+			mosq->id = clientid;
+			clientid = NULL;
 		}
 	}
 
-	prop = mosquitto_property_get_property(properties, MQTT_PROP_SERVER_KEEP_ALIVE, false);
-	if(prop){
-		rc = mosquitto_property_read_int16(prop, &mosq->keepalive);
-		if(rc){
-			mosquitto_property_free_all(&properties);
-			return rc;
-		}
-	}
+	mosquitto_property_read_int16(properties, MQTT_PROP_SERVER_KEEP_ALIVE, &mosq->keepalive, false);
 
 	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received CONNACK (%d)", mosq->id, reason_code);
 	pthread_mutex_lock(&mosq->callback_mutex);

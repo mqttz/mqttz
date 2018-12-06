@@ -24,13 +24,11 @@ void on_message_v5(struct mosquitto *mosq, void *obj, const struct mosquitto_mes
 	int rc;
 
 	if(!strcmp(msg->topic, "request/topic")){
-		p_resp = mosquitto_property_get_property(props, MQTT_PROP_RESPONSE_TOPIC, false);
+		p_resp = mosquitto_property_read_string(props, MQTT_PROP_RESPONSE_TOPIC, &resp_topic, false);
 		if(p_resp){
-			p_corr = mosquitto_property_get_property(props, MQTT_PROP_CORRELATION_DATA, false);
-			if(mosquitto_property_read_string(p_resp, &resp_topic) == MOSQ_ERR_SUCCESS){
-				rc = mosquitto_publish_v5(mosq, NULL, resp_topic, strlen("a response"), "a response", 0, false, p_corr);
-				free(resp_topic);
-			}
+			p_corr = mosquitto_property_read_binary(props, MQTT_PROP_CORRELATION_DATA, NULL, NULL, false);
+			rc = mosquitto_publish_v5(mosq, NULL, resp_topic, strlen("a response"), "a response", 0, false, p_corr);
+			free(resp_topic);
 		}
 	}
 }

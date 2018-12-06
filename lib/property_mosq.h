@@ -36,6 +36,7 @@ struct mqtt5__property {
 	} value;
 	struct mqtt__string name;
 	int32_t identifier;
+	bool client_generated;
 };
 
 

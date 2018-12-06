@@ -2428,17 +2428,26 @@ libmosq_EXPORT int mosquitto_property_add_string(mosquitto_property **proplist, 
 libmosq_EXPORT int mosquitto_property_add_string_pair(mosquitto_property **proplist, int identifier, const char *name, const char *value);
 
 /*
- * Function: mosquitto_property_get_property
+ * Function: mosquitto_property_read_byte
  *
- * Retrieve a property matching an identifier, from a property list. This
- * function can search for multiple entries of an identifier by using the
- * returned value and skip_first.
+ * Attempt to read a byte property matching an identifier, from a property list
+ * or single property. This function can search for multiple entries of the
+ * same identifier by using the returned value and skip_first. Note however
+ * that it is forbidden for most properties to be duplicated.
+ *
+ * If the property is not found, *value will not be modified, so it is safe to
+ * pass a variable with a default value to be potentially overwritten:
+ *
+ * uint16_t keepalive = 60; // default value
+ * // Get value from property list, or keep default if not found.
+ * mosquitto_property_read_int16(proplist, MQTT_PROP_SERVER_KEEP_ALIVE, &keepalive, false);
  *
  * Parameters:
- *	proplist - mosquitto_property pointer, the list of properties
+ *	proplist - mosquitto_property pointer, the list of properties or single property
  *	identifier - property identifier (e.g. MQTT_PROP_PAYLOAD_FORMAT_INDICATOR)
+ *	value - pointer to store the value, or NULL if the value is not required.
  *	skip_first - boolean that indicates whether the first item in the list
- *	             should be ignored or not.
+ *	             should be ignored or not. Should usually be set to false.
  *
  * Returns:
  *	A valid property pointer if the property is found
@@ -2447,30 +2456,17 @@ libmosq_EXPORT int mosquitto_property_add_string_pair(mosquitto_property **propl
  * Example:
  *	// proplist is obtained from a callback
  *	mosquitto_property *prop;
- *	prop = mosquitto_property_get_property(proplist, MQTT_PROP_USER_PROPERTY, false);
+ *	prop = mosquitto_property_read_byte(proplist, identifier, &value, false);
  *	while(prop){
- *		mosquitto_property_read_string_pair(prop, &key, &value);
- *		printf("key: %s value: %s\n", key, value);
- *
- *		prop = mosquitto_property_get_property(prop, MQTT_PROP_USER_PROPERTY, true);
+ *		printf("value: %s\n", value);
+ *		prop = mosquitto_property_read_byte(prop, identifier, &value);
  *	}
  */
-libmosq_EXPORT const mosquitto_property *mosquitto_property_get_property(const mosquitto_property *proplist, int identifier, bool skip_first);
-
-/*
- * Function: mosquitto_property_read_byte
- *
- * Read a byte property value from a property.
- *
- * Parameters:
- *	property - property to read
- *	value - pointer to integer, for the property to be stored in
- *
- * Returns:
- *	MOSQ_ERR_SUCCESS - on success
- *	MOSQ_ERR_INVAL - if property or value is NULL, or if property is not a byte
- */
-libmosq_EXPORT int mosquitto_property_read_byte(const mosquitto_property *property, uint8_t *value);
+libmosq_EXPORT const mosquitto_property *mosquitto_property_read_byte(
+		const mosquitto_property *proplist,
+		int identifier,
+		uint8_t *value,
+		bool skip_first);
 
 /*
  * Function: mosquitto_property_read_int16
@@ -2479,13 +2475,23 @@ libmosq_EXPORT int mosquitto_property_read_byte(const mosquitto_property *proper
  *
  * Parameters:
  *	property - property to read
- *	value - pointer to integer, for the property to be stored in
+ *	identifier - property identifier (e.g. MQTT_PROP_PAYLOAD_FORMAT_INDICATOR)
+ *	value - pointer to store the value, or NULL if the value is not required.
+ *	skip_first - boolean that indicates whether the first item in the list
+ *	             should be ignored or not. Should usually be set to false.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success
- *	MOSQ_ERR_INVAL - if property or value is NULL, or if property is not a uint16
+ *	A valid property pointer if the property is found
+ *	NULL, if the property is not found, or proplist is NULL.
+ *
+ * Example:
+ *	See <mosquitto_property_read_byte>
  */
-libmosq_EXPORT int mosquitto_property_read_int16(const mosquitto_property *property, uint16_t *value);
+libmosq_EXPORT const mosquitto_property *mosquitto_property_read_int16(
+		const mosquitto_property *proplist,
+		int identifier,
+		uint16_t *value,
+		bool skip_first);
 
 /*
  * Function: mosquitto_property_read_int32
@@ -2494,13 +2500,23 @@ libmosq_EXPORT int mosquitto_property_read_int16(const mosquitto_property *prope
  *
  * Parameters:
  *	property - pointer to mosquitto_property pointer, the list of properties
- *	value - pointer to integer, for the property to be stored in
+ *	identifier - property identifier (e.g. MQTT_PROP_PAYLOAD_FORMAT_INDICATOR)
+ *	value - pointer to store the value, or NULL if the value is not required.
+ *	skip_first - boolean that indicates whether the first item in the list
+ *	             should be ignored or not. Should usually be set to false.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success
- *	MOSQ_ERR_INVAL - if property or value is NULL, or if property is not an int32
+ *	A valid property pointer if the property is found
+ *	NULL, if the property is not found, or proplist is NULL.
+ *
+ * Example:
+ *	See <mosquitto_property_read_byte>
  */
-libmosq_EXPORT int mosquitto_property_read_int32(const mosquitto_property *property, uint32_t *value);
+libmosq_EXPORT const mosquitto_property *mosquitto_property_read_int32(
+		const mosquitto_property *proplist,
+		int identifier,
+		uint32_t *value,
+		bool skip_first);
 
 /*
  * Function: mosquitto_property_read_varint
@@ -2509,13 +2525,23 @@ libmosq_EXPORT int mosquitto_property_read_int32(const mosquitto_property *prope
  *
  * Parameters:
  *	property - property to read
- *	value - pointer to integer, for the property to be stored in
+ *	identifier - property identifier (e.g. MQTT_PROP_PAYLOAD_FORMAT_INDICATOR)
+ *	value - pointer to store the value, or NULL if the value is not required.
+ *	skip_first - boolean that indicates whether the first item in the list
+ *	             should be ignored or not. Should usually be set to false.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success
- *	MOSQ_ERR_INVAL - if property or value is NULL, or if property is not a varint
+ *	A valid property pointer if the property is found
+ *	NULL, if the property is not found, or proplist is NULL.
+ *
+ * Example:
+ *	See <mosquitto_property_read_byte>
  */
-libmosq_EXPORT int mosquitto_property_read_varint(const mosquitto_property *property, uint32_t *value);
+libmosq_EXPORT const mosquitto_property *mosquitto_property_read_varint(
+		const mosquitto_property *proplist,
+		int identifier,
+		uint32_t *value,
+		bool skip_first);
 
 /*
  * Function: mosquitto_property_read_binary
@@ -2526,15 +2552,24 @@ libmosq_EXPORT int mosquitto_property_read_varint(const mosquitto_property *prop
  *
  * Parameters:
  *	property - property to read
- *	value - pointer to void pointer, for the property data to be stored in
- *	len - int pointer to store the data length
+ *	identifier - property identifier (e.g. MQTT_PROP_PAYLOAD_FORMAT_INDICATOR)
+ *	value - pointer to store the value, or NULL if the value is not required.
+ *	skip_first - boolean that indicates whether the first item in the list
+ *	             should be ignored or not. Should usually be set to false.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success
- *	MOSQ_ERR_INVAL - if property, len, or value is NULL, or if property is not a binary type
- *	MOSQ_ERR_NOMEM - on out of memory
+ *	A valid property pointer if the property is found
+ *	NULL, if the property is not found, or proplist is NULL, or if an out of memory condition occurred.
+ *
+ * Example:
+ *	See <mosquitto_property_read_byte>
  */
-libmosq_EXPORT int mosquitto_property_read_binary(const mosquitto_property *property, void **value, int *len);
+libmosq_EXPORT const mosquitto_property *mosquitto_property_read_binary(
+		const mosquitto_property *proplist,
+		int identifier,
+		void **value,
+		int *len,
+		bool skip_first);
 
 /*
  * Function: mosquitto_property_read_string
@@ -2545,14 +2580,24 @@ libmosq_EXPORT int mosquitto_property_read_binary(const mosquitto_property *prop
  *
  * Parameters:
  *	property - property to read
- *	value - pointer to char*, for the property data to be stored in
+ *	identifier - property identifier (e.g. MQTT_PROP_PAYLOAD_FORMAT_INDICATOR)
+ *	value - pointer to char*, for the property data to be stored in, or NULL if
+ *	        the value is not required.
+ *	skip_first - boolean that indicates whether the first item in the list
+ *	             should be ignored or not. Should usually be set to false.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success
- *	MOSQ_ERR_INVAL - if property or value is NULL, or if property is not a string
- *	MOSQ_ERR_NOMEM - on out of memory
+ *	A valid property pointer if the property is found
+ *	NULL, if the property is not found, or proplist is NULL, or if an out of memory condition occurred.
+ *
+ * Example:
+ *	See <mosquitto_property_read_byte>
  */
-libmosq_EXPORT int mosquitto_property_read_string(const mosquitto_property *property, char **value);
+libmosq_EXPORT const mosquitto_property *mosquitto_property_read_string(
+		const mosquitto_property *proplist,
+		int identifier,
+		char **value,
+		bool skip_first);
 
 /*
  * Function: mosquitto_property_read_string_pair
@@ -2563,15 +2608,27 @@ libmosq_EXPORT int mosquitto_property_read_string(const mosquitto_property *prop
  *
  * Parameters:
  *	property - property to read
- *	name - pointer to char* for the name property data to be stored in
- *	value - pointer to char* for the value property data to be stored in
+ *	identifier - property identifier (e.g. MQTT_PROP_PAYLOAD_FORMAT_INDICATOR)
+ *	name - pointer to char* for the name property data to be stored in, or NULL
+ *	       if the name is not required.
+ *	value - pointer to char*, for the property data to be stored in, or NULL if
+ *	        the value is not required.
+ *	skip_first - boolean that indicates whether the first item in the list
+ *	             should be ignored or not. Should usually be set to false.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success
- *	MOSQ_ERR_INVAL - if property, name, or value is NULL, or if property is not a string pair
- *	MOSQ_ERR_NOMEM - on out of memory
+ *	A valid property pointer if the property is found
+ *	NULL, if the property is not found, or proplist is NULL, or if an out of memory condition occurred.
+ *
+ * Example:
+ *	See <mosquitto_property_read_byte>
  */
-libmosq_EXPORT int mosquitto_property_read_string_pair(const mosquitto_property *property, char **name, char **value);
+libmosq_EXPORT const mosquitto_property *mosquitto_property_read_string_pair(
+		const mosquitto_property *proplist,
+		int identifier,
+		char **name,
+		char **value,
+		bool skip_first);
 
 /*
  * Function: mosquitto_property_free_all

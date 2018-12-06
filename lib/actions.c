@@ -39,15 +39,32 @@ int mosquitto_publish_v5(struct mosquitto *mosq, int *mid, const char *topic, in
 	uint16_t local_mid;
 	int queue_status;
 	const mosquitto_property *p;
+	const mosquitto_property *outgoing_properties = NULL;
+	mosquitto_property local_property;
 	bool have_topic_alias;
 	int rc;
 
 	if(!mosq || qos<0 || qos>2) return MOSQ_ERR_INVAL;
+	if(mosq->protocol != mosq_p_mqtt5 && properties) return MOSQ_ERR_NOT_SUPPORTED;
+
+	if(properties){
+		if(properties->client_generated){
+			outgoing_properties = properties;
+		}else{
+			memcpy(&local_property, properties, sizeof(mosquitto_property));
+			local_property.client_generated = true;
+			local_property.next = NULL;
+			outgoing_properties = &local_property;
+		}
+		rc = mosquitto_property_check_all(CMD_PUBLISH, outgoing_properties);
+		if(rc) return rc;
+	}
+
 	if(!topic || STREMPTY(topic)){
 		if(topic) topic = NULL;
 
 		if(mosq->protocol == mosq_p_mqtt5){
-			p = properties;
+			p = outgoing_properties;
 			have_topic_alias = false;
 			while(p){
 				if(p->identifier == MQTT_PROP_TOPIC_ALIAS){
@@ -69,10 +86,6 @@ int mosquitto_publish_v5(struct mosquitto *mosq, int *mid, const char *topic, in
 			return MOSQ_ERR_INVAL;
 		}
 	}
-	if(properties){
-		rc = mosquitto_property_check_all(CMD_PUBLISH, properties);
-		if(rc) return rc;
-	}
 
 	local_mid = mosquitto__mid_generate(mosq);
 	if(mid){
@@ -80,7 +93,7 @@ int mosquitto_publish_v5(struct mosquitto *mosq, int *mid, const char *topic, in
 	}
 
 	if(qos == 0){
-		return send__publish(mosq, local_mid, topic, payloadlen, payload, qos, retain, false, properties);
+		return send__publish(mosq, local_mid, topic, payloadlen, payload, qos, retain, false, outgoing_properties);
 	}else{
 		message = mosquitto__calloc(1, sizeof(struct mosquitto_message_all));
 		if(!message) return MOSQ_ERR_NOMEM;
@@ -120,7 +133,7 @@ int mosquitto_publish_v5(struct mosquitto *mosq, int *mid, const char *topic, in
 				message->state = mosq_ms_wait_for_pubrec;
 			}
 			pthread_mutex_unlock(&mosq->out_message_mutex);
-			return send__publish(mosq, message->msg.mid, message->msg.topic, message->msg.payloadlen, message->msg.payload, message->msg.qos, message->msg.retain, message->dup, properties);
+			return send__publish(mosq, message->msg.mid, message->msg.topic, message->msg.payloadlen, message->msg.payload, message->msg.qos, message->msg.retain, message->dup, outgoing_properties);
 		}else{
 			message->state = mosq_ms_invalid;
 			pthread_mutex_unlock(&mosq->out_message_mutex);
@@ -137,34 +150,57 @@ int mosquitto_subscribe(struct mosquitto *mosq, int *mid, const char *sub, int q
 
 int mosquitto_subscribe_v5(struct mosquitto *mosq, int *mid, const char *sub, int qos, const mosquitto_property *properties)
 {
+	const mosquitto_property *outgoing_properties = NULL;
+	mosquitto_property local_property;
+
 	int rc;
 
 	if(!mosq) return MOSQ_ERR_INVAL;
+	if(mosq->protocol != mosq_p_mqtt5 && properties) return MOSQ_ERR_NOT_SUPPORTED;
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
 
 	if(mosquitto_sub_topic_check(sub)) return MOSQ_ERR_INVAL;
 	if(mosquitto_validate_utf8(sub, strlen(sub))) return MOSQ_ERR_MALFORMED_UTF8;
 
 	if(properties){
-		rc = mosquitto_property_check_all(CMD_SUBSCRIBE, properties);
+		if(properties->client_generated){
+			outgoing_properties = properties;
+		}else{
+			memcpy(&local_property, properties, sizeof(mosquitto_property));
+			local_property.client_generated = true;
+			local_property.next = NULL;
+			outgoing_properties = &local_property;
+		}
+		rc = mosquitto_property_check_all(CMD_SUBSCRIBE, outgoing_properties);
 		if(rc) return rc;
 	}
 
-	return send__subscribe(mosq, mid, 1, (char *const *const)&sub, qos, properties);
+	return send__subscribe(mosq, mid, 1, (char *const *const)&sub, qos, outgoing_properties);
 }
 
 
 int mosquitto_subscribe_multiple(struct mosquitto *mosq, int *mid, int sub_count, char *const *const sub, int qos, const mosquitto_property *properties)
 {
+	const mosquitto_property *outgoing_properties = NULL;
+	mosquitto_property local_property;
 	int i;
 	int rc;
 
 	if(!mosq || !sub_count || !sub) return MOSQ_ERR_INVAL;
+	if(mosq->protocol != mosq_p_mqtt5 && properties) return MOSQ_ERR_NOT_SUPPORTED;
 	if(qos < 0 || qos > 2) return MOSQ_ERR_INVAL;
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
 
-	if(mosq->protocol == mosq_p_mqtt5 && properties){
-		rc = mosquitto_property_check_all(CMD_SUBSCRIBE, properties);
+	if(properties){
+		if(properties->client_generated){
+			outgoing_properties = properties;
+		}else{
+			memcpy(&local_property, properties, sizeof(mosquitto_property));
+			local_property.client_generated = true;
+			local_property.next = NULL;
+			outgoing_properties = &local_property;
+		}
+		rc = mosquitto_property_check_all(CMD_SUBSCRIBE, outgoing_properties);
 		if(rc) return rc;
 	}
 
@@ -184,18 +220,30 @@ int mosquitto_unsubscribe(struct mosquitto *mosq, int *mid, const char *sub)
 
 int mosquitto_unsubscribe_v5(struct mosquitto *mosq, int *mid, const char *sub, const mosquitto_property *properties)
 {
+	const mosquitto_property *outgoing_properties = NULL;
+	mosquitto_property local_property;
 	int rc;
 
 	if(!mosq) return MOSQ_ERR_INVAL;
+	if(mosq->protocol != mosq_p_mqtt5 && properties) return MOSQ_ERR_NOT_SUPPORTED;
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
 
 	if(mosquitto_sub_topic_check(sub)) return MOSQ_ERR_INVAL;
 	if(mosquitto_validate_utf8(sub, strlen(sub))) return MOSQ_ERR_MALFORMED_UTF8;
 
 	if(properties){
-		rc = mosquitto_property_check_all(CMD_PUBLISH, properties);
+		if(properties->client_generated){
+			outgoing_properties = properties;
+		}else{
+			memcpy(&local_property, properties, sizeof(mosquitto_property));
+			local_property.client_generated = true;
+			local_property.next = NULL;
+			outgoing_properties = &local_property;
+		}
+		rc = mosquitto_property_check_all(CMD_UNSUBSCRIBE, outgoing_properties);
 		if(rc) return rc;
 	}
-	return send__unsubscribe(mosq, mid, sub, properties);
+
+	return send__unsubscribe(mosq, mid, sub, outgoing_properties);
 }
 
