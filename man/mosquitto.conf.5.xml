@@ -436,6 +436,25 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>max_keepalive</option> <replaceable>value</replaceable></term>
+				<listitem>
+					<para>For MQTT v5 clients, it is possible to have the
+						server send a "server keepalive" value that will
+						override the keepalive value set by the client.  This
+						is intended to be used as a mechanism to say that the
+						server will disconnect the client earlier than it
+						anticipated, and that the client should use the new
+						keepalive value. The max_keepalive option allows you to
+						specify that clients may only connect with keepalive
+						less than or equal to this value, otherwise they will
+						be sent a server keepalive telling them to use
+						max_keepalive. This only applies to MQTT v5 clients.
+						The maximum value allowable, and default value, is
+						65535. Do not set below 10 seconds.</para>
+					<para>Reloaded on reload signal.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>max_queued_bytes</option> <replaceable>count</replaceable></term>
 				<listitem>
 					<para>QoS 1 and 2 messages above those currently in-flight will be

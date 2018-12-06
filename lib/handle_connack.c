@@ -62,6 +62,16 @@ int handle__connack(struct mosquitto *mosq)
 			}
 		}
 	}
+
+	prop = mosquitto_property_get_property(properties, MQTT_PROP_SERVER_KEEP_ALIVE, false);
+	if(prop){
+		rc = mosquitto_property_read_int16(prop, &mosq->keepalive);
+		if(rc){
+			mosquitto_property_free_all(&properties);
+			return rc;
+		}
+	}
+
 	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received CONNACK (%d)", mosq->id, reason_code);
 	pthread_mutex_lock(&mosq->callback_mutex);
 	if(mosq->on_connect){

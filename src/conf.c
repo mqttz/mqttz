@@ -212,6 +212,7 @@ static void config__init_reload(struct mosquitto_db *db, struct mosquitto__confi
 	}
 #endif
 	config->log_timestamp = true;
+	config->max_keepalive = 65535;
 	config->persistence = false;
 	mosquitto__free(config->persistence_location);
 	config->persistence_location = NULL;
@@ -1513,6 +1514,13 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 					}else{
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty max_inflight_messages value in configuration.");
 					}
+				}else if(!strcmp(token, "max_keepalive")){
+					if(conf__parse_int(&token, "max_keepalive", &tmp_int, saveptr)) return MOSQ_ERR_INVAL;
+					if(tmp_int < 10 || tmp_int > 65535){
+						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid max_keepalive value (%d).", tmp_int);
+						return MOSQ_ERR_INVAL;
+					}
+					config->max_keepalive = tmp_int;
 				}else if(!strcmp(token, "max_queued_bytes")){
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){

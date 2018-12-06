@@ -297,11 +297,17 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		rc = 1;
 		goto handle_connect_error;
 	}
+	if(protocol_version == PROTOCOL_VERSION_v5 && context->keepalive > db->config->max_keepalive){
+		context->keepalive = db->config->max_keepalive;
+		if(mosquitto_property_add_int16(&connack_props, MQTT_PROP_SERVER_KEEP_ALIVE, context->keepalive)){
+			rc = MOSQ_ERR_NOMEM;
+			goto handle_connect_error;
+		}
+	}
 
 	if(protocol_version == PROTOCOL_VERSION_v5){
 		rc = property__read_all(CMD_CONNECT, &context->in_packet, &properties);
-		if(rc) return rc;
-		mosquitto_property_free_all(&properties);
+		if(rc) goto handle_connect_error;
 	}
 	property__process_connect(context, properties);
 

@@ -5,6 +5,8 @@ Broker features:
 - Improved general support for broker generated client ids. Removed libuuid
   dependency.
 - auto_id_prefix now defaults to 'auto-'.
+- Add max_keepalive option, to allow a maximum keepalive value to be set for
+  MQTT v5 clients only.
 
 Client library features:
 - Add mosquitto_subscribe_multiple() for sending subscriptions to multiple

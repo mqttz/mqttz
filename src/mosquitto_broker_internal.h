@@ -259,6 +259,7 @@ struct mosquitto__config {
 	bool log_timestamp;
 	char *log_file;
 	FILE *log_fptr;
+	uint16_t max_keepalive;
 	uint32_t message_size_limit;
 	bool persistence;
 	char *persistence_location;
