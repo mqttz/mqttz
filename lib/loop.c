@@ -292,31 +292,7 @@ int mosquitto_loop_misc(struct mosquitto *mosq)
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
 
-	mosquitto__check_keepalive(mosq);
-	now = mosquitto_time();
-
-	if(mosq->ping_t && now - mosq->ping_t >= mosq->keepalive){
-		/* mosq->ping_t != 0 means we are waiting for a pingresp.
-		 * This hasn't happened in the keepalive time so we should disconnect.
-		 */
-		net__socket_close(mosq);
-		pthread_mutex_lock(&mosq->state_mutex);
-		if(mosq->state == mosq_cs_disconnecting){
-			rc = MOSQ_ERR_SUCCESS;
-		}else{
-			rc = MOSQ_ERR_KEEPALIVE;
-		}
-		pthread_mutex_unlock(&mosq->state_mutex);
-		pthread_mutex_lock(&mosq->callback_mutex);
-		if(mosq->on_disconnect){
-			mosq->in_callback = true;
-			mosq->on_disconnect(mosq, mosq->userdata, rc);
-			mosq->in_callback = false;
-		}
-		pthread_mutex_unlock(&mosq->callback_mutex);
-		return MOSQ_ERR_CONN_LOST;
-	}
-	return MOSQ_ERR_SUCCESS;
+	return mosquitto__check_keepalive(mosq);
 }
 
 

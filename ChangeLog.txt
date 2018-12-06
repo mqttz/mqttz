@@ -17,6 +17,7 @@ Broker:
 
 Library:
 - Fix reconnect delay backoff behaviour. Closes #1027.
+- Don't call on_disconnect() twice if keepalive tests fail. Closes #1067.
 
 Client:
 - Always print leading zeros in mosquitto_sub when output format is hex.

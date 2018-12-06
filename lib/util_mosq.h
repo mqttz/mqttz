@@ -26,9 +26,9 @@ Contributors:
 #endif
 
 #ifdef WITH_BROKER
-void mosquitto__check_keepalive(struct mosquitto_db *db, struct mosquitto *mosq);
+int mosquitto__check_keepalive(struct mosquitto_db *db, struct mosquitto *mosq);
 #else
-void mosquitto__check_keepalive(struct mosquitto *mosq);
+int mosquitto__check_keepalive(struct mosquitto *mosq);
 #endif
 uint16_t mosquitto__mid_generate(struct mosquitto *mosq);
 FILE *mosquitto__fopen(const char *path, const char *mode, bool restrict_read);
