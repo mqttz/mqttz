@@ -33,7 +33,10 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 	int rc2;
 	uint16_t mid;
 	char *sub;
+	uint8_t subscription_options;
 	uint8_t qos;
+	uint8_t retain_handling = 0;
+	uint8_t retain_as_published = 0;
 	uint8_t *payload = NULL, *tmp_payload;
 	uint32_t payloadlen = 0;
 	int len;
@@ -84,10 +87,24 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 				return 1;
 			}
 
-			if(packet__read_byte(&context->in_packet, &qos)){
+			if(packet__read_byte(&context->in_packet, &subscription_options)){
 				mosquitto__free(sub);
 				mosquitto__free(payload);
 				return 1;
+			}
+			if(context->protocol == mosq_p_mqtt31 || context->protocol == mosq_p_mqtt311){
+				qos = subscription_options;
+			}else{
+				qos = subscription_options & 0x03;
+
+				retain_as_published = subscription_options & 0x04;
+
+				retain_handling = (subscription_options & 0x30) >> 4;
+				if(retain_handling == 3){
+					mosquitto__free(sub);
+					mosquitto__free(payload);
+					return MOSQ_ERR_PROTOCOL;
+				}
 			}
 			if(qos > 2){
 				log__printf(NULL, MOSQ_LOG_INFO,
@@ -97,6 +114,8 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 				mosquitto__free(payload);
 				return 1;
 			}
+
+
 			if(context->listener && context->listener->mount_point){
 				len = strlen(context->listener->mount_point) + slen + 1;
 				sub_mount = mosquitto__malloc(len+1);
@@ -130,11 +149,18 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 
 			if(qos != 0x80){
 				rc2 = sub__add(db, context, sub, qos, &db->subs);
-				if(rc2 == MOSQ_ERR_SUCCESS){
-					if(sub__retain_queue(db, context, sub, qos)) rc = 1;
-				}else if(rc2 != -1){
-					rc = rc2;
+				if(context->protocol == mosq_p_mqtt311 || context->protocol == mosq_p_mqtt31){
+					if(rc2 == MOSQ_ERR_SUCCESS || rc2 == MOSQ_ERR_SUB_EXISTS){
+						if(sub__retain_queue(db, context, sub, qos)) rc = 1;
+					}
+				}else{
+					if((rc2 == MOSQ_ERR_SUCCESS && retain_handling == 0)
+							|| (rc2 == MOSQ_ERR_SUB_EXISTS && retain_handling == 1)){
+
+						if(sub__retain_queue(db, context, sub, qos)) rc = 1;
+					}
 				}
+
 				log__printf(NULL, MOSQ_LOG_SUBSCRIBE, "%s %d %s", context->id, qos, sub);
 			}
 			mosquitto__free(sub);

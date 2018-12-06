@@ -260,11 +260,11 @@ static int sub__add_recurse(struct mosquitto_db *db, struct mosquitto *context, 
 			while(leaf){
 				if(leaf->context && leaf->context->id && !strcmp(leaf->context->id, context->id)){
 					/* Client making a second subscription to same topic. Only
-					 * need to update QoS. Return -1 to indicate this to the
-					 * calling function. */
+					 * need to update QoS. Return MOSQ_ERR_SUB_EXISTS to
+					 * indicate this to the calling function. */
 					leaf->qos = qos;
 					if(context->protocol == mosq_p_mqtt31){
-						return -1;
+						return MOSQ_ERR_SUB_EXISTS;
 					}else{
 						/* mqttv311/mqttv5 requires retained messages are resent on
 						 * resubscribe. */
@@ -472,8 +472,6 @@ int sub__add(struct mosquitto_db *db, struct mosquitto *context, const char *sub
 
 	sub__topic_tokens_free(tokens);
 
-	/* We aren't worried about -1 (already subscribed) return codes. */
-	if(rc == -1) rc = MOSQ_ERR_SUCCESS;
 	return rc;
 }
 

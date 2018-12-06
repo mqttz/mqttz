@@ -799,7 +799,7 @@ static int persist__sub_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 	topic[slen] = '\0';
 
 	read_e(db_fptr, &qos, sizeof(uint8_t));
-	if(persist__restore_sub(db, client_id, topic, qos)){
+	if(persist__restore_sub(db, client_id, topic, qos) > 0){
 		rc = 1;
 	}
 	mosquitto__free(client_id);
