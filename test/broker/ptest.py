@@ -110,6 +110,8 @@ tests = [
 	(1, './12-prop-subpub-content-type.py'),
 	(1, './12-prop-assigned-client-identifier.py'),
 	(1, './12-prop-server-keepalive.py'),
+    (1, './12-prop-response-topic.py'),
+    (1, './12-prop-response-topic-correlation-data.py'),
     ]
 
 minport = 1888

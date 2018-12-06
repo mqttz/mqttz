@@ -158,10 +158,11 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 		msg_properties_last = NULL;
 		while(p){
 			switch(p->identifier){
-				case MQTT_PROP_PAYLOAD_FORMAT_INDICATOR:
-				case MQTT_PROP_CORRELATION_DATA:
-				case MQTT_PROP_USER_PROPERTY:
 				case MQTT_PROP_CONTENT_TYPE:
+				case MQTT_PROP_CORRELATION_DATA:
+				case MQTT_PROP_PAYLOAD_FORMAT_INDICATOR:
+				case MQTT_PROP_RESPONSE_TOPIC:
+				case MQTT_PROP_USER_PROPERTY:
 					if(msg_properties){
 						msg_properties_last->next = p;
 						msg_properties_last = p;
@@ -180,11 +181,6 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 					break;
 
 				case MQTT_PROP_TOPIC_ALIAS:
-					p_prev = p;
-					p = p->next;
-					break;
-
-				case MQTT_PROP_RESPONSE_TOPIC:
 					p_prev = p;
 					p = p->next;
 					break;

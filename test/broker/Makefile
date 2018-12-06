@@ -141,3 +141,5 @@ endif
 	./12-prop-subpub-content-type.py
 	./12-prop-assigned-client-identifier.py
 	./12-prop-server-keepalive.py
+	./12-prop-response-topic.py
+	./12-prop-response-topic-correlation-data.py
