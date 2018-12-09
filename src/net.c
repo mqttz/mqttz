@@ -152,8 +152,10 @@ int net__socket_accept(struct mosquitto_db *db, mosq_sock_t listensock)
 	fromhost(&wrap_req);
 	if(!hosts_access(&wrap_req)){
 		/* Access is denied */
-		if(!net__socket_get_address(new_sock, address, 1024)){
-			log__printf(NULL, MOSQ_LOG_NOTICE, "Client connection from %s denied access by tcpd.", address);
+		if(db->config->connection_messages == true){
+			if(!net__socket_get_address(new_sock, address, 1024)){
+				log__printf(NULL, MOSQ_LOG_NOTICE, "Client connection from %s denied access by tcpd.", address);
+			}
 		}
 		COMPAT_CLOSE(new_sock);
 		return -1;
@@ -187,7 +189,9 @@ int net__socket_accept(struct mosquitto_db *db, mosq_sock_t listensock)
 	}
 
 	if(new_context->listener->max_connections > 0 && new_context->listener->client_count > new_context->listener->max_connections){
-		log__printf(NULL, MOSQ_LOG_NOTICE, "Client connection from %s denied: max_connections exceeded.", new_context->address);
+		if(db->config->connection_messages == true){
+			log__printf(NULL, MOSQ_LOG_NOTICE, "Client connection from %s denied: max_connections exceeded.", new_context->address);
+		}
 		context__cleanup(db, new_context, true);
 		return -1;
 	}
@@ -217,12 +221,14 @@ int net__socket_accept(struct mosquitto_db *db, mosq_sock_t listensock)
 						}else if(rc == SSL_ERROR_WANT_WRITE){
 							new_context->want_write = true;
 						}else{
-							e = ERR_get_error();
-							while(e){
-								log__printf(NULL, MOSQ_LOG_NOTICE,
-										"Client connection from %s failed: %s.",
-										new_context->address, ERR_error_string(e, ebuf));
+							if(db->config->connection_messages == true){
 								e = ERR_get_error();
+								while(e){
+									log__printf(NULL, MOSQ_LOG_NOTICE,
+											"Client connection from %s failed: %s.",
+											new_context->address, ERR_error_string(e, ebuf));
+									e = ERR_get_error();
+								}
 							}
 							context__cleanup(db, new_context, true);
 							return -1;
@@ -234,7 +240,9 @@ int net__socket_accept(struct mosquitto_db *db, mosq_sock_t listensock)
 	}
 #endif
 
-	log__printf(NULL, MOSQ_LOG_NOTICE, "New connection from %s on port %d.", new_context->address, new_context->listener->port);
+	if(db->config->connection_messages == true){
+		log__printf(NULL, MOSQ_LOG_NOTICE, "New connection from %s on port %d.", new_context->address, new_context->listener->port);
+	}
 
 	return new_sock;
 }

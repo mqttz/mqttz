@@ -19,6 +19,8 @@ Broker:
 - Don't reload auth_opt_ options on reload, to match the behaviour of the
   other plugin options. Closes #1068.
 - Print message on error when installing/uninstalling as a Windows service.
+- All non-error connect/disconnect messages are controlled by the
+  `connection_messages` option. Closes #772. Closes #613. Closes #537.
 
 Library:
 - Fix reconnect delay backoff behaviour. Closes #1027.
