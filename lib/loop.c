@@ -286,9 +286,6 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 
 int mosquitto_loop_misc(struct mosquitto *mosq)
 {
-	time_t now;
-	int rc;
-
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
 
