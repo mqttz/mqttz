@@ -33,7 +33,7 @@ int mosquitto__check_keepalive(struct mosquitto *mosq);
 uint16_t mosquitto__mid_generate(struct mosquitto *mosq);
 FILE *mosquitto__fopen(const char *path, const char *mode, bool restrict_read);
 
-#ifdef WITH_TLS_PSK
+#ifdef FINAL_WITH_TLS_PSK
 int mosquitto__hex2bin(const char *hex, unsigned char *bin, int bin_max_len);
 #endif
 

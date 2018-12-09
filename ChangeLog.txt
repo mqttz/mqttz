@@ -28,6 +28,9 @@ Client:
 - Always print leading zeros in mosquitto_sub when output format is hex.
   Closes #1066.
 
+Build:
+- Fix building where TLS-PSK is not available. Closes #68.
+
 
 1.5.4 - 20181108
 ================

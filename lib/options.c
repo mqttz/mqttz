@@ -223,7 +223,7 @@ int mosquitto_tls_insecure_set(struct mosquitto *mosq, bool value)
 
 int mosquitto_tls_psk_set(struct mosquitto *mosq, const char *psk, const char *identity, const char *ciphers)
 {
-#ifdef WITH_TLS_PSK
+#ifdef FINAL_WITH_TLS_PSK
 	if(!mosq || !psk || !identity) return MOSQ_ERR_INVAL;
 
 	/* Check for hex only digits */

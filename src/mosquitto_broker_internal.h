@@ -463,7 +463,7 @@ struct mosquitto__bridge{
 	char *tls_certfile;
 	char *tls_keyfile;
 	char *tls_version;
-#  ifdef WITH_TLS_PSK
+#  ifdef FINAL_WITH_TLS_PSK
 	char *tls_psk_identity;
 	char *tls_psk;
 #  endif

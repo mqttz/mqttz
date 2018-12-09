@@ -349,7 +349,7 @@ int mosquitto_topic_matches_sub2(const char *sub, size_t sublen, const char *top
 	return MOSQ_ERR_SUCCESS;
 }
 
-#ifdef WITH_TLS_PSK
+#ifdef FINAL_WITH_TLS_PSK
 int mosquitto__hex2bin(const char *hex, unsigned char *bin, int bin_max_len)
 {
 	BIGNUM *bn = NULL;

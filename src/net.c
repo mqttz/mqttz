@@ -247,7 +247,7 @@ static int client_certificate_verify(int preverify_ok, X509_STORE_CTX *ctx)
 }
 #endif
 
-#ifdef WITH_TLS_PSK
+#ifdef FINAL_WITH_TLS_PSK
 static unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned char *psk, unsigned int max_psk_len)
 {
 	struct mosquitto_db *db;
@@ -520,7 +520,7 @@ int net__socket_listen(struct mosquitto__listener *listener)
 				X509_STORE_set_flags(store, X509_V_FLAG_CRL_CHECK);
 			}
 
-#  ifdef WITH_TLS_PSK
+#  ifdef FINAL_WITH_TLS_PSK
 		}else if(listener->psk_hint){
 			if(tls_ex_index_context == -1){
 				tls_ex_index_context = SSL_get_ex_new_index(0, "client context", NULL, NULL, NULL);
@@ -543,7 +543,7 @@ int net__socket_listen(struct mosquitto__listener *listener)
 					return 1;
 				}
 			}
-#  endif /* WITH_TLS_PSK */
+#  endif /* FINAL_WITH_TLS_PSK */
 		}
 #endif /* WITH_TLS */
 		return 0;

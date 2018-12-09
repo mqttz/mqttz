@@ -183,7 +183,7 @@ int net__socket_close(struct mosquitto *mosq)
 }
 
 
-#ifdef WITH_TLS_PSK
+#ifdef FINAL_WITH_TLS_PSK
 static unsigned int psk_client_callback(SSL *ssl, const char *hint,
 		char *identity, unsigned int max_identity_len,
 		unsigned char *psk, unsigned int max_psk_len)
@@ -594,7 +594,7 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 					return MOSQ_ERR_TLS;
 				}
 			}
-#ifdef WITH_TLS_PSK
+#ifdef FINAL_WITH_TLS_PSK
 		}else if(mosq->tls_psk){
 			SSL_CTX_set_psk_client_callback(mosq->ssl_ctx, psk_client_callback);
 #endif
