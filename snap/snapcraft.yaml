@@ -16,11 +16,11 @@ apps:
     command: launcher.sh
     daemon: simple
     restart-condition: always
-    plugs: [home, network, network-bind]
+    plugs: [network, network-bind]
 
   pub:
     command: usr/bin/mosquitto_pub
-    plugs: [home, network]
+    plugs: [network]
 
   sub:
     command: usr/bin/mosquitto_sub
@@ -28,7 +28,6 @@ apps:
 
   passwd:
     command: usr/bin/mosquitto_passwd
-    plugs: [home]
 
 
 parts:
