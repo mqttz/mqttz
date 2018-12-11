@@ -11,7 +11,7 @@
 
 # Source
 
-* [mosquitto-1.5.4.tar.gz](https://mosquitto.org/files/source/mosquitto-1.5.4.tar.gz) (319kB) ([GPG signature](https://mosquitto.org/files/source/mosquitto-1.5.4.tar.gz.asc))
+* [mosquitto-1.5.5.tar.gz](https://mosquitto.org/files/source/mosquitto-1.5.5.tar.gz) (319kB) ([GPG signature](https://mosquitto.org/files/source/mosquitto-1.5.5.tar.gz.asc))
 * [mosquitto-1.5.4.tar.gz](https://www.eclipse.org/downloads/download.php?file=/mosquitto/source/mosquitto-1.5.4.tar.gz) (via Eclipse)
 * [Git source code repository](https://github.com/eclipse/mosquitto) (github.com)
 

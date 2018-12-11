@@ -19,6 +19,8 @@ follow the steps on [Eclipse Security] page to report it.
 Listed with most recent first. Further information on security related issues
 can be found in the [security category].
 
+* December 2018: No CVE assigned. Affecting versions **1.5** to **1.5.4**
+  inclusive, fixed in **1.5.5.**. More details at [version-155-released].
 * November 2018: No CVE assigned. Affecting versions **1.4** to **1.5.3**
   inclusive, fixed in **1.5.4**. More details at [version-154-released].
 * September 2018: [CVE-2018-12543] affecting versions **1.5** to **1.5.2**
@@ -43,6 +45,7 @@ can be found in the [security category].
   inclusive, fixed in **1.4.12**. More details at
   [security-advisory-cve-2017-7650].
 
+[version-155-released]: /2018/11/version-155-released/
 [version-154-released]: /2018/11/version-154-released/
 [security-advisory-cve-2018-12543]: /2018/09/security-advisory-cve-2018-12543/
 [security-advisory-cve-2017-7651-cve-2017-7652]: /2018/02/security-advisory-cve-2017-7651-cve-2017-7652/
