@@ -85,11 +85,11 @@ static void write_payload(const unsigned char *payload, int payloadlen, int hex)
 		(void)fwrite(payload, 1, payloadlen, stdout);
 	}else if(hex == 1){
 		for(i=0; i<payloadlen; i++){
-			fprintf(stdout, "%x", payload[i]);
+			fprintf(stdout, "%02x", payload[i]);
 		}
 	}else if(hex == 2){
 		for(i=0; i<payloadlen; i++){
-			fprintf(stdout, "%X", payload[i]);
+			fprintf(stdout, "%02X", payload[i]);
 		}
 	}
 }

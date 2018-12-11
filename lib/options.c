@@ -76,6 +76,8 @@ int mosquitto_reconnect_delay_set(struct mosquitto *mosq, unsigned int reconnect
 {
 	if(!mosq) return MOSQ_ERR_INVAL;
 	
+	if(reconnect_delay == 0) reconnect_delay = 1;
+
 	mosq->reconnect_delay = reconnect_delay;
 	mosq->reconnect_delay_max = reconnect_delay_max;
 	mosq->reconnect_exponential_backoff = reconnect_exponential_backoff;
@@ -221,7 +223,7 @@ int mosquitto_tls_insecure_set(struct mosquitto *mosq, bool value)
 
 int mosquitto_tls_psk_set(struct mosquitto *mosq, const char *psk, const char *identity, const char *ciphers)
 {
-#ifdef WITH_TLS_PSK
+#ifdef FINAL_WITH_TLS_PSK
 	if(!mosq || !psk || !identity) return MOSQ_ERR_INVAL;
 
 	/* Check for hex only digits */

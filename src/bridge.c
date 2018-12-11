@@ -82,7 +82,7 @@ int bridge__new(struct mosquitto_db *db, struct mosquitto__bridge *bridge)
 	new_context->tls_cert_reqs = SSL_VERIFY_PEER;
 	new_context->tls_version = new_context->bridge->tls_version;
 	new_context->tls_insecure = new_context->bridge->tls_insecure;
-#ifdef WITH_TLS_PSK
+#ifdef FINAL_WITH_TLS_PSK
 	new_context->tls_psk_identity = new_context->bridge->tls_psk_identity;
 	new_context->tls_psk = new_context->bridge->tls_psk;
 #endif
@@ -140,16 +140,6 @@ int bridge__connect_step1(struct mosquitto_db *db, struct mosquitto *context)
 	 * anyway. This means any unwanted subs will be removed.
 	 */
 	sub__clean_session(db, context);
-
-	for(i=0; i<context->bridge->topic_count; i++){
-		if(context->bridge->topics[i].direction == bd_out || context->bridge->topics[i].direction == bd_both){
-			log__printf(NULL, MOSQ_LOG_DEBUG, "Bridge %s doing local SUBSCRIBE on topic %s", context->id, context->bridge->topics[i].local_topic);
-			if(sub__add(db, context, context->bridge->topics[i].local_topic, context->bridge->topics[i].qos, &db->subs)) return 1;
-			sub__retain_queue(db, context,
-					context->bridge->topics[i].local_topic,
-					context->bridge->topics[i].qos);
-		}
-	}
 
 	if(context->bridge->notifications){
 		if(context->bridge->notification_topic){

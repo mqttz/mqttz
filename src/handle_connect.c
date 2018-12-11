@@ -420,7 +420,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			rc = 1;
 			goto handle_connect_error;
 		}
-#ifdef WITH_TLS_PSK
+#ifdef FINAL_WITH_TLS_PSK
 		if(context->listener->psk_hint){
 			/* Client should have provided an identity to get this far. */
 			if(!context->username){
@@ -429,7 +429,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 				goto handle_connect_error;
 			}
 		}else{
-#endif /* WITH_TLS_PSK */
+#endif /* FINAL_WITH_TLS_PSK */
 			client_cert = SSL_get_peer_certificate(context->ssl);
 			if(!client_cert){
 				send__connack(context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD);
@@ -457,7 +457,11 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 						rc = 1;
 						goto handle_connect_error;
 					}
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 					context->username = mosquitto__strdup((char *) ASN1_STRING_data(name_asn1));
+#else
+					context->username = mosquitto__strdup((char *) ASN1_STRING_get0_data(name_asn1));
+#endif
 					if(!context->username){
 						send__connack(context, 0, CONNACK_REFUSED_SERVER_UNAVAILABLE);
 						rc = MOSQ_ERR_NOMEM;
@@ -492,9 +496,9 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			}
 			X509_free(client_cert);
 			client_cert = NULL;
-#ifdef WITH_TLS_PSK
+#ifdef FINAL_WITH_TLS_PSK
 		}
-#endif /* WITH_TLS_PSK */
+#endif /* FINAL_WITH_TLS_PSK */
 	}else{
 #endif /* WITH_TLS */
 		if(username_flag){

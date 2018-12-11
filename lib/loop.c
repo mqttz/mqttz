@@ -147,12 +147,10 @@ int mosquitto_loop(struct mosquitto *mosq, int timeout, int max_packets)
 	}else{
 		if(mosq->sock != INVALID_SOCKET){
 			if(FD_ISSET(mosq->sock, &readfds)){
-				do{
-					rc = mosquitto_loop_read(mosq, max_packets);
-					if(rc || mosq->sock == INVALID_SOCKET){
-						return rc;
-					}
-				}while(SSL_DATA_PENDING(mosq));
+				rc = mosquitto_loop_read(mosq, max_packets);
+				if(rc || mosq->sock == INVALID_SOCKET){
+					return rc;
+				}
 			}
 			if(mosq->sockpairR != INVALID_SOCKET && FD_ISSET(mosq->sockpairR, &readfds)){
 #ifndef WIN32
@@ -245,8 +243,12 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 			}else{
 				pthread_mutex_unlock(&mosq->state_mutex);
 
-				if(mosq->reconnect_delay > 0 && mosq->reconnect_exponential_backoff){
-					reconnect_delay = mosq->reconnect_delay*reconnects*reconnects;
+				if(mosq->reconnect_delay_max > mosq->reconnect_delay){
+					if(mosq->reconnect_exponential_backoff){
+						reconnect_delay = mosq->reconnect_delay*(reconnects+1)*(reconnects+1);
+					}else{
+						reconnect_delay = mosq->reconnect_delay*(reconnects+1);
+					}
 				}else{
 					reconnect_delay = mosq->reconnect_delay;
 				}
@@ -284,37 +286,10 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 
 int mosquitto_loop_misc(struct mosquitto *mosq)
 {
-	time_t now;
-	int rc;
-
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
 
-	mosquitto__check_keepalive(mosq);
-	now = mosquitto_time();
-
-	if(mosq->ping_t && now - mosq->ping_t >= mosq->keepalive){
-		/* mosq->ping_t != 0 means we are waiting for a pingresp.
-		 * This hasn't happened in the keepalive time so we should disconnect.
-		 */
-		net__socket_close(mosq);
-		pthread_mutex_lock(&mosq->state_mutex);
-		if(mosq->state == mosq_cs_disconnecting){
-			rc = MOSQ_ERR_SUCCESS;
-		}else{
-			rc = MOSQ_ERR_KEEPALIVE;
-		}
-		pthread_mutex_unlock(&mosq->state_mutex);
-		pthread_mutex_lock(&mosq->callback_mutex);
-		if(mosq->on_disconnect){
-			mosq->in_callback = true;
-			mosq->on_disconnect(mosq, mosq->userdata, rc);
-			mosq->in_callback = false;
-		}
-		pthread_mutex_unlock(&mosq->callback_mutex);
-		return MOSQ_ERR_CONN_LOST;
-	}
-	return MOSQ_ERR_SUCCESS;
+	return mosquitto__check_keepalive(mosq);
 }
 
 
@@ -364,7 +339,7 @@ int mosquitto_loop_read(struct mosquitto *mosq, int max_packets)
 	/* Queue len here tells us how many messages are awaiting processing and
 	 * have QoS > 0. We should try to deal with that many in this loop in order
 	 * to keep up. */
-	for(i=0; i<max_packets; i++){
+	for(i=0; i<max_packets || SSL_DATA_PENDING(mosq); i++){
 #ifdef WITH_SOCKS
 		if(mosq->socks5_host){
 			rc = socks5__read(mosq);

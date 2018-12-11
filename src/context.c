@@ -197,6 +197,13 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 		context->queued_msgs = NULL;
 		context->last_queued_msg = NULL;
 	}
+#if defined(WITH_BROKER) && defined(__GLIBC__) && defined(WITH_ADNS)
+	if(context->adns){
+		gai_cancel(context->adns);
+		mosquitto__free((struct addrinfo *)context->adns->ar_request);
+		mosquitto__free(context->adns);
+	}
+#endif
 	if(do_free){
 		mosquitto__free(context);
 	}

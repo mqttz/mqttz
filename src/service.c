@@ -27,6 +27,18 @@ SERVICE_STATUS_HANDLE service_handle = 0;
 static SERVICE_STATUS service_status;
 int main(int argc, char *argv[]);
 
+static void print_error(void)
+{
+	char *buf;
+
+	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+		NULL, GetLastError(), LANG_NEUTRAL, &buf, 0, NULL);
+
+	fprintf(stderr, "Error: %s\n", buf);
+	LocalFree(buf);
+}
+
+
 /* Service control callback */
 void __stdcall service_handler(DWORD fdwControl)
 {
@@ -112,8 +124,12 @@ void service_install(void)
 			svc_desc.lpDescription = "MQTT v3.1.1 broker";
 			ChangeServiceConfig2(svc_handle, SERVICE_CONFIG_DESCRIPTION, &svc_desc);
 			CloseServiceHandle(svc_handle);
+		}else{
+			print_error();
 		}
 		CloseServiceHandle(sc_manager);
+	} else {
+		print_error();
 	}
 }
 
@@ -132,8 +148,12 @@ void service_uninstall(void)
 				}
 			}
 			CloseServiceHandle(svc_handle);
+		}else{
+			print_error();
 		}
 		CloseServiceHandle(sc_manager);
+	}else{
+		print_error();
 	}
 }
 

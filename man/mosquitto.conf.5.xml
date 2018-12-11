@@ -814,6 +814,27 @@
 					</listitem>
 				</varlistentry>
 				<varlistentry>
+					<term><option>socket_domain</option> [ ipv4 | ipv6 ]</term>
+					<listitem>
+						<para>By default, a listener will attempt to listen on
+							all supported IP protocol versions. If you do not
+							have an IPv4 or IPv6 interface you may wish to
+							disable support for either of those protocol
+							versions. In particular, note that due to the
+							limitations of the websockets library, it will only
+							ever attempt to open IPv6 sockets if IPv6 support
+							is compiled in, and so will fail if IPv6 is not
+							available.</para>
+						<para>Set to <option>ipv4</option> to force the
+							listener to only use IPv4, or set to
+							<option>ipv6</option> to force the listener to only
+							use IPv6. If you want support for both IPv4 and
+							IPv6, then do not use the
+							<option>socket_domain</option> option.</para>
+						<para>Not reloaded on reload signal.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
 					<term><option>use_username_as_clientid</option> [ true | false ]</term>
 					<listitem>
 						<para>Set <option>use_username_as_clientid</option> to
