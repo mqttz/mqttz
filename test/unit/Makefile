@@ -8,6 +8,7 @@ TEST_LDFLAGS=-lcunit -coverage
 TEST_OBJS = test.o \
 			datatype_read.o \
 			datatype_write.o \
+			property_add.o \
 			property_read.o \
 			property_write.o \
 			stubs.o \
