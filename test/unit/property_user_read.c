@@ -478,6 +478,60 @@ static void TEST_read_missing(void)
 }
 
 /* ========================================================================
+ * STRING TO PROPERTY INFO
+ * ======================================================================== */
+
+static void string_to_property_info_helper(const char *str, int rc_expected, int identifier_expected, int type_expected)
+{
+	int rc;
+	int identifier, type;
+
+	rc = mosquitto_string_to_property_info(str, &identifier, &type);
+	CU_ASSERT_EQUAL(rc, rc_expected);
+	if(rc == MOSQ_ERR_SUCCESS){
+		CU_ASSERT_EQUAL(identifier, identifier_expected);
+		CU_ASSERT_EQUAL(type, type_expected);
+	}
+}
+
+static void TEST_string_to_property_info(void)
+{
+	string_to_property_info_helper("payload-format-indicator", MOSQ_ERR_SUCCESS, MQTT_PROP_PAYLOAD_FORMAT_INDICATOR, MQTT_PROP_TYPE_BYTE);
+	string_to_property_info_helper("message-expiry-interval", MOSQ_ERR_SUCCESS, MQTT_PROP_MESSAGE_EXPIRY_INTERVAL, MQTT_PROP_TYPE_INT32);
+	string_to_property_info_helper("content-type", MOSQ_ERR_SUCCESS, MQTT_PROP_CONTENT_TYPE, MQTT_PROP_TYPE_STRING);
+	string_to_property_info_helper("response-topic", MOSQ_ERR_SUCCESS, MQTT_PROP_RESPONSE_TOPIC, MQTT_PROP_TYPE_STRING);
+	string_to_property_info_helper("correlation-data", MOSQ_ERR_SUCCESS, MQTT_PROP_CORRELATION_DATA, MQTT_PROP_TYPE_BINARY);
+	string_to_property_info_helper("subscription-identifier", MOSQ_ERR_SUCCESS, MQTT_PROP_SUBSCRIPTION_IDENTIFIER, MQTT_PROP_TYPE_VARINT);
+	string_to_property_info_helper("session-expiry-interval", MOSQ_ERR_SUCCESS, MQTT_PROP_SESSION_EXPIRY_INTERVAL, MQTT_PROP_TYPE_INT32);
+	string_to_property_info_helper("assigned-client-identifier", MOSQ_ERR_SUCCESS, MQTT_PROP_ASSIGNED_CLIENT_IDENTIFIER, MQTT_PROP_TYPE_STRING);
+	string_to_property_info_helper("server-keep-alive", MOSQ_ERR_SUCCESS, MQTT_PROP_SERVER_KEEP_ALIVE, MQTT_PROP_TYPE_INT16);
+	string_to_property_info_helper("authentication-method", MOSQ_ERR_SUCCESS, MQTT_PROP_AUTHENTICATION_METHOD, MQTT_PROP_TYPE_STRING);
+	string_to_property_info_helper("authentication-data", MOSQ_ERR_SUCCESS, MQTT_PROP_AUTHENTICATION_DATA, MQTT_PROP_TYPE_BINARY);
+	string_to_property_info_helper("request-problem-information", MOSQ_ERR_SUCCESS, MQTT_PROP_REQUEST_PROBLEM_INFORMATION, MQTT_PROP_TYPE_BYTE);
+	string_to_property_info_helper("will-delay-interval", MOSQ_ERR_SUCCESS, MQTT_PROP_WILL_DELAY_INTERVAL, MQTT_PROP_TYPE_INT32);
+	string_to_property_info_helper("request-response-information", MOSQ_ERR_SUCCESS, MQTT_PROP_REQUEST_RESPONSE_INFORMATION, MQTT_PROP_TYPE_BYTE);
+	string_to_property_info_helper("response-information", MOSQ_ERR_SUCCESS, MQTT_PROP_RESPONSE_INFORMATION, MQTT_PROP_TYPE_STRING);
+	string_to_property_info_helper("server-reference", MOSQ_ERR_SUCCESS, MQTT_PROP_SERVER_REFERENCE, MQTT_PROP_TYPE_STRING);
+	string_to_property_info_helper("reason-string", MOSQ_ERR_SUCCESS, MQTT_PROP_REASON_STRING, MQTT_PROP_TYPE_STRING);
+	string_to_property_info_helper("receive-maximum", MOSQ_ERR_SUCCESS, MQTT_PROP_RECEIVE_MAXIMUM, MQTT_PROP_TYPE_INT16);
+	string_to_property_info_helper("topic-alias-maximum", MOSQ_ERR_SUCCESS, MQTT_PROP_TOPIC_ALIAS_MAXIMUM, MQTT_PROP_TYPE_INT16);
+	string_to_property_info_helper("topic-alias", MOSQ_ERR_SUCCESS, MQTT_PROP_TOPIC_ALIAS, MQTT_PROP_TYPE_INT16);
+	string_to_property_info_helper("maximum-qos", MOSQ_ERR_SUCCESS, MQTT_PROP_MAXIMUM_QOS, MQTT_PROP_TYPE_BYTE);
+	string_to_property_info_helper("retain-available", MOSQ_ERR_SUCCESS, MQTT_PROP_RETAIN_AVAILABLE, MQTT_PROP_TYPE_BYTE);
+	string_to_property_info_helper("user-property", MOSQ_ERR_SUCCESS, MQTT_PROP_USER_PROPERTY, MQTT_PROP_TYPE_STRING_PAIR);
+	string_to_property_info_helper("maximum-packet-size", MOSQ_ERR_SUCCESS, MQTT_PROP_MAXIMUM_PACKET_SIZE, MQTT_PROP_TYPE_INT32);
+	string_to_property_info_helper("wildcard-subscription-available", MOSQ_ERR_SUCCESS, MQTT_PROP_WILDCARD_SUB_AVAILABLE, MQTT_PROP_TYPE_BYTE);
+	string_to_property_info_helper("subscription-identifier-available", MOSQ_ERR_SUCCESS, MQTT_PROP_SUBSCRIPTION_ID_AVAILABLE, MQTT_PROP_TYPE_BYTE);
+	string_to_property_info_helper("shared-subscription-available", MOSQ_ERR_SUCCESS, MQTT_PROP_SHARED_SUB_AVAILABLE, MQTT_PROP_TYPE_BYTE);
+
+	string_to_property_info_helper("payload-format-indicator1", MOSQ_ERR_INVAL, 0, 0);
+	string_to_property_info_helper("payload", MOSQ_ERR_INVAL, 0, 0);
+	string_to_property_info_helper("", MOSQ_ERR_INVAL, 0, 0);
+	string_to_property_info_helper(NULL, MOSQ_ERR_INVAL, 0, 0);
+}
+
+
+/* ========================================================================
  * TEST SUITE SETUP
  * ======================================================================== */
 
@@ -500,6 +554,7 @@ int init_property_user_read_tests(void)
 			|| !CU_add_test(test_suite, "Read single string", TEST_read_single_string)
 			|| !CU_add_test(test_suite, "Read single string pair", TEST_read_single_string_pair)
 			|| !CU_add_test(test_suite, "Read missing", TEST_read_missing)
+			|| !CU_add_test(test_suite, "String to property info", TEST_string_to_property_info)
 			){
 
 		printf("Error adding Property Add CUnit tests.\n");

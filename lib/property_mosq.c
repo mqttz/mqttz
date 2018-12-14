@@ -512,6 +512,8 @@ int mosquitto_property_check_command(int command, int identifier)
 
 int mosquitto_string_to_property_info(const char *propname, int *identifier, int *type)
 {
+	if(!propname) return MOSQ_ERR_INVAL;
+
 	if(!strcasecmp(propname, "payload-format-indicator")){
 		*identifier = MQTT_PROP_PAYLOAD_FORMAT_INDICATOR;
 		*type = MQTT_PROP_TYPE_BYTE;
