@@ -42,6 +42,7 @@ static void byte_prop_write_helper(
 		mosquitto_property_free_all(&properties);
 	}
 	CU_ASSERT_PTR_EQUAL(properties, NULL);
+	free(packet.payload);
 }
 
 
@@ -82,6 +83,7 @@ static void int32_prop_write_helper(
 		mosquitto_property_free_all(&properties);
 	}
 	CU_ASSERT_PTR_EQUAL(properties, NULL);
+	free(packet.payload);
 }
 
 
@@ -122,6 +124,7 @@ static void int16_prop_write_helper(
 		mosquitto_property_free_all(&properties);
 	}
 	CU_ASSERT_PTR_EQUAL(properties, NULL);
+	free(packet.payload);
 }
 
 static void string_prop_write_helper(
@@ -164,6 +167,7 @@ static void string_prop_write_helper(
 	}
 	CU_ASSERT_PTR_EQUAL(properties, NULL);
 	free(property.value.s.v);
+	free(packet.payload);
 }
 
 
@@ -209,6 +213,7 @@ static void binary_prop_write_helper(
 	}
 	CU_ASSERT_PTR_EQUAL(properties, NULL);
 	free(property.value.bin.v);
+	free(packet.payload);
 }
 
 static void string_pair_prop_write_helper(
@@ -261,6 +266,7 @@ static void string_pair_prop_write_helper(
 	CU_ASSERT_PTR_NULL(properties);
 	free(property.value.s.v);
 	free(property.name.v);
+	free(packet.payload);
 }
 
 static void varint_prop_write_helper(
@@ -308,6 +314,7 @@ static void varint_prop_write_helper(
 		mosquitto_property_free_all(&properties);
 	}
 	CU_ASSERT_PTR_NULL(properties);
+	free(packet.payload);
 }
 
 /* ========================================================================
