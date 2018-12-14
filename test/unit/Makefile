@@ -10,6 +10,7 @@ TEST_OBJS = test.o \
 			datatype_write.o \
 			property_add.o \
 			property_read.o \
+			property_user_read.o \
 			property_write.o \
 			stubs.o \
 			util_topic_test.o \
