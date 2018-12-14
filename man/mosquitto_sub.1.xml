@@ -47,6 +47,7 @@
 				<arg choice='plain'><option>-R</option></arg>
 				<arg choice='plain'><option>--retained-only</option></arg>
 			</group>
+			<arg><option>--retain-as-published</option></arg>
 			<arg><option>-S</option></arg>
 			<arg choice='opt' rep='repeat'><option>-T</option> <replaceable>filter-out</replaceable></arg>
 			<arg choice='opt' rep='repeat'><option>-U</option> <replaceable>unsub-topic</replaceable></arg>
@@ -459,7 +460,20 @@
 						Messages with retain set are "stale", in that it is not
 						known when they were originally published. With this
 						argument in use, the receipt of the first non-stale
-						message will cause the client to exit.</para>
+						message will cause the client to exit. See also the
+						<option>--retain-as-published</option> option.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>--retain-as-published</option></term>
+				<listitem>
+					<para>If this argument is given, the subscriptions will
+						have the "retain as published" option set. This means
+						that the retain flag on an incoming message will be
+						exactly as set by the publishing client, rather than
+						indicating whether the message is fresh/stale.</para>
+					<para>This option is not valid for MQTT v3.1/v3.1.1
+						clients.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

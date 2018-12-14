@@ -700,6 +700,11 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 			}else{
 				cfg->pub_mode = MSGMODE_NULL;
 			}
+		}else if(!strcmp(argv[i], "--retain-as-published")){
+			if(pub_or_sub == CLIENT_PUB){
+				goto unknown_option;
+			}
+			cfg->sub_opts |= MQTT_SUB_OPT_RETAIN_AS_PUBLISHED;
 		}else if(!strcmp(argv[i], "-V") || !strcmp(argv[i], "--protocol-version")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: --protocol-version argument given but no version specified.\n\n");

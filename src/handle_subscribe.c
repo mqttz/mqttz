@@ -94,10 +94,13 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 			}
 			if(context->protocol == mosq_p_mqtt31 || context->protocol == mosq_p_mqtt311){
 				qos = subscription_options;
+				if(context->is_bridge){
+					retain_as_published = 1;
+				}
 			}else{
 				qos = subscription_options & 0x03;
 
-				retain_as_published = subscription_options & 0x04;
+				retain_as_published = subscription_options & 0x08;
 
 				retain_handling = (subscription_options & 0x30) >> 4;
 				if(retain_handling == 3){
@@ -148,7 +151,7 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 			}
 
 			if(qos != 0x80){
-				rc2 = sub__add(db, context, sub, qos, &db->subs);
+				rc2 = sub__add(db, context, sub, qos, retain_as_published, &db->subs);
 				if(context->protocol == mosq_p_mqtt311 || context->protocol == mosq_p_mqtt31){
 					if(rc2 == MOSQ_ERR_SUCCESS || rc2 == MOSQ_ERR_SUB_EXISTS){
 						if(sub__retain_queue(db, context, sub, qos)) rc = 1;
