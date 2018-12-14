@@ -45,7 +45,7 @@ static void duplicate_byte_helper(int command, int identifier)
 	payload[3] = identifier;
 	payload[4] = 0;
 
-	byte_prop_read_helper(command, payload, 5, MOSQ_ERR_PROTOCOL, identifier, 1);
+	byte_prop_read_helper(command, payload, 5, MOSQ_ERR_DUPLICATE_PROPERTY, identifier, 1);
 }
 
 static void bad_byte_helper(int command, int identifier)
@@ -107,7 +107,7 @@ static void duplicate_int32_helper(int command, int identifier)
 	payload[9] = 0;
 	payload[10] = 0;
 
-	int32_prop_read_helper(command, payload, 11, MOSQ_ERR_PROTOCOL, identifier, 1);
+	int32_prop_read_helper(command, payload, 11, MOSQ_ERR_DUPLICATE_PROPERTY, identifier, 1);
 }
 
 
@@ -153,7 +153,7 @@ static void duplicate_int16_helper(int command, int identifier)
 	payload[5] = 0;
 	payload[6] = 0;
 
-	int16_prop_read_helper(command, payload, 7, MOSQ_ERR_PROTOCOL, identifier, 1);
+	int16_prop_read_helper(command, payload, 7, MOSQ_ERR_DUPLICATE_PROPERTY, identifier, 1);
 }
 
 static void string_prop_read_helper(
@@ -186,7 +186,7 @@ static void string_prop_read_helper(
 	CU_ASSERT_PTR_EQUAL(properties, NULL);
 }
 
-static void duplicate_string_helper(int identifier)
+static void duplicate_string_helper(int command, int identifier)
 {
 	uint8_t payload[20];
 
@@ -201,7 +201,7 @@ static void duplicate_string_helper(int identifier)
 	payload[7] = 1;
 	payload[8] = 'h';
 
-	string_prop_read_helper(CMD_PUBLISH, payload, 9, MOSQ_ERR_PROTOCOL, identifier, "");
+	string_prop_read_helper(command, payload, 9, MOSQ_ERR_DUPLICATE_PROPERTY, identifier, "");
 }
 
 static void bad_string_helper(int identifier)
@@ -266,7 +266,7 @@ static void duplicate_binary_helper(int command, int identifier)
 	payload[7] = 1;
 	payload[8] = 'h';
 
-	string_prop_read_helper(command, payload, 9, MOSQ_ERR_PROTOCOL, identifier, "");
+	string_prop_read_helper(command, payload, 9, MOSQ_ERR_DUPLICATE_PROPERTY, identifier, "");
 }
 
 static void string_pair_prop_read_helper(
@@ -1004,37 +1004,37 @@ static void TEST_duplicate_topic_alias(void)
 
 static void TEST_duplicate_content_type(void)
 {
-	duplicate_string_helper(MQTT_PROP_CONTENT_TYPE);
+	duplicate_string_helper(CMD_PUBLISH, MQTT_PROP_CONTENT_TYPE);
 }
 
 static void TEST_duplicate_response_topic(void)
 {
-	duplicate_string_helper(MQTT_PROP_RESPONSE_TOPIC);
+	duplicate_string_helper(CMD_PUBLISH, MQTT_PROP_RESPONSE_TOPIC);
 }
 
 static void TEST_duplicate_assigned_client_identifier(void)
 {
-	duplicate_string_helper(MQTT_PROP_ASSIGNED_CLIENT_IDENTIFIER);
+	duplicate_string_helper(CMD_CONNACK, MQTT_PROP_ASSIGNED_CLIENT_IDENTIFIER);
 }
 
 static void TEST_duplicate_authentication_method(void)
 {
-	duplicate_string_helper(MQTT_PROP_AUTHENTICATION_METHOD);
+	duplicate_string_helper(CMD_AUTH, MQTT_PROP_AUTHENTICATION_METHOD);
 }
 
 static void TEST_duplicate_response_information(void)
 {
-	duplicate_string_helper(MQTT_PROP_RESPONSE_INFORMATION);
+	duplicate_string_helper(CMD_CONNACK, MQTT_PROP_RESPONSE_INFORMATION);
 }
 
 static void TEST_duplicate_server_reference(void)
 {
-	duplicate_string_helper(MQTT_PROP_SERVER_REFERENCE);
+	duplicate_string_helper(CMD_CONNACK, MQTT_PROP_SERVER_REFERENCE);
 }
 
 static void TEST_duplicate_reason_string(void)
 {
-	duplicate_string_helper(MQTT_PROP_REASON_STRING);
+	duplicate_string_helper(CMD_PUBACK, MQTT_PROP_REASON_STRING);
 }
 
 static void TEST_duplicate_correlation_data(void)
