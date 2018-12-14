@@ -97,7 +97,7 @@ static int subs__process(struct mosquitto_db *db, struct mosquitto__subhier *hie
 		}
 	}
 	while(source_id && leaf){
-		if(!leaf->context->id || (leaf->context->is_bridge && !strcmp(leaf->context->id, source_id))){
+		if(!leaf->context->id || leaf->no_local){
 			leaf = leaf->next;
 			continue;
 		}
@@ -240,7 +240,7 @@ static void sub__topic_tokens_free(struct sub__token *tokens)
 	}
 }
 
-static int sub__add_recurse(struct mosquitto_db *db, struct mosquitto *context, int qos, bool retain_as_published, struct mosquitto__subhier *subhier, struct sub__token *tokens)
+static int sub__add_recurse(struct mosquitto_db *db, struct mosquitto *context, int qos, int options, struct mosquitto__subhier *subhier, struct sub__token *tokens)
 	/* FIXME - this function has the potential to leak subhier, audit calling functions. */
 {
 	struct mosquitto__subhier *branch;
@@ -274,7 +274,8 @@ static int sub__add_recurse(struct mosquitto_db *db, struct mosquitto *context, 
 			leaf->next = NULL;
 			leaf->context = context;
 			leaf->qos = qos;
-			leaf->retain_as_published = retain_as_published;
+			leaf->no_local = ((options & 0x04) != 0);
+			leaf->retain_as_published = ((options & 0x08) != 0);
 			for(i=0; i<context->sub_count; i++){
 				if(!context->subs[i]){
 					context->subs[i] = subhier;
@@ -307,13 +308,13 @@ static int sub__add_recurse(struct mosquitto_db *db, struct mosquitto *context, 
 
 	HASH_FIND(hh, subhier->children, UHPA_ACCESS_TOPIC(tokens), tokens->topic_len, branch);
 	if(branch){
-		return sub__add_recurse(db, context, qos, retain_as_published, branch, tokens->next);
+		return sub__add_recurse(db, context, qos, options, branch, tokens->next);
 	}else{
 		/* Not found */
 		branch = sub__add_hier_entry(subhier, &subhier->children, UHPA_ACCESS_TOPIC(tokens), tokens->topic_len);
 		if(!branch) return MOSQ_ERR_NOMEM;
 
-		return sub__add_recurse(db, context, qos, retain_as_published, branch, tokens->next);
+		return sub__add_recurse(db, context, qos, options, branch, tokens->next);
 	}
 }
 
@@ -442,7 +443,7 @@ struct mosquitto__subhier *sub__add_hier_entry(struct mosquitto__subhier *parent
 }
 
 
-int sub__add(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int qos, bool retain_as_published, struct mosquitto__subhier **root)
+int sub__add(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int qos, int options, struct mosquitto__subhier **root)
 {
 	int rc = 0;
 	struct mosquitto__subhier *subhier;
@@ -464,7 +465,7 @@ int sub__add(struct mosquitto_db *db, struct mosquitto *context, const char *sub
 		}
 
 	}
-	rc = sub__add_recurse(db, context, qos, retain_as_published, subhier, tokens);
+	rc = sub__add_recurse(db, context, qos, options, subhier, tokens);
 
 	sub__topic_tokens_free(tokens);
 
