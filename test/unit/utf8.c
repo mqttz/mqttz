@@ -56,13 +56,13 @@ static void TEST_utf8_boundary_conditions(void)
 	/* 2  Boundary condition test cases */
 	/* 2.1  First possible sequence of a certain length */
 	utf8_helper_len("2.1.1  1 byte  (U-00000000):        \"\0\"", 39, MOSQ_ERR_MALFORMED_UTF8);
-	utf8_helper("2.1.2  2 bytes (U-00000080):        \"\"", MOSQ_ERR_SUCCESS);
+	utf8_helper("2.1.2  2 bytes (U-00000080):        \"\"", MOSQ_ERR_MALFORMED_UTF8); /* control char */
 	utf8_helper("2.1.3  3 bytes (U-00000800):        \"ࠀ\"", MOSQ_ERR_SUCCESS);
 	utf8_helper("2.1.4  4 bytes (U-00010000):        \"𐀀\"", MOSQ_ERR_SUCCESS);
 
 	/* 2.2  Last possible sequence of a certain length */
 
-	utf8_helper("2.2.1  1 byte  (U-0000007F):        \"\"", MOSQ_ERR_SUCCESS);
+	utf8_helper("2.2.1  1 byte  (U-0000007F):        \"\"", MOSQ_ERR_MALFORMED_UTF8); /* control char */
 	utf8_helper("2.2.2  2 bytes (U-000007FF):        \"߿\"", MOSQ_ERR_SUCCESS);
 	/* Non character */
 	utf8_helper("2.2.3  3 bytes (U-0000FFFF):        \"￿\"", MOSQ_ERR_MALFORMED_UTF8);
@@ -398,6 +398,33 @@ static void TEST_utf8_illegal_code_positions(void)
 }
 
 
+void TEST_utf8_control_characters(void)
+{
+	char buf[10];
+	int i;
+
+	/* U+0001 to U+001F are single byte control characters */
+	for(i=0x01; i<0x20; i++){
+		buf[0] = i;
+		buf[1] = '\0';
+		utf8_helper(buf, MOSQ_ERR_MALFORMED_UTF8);
+	}
+
+	/* U+007F is a single byte control character */
+	buf[0] = 0x7F;
+	buf[1] = '\0';
+	utf8_helper(buf, MOSQ_ERR_MALFORMED_UTF8);
+
+	/* U+007F to U+009F are two byte control characters */
+	for(i=0x80; i<0xA0; i++){
+		buf[0] = 0xC2;
+		buf[1] = i-0x80;
+		buf[2] = '\0';
+		utf8_helper(buf, MOSQ_ERR_MALFORMED_UTF8);
+	}
+
+}
+
 /* ========================================================================
  * TEST SUITE SETUP
  * ======================================================================== */
@@ -420,6 +447,7 @@ int init_utf8_tests(void)
 			|| !CU_add_test(test_suite, "UTF-8 malformed sequences", TEST_utf8_malformed_sequences)
 			|| !CU_add_test(test_suite, "UTF-8 overlong encoding", TEST_utf8_overlong_encoding)
 			|| !CU_add_test(test_suite, "UTF-8 illegal code positions", TEST_utf8_illegal_code_positions)
+			|| !CU_add_test(test_suite, "UTF-8 control characters", TEST_utf8_control_characters)
 			){
 
 		printf("Error adding UTF-8 CUnit tests.\n");

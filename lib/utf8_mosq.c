@@ -99,6 +99,10 @@ int mosquitto_validate_utf8(const char *str, int len)
 		if((codepoint & 0xFFFF) == 0xFFFE || (codepoint & 0xFFFF) == 0xFFFF){
 			return MOSQ_ERR_MALFORMED_UTF8;
 		}
+		/* Check for control characters */
+		if(codepoint <= 0x001F || (codepoint >= 0x007F && codepoint <= 0x009F)){
+			return MOSQ_ERR_MALFORMED_UTF8;
+		}
 	}
 	return MOSQ_ERR_SUCCESS;
 }
