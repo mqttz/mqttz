@@ -7,6 +7,7 @@ import sys
 max_running = 10
 tests = [
     #(ports required, 'path'),
+    (1, './01-connect-bad-packet.py'),
     (1, './01-connect-duplicate.py'),
     (1, './01-connect-duplicate-v5.py'),
     (1, './01-connect-success.py'),
