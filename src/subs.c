@@ -53,6 +53,7 @@ Contributors:
 
 #include "mosquitto_broker_internal.h"
 #include "memory_mosq.h"
+#include "mqtt_protocol.h"
 #include "util_mosq.h"
 
 struct sub__token {
@@ -97,7 +98,7 @@ static int subs__process(struct mosquitto_db *db, struct mosquitto__subhier *hie
 		}
 	}
 	while(source_id && leaf){
-		if(!leaf->context->id || leaf->no_local){
+		if(!leaf->context->id || (leaf->no_local && !strcmp(leaf->context->id, source_id))){
 			leaf = leaf->next;
 			continue;
 		}
@@ -274,8 +275,8 @@ static int sub__add_recurse(struct mosquitto_db *db, struct mosquitto *context, 
 			leaf->next = NULL;
 			leaf->context = context;
 			leaf->qos = qos;
-			leaf->no_local = ((options & 0x04) != 0);
-			leaf->retain_as_published = ((options & 0x08) != 0);
+			leaf->no_local = ((options & MQTT_SUB_OPT_NO_LOCAL) != 0);
+			leaf->retain_as_published = ((options & MQTT_SUB_OPT_RETAIN_AS_PUBLISHED) != 0);
 			for(i=0; i<context->sub_count; i++){
 				if(!context->subs[i]){
 					context->subs[i] = subhier;
