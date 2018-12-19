@@ -196,6 +196,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 
 	/* Don't accept multiple CONNECT commands. */
 	if(context->state != mosq_cs_new){
+		log__printf(NULL, MOSQ_LOG_NOTICE, "Bad client %s sending multiple CONNECT messages.", context->id);
 		rc = MOSQ_ERR_PROTOCOL;
 		goto handle_connect_error;
 	}
