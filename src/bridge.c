@@ -29,6 +29,7 @@ Contributors:
 #include <ws2tcpip.h>
 #endif
 
+#include "mqtt_protocol.h"
 #include "mosquitto.h"
 #include "mosquitto_broker_internal.h"
 #include "mosquitto_internal.h"
@@ -144,7 +145,12 @@ int bridge__connect_step1(struct mosquitto_db *db, struct mosquitto *context)
 	for(i=0; i<context->bridge->topic_count; i++){
 		if(context->bridge->topics[i].direction == bd_out || context->bridge->topics[i].direction == bd_both){
 			log__printf(NULL, MOSQ_LOG_DEBUG, "Bridge %s doing local SUBSCRIBE on topic %s", context->id, context->bridge->topics[i].local_topic);
-			if(sub__add(db, context, context->bridge->topics[i].local_topic, context->bridge->topics[i].qos, &db->subs) > 0){
+			if(sub__add(db,
+						context,
+						context->bridge->topics[i].local_topic,
+						context->bridge->topics[i].qos,
+						MQTT_SUB_OPT_NO_LOCAL | MQTT_SUB_OPT_RETAIN_AS_PUBLISHED,
+						&db->subs) > 0){
 				return 1;
 			}
 			sub__retain_queue(db, context,
@@ -312,7 +318,13 @@ int bridge__connect(struct mosquitto_db *db, struct mosquitto *context)
 	for(i=0; i<context->bridge->topic_count; i++){
 		if(context->bridge->topics[i].direction == bd_out || context->bridge->topics[i].direction == bd_both){
 			log__printf(NULL, MOSQ_LOG_DEBUG, "Bridge %s doing local SUBSCRIBE on topic %s", context->id, context->bridge->topics[i].local_topic);
-			if(sub__add(db, context, context->bridge->topics[i].local_topic, context->bridge->topics[i].qos, true, &db->subs) > 0){
+			if(sub__add(db,
+						context,
+						context->bridge->topics[i].local_topic,
+						context->bridge->topics[i].qos,
+						MQTT_SUB_OPT_NO_LOCAL | MQTT_SUB_OPT_RETAIN_AS_PUBLISHED,
+						&db->subs) > 0){
+
 				return 1;
 			}
 			sub__retain_queue(db, context,
