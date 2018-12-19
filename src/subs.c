@@ -258,12 +258,12 @@ static int sub__add_recurse(struct mosquitto_db *db, struct mosquitto *context, 
 					 * need to update QoS. Return MOSQ_ERR_SUB_EXISTS to
 					 * indicate this to the calling function. */
 					leaf->qos = qos;
-					if(context->protocol == mosq_p_mqtt31){
+					if(context->protocol == mosq_p_mqtt31 || context->protocol == mosq_p_mqtt5){
 						return MOSQ_ERR_SUB_EXISTS;
 					}else{
 						/* mqttv311/mqttv5 requires retained messages are resent on
 						 * resubscribe. */
-						return 0;
+						return MOSQ_ERR_SUCCESS;
 					}
 				}
 				last_leaf = leaf;

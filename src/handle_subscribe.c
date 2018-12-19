@@ -100,8 +100,8 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 				qos = subscription_options & 0x03;
 				subscription_options &= 0xFC;
 
-				retain_handling = (subscription_options & 0x30) >> 4;
-				if(retain_handling == 3 || (subscription_options & 0xC0) != 0){
+				retain_handling = (subscription_options & 0x30);
+				if(retain_handling == 0x30 || (subscription_options & 0xC0) != 0){
 					return MOSQ_ERR_PROTOCOL;
 				}
 			}
@@ -148,13 +148,17 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 
 			if(qos != 0x80){
 				rc2 = sub__add(db, context, sub, qos, subscription_options, &db->subs);
+				if(rc2 > 0){
+					mosquitto__free(sub);
+					return rc2;
+				}
 				if(context->protocol == mosq_p_mqtt311 || context->protocol == mosq_p_mqtt31){
 					if(rc2 == MOSQ_ERR_SUCCESS || rc2 == MOSQ_ERR_SUB_EXISTS){
 						if(sub__retain_queue(db, context, sub, qos)) rc = 1;
 					}
 				}else{
-					if((rc2 == MOSQ_ERR_SUCCESS && retain_handling == 0)
-							|| (rc2 == MOSQ_ERR_SUB_EXISTS && retain_handling == 1)){
+					if((retain_handling == MQTT_SUB_OPT_SEND_RETAIN_ALWAYS)
+							|| (rc2 == MOSQ_ERR_SUCCESS && retain_handling == MQTT_SUB_OPT_SEND_RETAIN_NEW)){
 
 						if(sub__retain_queue(db, context, sub, qos)) rc = 1;
 					}
