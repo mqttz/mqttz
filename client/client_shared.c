@@ -152,7 +152,7 @@ void client_config_cleanup(struct mosq_config *cfg)
 	free(cfg->keyfile);
 	free(cfg->ciphers);
 	free(cfg->tls_version);
-#  ifdef WITH_TLS_PSK
+#  ifdef FINAL_WITH_TLS_PSK
 	free(cfg->psk);
 	free(cfg->psk_identity);
 #  endif
@@ -316,7 +316,7 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 		return 1;
 	}
 #endif
-#ifdef WITH_TLS_PSK
+#ifdef FINAL_WITH_TLS_PSK
 	if((cfg->cafile || cfg->capath) && cfg->psk){
 		if(!cfg->quiet) fprintf(stderr, "Error: Only one of --psk or --cafile/--capath may be used at once.\n");
 		return 1;
@@ -734,7 +734,7 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				i++;
 			}
 #endif
-#ifdef WITH_TLS_PSK
+#ifdef FINAL_WITH_TLS_PSK
 		}else if(!strcmp(argv[i], "--psk")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: --psk argument given but no key specified.\n\n");
@@ -977,7 +977,7 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 		mosquitto_lib_cleanup();
 		return 1;
 	}
-#  ifdef WITH_TLS_PSK
+#  ifdef FINAL_WITH_TLS_PSK
 	if(cfg->psk && mosquitto_tls_psk_set(mosq, cfg->psk, cfg->psk_identity, NULL)){
 		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting TLS-PSK options.\n");
 		mosquitto_lib_cleanup();
@@ -1038,14 +1038,18 @@ int client_id_generate(struct mosq_config *cfg, const char *id_base)
 
 int client_connect(struct mosquitto *mosq, struct mosq_config *cfg)
 {
+#ifndef WIN32
+	char *err;
+#else
 	char err[1024];
+#endif
 	int rc;
 	int port;
 
 	if(cfg->port < 0){
 #ifdef WITH_TLS
 		if(cfg->cafile || cfg->capath
-#  ifdef WITH_TLS_PSK
+#  ifdef FINAL_WITH_TLS_PSK
 				|| cfg->psk
 #  endif
 				){
@@ -1072,7 +1076,7 @@ int client_connect(struct mosquitto *mosq, struct mosq_config *cfg)
 		if(!cfg->quiet){
 			if(rc == MOSQ_ERR_ERRNO){
 #ifndef WIN32
-				strerror_r(errno, err, 1024);
+				err = strerror(errno);
 #else
 				FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, errno, 0, (LPTSTR)&err, 1024, NULL);
 #endif

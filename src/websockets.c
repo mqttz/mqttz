@@ -229,7 +229,9 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				return -1;
 			}
 			if(mosq->listener->max_connections > 0 && mosq->listener->client_count > mosq->listener->max_connections){
-				log__printf(NULL, MOSQ_LOG_NOTICE, "Client connection from %s denied: max_connections exceeded.", mosq->address);
+				if(db->config->connection_messages == true){
+					log__printf(NULL, MOSQ_LOG_NOTICE, "Client connection from %s denied: max_connections exceeded.", mosq->address);
+				}
 				mosquitto__free(mosq);
 				u->mosq = NULL;
 				return -1;
@@ -665,6 +667,14 @@ static int callback_http(struct libwebsocket_context *context,
 			}
 			break;
 
+#ifdef WITH_TLS
+		case LWS_CALLBACK_OPENSSL_PERFORM_CLIENT_CERT_VERIFICATION:
+			if(!len || (SSL_get_verify_result((SSL*)in) != X509_V_OK)){
+				return 1;
+			}
+			break;
+#endif
+
 		default:
 			return 0;
 	}
@@ -721,6 +731,9 @@ struct libwebsocket_context *mosq_websockets_init(struct mosquitto__listener *li
 #if LWS_LIBRARY_VERSION_MAJOR>1
 	info.options |= LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
 #endif
+	if(listener->socket_domain == AF_INET){
+		info.options |= LWS_SERVER_OPTION_DISABLE_IPV6;
+	}
 
 	user = mosquitto__calloc(1, sizeof(struct libws_mqtt_hack));
 	if(!user){

@@ -87,7 +87,9 @@ static void temp__expire_websockets_clients(struct mosquitto_db *db)
 						}else{
 							id = "<unknown>";
 						}
-						log__printf(NULL, MOSQ_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", id);
+						if(db->config->connection_messages == true){
+							log__printf(NULL, MOSQ_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", id);
+						}
 					}
 					/* Client has exceeded keepalive*1.5 */
 					do_disconnect(db, context);
@@ -408,6 +410,10 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 								context->bridge->restart_t = 0;
 							}
 						}else{
+#ifdef WITH_EPOLL
+							/* clean any events triggered in previous connection */
+							context->events = 0;
+#endif
 							rc = bridge__connect_step1(db, context);
 							if(rc){
 								context->bridge->cur_address++;
@@ -422,8 +428,8 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 #else
 						{
 							rc = bridge__connect(db, context);
+							context->bridge->restart_t = 0;
 							if(rc == MOSQ_ERR_SUCCESS){
-								context->bridge->restart_t = 0;
 								if(context->bridge->round_robin == false && context->bridge->cur_address != 0){
 									context->bridge->primary_retry = now + 5;
 								}
@@ -638,9 +644,11 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 			context->sock = INVALID_SOCKET;
 			context->pollfd_index = -1;
 		}
-		HASH_DELETE(hh_id, db->contexts_by_id, context);
-		context->old_id = context->id;
-		context->id = NULL;
+		if(context->id){
+			HASH_DELETE(hh_id, db->contexts_by_id, context);
+			context->old_id = context->id;
+			context->id = NULL;
+		}
 	}else
 #endif
 	{
@@ -660,7 +668,9 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 		}
 #ifdef WITH_EPOLL
 		if (context->sock != INVALID_SOCKET && epoll_ctl(db->epollfd, EPOLL_CTL_DEL, context->sock, &ev) == -1) {
-			log__printf(NULL, MOSQ_LOG_DEBUG, "Error in epoll disconnecting: %s", strerror(errno));
+			if(db->config->connection_messages == true){
+				log__printf(NULL, MOSQ_LOG_DEBUG, "Error in epoll disconnecting: %s", strerror(errno));
+			}
 		}
 #endif		
 		context__disconnect(db, context);
@@ -811,14 +821,15 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 					continue;
 				}
 			}while(SSL_DATA_PENDING(context));
-		}
+		}else{
 #ifdef WITH_EPOLL
-		if(events & (EPOLLERR | EPOLLHUP)){
+			if(events & (EPOLLERR | EPOLLHUP)){
 #else
-		if(context->pollfd_index >= 0 && pollfds[context->pollfd_index].revents & (POLLERR | POLLNVAL | POLLHUP)){
+			if(context->pollfd_index >= 0 && pollfds[context->pollfd_index].revents & (POLLERR | POLLNVAL | POLLHUP)){
 #endif
-			do_disconnect(db, context);
-			continue;
+				do_disconnect(db, context);
+				continue;
+			}
 		}
 	}
 }

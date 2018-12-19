@@ -6,6 +6,7 @@ PLUGIN_SRC = \
 	auth_plugin.c \
 	auth_plugin_pwd.c \
 	auth_plugin_acl.c \
+	auth_plugin_acl_sub_denied.c \
 	auth_plugin_v2.c \
 	auth_plugin_context_params.c \
 	auth_plugin_msg_params.c

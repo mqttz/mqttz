@@ -46,9 +46,9 @@ Contributors:
 #endif
 
 #ifdef WITH_BROKER
-void mosquitto__check_keepalive(struct mosquitto_db *db, struct mosquitto *mosq)
+int mosquitto__check_keepalive(struct mosquitto_db *db, struct mosquitto *mosq)
 #else
-void mosquitto__check_keepalive(struct mosquitto *mosq)
+int mosquitto__check_keepalive(struct mosquitto *mosq)
 #endif
 {
 	time_t next_msg_out;
@@ -67,7 +67,7 @@ void mosquitto__check_keepalive(struct mosquitto *mosq)
 
 		log__printf(NULL, MOSQ_LOG_NOTICE, "Bridge connection %s has exceeded idle timeout, disconnecting.", mosq->id);
 		net__socket_close(db, mosq);
-		return;
+		return MOSQ_ERR_SUCCESS;
 	}
 #endif
 	pthread_mutex_lock(&mosq->msgtime_mutex);
@@ -113,9 +113,12 @@ void mosquitto__check_keepalive(struct mosquitto *mosq)
 				mosq->in_callback = false;
 			}
 			pthread_mutex_unlock(&mosq->callback_mutex);
+
+			return rc;
 #endif
 		}
 	}
+	return MOSQ_ERR_SUCCESS;
 }
 
 uint16_t mosquitto__mid_generate(struct mosquitto *mosq)
@@ -140,7 +143,7 @@ uint16_t mosquitto__mid_generate(struct mosquitto *mosq)
 }
 
 
-#ifdef WITH_TLS_PSK
+#ifdef FINAL_WITH_TLS_PSK
 int mosquitto__hex2bin(const char *hex, unsigned char *bin, int bin_max_len)
 {
 	BIGNUM *bn = NULL;
