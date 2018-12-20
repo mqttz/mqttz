@@ -70,6 +70,7 @@ static int subs__process(struct mosquitto_db *db, struct mosquitto__subhier *hie
 	uint16_t mid;
 	struct mosquitto__subleaf *leaf;
 	bool client_retain;
+	mosquitto_property *properties = NULL;
 
 	leaf = hier->subs;
 
@@ -129,7 +130,10 @@ static int subs__process(struct mosquitto_db *db, struct mosquitto__subhier *hie
 			}else{
 				client_retain = false;
 			}
-			if(db__message_insert(db, leaf->context, mid, mosq_md_out, msg_qos, client_retain, stored) == 1) rc = 1;
+			if(leaf->identifier){
+				mosquitto_property_add_varint(&properties, MQTT_PROP_SUBSCRIPTION_IDENTIFIER, leaf->identifier);
+			}
+			if(db__message_insert(db, leaf->context, mid, mosq_md_out, msg_qos, client_retain, stored, properties) == 1) rc = 1;
 		}else{
 			return 1; /* Application error */
 		}
@@ -241,7 +245,7 @@ static void sub__topic_tokens_free(struct sub__token *tokens)
 	}
 }
 
-static int sub__add_recurse(struct mosquitto_db *db, struct mosquitto *context, int qos, int options, struct mosquitto__subhier *subhier, struct sub__token *tokens)
+static int sub__add_recurse(struct mosquitto_db *db, struct mosquitto *context, int qos, uint32_t identifier, int options, struct mosquitto__subhier *subhier, struct sub__token *tokens)
 	/* FIXME - this function has the potential to leak subhier, audit calling functions. */
 {
 	struct mosquitto__subhier *branch;
@@ -275,6 +279,7 @@ static int sub__add_recurse(struct mosquitto_db *db, struct mosquitto *context, 
 			leaf->next = NULL;
 			leaf->context = context;
 			leaf->qos = qos;
+			leaf->identifier = identifier;
 			leaf->no_local = ((options & MQTT_SUB_OPT_NO_LOCAL) != 0);
 			leaf->retain_as_published = ((options & MQTT_SUB_OPT_RETAIN_AS_PUBLISHED) != 0);
 			for(i=0; i<context->sub_count; i++){
@@ -309,13 +314,13 @@ static int sub__add_recurse(struct mosquitto_db *db, struct mosquitto *context, 
 
 	HASH_FIND(hh, subhier->children, UHPA_ACCESS_TOPIC(tokens), tokens->topic_len, branch);
 	if(branch){
-		return sub__add_recurse(db, context, qos, options, branch, tokens->next);
+		return sub__add_recurse(db, context, qos, identifier, options, branch, tokens->next);
 	}else{
 		/* Not found */
 		branch = sub__add_hier_entry(subhier, &subhier->children, UHPA_ACCESS_TOPIC(tokens), tokens->topic_len);
 		if(!branch) return MOSQ_ERR_NOMEM;
 
-		return sub__add_recurse(db, context, qos, options, branch, tokens->next);
+		return sub__add_recurse(db, context, qos, identifier, options, branch, tokens->next);
 	}
 }
 
@@ -444,7 +449,7 @@ struct mosquitto__subhier *sub__add_hier_entry(struct mosquitto__subhier *parent
 }
 
 
-int sub__add(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int qos, int options, struct mosquitto__subhier **root)
+int sub__add(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int qos, uint32_t identifier, int options, struct mosquitto__subhier **root)
 {
 	int rc = 0;
 	struct mosquitto__subhier *subhier;
@@ -466,7 +471,7 @@ int sub__add(struct mosquitto_db *db, struct mosquitto *context, const char *sub
 		}
 
 	}
-	rc = sub__add_recurse(db, context, qos, options, subhier, tokens);
+	rc = sub__add_recurse(db, context, qos, identifier, options, subhier, tokens);
 
 	sub__topic_tokens_free(tokens);
 
@@ -517,7 +522,7 @@ int sub__messages_queue(struct mosquitto_db *db, const char *source_id, const ch
 			/* We have a message that needs to be retained, so ensure that the subscription
 			 * tree for its topic exists.
 			 */
-			sub__add_recurse(db, NULL, 0, false, subhier, tokens);
+			sub__add_recurse(db, NULL, 0, 0, 0, subhier, tokens);
 		}
 		sub__search(db, subhier, tokens, source_id, topic, qos, retain, *stored, true);
 	}
@@ -641,11 +646,12 @@ void sub__tree_print(struct mosquitto__subhier *root, int level)
 	}
 }
 
-static int retain__process(struct mosquitto_db *db, struct mosquitto_msg_store *retained, struct mosquitto *context, const char *sub, int sub_qos)
+static int retain__process(struct mosquitto_db *db, struct mosquitto_msg_store *retained, struct mosquitto *context, const char *sub, int sub_qos, uint32_t subscription_identifier)
 {
 	int rc = 0;
 	int qos;
 	uint16_t mid;
+	mosquitto_property *properties = NULL;
 
 	rc = mosquitto_acl_check(db, context, retained->topic, retained->payloadlen, UHPA_ACCESS(retained->payload, retained->payloadlen),
 			retained->qos, retained->retain, MOSQ_ACL_READ);
@@ -666,10 +672,13 @@ static int retain__process(struct mosquitto_db *db, struct mosquitto_msg_store *
 	}else{
 		mid = 0;
 	}
-	return db__message_insert(db, context, mid, mosq_md_out, qos, true, retained);
+	if(subscription_identifier > 0){
+		mosquitto_property_add_varint(&properties, MQTT_PROP_SUBSCRIPTION_IDENTIFIER, subscription_identifier);
+	}
+	return db__message_insert(db, context, mid, mosq_md_out, qos, true, retained, properties);
 }
 
-static int retain__search(struct mosquitto_db *db, struct mosquitto__subhier *subhier, struct sub__token *tokens, struct mosquitto *context, const char *sub, int sub_qos, int level)
+static int retain__search(struct mosquitto_db *db, struct mosquitto__subhier *subhier, struct sub__token *tokens, struct mosquitto *context, const char *sub, int sub_qos, uint32_t subscription_identifier, int level)
 {
 	struct mosquitto__subhier *branch, *branch_tmp;
 	int flag = 0;
@@ -685,25 +694,25 @@ static int retain__search(struct mosquitto_db *db, struct mosquitto__subhier *su
 			 */
 			flag = -1;
 			if(branch->retained){
-				retain__process(db, branch->retained, context, sub, sub_qos);
+				retain__process(db, branch->retained, context, sub, sub_qos, subscription_identifier);
 			}
 			if(branch->children){
-				retain__search(db, branch, tokens, context, sub, sub_qos, level+1);
+				retain__search(db, branch, tokens, context, sub, sub_qos, subscription_identifier, level+1);
 			}
 		}else if(strcmp(UHPA_ACCESS_TOPIC(branch), "+")
 					&& (!strcmp(UHPA_ACCESS_TOPIC(branch), UHPA_ACCESS_TOPIC(tokens))
 					|| !strcmp(UHPA_ACCESS_TOPIC(tokens), "+"))){
 			if(tokens->next){
-				if(retain__search(db, branch, tokens->next, context, sub, sub_qos, level+1) == -1
+				if(retain__search(db, branch, tokens->next, context, sub, sub_qos, subscription_identifier, level+1) == -1
 						|| (!branch_tmp && tokens->next && !strcmp(UHPA_ACCESS_TOPIC(tokens->next), "#") && level>0)){
 
 					if(branch->retained){
-						retain__process(db, branch->retained, context, sub, sub_qos);
+						retain__process(db, branch->retained, context, sub, sub_qos, subscription_identifier);
 					}
 				}
 			}else{
 				if(branch->retained){
-					retain__process(db, branch->retained, context, sub, sub_qos);
+					retain__process(db, branch->retained, context, sub, sub_qos, subscription_identifier);
 				}
 			}
 		}
@@ -711,7 +720,7 @@ static int retain__search(struct mosquitto_db *db, struct mosquitto__subhier *su
 	return flag;
 }
 
-int sub__retain_queue(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int sub_qos)
+int sub__retain_queue(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int sub_qos, uint32_t subscription_identifier)
 {
 	struct mosquitto__subhier *subhier;
 	struct sub__token *tokens = NULL, *tail;
@@ -725,7 +734,7 @@ int sub__retain_queue(struct mosquitto_db *db, struct mosquitto *context, const 
 	HASH_FIND(hh, db->subs, UHPA_ACCESS_TOPIC(tokens), tokens->topic_len, subhier);
 
 	if(subhier){
-		retain__search(db, subhier, tokens, context, sub, sub_qos, 0);
+		retain__search(db, subhier, tokens, context, sub, sub_qos, subscription_identifier, 0);
 	}
 	while(tokens){
 		tail = tokens->next;

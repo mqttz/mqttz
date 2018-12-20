@@ -52,7 +52,7 @@ int send__suback(struct mosquitto *context, uint16_t mid, uint32_t payloadlen, c
 
 	if(context->protocol == mosq_p_mqtt5){
 		/* We don't use Reason String or User Property yet. */
-		property__write_all(packet, properties);
+		property__write_all(packet, properties, true);
 	}
 
 	if(payloadlen){

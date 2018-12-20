@@ -168,7 +168,7 @@ static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking, const mos
 			local_property.next = NULL;
 			outgoing_properties = &local_property;
 		}
-		rc = mosquitto_property_check_all(CMD_DISCONNECT, outgoing_properties);
+		rc = mosquitto_property_check_all(CMD_CONNECT, outgoing_properties);
 		if(rc) return rc;
 	}
 

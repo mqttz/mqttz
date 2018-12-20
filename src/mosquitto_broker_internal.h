@@ -290,7 +290,8 @@ struct mosquitto__subleaf {
 	struct mosquitto__subleaf *prev;
 	struct mosquitto__subleaf *next;
 	struct mosquitto *context;
-	int qos;
+	uint32_t identifier;
+	uint8_t qos;
 	bool no_local;
 	bool retain_as_published;
 };
@@ -333,6 +334,7 @@ struct mosquitto_msg_store{
 struct mosquitto_client_msg{
 	struct mosquitto_client_msg *next;
 	struct mosquitto_msg_store *store;
+	mosquitto_property *properties;
 	time_t timestamp;
 	uint16_t mid;
 	uint8_t qos;
@@ -554,7 +556,7 @@ void db__limits_set(int inflight, unsigned long inflight_bytes, int queued, unsi
 /* Return the number of in-flight messages in count. */
 int db__message_count(int *count);
 int db__message_delete(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir);
-int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, int qos, bool retain, struct mosquitto_msg_store *stored);
+int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, int qos, bool retain, struct mosquitto_msg_store *stored, mosquitto_property *properties);
 int db__message_release(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir);
 int db__message_update(struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, enum mosquitto_msg_state state);
 int db__message_write(struct mosquitto_db *db, struct mosquitto *context);
@@ -575,12 +577,12 @@ void sys_tree__update(struct mosquitto_db *db, int interval, time_t start_time);
 /* ============================================================
  * Subscription functions
  * ============================================================ */
-int sub__add(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int qos, int options, struct mosquitto__subhier **root);
+int sub__add(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int qos, uint32_t identifier, int options, struct mosquitto__subhier **root);
 struct mosquitto__subhier *sub__add_hier_entry(struct mosquitto__subhier *parent, struct mosquitto__subhier **sibling, const char *topic, size_t len);
 int sub__remove(struct mosquitto_db *db, struct mosquitto *context, const char *sub, struct mosquitto__subhier *root);
 void sub__tree_print(struct mosquitto__subhier *root, int level);
 int sub__clean_session(struct mosquitto_db *db, struct mosquitto *context);
-int sub__retain_queue(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int sub_qos);
+int sub__retain_queue(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int sub_qos, uint32_t subscription_identifier);
 int sub__messages_queue(struct mosquitto_db *db, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store **stored);
 
 /* ============================================================

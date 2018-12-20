@@ -72,7 +72,7 @@ int send__subscribe(struct mosquitto *mosq, int *mid, int topic_count, const cha
 	packet__write_uint16(packet, local_mid);
 
 	if(mosq->protocol == mosq_p_mqtt5){
-		property__write_all(packet, properties);
+		property__write_all(packet, properties, true);
 	}
 
 	/* Payload */

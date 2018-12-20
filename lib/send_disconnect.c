@@ -67,7 +67,7 @@ int send__disconnect(struct mosquitto *mosq, uint8_t reason_code, const mosquitt
 	}
 	if(mosq->protocol == mosq_p_mqtt5){
 		packet__write_byte(packet, reason_code);
-		property__write_all(packet, properties);
+		property__write_all(packet, properties, true);
 	}
 
 	return packet__queue(mosq, packet);

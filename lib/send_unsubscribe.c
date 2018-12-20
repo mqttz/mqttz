@@ -70,7 +70,7 @@ int send__unsubscribe(struct mosquitto *mosq, int *mid, const char *topic, const
 
 	if(mosq->protocol == mosq_p_mqtt5){
 		/* We don't use User Property yet. */
-		property__write_all(packet, properties);
+		property__write_all(packet, properties, true);
 	}
 
 	/* Payload */

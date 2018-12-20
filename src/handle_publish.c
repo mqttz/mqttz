@@ -279,7 +279,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 			break;
 		case 2:
 			if(!dup){
-				res = db__message_insert(db, context, mid, mosq_md_in, qos, retain, stored);
+				res = db__message_insert(db, context, mid, mosq_md_in, qos, retain, stored, NULL);
 			}else{
 				res = 0;
 			}
@@ -308,7 +308,7 @@ process_bad_message:
 				if(db__message_store(db, context->id, mid, NULL, qos, 0, NULL, false, &stored, 0, NULL, 0)){
 					return 1;
 				}
-				res = db__message_insert(db, context, mid, mosq_md_in, qos, false, stored);
+				res = db__message_insert(db, context, mid, mosq_md_in, qos, false, stored, NULL);
 			}else{
 				res = 0;
 			}

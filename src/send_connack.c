@@ -62,11 +62,6 @@ int send__connack(struct mosquitto_db *db, struct mosquitto *context, int ack, i
 			mosquitto__free(packet);
 			return rc;
 		}
-		rc = mosquitto_property_add_byte(&connack_props, MQTT_PROP_SUBSCRIPTION_ID_AVAILABLE, 0);
-		if(rc){
-			mosquitto__free(packet);
-			return rc;
-		}
 
 		proplen = property__get_length_all(connack_props);
 		varbytes = packet__varint_bytes(proplen);
@@ -80,7 +75,7 @@ int send__connack(struct mosquitto_db *db, struct mosquitto *context, int ack, i
 	packet__write_byte(packet, ack);
 	packet__write_byte(packet, reason_code);
 	if(context->protocol == mosq_p_mqtt5){
-		property__write_all(packet, connack_props);
+		property__write_all(packet, connack_props, true);
 	}
 	mosquitto_property_free_all(&connack_props);
 

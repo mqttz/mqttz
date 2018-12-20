@@ -123,7 +123,7 @@ int cfg_parse_property(struct mosq_config *cfg, int argc, char *argv[], int *idx
 			break;
 
 		case CMD_SUBSCRIBE:
-			if(identifier != MQTT_PROP_USER_PROPERTY){
+			if(identifier != MQTT_PROP_SUBSCRIPTION_IDENTIFIER && identifier != MQTT_PROP_USER_PROPERTY){
 				fprintf(stderr, "Error: %s property not supported for %s in --property argument.\n\n", propname, cmdname);
 				return MOSQ_ERR_NOT_SUPPORTED;
 			}

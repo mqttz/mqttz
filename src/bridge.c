@@ -149,6 +149,7 @@ int bridge__connect_step1(struct mosquitto_db *db, struct mosquitto *context)
 						context,
 						context->bridge->topics[i].local_topic,
 						context->bridge->topics[i].qos,
+						0,
 						MQTT_SUB_OPT_NO_LOCAL | MQTT_SUB_OPT_RETAIN_AS_PUBLISHED,
 						&db->subs) > 0){
 				return 1;
@@ -322,6 +323,7 @@ int bridge__connect(struct mosquitto_db *db, struct mosquitto *context)
 						context,
 						context->bridge->topics[i].local_topic,
 						context->bridge->topics[i].qos,
+						0,
 						MQTT_SUB_OPT_NO_LOCAL | MQTT_SUB_OPT_RETAIN_AS_PUBLISHED,
 						&db->subs) > 0){
 
@@ -329,7 +331,7 @@ int bridge__connect(struct mosquitto_db *db, struct mosquitto *context)
 			}
 			sub__retain_queue(db, context,
 					context->bridge->topics[i].local_topic,
-					context->bridge->topics[i].qos);
+					context->bridge->topics[i].qos, 0);
 		}
 	}
 

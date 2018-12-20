@@ -336,7 +336,7 @@ int db__message_delete(struct mosquitto_db *db, struct mosquitto *context, uint1
 	return MOSQ_ERR_SUCCESS;
 }
 
-int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, int qos, bool retain, struct mosquitto_msg_store *stored)
+int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, int qos, bool retain, struct mosquitto_msg_store *stored, mosquitto_property *properties)
 {
 	struct mosquitto_client_msg *msg;
 	struct mosquitto_client_msg **msgs, **last_msg;
@@ -362,6 +362,7 @@ int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint1
 		for(i=0; i<stored->dest_id_count; i++){
 			if(!strcmp(stored->dest_ids[i], context->id)){
 				/* We have already sent this message to this client. */
+				mosquitto_property_free_all(&properties);
 				return MOSQ_ERR_SUCCESS;
 			}
 		}
@@ -370,9 +371,11 @@ int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint1
 		/* Client is not connected only queue messages with QoS>0. */
 		if(qos == 0 && !db->config->queue_qos0_messages){
 			if(!context->bridge){
+				mosquitto_property_free_all(&properties);
 				return 2;
 			}else{
 				if(context->bridge->start_type != bst_lazy){
+					mosquitto_property_free_all(&properties);
 					return 2;
 				}
 			}
@@ -397,6 +400,7 @@ int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint1
 				if(qos == 2){
 					state = mosq_ms_wait_for_pubrel;
 				}else{
+					mosquitto_property_free_all(&properties);
 					return 1;
 				}
 			}
@@ -412,6 +416,7 @@ int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint1
 						context->id);
 			}
 			G_MSGS_DROPPED_INC();
+			mosquitto_property_free_all(&properties);
 			return 2;
 		}
 	}else{
@@ -425,6 +430,7 @@ int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint1
 						"Outgoing messages are being dropped for client %s.",
 						context->id);
 			}
+			mosquitto_property_free_all(&properties);
 			return 2;
 		}
 	}
@@ -448,6 +454,7 @@ int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint1
 	msg->dup = false;
 	msg->qos = qos;
 	msg->retain = retain;
+	msg->properties = properties;
 
 	if (state == mosq_ms_queued){
 		msgs = &(context->queued_msgs);
@@ -875,7 +882,7 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 	uint32_t payloadlen;
 	const void *payload;
 	int msg_count = 0;
-	mosquitto_property *properties;
+	mosquitto_property *cmsg_props = NULL, *store_props = NULL;
 	time_t now;
 
 	if(!context || context->sock == INVALID_SOCKET
@@ -903,11 +910,12 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 		qos = tail->qos;
 		payloadlen = tail->store->payloadlen;
 		payload = UHPA_ACCESS_PAYLOAD(tail->store);
-		properties = tail->store->properties;
+		cmsg_props = tail->properties;
+		store_props = tail->store->properties;
 
 		switch(tail->state){
 			case mosq_ms_publish_qos0:
-				rc = send__publish(context, mid, topic, payloadlen, payload, qos, retain, retries, properties);
+				rc = send__publish(context, mid, topic, payloadlen, payload, qos, retain, retries, cmsg_props, store_props);
 				if(!rc){
 					db__message_remove(db, context, &tail, last);
 				}else{
@@ -916,7 +924,7 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 				break;
 
 			case mosq_ms_publish_qos1:
-				rc = send__publish(context, mid, topic, payloadlen, payload, qos, retain, retries, properties);
+				rc = send__publish(context, mid, topic, payloadlen, payload, qos, retain, retries, cmsg_props, store_props);
 				if(!rc){
 					tail->timestamp = mosquitto_time();
 					tail->dup = 1; /* Any retry attempts are a duplicate. */
@@ -929,7 +937,7 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 				break;
 
 			case mosq_ms_publish_qos2:
-				rc = send__publish(context, mid, topic, payloadlen, payload, qos, retain, retries, properties);
+				rc = send__publish(context, mid, topic, payloadlen, payload, qos, retain, retries, cmsg_props, store_props);
 				if(!rc){
 					tail->timestamp = mosquitto_time();
 					tail->dup = 1; /* Any retry attempts are a duplicate. */

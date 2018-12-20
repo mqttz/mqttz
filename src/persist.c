@@ -935,8 +935,8 @@ static int persist__restore_sub(struct mosquitto_db *db, const char *client_id, 
 
 	context = persist__find_or_add_context(db, client_id, 0);
 	if(!context) return 1;
-	/* FIXME - retain_as_published needs saving */
-	return sub__add(db, context, sub, qos, false, &db->subs);
+	/* FIXME - identifer, options need saving */
+	return sub__add(db, context, sub, qos, 0, 0, &db->subs);
 }
 
 #endif

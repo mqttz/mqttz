@@ -397,13 +397,15 @@ int property__write(struct mosquitto__packet *packet, const mosquitto_property *
 }
 
 
-int property__write_all(struct mosquitto__packet *packet, const mosquitto_property *properties)
+int property__write_all(struct mosquitto__packet *packet, const mosquitto_property *properties, bool write_len)
 {
 	int rc;
 	const mosquitto_property *p;
 
-	rc = packet__write_varint(packet, property__get_length_all(properties));
-	if(rc) return rc;
+	if(write_len){
+		rc = packet__write_varint(packet, property__get_length_all(properties));
+		if(rc) return rc;
+	}
 
 	p = properties;
 	while(p){

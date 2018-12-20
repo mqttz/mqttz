@@ -144,7 +144,7 @@ int send__command_with_mid(struct mosquitto *mosq, uint8_t command, uint16_t mid
 
 	if(mosq->protocol == mosq_p_mqtt5){
 		packet__write_byte(packet, reason_code);
-		property__write_all(packet, properties);
+		property__write_all(packet, properties, true);
 	}
 
 	return packet__queue(mosq, packet);

@@ -53,7 +53,7 @@ int send__unsuback(struct mosquitto *mosq, uint16_t mid, const mosquitto_propert
 	packet__write_uint16(packet, mid);
 
 	if(mosq->protocol == mosq_p_mqtt5){
-		property__write_all(packet, properties);
+		property__write_all(packet, properties, true);
 	}
 
 	return packet__queue(mosq, packet);

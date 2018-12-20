@@ -34,6 +34,7 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 	uint16_t mid;
 	char *sub;
 	uint8_t subscription_options;
+	uint32_t subscription_identifier = 0;
 	uint8_t qos;
 	uint8_t retain_handling = 0;
 	uint8_t *payload = NULL, *tmp_payload;
@@ -57,9 +58,20 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 	if(context->protocol == mosq_p_mqtt5){
 		rc = property__read_all(CMD_SUBSCRIBE, &context->in_packet, &properties);
 		if(rc) return rc;
+
+		if(mosquitto_property_read_varint(properties, MQTT_PROP_SUBSCRIPTION_IDENTIFIER,
+					&subscription_identifier, false)){
+
+			/* If the identifier was force set to 0, this is an error */
+			if(subscription_identifier == 0){
+				mosquitto_property_free_all(&properties);
+				return MOSQ_ERR_PROTOCOL;
+			}
+		}
+
 		mosquitto_property_free_all(&properties);
+		/* Note - User Property not handled */
 	}
-	mosquitto_property_free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
 
 	while(context->in_packet.pos < context->in_packet.remaining_length){
 		sub = NULL;
@@ -147,20 +159,20 @@ int handle__subscribe(struct mosquitto_db *db, struct mosquitto *context)
 			}
 
 			if(qos != 0x80){
-				rc2 = sub__add(db, context, sub, qos, subscription_options, &db->subs);
+				rc2 = sub__add(db, context, sub, qos, subscription_identifier, subscription_options, &db->subs);
 				if(rc2 > 0){
 					mosquitto__free(sub);
 					return rc2;
 				}
 				if(context->protocol == mosq_p_mqtt311 || context->protocol == mosq_p_mqtt31){
 					if(rc2 == MOSQ_ERR_SUCCESS || rc2 == MOSQ_ERR_SUB_EXISTS){
-						if(sub__retain_queue(db, context, sub, qos)) rc = 1;
+						if(sub__retain_queue(db, context, sub, qos, 0)) rc = 1;
 					}
 				}else{
 					if((retain_handling == MQTT_SUB_OPT_SEND_RETAIN_ALWAYS)
 							|| (rc2 == MOSQ_ERR_SUCCESS && retain_handling == MQTT_SUB_OPT_SEND_RETAIN_NEW)){
 
-						if(sub__retain_queue(db, context, sub, qos)) rc = 1;
+						if(sub__retain_queue(db, context, sub, qos, subscription_identifier)) rc = 1;
 					}
 				}
 
