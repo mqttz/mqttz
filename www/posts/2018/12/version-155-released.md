@@ -17,6 +17,7 @@ This is a bugfix and security release.
 - If `per_listener_settings` is set to true, then the `acl_file` setting was
   ignored for the "default listener" only. This has been fixed. This does not
   affect any listeners defined with the `listener` option. Closes [#1073].
+  This is now tracked as [CVE-2018-20145].
 
 ## Broker
 - Add `socket_domain` option to allow listeners to disable IPv6 support.
@@ -46,6 +47,7 @@ This is a bugfix and security release.
 - Fix building where TLS-PSK is not available. Closes [#68].
 
 
+[CVE-2018-20145]: https://nvd.nist.gov/vuln/detail/CVE-2018-20145
 [#68]: https://github.com/eclipse/mosquitto/issues/68
 [#537]: https://github.com/eclipse/mosquitto/issues/537
 [#613]: https://github.com/eclipse/mosquitto/issues/613

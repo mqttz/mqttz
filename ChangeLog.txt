@@ -5,6 +5,7 @@ Security:
 - If `per_listener_settings` is set to true, then the `acl_file` setting was
   ignored for the "default listener" only. This has been fixed. This does not
   affect any listeners defined with the `listener` option. Closes #1073.
+  This is now tracked as CVE-2018-20145.
 
 Broker:
 - Add `socket_domain` option to allow listeners to disable IPv6 support.
