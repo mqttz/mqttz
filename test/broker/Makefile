@@ -55,6 +55,7 @@ endif
 	./02-subpub-qos1-nolocal.py
 	./02-subpub-qos0-retain-as-publish.py
 	./02-subpub-qos0-send-retain.py
+	./02-subpub-qos0-subscription-id.py
 	./02-unsubscribe-qos0.py
 	./02-unsubscribe-qos1.py
 	./02-unsubscribe-qos2.py

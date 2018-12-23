@@ -48,6 +48,10 @@ def gen_string_pair_prop(identifier, s1, s2):
     prop = struct.pack('!BH%dsH%ds'%(len(s1), len(s2)), identifier, len(s1), s1, len(s2), s2)
     return prop
 
+def gen_varint_prop(identifier, val):
+    v = pack_varint(val)
+    return struct.pack("!B"+str(len(v))+"s", identifier, v)
+
 def pack_varint(varint):
     s = ""
     while True:

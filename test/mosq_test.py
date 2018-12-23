@@ -438,10 +438,14 @@ def gen_pubrel(mid, dup=False, proto_ver=4, reason_code=0):
 def gen_pubcomp(mid, proto_ver=4, reason_code=0):
     return _gen_command_with_mid(112, mid, proto_ver, reason_code)
 
-def gen_subscribe(mid, topic, qos, proto_ver=4):
+def gen_subscribe(mid, topic, qos, proto_ver=4, properties=""):
     if proto_ver == 5:
-        pack_format = "!BBHBH"+str(len(topic))+"sB"
-        return struct.pack(pack_format, 130, 2+1+2+len(topic)+1, mid, 0, len(topic), topic, qos)
+        if properties == "":
+            pack_format = "!BBHBH"+str(len(topic))+"sB"
+            return struct.pack(pack_format, 130, 2+1+2+len(topic)+1, mid, 0, len(topic), topic, qos)
+        else:
+            pack_format = "!BBH"+str(len(properties))+"s"+"H"+str(len(topic))+"sB"
+            return struct.pack(pack_format, 130, 2+1+2+len(topic)+len(properties), mid, properties, len(topic), topic, qos)
     else:
         pack_format = "!BBHH"+str(len(topic))+"sB"
         return struct.pack(pack_format, 130, 2+2+len(topic)+1, mid, len(topic), topic, qos)
