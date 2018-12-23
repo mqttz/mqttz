@@ -38,6 +38,7 @@ Contributors:
 
 int handle__pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 {
+	uint8_t reason_code;
 	uint16_t mid;
 #ifndef WITH_BROKER
 	struct mosquitto_message_all *message = NULL;
@@ -56,6 +57,9 @@ int handle__pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 	if(mid == 0) return MOSQ_ERR_PROTOCOL;
 
 	if(mosq->protocol == mosq_p_mqtt5){
+		rc = packet__read_byte(&mosq->in_packet, &reason_code);
+		if(rc) return rc;
+
 		rc = property__read_all(CMD_PUBREL, &mosq->in_packet, &properties);
 		if(rc) return rc;
 	}

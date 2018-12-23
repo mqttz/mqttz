@@ -37,6 +37,7 @@ Contributors:
 
 int handle__pubrec(struct mosquitto *mosq)
 {
+	uint8_t reason_code;
 	uint16_t mid;
 	int rc;
 	mosquitto_property *properties = NULL;
@@ -47,6 +48,9 @@ int handle__pubrec(struct mosquitto *mosq)
 	if(mid == 0) return MOSQ_ERR_PROTOCOL;
 
 	if(mosq->protocol == mosq_p_mqtt5){
+		rc = packet__read_byte(&mosq->in_packet, &reason_code);
+		if(rc) return rc;
+
 		rc = property__read_all(CMD_PUBREC, &mosq->in_packet, &properties);
 		if(rc) return rc;
 		/* Immediately free, we don't do anything with Reason String or User Property at the moment */

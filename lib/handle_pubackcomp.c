@@ -42,6 +42,7 @@ int handle__pubackcomp(struct mosquitto_db *db, struct mosquitto *mosq, const ch
 int handle__pubackcomp(struct mosquitto *mosq, const char *type)
 #endif
 {
+	uint8_t reason_code;
 	uint16_t mid;
 	int rc;
 	mosquitto_property *properties = NULL;
@@ -52,6 +53,9 @@ int handle__pubackcomp(struct mosquitto *mosq, const char *type)
 	if(mid == 0) return MOSQ_ERR_PROTOCOL;
 
 	if(mosq->protocol == mosq_p_mqtt5){
+		rc = packet__read_byte(&mosq->in_packet, &reason_code);
+		if(rc) return rc;
+
 		rc = property__read_all(CMD_PUBACK, &mosq->in_packet, &properties);
 		if(rc) return rc;
 	}
