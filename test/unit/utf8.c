@@ -425,6 +425,26 @@ void TEST_utf8_control_characters(void)
 
 }
 
+
+void TEST_utf8_mqtt_1_5_4_2(void)
+{
+	char buf[10] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', '\0'};
+
+	utf8_helper_len(buf, 9, MOSQ_ERR_SUCCESS);
+
+	buf[3] = '\0';
+	utf8_helper_len(buf, 9, MOSQ_ERR_MALFORMED_UTF8);
+}
+
+
+void TEST_utf8_mqtt_1_5_4_3(void)
+{
+	char buf[10] = {'a', 'b', 0xEF, 0xBB, 0xBF, 'f', 'g', 'h', 'i', '\0'};
+
+	utf8_helper_len(buf, 9, MOSQ_ERR_SUCCESS);
+}
+
+
 /* ========================================================================
  * TEST SUITE SETUP
  * ======================================================================== */
@@ -448,6 +468,8 @@ int init_utf8_tests(void)
 			|| !CU_add_test(test_suite, "UTF-8 overlong encoding", TEST_utf8_overlong_encoding)
 			|| !CU_add_test(test_suite, "UTF-8 illegal code positions", TEST_utf8_illegal_code_positions)
 			|| !CU_add_test(test_suite, "UTF-8 control characters", TEST_utf8_control_characters)
+			|| !CU_add_test(test_suite, "UTF-8 MQTT-1.5.4-2", TEST_utf8_mqtt_1_5_4_2)
+			|| !CU_add_test(test_suite, "UTF-8 MQTT-1.5.4-3", TEST_utf8_mqtt_1_5_4_3)
 			){
 
 		printf("Error adding UTF-8 CUnit tests.\n");
