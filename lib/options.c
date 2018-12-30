@@ -263,6 +263,8 @@ int mosquitto_opts_set(struct mosquitto *mosq, enum mosq_opt_t option, void *val
 				mosq->protocol = mosq_p_mqtt31;
 			}else if(ival == MQTT_PROTOCOL_V311){
 				mosq->protocol = mosq_p_mqtt311;
+			}else if(ival == MQTT_PROTOCOL_V5){
+				mosq->protocol = mosq_p_mqtt5;
 			}else{
 				return MOSQ_ERR_INVAL;
 			}

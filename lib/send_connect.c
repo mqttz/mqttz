@@ -60,12 +60,15 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 	password = mosq->password;
 #endif
 
-	if(mosq->protocol == mosq_p_mqtt31){
-		version = MQTT_PROTOCOL_V31;
-		headerlen = 12;
+	if(mosq->protocol == mosq_p_mqtt5){
+		version = MQTT_PROTOCOL_V5;
+		headerlen = 11; /* FIXME - this has a fixed property length of 0 */
 	}else if(mosq->protocol == mosq_p_mqtt311){
 		version = MQTT_PROTOCOL_V311;
 		headerlen = 10;
+	}else if(mosq->protocol == mosq_p_mqtt31){
+		version = MQTT_PROTOCOL_V31;
+		headerlen = 12;
 	}else{
 		return MOSQ_ERR_INVAL;
 	}
@@ -98,7 +101,7 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 	/* Variable header */
 	if(version == MQTT_PROTOCOL_V31){
 		packet__write_string(packet, PROTOCOL_NAME_v31, strlen(PROTOCOL_NAME_v31));
-	}else if(version == MQTT_PROTOCOL_V311){
+	}else{
 		packet__write_string(packet, PROTOCOL_NAME, strlen(PROTOCOL_NAME));
 	}
 #if defined(WITH_BROKER) && defined(WITH_BRIDGE)
@@ -120,6 +123,11 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 	}
 	packet__write_byte(packet, byte);
 	packet__write_uint16(packet, keepalive);
+
+	if(mosq->protocol == mosq_p_mqtt5){
+		/* Write properties */
+		packet__write_byte(packet, 0); /* FIXME - No properties yet. */
+	}
 
 	/* Payload */
 	packet__write_string(packet, clientid, strlen(clientid));

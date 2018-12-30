@@ -266,7 +266,7 @@ static int sub__add_recurse(struct mosquitto_db *db, struct mosquitto *context, 
 					if(context->protocol == mosq_p_mqtt31){
 						return -1;
 					}else{
-						/* mqttv311 requires retained messages are resent on
+						/* mqttv311/mqttv5 requires retained messages are resent on
 						 * resubscribe. */
 						return 0;
 					}
