@@ -53,7 +53,6 @@ struct config_recurse {
 	int log_type_set;
 	unsigned long max_inflight_bytes;
 	unsigned long max_queued_bytes;
-	int max_inflight_messages;
 	int max_queued_messages;
 };
 
@@ -213,6 +212,7 @@ static void config__init_reload(struct mosquitto_db *db, struct mosquitto__confi
 #endif
 	config->log_timestamp = true;
 	config->max_keepalive = 65535;
+	config->max_inflight_messages = 20;
 	config->persistence = false;
 	mosquitto__free(config->persistence_location);
 	config->persistence_location = NULL;
@@ -598,7 +598,6 @@ int config__read(struct mosquitto_db *db, struct mosquitto__config *config, bool
 	cr.log_type = MOSQ_LOG_NONE;
 	cr.log_type_set = 0;
 	cr.max_inflight_bytes = 0;
-	cr.max_inflight_messages = 20;
 	cr.max_queued_bytes = 0;
 	cr.max_queued_messages = 100;
 
@@ -681,7 +680,7 @@ int config__read(struct mosquitto_db *db, struct mosquitto__config *config, bool
 		config->user = "mosquitto";
 	}
 
-	db__limits_set(cr.max_inflight_messages, cr.max_inflight_bytes, cr.max_queued_messages, cr.max_queued_bytes);
+	db__limits_set(cr.max_inflight_bytes, cr.max_queued_messages, cr.max_queued_bytes);
 
 #ifdef WITH_BRIDGE
 	for(i=0; i<config->bridge_count; i++){
@@ -1511,13 +1510,14 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty max_inflight_bytes value in configuration.");
 					}
 				}else if(!strcmp(token, "max_inflight_messages")){
-					token = strtok_r(NULL, " ", &saveptr);
-					if(token){
-						cr->max_inflight_messages = atoi(token);
-						if(cr->max_inflight_messages < 0) cr->max_inflight_messages = 0;
-					}else{
-						log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty max_inflight_messages value in configuration.");
+					if(conf__parse_int(&token, "max_inflight_messages", &tmp_int, saveptr)) return MOSQ_ERR_INVAL;
+					if(tmp_int < 0 || tmp_int == 65535){
+						tmp_int = 0;
+					}else if(tmp_int > 65535){
+						log__printf(NULL, MOSQ_LOG_ERR, "Error: max_inflight_messages must be <= 65535.");
+						return MOSQ_ERR_INVAL;
 					}
+					config->max_inflight_messages = tmp_int;
 				}else if(!strcmp(token, "max_keepalive")){
 					if(conf__parse_int(&token, "max_keepalive", &tmp_int, saveptr)) return MOSQ_ERR_INVAL;
 					if(tmp_int < 10 || tmp_int > 65535){

@@ -25,7 +25,6 @@ Contributors:
 #include "sys_tree.h"
 #include "time_mosq.h"
 
-static int max_inflight = 20;
 static unsigned long max_inflight_bytes = 0;
 static int max_queued = 100;
 static unsigned long max_queued_bytes = 0;
@@ -38,14 +37,14 @@ static unsigned long max_queued_bytes = 0;
  */
 static bool db__ready_for_flight(struct mosquitto *context, int qos)
 {
-	if(qos == 0 || (max_inflight == 0 && max_inflight_bytes == 0)){
+	if(qos == 0 || (context->max_inflight_messages == 0 && max_inflight_bytes == 0)){
 		return true;
 	}
 
 	bool valid_bytes = context->msg_bytes12 < max_inflight_bytes;
-	bool valid_count = context->msg_count12 < max_inflight;
+	bool valid_count = context->msg_count12 < context->max_inflight_messages;
 
-	if(max_inflight == 0){
+	if(context->max_inflight_messages == 0){
 		return valid_bytes;
 	}
 	if(max_inflight_bytes == 0){
@@ -73,7 +72,7 @@ static bool db__ready_for_queue(struct mosquitto *context, int qos)
 	unsigned long source_bytes = context->msg_bytes12;
 	int source_count = context->msg_count12;
 	unsigned long adjust_bytes = max_inflight_bytes;
-	int adjust_count = max_inflight;
+	int adjust_count = context->max_inflight_messages;
 
 	/* nothing in flight for offline clients */
 	if(context->sock == INVALID_SOCKET){
@@ -307,7 +306,7 @@ int db__message_delete(struct mosquitto_db *db, struct mosquitto *context, uint1
 			tail = tail->next;
 		}
 	}
-	while (context->queued_msgs && (max_inflight == 0 || msg_index < max_inflight)){
+	while (context->queued_msgs && (context->max_inflight_messages == 0 || msg_index < context->max_inflight_messages)){
 		msg_index++;
 		tail = context->queued_msgs;
 		tail->timestamp = mosquitto_time();
@@ -838,7 +837,7 @@ int db__message_release(struct mosquitto_db *db, struct mosquitto *context, uint
 		}
 	}
 
-	while(context->queued_msgs && (max_inflight == 0 || msg_index < max_inflight)){
+	while(context->queued_msgs && (context->max_inflight_messages == 0 || msg_index < context->max_inflight_messages)){
 		msg_index++;
 		tail = context->queued_msgs;
 		tail->timestamp = mosquitto_time();
@@ -989,7 +988,7 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 		}
 	}
 
-	while(context->queued_msgs && (max_inflight == 0 || msg_count < max_inflight)){
+	while(context->queued_msgs && (context->max_inflight_messages == 0 || msg_count < context->max_inflight_messages)){
 		msg_count++;
 		tail = context->queued_msgs;
 		if(tail->direction == mosq_md_out){
@@ -1022,9 +1021,8 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 	return MOSQ_ERR_SUCCESS;
 }
 
-void db__limits_set(int inflight, unsigned long inflight_bytes, int queued, unsigned long queued_bytes)
+void db__limits_set(unsigned long inflight_bytes, int queued, unsigned long queued_bytes)
 {
-	max_inflight = inflight;
 	max_inflight_bytes = inflight_bytes;
 	max_queued = queued;
 	max_queued_bytes = queued_bytes;

@@ -35,6 +35,16 @@ int property__process_connect(struct mosquitto *context, mosquitto_property *pro
 	while(p){
 		if(p->identifier == MQTT_PROP_SESSION_EXPIRY_INTERVAL){
 			context->session_expiry_interval = p->value.i32;
+		}else if(p->identifier == MQTT_PROP_RECEIVE_MAXIMUM){
+			if(p->value.i16 == 0){
+				return MOSQ_ERR_PROTOCOL;
+			}
+
+			if(p->value.i16 == 65535){
+				context->max_inflight_messages = 0;
+			}else{
+				context->max_inflight_messages = p->value.i16;
+			}
 		}
 		p = p->next;
 	}

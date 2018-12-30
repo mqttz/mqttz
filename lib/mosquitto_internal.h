@@ -279,11 +279,11 @@ struct mosquitto {
 	char threaded;
 	struct mosquitto__packet *out_packet_last;
 	int inflight_messages;
-	int max_inflight_messages;
 #  ifdef WITH_SRV
 	ares_channel achan;
 #  endif
 #endif
+	int max_inflight_messages;
 
 #ifdef WITH_BROKER
 	UT_hash_handle hh_id;
