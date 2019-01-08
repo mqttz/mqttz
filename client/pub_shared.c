@@ -200,7 +200,7 @@ int pub_shared_loop(struct mosquitto *mosq)
 					}
 				}
 				if(feof(stdin)){
-					if(last_mid == -1){
+					if(mid_sent == -1){
 						/* Empty file */
 						mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
 						disconnect_sent = true;

@@ -17,6 +17,10 @@ Client features:
   its subscriptions acknowledged. Use with -c to create a durable client
   session without requiring a message to be received.
 
+Client fixes:
+- mosquitto_pub wouldn't always publish all messages when using `-l` and
+  QoS>0. This has been fixed.
+
 
 1.5.5 - 20181211
 ================
