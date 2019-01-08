@@ -99,6 +99,7 @@ MOSQ_1.6 {
 		mosquitto_disconnect_v5_callback_set;
 		mosquitto_disconnect_v5;
 		mosquitto_message_v5_callback_set;
+		mosquitto_int_option;
 		mosquitto_property_add_binary;
 		mosquitto_property_add_byte;
 		mosquitto_property_add_int16;
@@ -126,5 +127,6 @@ MOSQ_1.6 {
 		mosquitto_subscribe_v5;
 		mosquitto_unsubscribe_v5_callback_set;
 		mosquitto_unsubscribe_v5;
+		mosquitto_void_option;
 		mosquitto_will_set_v5;
 } MOSQ_1.5;

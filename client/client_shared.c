@@ -947,7 +947,7 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 {
 	int rc;
 
-	mosquitto_opts_set(mosq, MOSQ_OPT_PROTOCOL_VERSION, &(cfg->protocol_version));
+	mosquitto_int_option(mosq, MOSQ_OPT_PROTOCOL_VERSION, cfg->protocol_version);
 
 	if(cfg->will_topic && mosquitto_will_set_v5(mosq, cfg->will_topic,
 				cfg->will_payloadlen, cfg->will_payload, cfg->will_qos,

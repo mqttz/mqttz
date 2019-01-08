@@ -1313,6 +1313,9 @@ libmosq_EXPORT int mosquitto_threaded_set(struct mosquitto *mosq, bool threaded)
  *
  * Used to set options for the client.
  *
+ * This function is deprecated, the replacement <mosquitto_int_option> and
+ * <mosquitto_void_option> functions should be used instead.
+ *
  * Parameters:
  *	mosq -   a valid mosquitto instance.
  *	option - the option to set.
@@ -1344,6 +1347,57 @@ libmosq_EXPORT int mosquitto_threaded_set(struct mosquitto *mosq, bool threaded)
  *	          This option is only available for openssl 1.1.0 and higher.
  */
 libmosq_EXPORT int mosquitto_opts_set(struct mosquitto *mosq, enum mosq_opt_t option, void *value);
+
+/*
+ * Function: mosquitto_int_option
+ *
+ * Used to set integer options for the client.
+ *
+ * Parameters:
+ *	mosq -   a valid mosquitto instance.
+ *	option - the option to set.
+ *	value -  the option specific value.
+ *
+ * Options:
+ *	MOSQ_OPT_PROTOCOL_VERSION
+ *	          Value must be set to either MQTT_PROTOCOL_V31,
+ *	          MQTT_PROTOCOL_V311, or MQTT_PROTOCOL_V5. Must be set before the
+ *	          client connects.  Defaults to MQTT_PROTOCOL_V311.
+ *
+ *	MOSQ_OPT_SSL_CTX_WITH_DEFAULTS
+ *	          If value is set to a non zero value, then the user specified
+ *	          SSL_CTX passed in using MOSQ_OPT_SSL_CTX will have the default
+ *	          options applied to it. This means that you only need to change
+ *	          the values that are relevant to you. If you use this option then
+ *	          you must configure the TLS options as normal, i.e.  you should
+ *	          use <mosquitto_tls_set> to configure the cafile/capath as a
+ *	          minimum.
+ *	          This option is only available for openssl 1.1.0 and higher.
+ */
+libmosq_EXPORT int mosquitto_int_option(struct mosquitto *mosq, enum mosq_opt_t option, int value);
+
+/*
+ * Function: mosquitto_void_option
+ *
+ * Used to set void* options for the client.
+ *
+ * Parameters:
+ *	mosq -   a valid mosquitto instance.
+ *	option - the option to set.
+ *	value -  the option specific value.
+ *
+ * Options:
+ *	MOSQ_OPT_SSL_CTX
+ *	          Pass an openssl SSL_CTX to be used when creating TLS connections
+ *	          rather than libmosquitto creating its own.  This must be called
+ *	          before connecting to have any effect. If you use this option, the
+ *	          onus is on you to ensure that you are using secure settings.
+ *	          Setting to NULL means that libmosquitto will use its own SSL_CTX
+ *	          if TLS is to be used.
+ *	          This option is only available for openssl 1.1.0 and higher.
+ */
+libmosq_EXPORT int mosquitto_void_option(struct mosquitto *mosq, enum mosq_opt_t option, void *value);
+
 
 /*
  * Function: mosquitto_reconnect_delay_set

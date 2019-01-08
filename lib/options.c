@@ -276,16 +276,7 @@ int mosquitto_opts_set(struct mosquitto *mosq, enum mosq_opt_t option, void *val
 	switch(option){
 		case MOSQ_OPT_PROTOCOL_VERSION:
 			ival = *((int *)value);
-			if(ival == MQTT_PROTOCOL_V31){
-				mosq->protocol = mosq_p_mqtt31;
-			}else if(ival == MQTT_PROTOCOL_V311){
-				mosq->protocol = mosq_p_mqtt311;
-			}else if(ival == MQTT_PROTOCOL_V5){
-				mosq->protocol = mosq_p_mqtt5;
-			}else{
-				return MOSQ_ERR_INVAL;
-			}
-			break;
+			return mosquitto_int_option(mosq, option, ival);
 		case MOSQ_OPT_SSL_CTX:
 #ifdef WITH_TLS
 			mosq->ssl_ctx = (SSL_CTX *)value;
@@ -300,9 +291,64 @@ int mosquitto_opts_set(struct mosquitto *mosq, enum mosq_opt_t option, void *val
 #else
 			return MOSQ_ERR_NOT_SUPPORTED;
 #endif
+		default:
+			return MOSQ_ERR_INVAL;
+	}
+	return MOSQ_ERR_SUCCESS;
+}
+
+
+int mosquitto_int_option(struct mosquitto *mosq, enum mosq_opt_t option, int value)
+{
+	if(!mosq) return MOSQ_ERR_INVAL;
+
+	switch(option){
+		case MOSQ_OPT_PROTOCOL_VERSION:
+			if(value == MQTT_PROTOCOL_V31){
+				mosq->protocol = mosq_p_mqtt31;
+			}else if(value == MQTT_PROTOCOL_V311){
+				mosq->protocol = mosq_p_mqtt311;
+			}else if(value == MQTT_PROTOCOL_V5){
+				mosq->protocol = mosq_p_mqtt5;
+			}else{
+				return MOSQ_ERR_INVAL;
+			}
+			break;
+
 		case MOSQ_OPT_SSL_CTX_WITH_DEFAULTS:
 #if defined(WITH_TLS) && OPENSSL_VERSION_NUMBER >= 0x10100000L
-			mosq->ssl_ctx_defaults = true;
+			if(value){
+				mosq->ssl_ctx_defaults = true;
+			}else{
+				mosq->ssl_ctx_defaults = false;
+			}
+			break;
+#else
+			return MOSQ_ERR_NOT_SUPPORTED;
+#endif
+
+		default:
+			return MOSQ_ERR_INVAL;
+	}
+	return MOSQ_ERR_SUCCESS;
+}
+
+
+int mosquitto_void_option(struct mosquitto *mosq, enum mosq_opt_t option, void *value)
+{
+	if(!mosq || !value) return MOSQ_ERR_INVAL;
+
+	switch(option){
+		case MOSQ_OPT_SSL_CTX:
+#ifdef WITH_TLS
+			mosq->ssl_ctx = (SSL_CTX *)value;
+			if(mosq->ssl_ctx){
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L) && !defined(LIBRESSL_VERSION_NUMBER)
+				SSL_CTX_up_ref(mosq->ssl_ctx);
+#else
+				CRYPTO_add(&(mosq->ssl_ctx)->references, 1, CRYPTO_LOCK_SSL_CTX);
+#endif
+			}
 			break;
 #else
 			return MOSQ_ERR_NOT_SUPPORTED;
