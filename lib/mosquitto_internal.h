@@ -278,14 +278,14 @@ struct mosquitto {
 	bool reconnect_exponential_backoff;
 	char threaded;
 	struct mosquitto__packet *out_packet_last;
-	int inflight_messages;
 #  ifdef WITH_SRV
 	ares_channel achan;
 #  endif
 #endif
+	int send_quota;
 	int receive_quota;
-	int receive_maximum;
-	int max_inflight_messages;
+	uint16_t send_maximum;
+	uint16_t receive_maximum;
 
 #ifdef WITH_BROKER
 	UT_hash_handle hh_id;

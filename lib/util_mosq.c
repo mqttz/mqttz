@@ -261,3 +261,10 @@ void util__increment_receive_quota(struct mosquitto *mosq)
 		}
 	}
 }
+
+void util__increment_send_quota(struct mosquitto *mosq)
+{
+	if(mosq->send_quota < mosq->send_maximum){
+		mosq->send_quota++;
+	}
+}

@@ -37,14 +37,14 @@ static unsigned long max_queued_bytes = 0;
  */
 static bool db__ready_for_flight(struct mosquitto *context, int qos)
 {
-	if(qos == 0 || (context->max_inflight_messages == 0 && max_inflight_bytes == 0)){
+	if(qos == 0 || (context->send_maximum == 0 && max_inflight_bytes == 0)){
 		return true;
 	}
 
 	bool valid_bytes = context->msg_bytes12 < max_inflight_bytes;
-	bool valid_count = context->msg_count12 < context->max_inflight_messages;
+	bool valid_count = context->msg_count12 < context->send_maximum;
 
-	if(context->max_inflight_messages == 0){
+	if(context->send_maximum == 0){
 		return valid_bytes;
 	}
 	if(max_inflight_bytes == 0){
@@ -72,7 +72,7 @@ static bool db__ready_for_queue(struct mosquitto *context, int qos)
 	unsigned long source_bytes = context->msg_bytes12;
 	int source_count = context->msg_count12;
 	unsigned long adjust_bytes = max_inflight_bytes;
-	int adjust_count = context->max_inflight_messages;
+	int adjust_count = context->send_maximum;
 
 	/* nothing in flight for offline clients */
 	if(context->sock == INVALID_SOCKET){
@@ -306,7 +306,7 @@ int db__message_delete(struct mosquitto_db *db, struct mosquitto *context, uint1
 			tail = tail->next;
 		}
 	}
-	while (context->queued_msgs && (context->max_inflight_messages == 0 || msg_index < context->max_inflight_messages)){
+	while (context->queued_msgs && (context->send_maximum == 0 || msg_index < context->send_maximum)){
 		msg_index++;
 		tail = context->queued_msgs;
 		tail->timestamp = mosquitto_time();
@@ -837,7 +837,7 @@ int db__message_release(struct mosquitto_db *db, struct mosquitto *context, uint
 		}
 	}
 
-	while(context->queued_msgs && (context->max_inflight_messages == 0 || msg_index < context->max_inflight_messages)){
+	while(context->queued_msgs && (context->send_maximum == 0 || msg_index < context->send_maximum)){
 		msg_index++;
 		tail = context->queued_msgs;
 		tail->timestamp = mosquitto_time();
@@ -988,7 +988,7 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 		}
 	}
 
-	while(context->queued_msgs && (context->max_inflight_messages == 0 || msg_count < context->max_inflight_messages)){
+	while(context->queued_msgs && (context->send_maximum == 0 || msg_count < context->send_maximum)){
 		msg_count++;
 		tail = context->queued_msgs;
 		if(tail->direction == mosq_md_out){

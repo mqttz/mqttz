@@ -322,6 +322,13 @@ int mosquitto_int_option(struct mosquitto *mosq, enum mosq_opt_t option, int val
 			mosq->receive_maximum = value;
 			break;
 
+		case MOSQ_OPT_SEND_MAXIMUM:
+			if(value < 0 || value > 65535){
+				return MOSQ_ERR_INVAL;
+			}
+			mosq->send_maximum = value;
+			break;
+
 		case MOSQ_OPT_SSL_CTX_WITH_DEFAULTS:
 #if defined(WITH_TLS) && OPENSSL_VERSION_NUMBER >= 0x10100000L
 			if(value){

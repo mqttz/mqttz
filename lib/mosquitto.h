@@ -100,6 +100,7 @@ enum mosq_opt_t {
 	MOSQ_OPT_SSL_CTX = 2,
 	MOSQ_OPT_SSL_CTX_WITH_DEFAULTS = 3,
 	MOSQ_OPT_RECEIVE_MAXIMUM = 4,
+	MOSQ_OPT_SEND_MAXIMUM = 5,
 };
 
 /* MQTT specification restricts client ids to a maximum of 23 characters */
@@ -1375,6 +1376,15 @@ libmosq_EXPORT int mosquitto_opts_set(struct mosquitto *mosq, enum mosq_opt_t op
  *	          will override this option. Using this option is the recommended
  *	          method however.
  *
+ *	MOSQ_OPT_SEND_MAXIMUM
+ *	          Value can be set between 1 and 65535 inclusive, and represents
+ *	          the maximum number of outgoing QoS 1 and QoS 2 messages that this
+ *	          client will attempt to have "in flight" at once. Defaults to 20.
+ *	          This option is not valid for MQTT v3.1 or v3.1.1 clients.
+ *	          Note that if the broker being connected to sends a
+ *	          MQTT_PROP_RECEIVE_MAXIMUM property that has a lower value than
+ *	          this option, then the broker provided value will be used.
+ *
  *	MOSQ_OPT_SSL_CTX_WITH_DEFAULTS
  *	          If value is set to a non zero value, then the user specified
  *	          SSL_CTX passed in using MOSQ_OPT_SSL_CTX will have the default
@@ -1449,6 +1459,9 @@ libmosq_EXPORT int mosquitto_reconnect_delay_set(struct mosquitto *mosq, unsigne
 
 /*
  * Function: mosquitto_max_inflight_messages_set
+ *
+ * This function is deprected. Use the <mosquitto_int_option> function with the
+ * MOSQ_OPT_SEND_MAXIMUM option instead.
  *
  * Set the number of QoS 1 and 2 messages that can be "in flight" at one time.
  * An in flight message is part way through its delivery flow. Attempts to send

@@ -40,11 +40,8 @@ int property__process_connect(struct mosquitto *context, mosquitto_property *pro
 				return MOSQ_ERR_PROTOCOL;
 			}
 
-			if(p->value.i16 == 65535){
-				context->max_inflight_messages = 0;
-			}else{
-				context->max_inflight_messages = p->value.i16;
-			}
+			context->send_maximum = p->value.i16;
+			context->send_quota = context->send_maximum;
 		}
 		p = p->next;
 	}

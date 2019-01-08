@@ -38,4 +38,5 @@ int mosquitto__hex2bin(const char *hex, unsigned char *bin, int bin_max_len);
 #endif
 
 void util__increment_receive_quota(struct mosquitto *mosq);
+void util__increment_send_quota(struct mosquitto *mosq);
 #endif
