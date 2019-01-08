@@ -320,10 +320,9 @@ def gen_connect(client_id, clean_session=True, keepalive=60, username=None, pass
         connect_flags = connect_flags | 0x02
 
     if proto_ver == 5:
-        properties += mqtt5_props.gen_uint16_prop(mqtt5_props.PROP_RECEIVE_MAXIMUM, 20)
-        properties = mqtt5_props.prop_finalise(properties)
         if properties == "":
-            properties = struct.pack("B", 0)
+            properties += mqtt5_props.gen_uint16_prop(mqtt5_props.PROP_RECEIVE_MAXIMUM, 20)
+        properties = mqtt5_props.prop_finalise(properties)
         remaining_length += len(properties)
 
     if will_topic != None:
@@ -378,7 +377,7 @@ def gen_connack(resv=0, rc=0, proto_ver=4, properties=""):
 
     return packet
 
-def gen_publish(topic, qos, payload=None, retain=False, dup=False, mid=0, proto_ver=4, properties=None):
+def gen_publish(topic, qos, payload=None, retain=False, dup=False, mid=0, proto_ver=4, properties=""):
     rl = 2+len(topic)
     pack_format = "H"+str(len(topic))+"s"
     if qos > 0:
@@ -386,9 +385,7 @@ def gen_publish(topic, qos, payload=None, retain=False, dup=False, mid=0, proto_
         pack_format = pack_format + "H"
 
     if proto_ver == 5:
-        if properties is None:
-            properties = struct.pack("!B", 0)
-
+        properties = mqtt5_props.prop_finalise(properties)
         rl += len(properties)
         # This will break if len(properties) > 127
         pack_format = pack_format + "%ds"%(len(properties))
@@ -446,6 +443,7 @@ def gen_subscribe(mid, topic, qos, proto_ver=4, properties=""):
             pack_format = "!BBHBH"+str(len(topic))+"sB"
             return struct.pack(pack_format, 130, 2+1+2+len(topic)+1, mid, 0, len(topic), topic, qos)
         else:
+            properties = mqtt5_props.prop_finalise(properties)
             pack_format = "!BBH"+str(len(properties))+"s"+"H"+str(len(topic))+"sB"
             return struct.pack(pack_format, 130, 2+1+2+len(topic)+len(properties), mid, properties, len(topic), topic, qos)
     else:
@@ -480,8 +478,7 @@ def gen_pingresp():
 
 def gen_disconnect(reason_code=0, proto_ver=4, properties=""):
     if proto_ver == 5:
-        if properties == "":
-            properties = struct.pack("B", 0)
+        properties = mqtt5_props.prop_finalise(properties)
 
         return struct.pack('!BBB', 224, 1+len(properties), reason_code) + properties
     else:

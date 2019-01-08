@@ -22,7 +22,6 @@ suback_packet = mosq_test.gen_suback(mid=1, qos=0, proto_ver=5)
 
 props = mqtt5_props.gen_string_prop(mqtt5_props.PROP_RESPONSE_TOPIC, "response/topic")
 props = mqtt5_props.gen_string_prop(mqtt5_props.PROP_CORRELATION_DATA, "45vyvynq30q3vt4 nuy893b4v3")
-props = mqtt5_props.prop_finalise(props)
 publish_packet2 = mosq_test.gen_publish(topic="normal/topic", qos=0, payload="2", proto_ver=5, properties=props)
 
 publish_packet1 = mosq_test.gen_publish(topic="response/topic", qos=0, payload="22", proto_ver=5)

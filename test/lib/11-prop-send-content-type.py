@@ -10,7 +10,6 @@ connect_packet = mosq_test.gen_connect("prop-test", keepalive=keepalive, proto_v
 connack_packet = mosq_test.gen_connack(rc=0, proto_ver=5)
 
 props = mqtt5_props.gen_string_prop(mqtt5_props.PROP_CONTENT_TYPE, "application/json")
-props = mqtt5_props.prop_finalise(props)
 publish_packet = mosq_test.gen_publish("prop/qos0", qos=0, payload="message", proto_ver=5, properties=props)
 
 disconnect_packet = mosq_test.gen_disconnect(proto_ver=5)

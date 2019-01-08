@@ -9,9 +9,7 @@ from mosq_test_helper import *
 
 props_out = mqtt5_props.gen_string_prop(mqtt5_props.PROP_CONTENT_TYPE, "text")
 props_out = props_out+mqtt5_props.gen_uint16_prop(mqtt5_props.PROP_TOPIC_ALIAS, 1)
-props_out = mqtt5_props.prop_finalise(props_out)
 
 props_in = mqtt5_props.gen_string_prop(mqtt5_props.PROP_CONTENT_TYPE, "text")
-props_in = mqtt5_props.prop_finalise(props_in)
 
 helper.prop_subpub_helper(props_out, props_in)

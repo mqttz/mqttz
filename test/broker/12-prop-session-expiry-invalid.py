@@ -9,13 +9,11 @@ rc = 1
 
 keepalive = 10
 props = mqtt5_props.gen_uint32_prop(mqtt5_props.PROP_SESSION_EXPIRY_INTERVAL, 0)
-props = mqtt5_props.prop_finalise(props)
 connect_packet = mosq_test.gen_connect("test", proto_ver=5, keepalive=keepalive, properties=props)
 
 connack_packet = mosq_test.gen_connack(rc=0, proto_ver=5)
 
 props = mqtt5_props.gen_uint32_prop(mqtt5_props.PROP_SESSION_EXPIRY_INTERVAL, 1)
-props = mqtt5_props.prop_finalise(props)
 disconnect_client_packet = mosq_test.gen_disconnect(proto_ver=5, properties=props)
 
 disconnect_server_packet = mosq_test.gen_disconnect(proto_ver=5, reason_code=130)
