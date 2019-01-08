@@ -320,6 +320,8 @@ def gen_connect(client_id, clean_session=True, keepalive=60, username=None, pass
         connect_flags = connect_flags | 0x02
 
     if proto_ver == 5:
+        properties += mqtt5_props.gen_uint16_prop(mqtt5_props.PROP_RECEIVE_MAXIMUM, 20)
+        properties = mqtt5_props.prop_finalise(properties)
         if properties == "":
             properties = struct.pack("B", 0)
         remaining_length += len(properties)

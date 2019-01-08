@@ -68,6 +68,7 @@ static int mosquitto__connect_init(struct mosquitto *mosq, const char *host, int
 	}
 
 	mosq->keepalive = keepalive;
+	mosq->receive_quota = mosq->receive_maximum;
 
 	if(mosq->sockpairR != INVALID_SOCKET){
 		COMPAT_CLOSE(mosq->sockpairR);
@@ -191,7 +192,7 @@ static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking, const mos
 	mosq->ping_t = 0;
 
 	packet__cleanup(&mosq->in_packet);
-		
+
 	pthread_mutex_lock(&mosq->current_out_packet_mutex);
 	pthread_mutex_lock(&mosq->out_packet_mutex);
 

@@ -37,4 +37,5 @@ FILE *mosquitto__fopen(const char *path, const char *mode, bool restrict_read);
 int mosquitto__hex2bin(const char *hex, unsigned char *bin, int bin_max_len);
 #endif
 
+void util__increment_receive_quota(struct mosquitto *mosq);
 #endif

@@ -147,6 +147,7 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_st
 	mosq->out_messages = NULL;
 	mosq->out_messages_last = NULL;
 	mosq->max_inflight_messages = 20;
+	mosq->receive_maximum = 20;
 	mosq->will = NULL;
 	mosq->on_connect = NULL;
 	mosq->on_publish = NULL;

@@ -62,6 +62,15 @@ int handle__publish(struct mosquitto *mosq)
 	}
 
 	if(message->msg.qos > 0){
+		if(mosq->protocol == mosq_p_mqtt5){
+			if(mosq->receive_quota == 0){
+				message__cleanup(&message);
+				/* FIXME - should send a DISCONNECT here */
+				return MOSQ_ERR_PROTOCOL;
+			}
+			mosq->receive_quota--;
+		}
+
 		rc = packet__read_uint16(&mosq->in_packet, &mid);
 		if(rc){
 			message__cleanup(&message);

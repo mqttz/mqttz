@@ -252,3 +252,12 @@ FILE *mosquitto__fopen(const char *path, const char *mode, bool restrict_read)
 	}
 #endif
 }
+
+void util__increment_receive_quota(struct mosquitto *mosq)
+{
+	if(mosq->protocol == mosq_p_mqtt5){
+		if(mosq->receive_quota < mosq->receive_maximum){
+			mosq->receive_quota++;
+		}
+	}
+}

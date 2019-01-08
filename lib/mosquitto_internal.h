@@ -283,6 +283,8 @@ struct mosquitto {
 	ares_channel achan;
 #  endif
 #endif
+	int receive_quota;
+	int receive_maximum;
 	int max_inflight_messages;
 
 #ifdef WITH_BROKER

@@ -72,6 +72,7 @@ int send__puback(struct mosquitto *mosq, uint16_t mid)
 #else
 	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBACK (Mid: %d)", mosq->id, mid);
 #endif
+	util__increment_receive_quota(mosq);
 	/* We don't use Reason String or User Property yet. */
 	return send__command_with_mid(mosq, CMD_PUBACK, mid, false, 0, NULL);
 }
@@ -83,6 +84,7 @@ int send__pubcomp(struct mosquitto *mosq, uint16_t mid)
 #else
 	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBCOMP (Mid: %d)", mosq->id, mid);
 #endif
+	util__increment_receive_quota(mosq);
 	/* We don't use Reason String or User Property yet. */
 	return send__command_with_mid(mosq, CMD_PUBCOMP, mid, false, 0, NULL);
 }
@@ -95,6 +97,11 @@ int send__pubrec(struct mosquitto *mosq, uint16_t mid)
 #else
 	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBREC (Mid: %d)", mosq->id, mid);
 #endif
+	/* FIXME - if rc >= 0x80 quota needs incrementing
+	if(rc >= 0x80){
+		util__increment_receive_quota(mosq);
+	}
+	*/
 	/* We don't use Reason String or User Property yet. */
 	return send__command_with_mid(mosq, CMD_PUBREC, mid, false, 0, NULL);
 }

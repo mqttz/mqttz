@@ -99,6 +99,7 @@ enum mosq_opt_t {
 	MOSQ_OPT_PROTOCOL_VERSION = 1,
 	MOSQ_OPT_SSL_CTX = 2,
 	MOSQ_OPT_SSL_CTX_WITH_DEFAULTS = 3,
+	MOSQ_OPT_RECEIVE_MAXIMUM = 4,
 };
 
 /* MQTT specification restricts client ids to a maximum of 23 characters */
@@ -1363,6 +1364,16 @@ libmosq_EXPORT int mosquitto_opts_set(struct mosquitto *mosq, enum mosq_opt_t op
  *	          Value must be set to either MQTT_PROTOCOL_V31,
  *	          MQTT_PROTOCOL_V311, or MQTT_PROTOCOL_V5. Must be set before the
  *	          client connects.  Defaults to MQTT_PROTOCOL_V311.
+ *
+ *	MOSQ_OPT_RECEIVE_MAXIMUM
+ *	          Value can be set between 1 and 65535 inclusive, and represents
+ *	          the maximum number of incoming QoS 1 and QoS 2 messages that this
+ *	          client wants to process at once. Defaults to 20. This option is
+ *	          not valid for MQTT v3.1 or v3.1.1 clients.
+ *	          Note that if the MQTT_PROP_RECEIVE_MAXIMUM property is in the
+ *	          proplist passed to mosquitto_connect_v5(), then that property
+ *	          will override this option. Using this option is the recommended
+ *	          method however.
  *
  *	MOSQ_OPT_SSL_CTX_WITH_DEFAULTS
  *	          If value is set to a non zero value, then the user specified

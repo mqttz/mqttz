@@ -41,7 +41,9 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 	uint8_t version;
 	char *clientid, *username, *password;
 	int headerlen;
-	int proplen, varbytes;
+	int proplen = 0, will_proplen, varbytes;
+	mosquitto_property *local_props = NULL;
+	uint16_t receive_maximum;
 
 	assert(mosq);
 
@@ -64,9 +66,20 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 #endif
 
 	if(mosq->protocol == mosq_p_mqtt5){
+		/* Generate properties from options */
+		if(!mosquitto_property_read_int16(properties, MQTT_PROP_RECEIVE_MAXIMUM, &receive_maximum, false)){
+			rc = mosquitto_property_add_int16(&local_props, MQTT_PROP_RECEIVE_MAXIMUM, mosq->receive_maximum);
+			if(rc) return rc;
+		}else{
+			mosq->receive_maximum = receive_maximum;
+			mosq->receive_quota = receive_maximum;
+		}
+
 		version = MQTT_PROTOCOL_V5;
 		headerlen = 10;
-		proplen = property__get_length_all(properties);
+		proplen = 0;
+		proplen += property__get_length_all(properties);
+		proplen += property__get_length_all(local_props);
 		varbytes = packet__varint_bytes(proplen);
 		headerlen += proplen + varbytes;
 	}else if(mosq->protocol == mosq_p_mqtt311){
@@ -93,9 +106,9 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 
 		payloadlen += 2+strlen(mosq->will->msg.topic) + 2+mosq->will->msg.payloadlen;
 		if(mosq->protocol == mosq_p_mqtt5){
-			proplen = property__get_length_all(mosq->will->properties);
-			varbytes = packet__varint_bytes(proplen);
-			payloadlen += proplen + varbytes;
+			will_proplen = property__get_length_all(mosq->will->properties);
+			varbytes = packet__varint_bytes(will_proplen);
+			payloadlen += will_proplen + varbytes;
 		}
 	}
 	if(username){
@@ -141,7 +154,9 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 
 	if(mosq->protocol == mosq_p_mqtt5){
 		/* Write properties */
-		property__write_all(packet, properties, true);
+		packet__write_varint(packet, proplen);
+		property__write_all(packet, properties, false);
+		property__write_all(packet, local_props, false);
 	}
 
 	/* Payload */
