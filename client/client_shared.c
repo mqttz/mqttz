@@ -710,11 +710,11 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				fprintf(stderr, "Error: --protocol-version argument given but no version specified.\n\n");
 				return 1;
 			}else{
-				if(!strcmp(argv[i+1], "mqttv31")){
+				if(!strcmp(argv[i+1], "mqttv31") || !strcmp(argv[i+1], "31")){
 					cfg->protocol_version = MQTT_PROTOCOL_V31;
-				}else if(!strcmp(argv[i+1], "mqttv311")){
+				}else if(!strcmp(argv[i+1], "mqttv311") || !strcmp(argv[i+1], "311")){
 					cfg->protocol_version = MQTT_PROTOCOL_V311;
-				}else if(!strcmp(argv[i+1], "mqttv5")){
+				}else if(!strcmp(argv[i+1], "mqttv5") || !strcmp(argv[i+1], "5")){
 					cfg->protocol_version = MQTT_PROTOCOL_V5;
 				}else{
 					fprintf(stderr, "Error: Invalid protocol version argument given.\n\n");
