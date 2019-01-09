@@ -23,6 +23,8 @@ SRC = \
 	03-publish-c2b-qos2-receive-maximum-1.c \
 	03-publish-c2b-qos2-receive-maximum-2.c \
 	03-publish-c2b-qos2-pubrec-error.c \
+	03-publish-c2b-qos2-maximum-qos-0.c \
+	03-publish-c2b-qos2-maximum-qos-1.c \
 	03-publish-b2c-qos1.c \
 	03-publish-b2c-qos2.c \
 	03-request-response-1.c \

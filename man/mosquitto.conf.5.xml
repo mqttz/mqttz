@@ -803,6 +803,20 @@
 					</listitem>
 				</varlistentry>
 				<varlistentry>
+					<term><option>maximum_qos</option> <replaceable>count</replaceable></term>
+					<listitem>
+						<para>Limit the QoS value allowed when using this
+							listener. Defaults to 2, which means any QoS can be
+							used. Set to 0 or 1 to limit to those QoS values.
+							This makes use of an MQTT v5 feature to notify
+							clients of the limitation. MQTT v3.1.1 clients will
+							not be aware of the limitation. Clients publshing
+							to this listener with a too-high QoS will be
+							disconnected.</para>
+						<para>Not reloaded on reload signal.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
 					<term><option>mount_point</option> <replaceable>topic prefix</replaceable></term>
 					<listitem>
 						<para>This option is used with the listener option to

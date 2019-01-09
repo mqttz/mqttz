@@ -220,6 +220,7 @@ struct mosquitto__listener {
 	enum mosquitto_protocol protocol;
 	int socket_domain;
 	bool use_username_as_clientid;
+	uint8_t maximum_qos;
 #ifdef WITH_TLS
 	char *cafile;
 	char *capath;

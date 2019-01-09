@@ -266,6 +266,7 @@ void config__init(struct mosquitto_db *db, struct mosquitto__config *config)
 	config->default_listener.max_connections = -1;
 	config->default_listener.protocol = mp_mqtt;
 	config->default_listener.security_options.allow_anonymous = -1;
+	config->default_listener.maximum_qos = 2;
 }
 
 void config__cleanup(struct mosquitto__config *config)
@@ -446,6 +447,7 @@ int config__parse_args(struct mosquitto_db *db, struct mosquitto__config *config
 			|| config->default_listener.host
 			|| config->default_listener.port
 			|| config->default_listener.max_connections != -1
+			|| config->default_listener.maximum_qos != 2
 			|| config->default_listener.mount_point
 			|| config->default_listener.protocol != mp_mqtt
 			|| config->default_listener.socket_domain
@@ -485,6 +487,7 @@ int config__parse_args(struct mosquitto_db *db, struct mosquitto__config *config
 		config->listeners[config->listener_count-1].sock_count = 0;
 		config->listeners[config->listener_count-1].client_count = 0;
 		config->listeners[config->listener_count-1].use_username_as_clientid = config->default_listener.use_username_as_clientid;
+		config->listeners[config->listener_count-1].maximum_qos = config->default_listener.maximum_qos;
 #ifdef WITH_TLS
 		config->listeners[config->listener_count-1].tls_version = config->default_listener.tls_version;
 		config->listeners[config->listener_count-1].cafile = config->default_listener.cafile;
@@ -1502,6 +1505,14 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 					}else{
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty max_connections value in configuration.");
 					}
+				}else if(!strcmp(token, "maximum_qos")){
+					if(reload) continue; // Listeners not valid for reloading.
+					if(conf__parse_int(&token, "maximum_qos", &tmp_int, saveptr)) return MOSQ_ERR_INVAL;
+					if(tmp_int < 0 || tmp_int > 2){
+						log__printf(NULL, MOSQ_LOG_ERR, "Error: maximum_qos must be between 0 and 2 inclusive.");
+						return MOSQ_ERR_INVAL;
+					}
+					cur_listener->maximum_qos = tmp_int;
 				}else if(!strcmp(token, "max_inflight_bytes")){
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){

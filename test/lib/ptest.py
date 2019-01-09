@@ -25,6 +25,8 @@ tests = [
     ('./03-publish-c2b-qos2-receive-maximum-1.py', 'c/03-publish-c2b-qos2-receive-maximum-1.test'),
     ('./03-publish-c2b-qos2-receive-maximum-2.py', 'c/03-publish-c2b-qos2-receive-maximum-2.test'),
     ('./03-publish-c2b-qos2-pubrec-error.py', 'c/03-publish-c2b-qos2-pubrec-error.test'),
+    ('./03-publish-c2b-qos2-maximum-qos-0.py', 'c/03-publish-c2b-qos2-maximum-qos-0.test'),
+    ('./03-publish-c2b-qos2-maximum-qos-1.py', 'c/03-publish-c2b-qos2-maximum-qos-1.test'),
     ('./03-publish-qos0-no-payload.py', 'c/03-publish-qos0-no-payload.test'),
     ('./03-publish-qos0.py', 'c/03-publish-qos0.test'),
     ('./03-request-response.py', 'c/03-request-response.test'),

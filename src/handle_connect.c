@@ -262,6 +262,14 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		goto handle_connect_error;
 	}
 
+	context->maximum_qos = context->listener->maximum_qos;
+	if(protocol_version == PROTOCOL_VERSION_v5 && context->maximum_qos != 2){
+		if(mosquitto_property_add_byte(&connack_props, MQTT_PROP_MAXIMUM_QOS, context->maximum_qos)){
+			rc = MOSQ_ERR_NOMEM;
+			goto handle_connect_error;
+		}
+	}
+
 	if(packet__read_byte(&context->in_packet, &connect_flags)){
 		rc = 1;
 		goto handle_connect_error;

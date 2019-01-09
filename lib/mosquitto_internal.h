@@ -286,6 +286,7 @@ struct mosquitto {
 	int receive_quota;
 	uint16_t send_maximum;
 	uint16_t receive_maximum;
+	uint8_t maximum_qos;
 
 #ifdef WITH_BROKER
 	UT_hash_handle hh_id;

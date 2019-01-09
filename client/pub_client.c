@@ -84,6 +84,9 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 					case MOSQ_ERR_PAYLOAD_SIZE:
 						fprintf(stderr, "Error: Message payload is too large.\n");
 						break;
+					case MOSQ_ERR_QOS_NOT_SUPPORTED:
+						fprintf(stderr, "Error: Message QoS not supported on broker, try a lower QoS.\n");
+						break;
 				}
 			}
 			mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);

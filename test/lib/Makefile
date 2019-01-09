@@ -40,6 +40,8 @@ c : test-compile
 	./03-publish-c2b-qos2-receive-maximum-1.py $@/03-publish-c2b-qos2-receive-maximum-1.test
 	./03-publish-c2b-qos2-receive-maximum-2.py $@/03-publish-c2b-qos2-receive-maximum-2.test
 	./03-publish-c2b-qos2-pubrec-error.py $@/03-publish-c2b-qos2-pubrec-error.test
+	./03-publish-c2b-qos2-maximum-qos-0.py $@/03-publish-c2b-qos2-maximum-qos-0.test
+	./03-publish-c2b-qos2-maximum-qos-1.py $@/03-publish-c2b-qos2-maximum-qos-1.test
 	./03-publish-b2c-qos1.py $@/03-publish-b2c-qos1.test
 	./03-publish-b2c-qos2.py $@/03-publish-b2c-qos2.test
 	./03-request-response.py $@/03-request-response.test

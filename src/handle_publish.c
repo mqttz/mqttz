@@ -66,6 +66,11 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 				"Invalid QoS in PUBLISH from %s, disconnecting.", context->id);
 		return 1;
 	}
+	if(qos > context->maximum_qos){
+		log__printf(NULL, MOSQ_LOG_INFO,
+				"Too high QoS in PUBLISH from %s, disconnecting.", context->id);
+		return 1;
+	}
 	retain = (header & 0x01);
 
 	if(retain && db->config->retain_available == false){
