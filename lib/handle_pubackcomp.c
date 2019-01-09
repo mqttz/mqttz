@@ -42,7 +42,7 @@ int handle__pubackcomp(struct mosquitto_db *db, struct mosquitto *mosq, const ch
 int handle__pubackcomp(struct mosquitto *mosq, const char *type)
 #endif
 {
-	uint8_t reason_code;
+	uint8_t reason_code = 0;
 	uint16_t mid;
 	int rc;
 	mosquitto_property *properties = NULL;
@@ -88,7 +88,7 @@ int handle__pubackcomp(struct mosquitto *mosq, const char *type)
 		}
 		if(mosq->on_publish_v5){
 			mosq->in_callback = true;
-			mosq->on_publish_v5(mosq, mosq->userdata, mid, properties);
+			mosq->on_publish_v5(mosq, mosq->userdata, mid, reason_code, properties);
 			mosq->in_callback = false;
 		}
 		pthread_mutex_unlock(&mosq->callback_mutex);

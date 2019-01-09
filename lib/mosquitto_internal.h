@@ -259,7 +259,7 @@ struct mosquitto {
 	void (*on_disconnect)(struct mosquitto *, void *userdata, int rc);
 	void (*on_disconnect_v5)(struct mosquitto *, void *userdata, int rc, const mosquitto_property *props);
 	void (*on_publish)(struct mosquitto *, void *userdata, int mid);
-	void (*on_publish_v5)(struct mosquitto *, void *userdata, int mid, const mosquitto_property *props);
+	void (*on_publish_v5)(struct mosquitto *, void *userdata, int mid, int reason_code, const mosquitto_property *props);
 	void (*on_message)(struct mosquitto *, void *userdata, const struct mosquitto_message *message);
 	void (*on_message_v5)(struct mosquitto *, void *userdata, const struct mosquitto_message *message, const mosquitto_property *props);
 	void (*on_subscribe)(struct mosquitto *, void *userdata, int mid, int qos_count, const int *granted_qos);

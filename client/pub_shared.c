@@ -52,7 +52,7 @@ void my_disconnect_callback(struct mosquitto *mosq, void *obj, int rc, const mos
 	connected = false;
 }
 
-void my_publish_callback(struct mosquitto *mosq, void *obj, int mid)
+void my_publish_callback(struct mosquitto *mosq, void *obj, int mid, int reason_code, const mosquitto_property *properties)
 {
 	last_mid_sent = mid;
 	if(cfg.pub_mode == MSGMODE_STDIN_LINE){

@@ -17,7 +17,7 @@ void on_connect(struct mosquitto *mosq, void *obj, int rc, int flags, const mosq
 	}
 }
 
-void on_publish(struct mosquitto *mosq, void *obj, int mid, const mosquitto_property *properties)
+void on_publish(struct mosquitto *mosq, void *obj, int mid, int reason_code, const mosquitto_property *properties)
 {
 	if(mid == 6){
 		mosquitto_disconnect(mosq);

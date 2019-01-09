@@ -220,7 +220,7 @@ int packet__write(struct mosquitto *mosq)
 			if(mosq->on_publish_v5){
 				/* This is a QoS=0 message */
 				mosq->in_callback = true;
-				mosq->on_publish_v5(mosq, mosq->userdata, packet->mid, NULL);
+				mosq->on_publish_v5(mosq, mosq->userdata, packet->mid, 0, NULL);
 				mosq->in_callback = false;
 			}
 			pthread_mutex_unlock(&mosq->callback_mutex);

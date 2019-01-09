@@ -1822,9 +1822,10 @@ libmosq_EXPORT void mosquitto_publish_callback_set(struct mosquitto *mosq, void 
  *  mosq - the mosquitto instance making the callback.
  *  obj -  the user data provided in <mosquitto_new>
  *  mid -  the message id of the sent message.
+ *  reason_code - the MQTT 5 reason code
  *  props - list of MQTT 5 properties, or NULL
  */
-libmosq_EXPORT void mosquitto_publish_v5_callback_set(struct mosquitto *mosq, void (*on_publish)(struct mosquitto *, void *, int, const mosquitto_property *));
+libmosq_EXPORT void mosquitto_publish_v5_callback_set(struct mosquitto *mosq, void (*on_publish)(struct mosquitto *, void *, int, int, const mosquitto_property *));
 
 /*
  * Function: mosquitto_message_callback_set

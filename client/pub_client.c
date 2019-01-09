@@ -264,7 +264,7 @@ int main(int argc, char *argv[])
 	}
 	mosquitto_connect_v5_callback_set(mosq, my_connect_callback);
 	mosquitto_disconnect_v5_callback_set(mosq, my_disconnect_callback);
-	mosquitto_publish_callback_set(mosq, my_publish_callback);
+	mosquitto_publish_v5_callback_set(mosq, my_publish_callback);
 
 	if(client_opts_set(mosq, &cfg)){
 		goto cleanup;

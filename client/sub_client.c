@@ -53,7 +53,7 @@ void my_signal_handler(int signum)
 void print_message(struct mosq_config *cfg, const struct mosquitto_message *message);
 
 
-void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
+void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message, const mosquitto_property *properties)
 {
 	int i;
 	bool res;
@@ -282,7 +282,7 @@ int main(int argc, char *argv[])
 		mosquitto_subscribe_callback_set(mosq, my_subscribe_callback);
 	}
 	mosquitto_connect_v5_callback_set(mosq, my_connect_callback);
-	mosquitto_message_callback_set(mosq, my_message_callback);
+	mosquitto_message_v5_callback_set(mosq, my_message_callback);
 
 	rc = client_connect(mosq, &cfg);
 	if(rc){

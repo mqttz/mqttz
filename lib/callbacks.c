@@ -62,7 +62,7 @@ void mosquitto_publish_callback_set(struct mosquitto *mosq, void (*on_publish)(s
 	pthread_mutex_unlock(&mosq->callback_mutex);
 }
 
-void mosquitto_publish_v5_callback_set(struct mosquitto *mosq, void (*on_publish)(struct mosquitto *, void *, int, const mosquitto_property *props))
+void mosquitto_publish_v5_callback_set(struct mosquitto *mosq, void (*on_publish)(struct mosquitto *, void *, int, int, const mosquitto_property *props))
 {
 	pthread_mutex_lock(&mosq->callback_mutex);
 	mosq->on_publish_v5 = on_publish;

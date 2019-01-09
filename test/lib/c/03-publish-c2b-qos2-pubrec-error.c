@@ -15,7 +15,7 @@ void on_connect(struct mosquitto *mosq, void *obj, int rc, int flags, const mosq
 	mosquitto_publish_v5(mosq, NULL, "topic", strlen("accepted"), "accepted", 2, false, NULL);
 }
 
-void on_publish(struct mosquitto *mosq, void *obj, int mid, const mosquitto_property *properties)
+void on_publish(struct mosquitto *mosq, void *obj, int mid, int reason_code, const mosquitto_property *properties)
 {
 	if(mid == 2){
 		run = 0;
