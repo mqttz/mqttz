@@ -63,6 +63,7 @@ int handle__connack(struct mosquitto *mosq)
 
 	mosquitto_property_read_int16(properties, MQTT_PROP_SERVER_KEEP_ALIVE, &mosq->keepalive, false);
 	mosquitto_property_read_int16(properties, MQTT_PROP_RECEIVE_MAXIMUM, &mosq->send_maximum, false);
+	mosq->send_quota = mosq->send_maximum;
 
 	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received CONNACK (%d)", mosq->id, reason_code);
 	pthread_mutex_lock(&mosq->callback_mutex);

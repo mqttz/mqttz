@@ -21,6 +21,8 @@ tests = [
     ('./03-publish-c2b-qos1-disconnect.py', 'c/03-publish-c2b-qos1-disconnect.test'),
     ('./03-publish-c2b-qos2-disconnect.py', 'c/03-publish-c2b-qos2-disconnect.test'),
     ('./03-publish-c2b-qos2.py', 'c/03-publish-c2b-qos2.test'),
+    ('./03-publish-c2b-qos1-receive-maximum.py', 'c/03-publish-c2b-qos1-receive-maximum.test'),
+    ('./03-publish-c2b-qos2-receive-maximum.py', 'c/03-publish-c2b-qos2-receive-maximum.test'),
     ('./03-publish-qos0-no-payload.py', 'c/03-publish-qos0-no-payload.test'),
     ('./03-publish-qos0.py', 'c/03-publish-qos0.test'),
     ('./03-request-response.py', 'c/03-request-response.test'),

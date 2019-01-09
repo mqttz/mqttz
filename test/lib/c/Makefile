@@ -19,11 +19,13 @@ SRC = \
 	03-publish-c2b-qos1-disconnect.c \
 	03-publish-c2b-qos2.c \
 	03-publish-c2b-qos2-disconnect.c \
+	03-publish-c2b-qos1-receive-maximum.c \
+	03-publish-c2b-qos2-receive-maximum.c \
 	03-publish-b2c-qos1.c \
+	03-publish-b2c-qos2.c \
 	03-request-response-1.c \
 	03-request-response-2.c \
 	03-request-response-correlation-1.c \
-	03-publish-b2c-qos2.c \
 	04-retain-qos0.c \
 	08-ssl-connect-no-auth.c \
 	08-ssl-connect-cert-auth.c \
