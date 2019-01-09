@@ -31,7 +31,7 @@ int handle__pubackcomp(struct mosquitto *mosq, const char *type);
 int handle__publish(struct mosquitto *mosq);
 int handle__auth(struct mosquitto *mosq);
 #endif
-int handle__pubrec(struct mosquitto *mosq);
+int handle__pubrec(struct mosquitto_db *db, struct mosquitto *mosq);
 int handle__pubrel(struct mosquitto_db *db, struct mosquitto *mosq);
 int handle__suback(struct mosquitto *mosq);
 int handle__unsuback(struct mosquitto *mosq);

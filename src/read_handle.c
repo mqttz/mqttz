@@ -46,7 +46,7 @@ int handle__packet(struct mosquitto_db *db, struct mosquitto *context)
 		case CMD_PUBLISH:
 			return handle__publish(db, context);
 		case CMD_PUBREC:
-			return handle__pubrec(context);
+			return handle__pubrec(db, context);
 		case CMD_PUBREL:
 			return handle__pubrel(db, context);
 		case CMD_CONNECT:

@@ -41,6 +41,7 @@ tests = [
     (1, './02-subpub-qos0-subscription-id.py'),
     (1, './02-subpub-qos2-receive-maximum-1.py'),
     (1, './02-subpub-qos2-receive-maximum-2.py'),
+    (1, './02-subpub-qos2-pubrec-error.py'),
     (1, './02-unsubscribe-qos0.py'),
     (1, './02-unsubscribe-qos1.py'),
     (1, './02-unsubscribe-qos2.py'),

@@ -35,9 +35,9 @@ Contributors:
 #include "send_mosq.h"
 #include "util_mosq.h"
 
-int handle__pubrec(struct mosquitto *mosq)
+int handle__pubrec(struct mosquitto_db *db, struct mosquitto *mosq)
 {
-	uint8_t reason_code;
+	uint8_t reason_code = 0;
 	uint16_t mid;
 	int rc;
 	mosquitto_property *properties = NULL;
@@ -60,11 +60,20 @@ int handle__pubrec(struct mosquitto *mosq)
 #ifdef WITH_BROKER
 	log__printf(NULL, MOSQ_LOG_DEBUG, "Received PUBREC from %s (Mid: %d)", mosq->id, mid);
 
-	rc = db__message_update(mosq, mid, mosq_md_out, mosq_ms_wait_for_pubcomp);
+	if(reason_code < 0x80){
+		rc = db__message_update(mosq, mid, mosq_md_out, mosq_ms_wait_for_pubcomp);
+	}else{
+		return db__message_delete(db, mosq, mid, mosq_md_out);
+	}
 #else
 	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received PUBREC (Mid: %d)", mosq->id, mid);
 
-	rc = message__out_update(mosq, mid, mosq_ms_wait_for_pubcomp);
+	if(reason_code < 0x80){
+		rc = message__out_update(mosq, mid, mosq_ms_wait_for_pubcomp);
+	}else{
+		message__delete(mosq, mid, mosq_md_out);
+		return MOSQ_ERR_SUCCESS;
+	}
 #endif
 	if(rc == MOSQ_ERR_NOT_FOUND){
 		log__printf(mosq, MOSQ_LOG_WARNING, "Warning: Received PUBREC from %s for an unknown packet identifier %d.", mosq->id, mid);
