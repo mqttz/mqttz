@@ -87,9 +87,11 @@ int net__init(void)
 #endif
 
 #ifdef WITH_TLS
+#  if OPENSSL_VERSION_NUMBER < 0x10100000L || OPENSSL_API_COMPAT < 0x10100000L
 	SSL_load_error_strings();
 	SSL_library_init();
 	OpenSSL_add_all_algorithms();
+#  endif
 	if(tls_ex_index_mosq == -1){
 		tls_ex_index_mosq = SSL_get_ex_new_index(0, "client context", NULL, NULL, NULL);
 	}
@@ -100,16 +102,18 @@ int net__init(void)
 void net__cleanup(void)
 {
 #ifdef WITH_TLS
-	#if OPENSSL_VERSION_NUMBER < 0x10100000L
-		ERR_remove_state(0);
-	#endif
-	#ifndef OPENSSL_NO_ENGINE
-		ENGINE_cleanup();
-	#endif
-	CONF_modules_unload(1);
-	ERR_free_strings();
-	EVP_cleanup();
+#  if OPENSSL_VERSION_NUMBER < 0x10100000L || OPENSSL_API_COMPAT < 0x10100000L
 	CRYPTO_cleanup_all_ex_data();
+	ERR_free_strings();
+	ERR_remove_state(0);
+	EVP_cleanup();
+
+#    if !defined(OPENSSL_NO_ENGINE)
+	ENGINE_cleanup();
+#    endif
+#  endif
+
+	CONF_modules_unload(1);
 #endif
 
 #ifdef WITH_SRV

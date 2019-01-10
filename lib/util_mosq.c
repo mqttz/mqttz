@@ -28,6 +28,9 @@ Contributors:
 #  include <sys/stat.h>
 #endif
 
+#ifdef WITH_TLS
+#  include <openssl/bn.h>
+#endif
 
 #ifdef WITH_BROKER
 #include "mosquitto_broker_internal.h"

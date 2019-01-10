@@ -3,6 +3,8 @@
 
 Build:
 - Fix comparison of boolean values in CMake build. Closes #1101.
+- Fix compilation when openssl deprecated APIs are not available.
+  Closes #1094.
 
 
 1.5.5 - 20181211

@@ -387,7 +387,9 @@ int main(int argc, char *argv[])
 	signal(SIGINT, handle_sigint);
 	signal(SIGTERM, handle_sigint);
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || OPENSSL_API_COMPAT < 0x10100000L
 	OpenSSL_add_all_digests();
+#endif
 
 	if(argc == 1){
 		print_usage();
