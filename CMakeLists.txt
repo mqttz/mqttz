@@ -51,7 +51,7 @@ option(WITH_TLS_PSK
 	"Include TLS-PSK support (requires WITH_TLS)?" ON)
 option(WITH_EC
 	"Include Elliptic Curve support (requires WITH_TLS)?" ON)
-if (${WITH_TLS} STREQUAL ON)
+if (WITH_TLS)
 	find_package(OpenSSL REQUIRED)
 	add_definitions("-DWITH_TLS")
 
@@ -62,19 +62,19 @@ if (${WITH_TLS} STREQUAL ON)
 	if (${WITH_EC} STREQUAL ON)
 		add_definitions("-DWITH_EC")
 	endif (${WITH_EC} STREQUAL ON)
-else (${WITH_TLS} STREQUAL ON)
+else (WITH_TLS)
 	set (OPENSSL_INCLUDE_DIR "")
-endif (${WITH_TLS} STREQUAL ON)
+endif (WITH_TLS)
 
 option(WITH_SOCKS "Include SOCKS5 support?" ON)
-if (${WITH_SOCKS} STREQUAL ON)
+if (WITH_SOCKS)
 	add_definitions("-DWITH_SOCKS")
-endif (${WITH_SOCKS} STREQUAL ON)
+endif (WITH_SOCKS)
 
 option(WITH_SRV "Include SRV lookup support?" OFF)
 
 option(WITH_THREADING "Include client library threading support?" ON)
-if (${WITH_THREADING} STREQUAL ON)
+if (WITH_THREADING)
 	add_definitions("-DWITH_THREADING")
 	if (WIN32)
 		if (CMAKE_CL_64)
@@ -92,10 +92,10 @@ if (${WITH_THREADING} STREQUAL ON)
 		endif()
 		set (PTHREAD_INCLUDE_DIR "")
 	endif (WIN32)
-else (${WITH_THREADING} STREQUAL ON)
+else (WITH_THREADING)
 	set (PTHREAD_LIBRARIES "")
 	set (PTHREAD_INCLUDE_DIR "")
-endif (${WITH_THREADING} STREQUAL ON)
+endif (WITH_THREADING)
 
 option(DOCUMENTATION "Build documentation?" ON)
 
@@ -106,9 +106,9 @@ option(DOCUMENTATION "Build documentation?" ON)
 add_subdirectory(lib)
 add_subdirectory(client)
 add_subdirectory(src)
-if (${DOCUMENTATION} STREQUAL ON)
+if (DOCUMENTATION)
 	add_subdirectory(man)
-endif (${DOCUMENTATION} STREQUAL ON)
+endif (DOCUMENTATION)
 
 # ========================================
 # Install config file

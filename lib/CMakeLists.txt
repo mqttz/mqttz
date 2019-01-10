@@ -60,7 +60,7 @@ if (WIN32)
 	set (LIBRARIES ${LIBRARIES} ws2_32)
 endif (WIN32)
 
-if (${WITH_SRV} STREQUAL ON)
+if (WITH_SRV)
 	# Simple detect c-ares
 	find_path(ARES_HEADER ares.h)
 	if (ARES_HEADER)
@@ -69,7 +69,7 @@ if (${WITH_SRV} STREQUAL ON)
 	else (ARES_HEADER)
 		message(WARNING "c-ares library not found.")
 	endif (ARES_HEADER)
-endif (${WITH_SRV} STREQUAL ON)
+endif (WITH_SRV)
 
 add_library(libmosquitto SHARED ${C_SRC})
 set_target_properties(libmosquitto PROPERTIES
@@ -86,13 +86,13 @@ set_target_properties(libmosquitto PROPERTIES
 
 install(TARGETS libmosquitto RUNTIME DESTINATION "${BINDIR}" LIBRARY DESTINATION "${LIBDIR}")
 
-if (${WITH_STATIC_LIBRARIES} STREQUAL ON)
+if (WITH_STATIC_LIBRARIES)
 	add_library(libmosquitto_static STATIC ${C_SRC})
-	if (${WITH_PIC} STREQUAL ON)
+	if (WITH_PIC)
 		set_target_properties(libmosquitto_static PROPERTIES
 			POSITION_INDEPENDENT_CODE 1
 		)
-	endif (${WITH_PIC} STREQUAL ON)
+	endif (WITH_PIC)
 
 	target_link_libraries(libmosquitto_static ${LIBRARIES})
 
@@ -103,7 +103,7 @@ if (${WITH_STATIC_LIBRARIES} STREQUAL ON)
 
 	target_compile_definitions(libmosquitto_static PUBLIC "LIBMOSQUITTO_STATIC")
 	install(TARGETS libmosquitto_static RUNTIME DESTINATION "${BINDIR}" ARCHIVE DESTINATION "${LIBDIR}")
-endif (${WITH_STATIC_LIBRARIES} STREQUAL ON)
+endif (WITH_STATIC_LIBRARIES)
 
 install(FILES mosquitto.h DESTINATION "${INCLUDEDIR}")
 

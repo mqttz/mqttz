@@ -52,62 +52,62 @@ set (MOSQ_SRCS
 
 
 option(WITH_BUNDLED_DEPS "Build with bundled dependencies?" ON)
-if (${WITH_BUNDLED_DEPS} STREQUAL ON)
+if (WITH_BUNDLED_DEPS)
 	include_directories(${mosquitto_SOURCE_DIR} ${mosquitto_SOURCE_DIR}/src/deps)
-endif (${WITH_BUNDLED_DEPS} STREQUAL ON)
+endif (WITH_BUNDLED_DEPS)
 
 option(INC_BRIDGE_SUPPORT
 	"Include bridge support for connecting to other brokers?" ON)
-if (${INC_BRIDGE_SUPPORT} STREQUAL ON)
+if (INC_BRIDGE_SUPPORT)
 	set (MOSQ_SRCS ${MOSQ_SRCS} bridge.c)
 	add_definitions("-DWITH_BRIDGE")
-endif (${INC_BRIDGE_SUPPORT} STREQUAL ON)
+endif (INC_BRIDGE_SUPPORT)
 
 
 option(USE_LIBWRAP
 	"Include tcp-wrappers support?" OFF)
 
-if (${USE_LIBWRAP} STREQUAL ON)
+if (USE_LIBWRAP)
 	set (MOSQ_LIBS ${MOSQ_LIBS} wrap)
 	add_definitions("-DWITH_WRAP")
-endif (${USE_LIBWRAP} STREQUAL ON)
+endif (USE_LIBWRAP)
 
 option(INC_DB_UPGRADE
 	"Include database upgrade support? (recommended)" ON)
 
 option(INC_MEMTRACK
 	"Include memory tracking support?" ON)
-if (${INC_MEMTRACK} STREQUAL ON)
+if (INC_MEMTRACK)
 	add_definitions("-DWITH_MEMORY_TRACKING")
-endif (${INC_MEMTRACK} STREQUAL ON)
+endif (INC_MEMTRACK)
 
 option(WITH_PERSISTENCE
 	"Include persistence support?" ON)
-if (${WITH_PERSISTENCE} STREQUAL ON)
+if (WITH_PERSISTENCE)
 	add_definitions("-DWITH_PERSISTENCE")
-endif (${WITH_PERSISTENCE} STREQUAL ON)
+endif (WITH_PERSISTENCE)
 
 option(WITH_SYS_TREE
 	"Include $SYS tree support?" ON)
-if (${WITH_SYS_TREE} STREQUAL ON)
+if (WITH_SYS_TREE)
 	add_definitions("-DWITH_SYS_TREE")
-endif (${WITH_SYS_TREE} STREQUAL ON)
+endif (WITH_SYS_TREE)
 
 if (CMAKE_SYSTEM_NAME STREQUAL Linux)
 	option(WITH_SYSTEMD
 		"Include systemd support?" OFF)
-	if (${WITH_SYSTEMD} STREQUAL ON)
+	if (WITH_SYSTEMD)
 		add_definitions("-DWITH_SYSTEMD")
 		find_library(SYSTEMD_LIBRARY systemd)
 		set (MOSQ_LIBS ${MOSQ_LIBS} ${SYSTEMD_LIBRARY})
-	endif (${WITH_SYSTEMD} STREQUAL ON)
+	endif (WITH_SYSTEMD)
 endif (CMAKE_SYSTEM_NAME STREQUAL Linux)
 
 option(WITH_WEBSOCKETS "Include websockets support?" OFF)
 option(STATIC_WEBSOCKETS "Use the static libwebsockets library?" OFF)
-if (${WITH_WEBSOCKETS} STREQUAL ON )
+if (WITH_WEBSOCKETS)
 	add_definitions("-DWITH_WEBSOCKETS")
-endif (${WITH_WEBSOCKETS} STREQUAL ON)
+endif (WITH_WEBSOCKETS)
 
 if (WIN32 OR CYGWIN)
 	set (MOSQ_SRCS ${MOSQ_SRCS} service.c)
@@ -144,17 +144,17 @@ if (WIN32)
 	set (MOSQ_LIBS ${MOSQ_LIBS} ws2_32)
 endif (WIN32)
 
-if (${WITH_WEBSOCKETS} STREQUAL ON)
-	if (${STATIC_WEBSOCKETS} STREQUAL ON)
+if (WITH_WEBSOCKETS)
+	if (STATIC_WEBSOCKETS)
 		set (MOSQ_LIBS ${MOSQ_LIBS} websockets_static)
 		if (WIN32)
 			set (MOSQ_LIBS ${MOSQ_LIBS} iphlpapi)
 			link_directories(${mosquitto_SOURCE_DIR})
 		endif (WIN32)
-	else (${STATIC_WEBSOCKETS} STREQUAL ON)
+	else (STATIC_WEBSOCKETS)
 		set (MOSQ_LIBS ${MOSQ_LIBS} websockets)
-	endif (${STATIC_WEBSOCKETS} STREQUAL ON)
-endif (${WITH_WEBSOCKETS} STREQUAL ON)
+	endif (STATIC_WEBSOCKETS)
+endif (WITH_WEBSOCKETS)
 
 # Simple detect libuuid
 if(NOT APPLE)
@@ -179,14 +179,12 @@ endif (UNIX)
 install(TARGETS mosquitto RUNTIME DESTINATION "${SBINDIR}" LIBRARY DESTINATION "${LIBDIR}")
 install(FILES mosquitto_broker.h mosquitto_plugin.h DESTINATION "${INCLUDEDIR}")
 
-if (${WITH_TLS} STREQUAL ON)
+if (WITH_TLS)
 	add_executable(mosquitto_passwd mosquitto_passwd.c)
 	target_link_libraries(mosquitto_passwd ${OPENSSL_LIBRARIES})
 	install(TARGETS mosquitto_passwd RUNTIME DESTINATION "${BINDIR}" LIBRARY DESTINATION "${LIBDIR}")
-endif (${WITH_TLS} STREQUAL ON)
+endif (WITH_TLS)
 
 if (UNIX AND NOT APPLE)
 	install(CODE "EXEC_PROGRAM(/sbin/ldconfig)")
 endif (UNIX AND NOT APPLE)
-
-
