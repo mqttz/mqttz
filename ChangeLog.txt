@@ -6,6 +6,8 @@ Broker:
 
 Library:
 - Fix TLS connections not working over SOCKS.
+- Don't clear SSL context when TLS connection is closed, meaning if a user
+  provided an external SSL_CTX they have less chance of leaking references.
 
 Build:
 - Fix comparison of boolean values in CMake build. Closes #1101.
