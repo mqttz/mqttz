@@ -4,6 +4,9 @@
 Broker:
 - Fixed comment handling for config options that have optional arguments.
 
+Library:
+- Fix TLS connections not working over SOCKS.
+
 Build:
 - Fix comparison of boolean values in CMake build. Closes #1101.
 - Fix compilation when openssl deprecated APIs are not available.

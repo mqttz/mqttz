@@ -610,7 +610,7 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 #endif
 
 
-int net__socket_connect_step3(struct mosquitto *mosq, const char *host, uint16_t port, const char *bind_address, bool blocking)
+int net__socket_connect_step3(struct mosquitto *mosq, const char *host)
 {
 #ifdef WITH_TLS
 	BIO *bio;
@@ -671,8 +671,13 @@ int net__socket_connect(struct mosquitto *mosq, const char *host, uint16_t port,
 
 	mosq->sock = sock;
 
-	rc = net__socket_connect_step3(mosq, host, port, bind_address, blocking);
-	if(rc) return rc;
+#ifdef WITH_SOCKS
+	if(!mosq->socks5_host)
+#endif
+	{
+		rc = net__socket_connect_step3(mosq, host);
+		if(rc) return rc;
+	}
 
 	return MOSQ_ERR_SUCCESS;
 }
