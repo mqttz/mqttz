@@ -415,27 +415,37 @@ def gen_publish(topic, qos, payload=None, retain=False, dup=False, mid=0, proto_
         else:
             return struct.pack("!B" + str(len(rlpacked))+"s" + pack_format, cmd, rlpacked, len(topic), topic, payload)
 
-def _gen_command_with_mid(cmd, mid, proto_ver=4, reason_code=0):
-    if proto_ver == 5:
-        return struct.pack('!BBHBB', cmd, 4, mid, reason_code, 0)
+def _gen_command_with_mid(cmd, mid, proto_ver=4, reason_code=-1, properties=None):
+    if proto_ver == 5 and (reason_code != -1 or properties is not None):
+        if reason_code == -1:
+            reason_code = 0
+
+        if properties is None:
+            return struct.pack('!BBHB', cmd, 3, mid, reason_code)
+        elif properties == "":
+            return struct.pack('!BBHBB', cmd, 4, mid, reason_code, 0)
+        else:
+            properties = mqtt5_props.prop_finalise(properties)
+            pack_format = "!BBHB"+str(len(properties))+"s"
+            return struct.pack(pack_format, cmd, 2+1+len(properties), mid, reason_code, properties)
     else:
         return struct.pack('!BBH', cmd, 2, mid)
 
-def gen_puback(mid, proto_ver=4, reason_code=0):
-    return _gen_command_with_mid(64, mid, proto_ver, reason_code)
+def gen_puback(mid, proto_ver=4, reason_code=-1, properties=None):
+    return _gen_command_with_mid(64, mid, proto_ver, reason_code, properties)
 
-def gen_pubrec(mid, proto_ver=4, reason_code=0):
-    return _gen_command_with_mid(80, mid, proto_ver, reason_code)
+def gen_pubrec(mid, proto_ver=4, reason_code=-1, properties=None):
+    return _gen_command_with_mid(80, mid, proto_ver, reason_code, properties)
 
-def gen_pubrel(mid, dup=False, proto_ver=4, reason_code=0):
+def gen_pubrel(mid, dup=False, proto_ver=4, reason_code=-1, properties=None):
     if dup:
         cmd = 96+8+2
     else:
         cmd = 96+2
-    return _gen_command_with_mid(cmd, mid, proto_ver, reason_code)
+    return _gen_command_with_mid(cmd, mid, proto_ver, reason_code, properties)
 
-def gen_pubcomp(mid, proto_ver=4, reason_code=0):
-    return _gen_command_with_mid(112, mid, proto_ver, reason_code)
+def gen_pubcomp(mid, proto_ver=4, reason_code=-1, properties=None):
+    return _gen_command_with_mid(112, mid, proto_ver, reason_code, properties)
 
 def gen_subscribe(mid, topic, qos, proto_ver=4, properties=""):
     if proto_ver == 5:

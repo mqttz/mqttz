@@ -135,10 +135,15 @@ int send__command_with_mid(struct mosquitto *mosq, uint8_t command, uint16_t mid
 	packet->remaining_length = 2;
 
 	if(mosq->protocol == mosq_p_mqtt5){
-		proplen = property__get_length_all(properties);
-		varbytes = packet__varint_bytes(proplen);
-		/* 1 here is sizeof(reason_code) */
-		packet->remaining_length += 1 + varbytes + proplen;
+		if(reason_code != 0 || properties){
+			packet->remaining_length += 1;
+		}
+
+		if(properties){
+			proplen = property__get_length_all(properties);
+			varbytes = packet__varint_bytes(proplen);
+			packet->remaining_length += varbytes + proplen;
+		}
 	}
 
 	rc = packet__alloc(packet);
@@ -150,8 +155,12 @@ int send__command_with_mid(struct mosquitto *mosq, uint8_t command, uint16_t mid
 	packet__write_uint16(packet, mid);
 
 	if(mosq->protocol == mosq_p_mqtt5){
-		packet__write_byte(packet, reason_code);
-		property__write_all(packet, properties, true);
+		if(reason_code != 0 || properties){
+			packet__write_byte(packet, reason_code);
+		}
+		if(properties){
+			property__write_all(packet, properties, true);
+		}
 	}
 
 	return packet__queue(mosq, packet);

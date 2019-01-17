@@ -56,12 +56,14 @@ int handle__pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 	if(rc) return rc;
 	if(mid == 0) return MOSQ_ERR_PROTOCOL;
 
-	if(mosq->protocol == mosq_p_mqtt5){
+	if(mosq->protocol == mosq_p_mqtt5 && mosq->in_packet.remaining_length > 2){
 		rc = packet__read_byte(&mosq->in_packet, &reason_code);
 		if(rc) return rc;
 
-		rc = property__read_all(CMD_PUBREL, &mosq->in_packet, &properties);
-		if(rc) return rc;
+		if(mosq->in_packet.remaining_length > 3){
+			rc = property__read_all(CMD_PUBREL, &mosq->in_packet, &properties);
+			if(rc) return rc;
+		}
 	}
 
 #ifdef WITH_BROKER
@@ -75,8 +77,17 @@ int handle__pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 		 * due to a repeated PUBREL after a client has reconnected. */
 		log__printf(mosq, MOSQ_LOG_WARNING, "Warning: Received PUBREL from %s for an unknown packet identifier %d.", mosq->id, mid);
 	}
+
+	rc = send__pubcomp(mosq, mid);
+	if(rc) return rc;
 #else
 	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received PUBREL (Mid: %d)", mosq->id, mid);
+
+	rc = send__pubcomp(mosq, mid);
+	if(rc){
+		message__remove(mosq, mid, mosq_md_in, &message);
+		return rc;
+	}
 
 	if(!message__remove(mosq, mid, mosq_md_in, &message)){
 		/* Only pass the message on if we have removed it from the queue - this
@@ -97,8 +108,6 @@ int handle__pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 		message__cleanup(&message);
 	}
 #endif
-	rc = send__pubcomp(mosq, mid);
-	if(rc) return rc;
 
 	return MOSQ_ERR_SUCCESS;
 }

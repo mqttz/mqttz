@@ -47,14 +47,16 @@ int handle__pubrec(struct mosquitto_db *db, struct mosquitto *mosq)
 	if(rc) return rc;
 	if(mid == 0) return MOSQ_ERR_PROTOCOL;
 
-	if(mosq->protocol == mosq_p_mqtt5){
+	if(mosq->protocol == mosq_p_mqtt5 && mosq->in_packet.remaining_length > 2){
 		rc = packet__read_byte(&mosq->in_packet, &reason_code);
 		if(rc) return rc;
 
-		rc = property__read_all(CMD_PUBREC, &mosq->in_packet, &properties);
-		if(rc) return rc;
-		/* Immediately free, we don't do anything with Reason String or User Property at the moment */
-		mosquitto_property_free_all(&properties);
+		if(mosq->in_packet.remaining_length > 3){
+			rc = property__read_all(CMD_PUBREC, &mosq->in_packet, &properties);
+			if(rc) return rc;
+			/* Immediately free, we don't do anything with Reason String or User Property at the moment */
+			mosquitto_property_free_all(&properties);
+		}
 	}
 
 #ifdef WITH_BROKER
@@ -71,7 +73,16 @@ int handle__pubrec(struct mosquitto_db *db, struct mosquitto *mosq)
 	if(reason_code < 0x80){
 		rc = message__out_update(mosq, mid, mosq_ms_wait_for_pubcomp);
 	}else{
-		message__delete(mosq, mid, mosq_md_out);
+		if(!message__delete(mosq, mid, mosq_md_out)){
+			/* Only inform the client the message has been sent once. */
+			pthread_mutex_lock(&mosq->callback_mutex);
+			if(mosq->on_publish_v5){
+				mosq->in_callback = true;
+				mosq->on_publish_v5(mosq, mosq->userdata, mid, reason_code, properties);
+				mosq->in_callback = false;
+			}
+			pthread_mutex_unlock(&mosq->callback_mutex);
+		}
 		return MOSQ_ERR_SUCCESS;
 	}
 #endif

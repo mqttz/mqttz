@@ -52,12 +52,14 @@ int handle__pubackcomp(struct mosquitto *mosq, const char *type)
 	if(rc) return rc;
 	if(mid == 0) return MOSQ_ERR_PROTOCOL;
 
-	if(mosq->protocol == mosq_p_mqtt5){
+	if(mosq->protocol == mosq_p_mqtt5 && mosq->in_packet.remaining_length > 2){
 		rc = packet__read_byte(&mosq->in_packet, &reason_code);
 		if(rc) return rc;
 
-		rc = property__read_all(CMD_PUBACK, &mosq->in_packet, &properties);
-		if(rc) return rc;
+		if(mosq->in_packet.remaining_length > 3){
+			rc = property__read_all(CMD_PUBACK, &mosq->in_packet, &properties);
+			if(rc) return rc;
+		}
 	}
 
 #ifdef WITH_BROKER

@@ -34,6 +34,9 @@ c : test-compile
 	./03-publish-qos0.py $@/03-publish-qos0.test
 	./03-publish-qos0-no-payload.py $@/03-publish-qos0-no-payload.test
 	./03-publish-c2b-qos1-disconnect.py $@/03-publish-c2b-qos1-disconnect.test
+	./03-publish-c2b-qos1-len.py $@/03-publish-c2b-qos1-len.test
+	./03-publish-c2b-qos2-len.py $@/03-publish-c2b-qos2-len.test
+	./03-publish-b2c-qos2-len.py $@/03-publish-b2c-qos2-len.test
 	./03-publish-c2b-qos2.py $@/03-publish-c2b-qos2.test
 	./03-publish-c2b-qos2-disconnect.py $@/03-publish-c2b-qos2-disconnect.test
 	./03-publish-c2b-qos1-receive-maximum.py $@/03-publish-c2b-qos1-receive-maximum.test

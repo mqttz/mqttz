@@ -1816,7 +1816,9 @@ libmosq_EXPORT void mosquitto_publish_callback_set(struct mosquitto *mosq, void 
  * Function: mosquitto_publish_v5_callback_set
  *
  * Set the publish callback. This is called when a message initiated with
- * <mosquitto_publish> has been sent to the broker successfully.
+ * <mosquitto_publish> has been sent to the broker. This callback will be
+ * called both if the message is sent successfully, or if the broker responded
+ * with an error, which will be reflected in the reason_code parameter.
  *
  * Parameters:
  *  mosq -       a valid mosquitto instance.

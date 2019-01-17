@@ -17,8 +17,11 @@ SRC = \
 	03-publish-qos0.c \
 	03-publish-qos0-no-payload.c \
 	03-publish-c2b-qos1-disconnect.c \
+	03-publish-c2b-qos1-len.c \
 	03-publish-c2b-qos2.c \
 	03-publish-c2b-qos2-disconnect.c \
+	03-publish-c2b-qos2-len.c \
+	03-publish-b2c-qos2-len.c \
 	03-publish-c2b-qos1-receive-maximum.c \
 	03-publish-c2b-qos2-receive-maximum-1.c \
 	03-publish-c2b-qos2-receive-maximum-2.c \
