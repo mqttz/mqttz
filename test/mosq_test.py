@@ -486,11 +486,18 @@ def gen_pingreq():
 def gen_pingresp():
     return struct.pack('!BB', 208, 0)
 
-def gen_disconnect(reason_code=0, proto_ver=4, properties=""):
-    if proto_ver == 5:
-        properties = mqtt5_props.prop_finalise(properties)
+def gen_disconnect(reason_code=-1, proto_ver=4, properties=None):
+    if proto_ver == 5 and (reason_code != -1 or properties is not None):
+        if reason_code == -1:
+             reason_code = 0
 
-        return struct.pack('!BBB', 224, 1+len(properties), reason_code) + properties
+        if properties is None:
+            return struct.pack('!BBB', 224, 1, reason_code)
+        elif properties == "":
+            return struct.pack('!BBBB', 224, 2, reason_code, 0)
+        else:
+            properties = mqtt5_props.prop_finalise(properties)
+            return struct.pack("!BBB", 224, 1+len(properties), reason_code) + properties
     else:
         return struct.pack('!BB', 224, 0)
 

@@ -38,10 +38,14 @@ int handle__disconnect(struct mosquitto *mosq)
 		return MOSQ_ERR_INVAL;
 	}
 
+	if(mosq->protocol != mosq_p_mqtt5){
+		return MOSQ_ERR_PROTOCOL;
+	}
+
 	rc = packet__read_byte(&mosq->in_packet, &reason_code);
 	if(rc) return rc;
 
-	if(mosq->protocol == mosq_p_mqtt5){
+	if(mosq->in_packet.remaining_length > 2){
 		rc = property__read_all(CMD_DISCONNECT, &mosq->in_packet, &properties);
 		if(rc) return rc;
 		mosquitto_property_free_all(&properties);
