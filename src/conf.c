@@ -1331,6 +1331,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						cur_listener->security_options.allow_anonymous = -1;
 						cur_listener->protocol = mp_mqtt;
 						cur_listener->port = tmp_int;
+						cur_listener->maximum_qos = 2;
 						token = strtok_r(NULL, "", &saveptr);
 						mosquitto__free(cur_listener->host);
 						if(token){
