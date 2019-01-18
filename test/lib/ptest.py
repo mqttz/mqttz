@@ -8,6 +8,7 @@ max_running = 10
 tests = [
     ('./01-con-discon-success.py', 'c/01-con-discon-success.test'),
     ('./01-keepalive-pingreq.py', 'c/01-keepalive-pingreq.test'),
+    ('./01-server-keepalive-pingreq.py', 'c/01-server-keepalive-pingreq.test'),
     ('./01-no-clean-session.py', 'c/01-no-clean-session.test'),
     ('./01-unpwd-set.py', 'c/01-unpwd-set.test'),
     ('./01-will-set.py', 'c/01-will-set.test'),

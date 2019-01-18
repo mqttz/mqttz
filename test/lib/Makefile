@@ -27,6 +27,7 @@ c : test-compile
 	./01-will-unpwd-set.py $@/01-will-unpwd-set.test
 	./01-no-clean-session.py $@/01-no-clean-session.test
 	./01-keepalive-pingreq.py $@/01-keepalive-pingreq.test
+	./01-server-keepalive-pingreq.py $@/01-server-keepalive-pingreq.test
 	./02-subscribe-qos0.py $@/02-subscribe-qos0.test
 	./02-subscribe-qos1.py $@/02-subscribe-qos1.test
 	./02-subscribe-qos2.py $@/02-subscribe-qos2.test

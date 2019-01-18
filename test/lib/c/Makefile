@@ -10,6 +10,7 @@ SRC = \
 	01-will-unpwd-set.c \
 	01-no-clean-session.c \
 	01-keepalive-pingreq.c \
+	01-server-keepalive-pingreq.c \
 	02-subscribe-qos0.c \
 	02-subscribe-qos1.c \
 	02-subscribe-qos2.c \
