@@ -20,6 +20,7 @@ Contributors:
 #include <time.h>
 
 #include "mosquitto_broker_internal.h"
+#include "alias_mosq.h"
 #include "memory_mosq.h"
 #include "packet_mosq.h"
 #include "property_mosq.h"
@@ -139,6 +140,8 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 		context->bridge->remote_password = NULL;
 	}
 #endif
+
+	alias__free_all(context);
 
 	mosquitto__free(context->username);
 	context->username = NULL;

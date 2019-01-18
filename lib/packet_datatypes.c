@@ -97,6 +97,12 @@ int packet__read_binary(struct mosquitto__packet *packet, uint8_t **data, int *l
 	rc = packet__read_uint16(packet, &slen);
 	if(rc) return rc;
 
+	if(slen == 0){
+		*data = NULL;
+		*length = 0;
+		return MOSQ_ERR_SUCCESS;
+	}
+
 	if(packet->pos+slen > packet->remaining_length) return MOSQ_ERR_PROTOCOL;
 
 	*data = mosquitto__malloc(slen+1);
@@ -116,18 +122,17 @@ int packet__read_binary(struct mosquitto__packet *packet, uint8_t **data, int *l
 int packet__read_string(struct mosquitto__packet *packet, char **str, int *length)
 {
 	int rc;
-	int len;
 
-	rc = packet__read_binary(packet, (uint8_t **)str, &len);
+	rc = packet__read_binary(packet, (uint8_t **)str, length);
 	if(rc) return rc;
+	if(*length == 0) return MOSQ_ERR_SUCCESS;
 
-	if(mosquitto_validate_utf8(*str, len)){
+	if(mosquitto_validate_utf8(*str, *length)){
 		mosquitto__free(*str);
 		*str = NULL;
 		return MOSQ_ERR_MALFORMED_UTF8;
 	}
 
-	*length = len;
 	return MOSQ_ERR_SUCCESS;
 }
 

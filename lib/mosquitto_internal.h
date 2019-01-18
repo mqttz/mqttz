@@ -132,6 +132,12 @@ enum mosquitto__transport {
 	mosq_t_sctp = 3
 };
 
+
+struct mosquitto__alias{
+	char *topic;
+	uint16_t alias;
+};
+
 struct mosquitto__packet{
 	uint8_t *payload;
 	struct mosquitto__packet *next;
@@ -178,6 +184,8 @@ struct mosquitto {
 	struct mosquitto__packet *current_out_packet;
 	struct mosquitto__packet *out_packet;
 	struct mosquitto_message_all *will;
+	struct mosquitto__alias *aliases;
+	int alias_count;
 #ifdef WITH_TLS
 	SSL *ssl;
 	SSL_CTX *ssl_ctx;

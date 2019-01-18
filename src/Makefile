@@ -9,6 +9,7 @@ all : mosquitto
 endif
 
 OBJS=	mosquitto.o \
+		alias_mosq.o \
 		bridge.o \
 		conf.o \
 		conf_includedir.o \
@@ -65,6 +66,9 @@ mosquitto : ${OBJS}
 	${CROSS_COMPILE}${CC} $^ -o $@ ${BROKER_LDFLAGS} $(BROKER_LIBS)
 
 mosquitto.o : mosquitto.c mosquitto_broker_internal.h
+	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
+
+alias_mosq.o : ../lib/alias_mosq.c ../lib/alias_mosq.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
 bridge.o : bridge.c mosquitto_broker_internal.h

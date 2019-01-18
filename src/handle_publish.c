@@ -21,6 +21,7 @@ Contributors:
 #include <string.h>
 
 #include "mosquitto_broker_internal.h"
+#include "alias_mosq.h"
 #include "mqtt_protocol.h"
 #include "memory_mosq.h"
 #include "packet_mosq.h"
@@ -49,6 +50,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	mosquitto_property *p, *p_prev;
 	mosquitto_property *msg_properties = NULL, *msg_properties_last;
 	uint32_t message_expiry_interval = 0;
+	uint16_t topic_alias = 0;
 
 #ifdef WITH_BRIDGE
 	char *topic_temp;
@@ -81,10 +83,89 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	if(packet__read_string(&context->in_packet, &topic, &slen)) return 1;
-	if(!slen){
+	if(!slen && context->protocol != mosq_p_mqtt5){
 		/* Invalid publish topic, disconnect client. */
 		mosquitto__free(topic);
 		return 1;
+	}
+
+	if(qos > 0){
+		if(packet__read_uint16(&context->in_packet, &mid)){
+			mosquitto__free(topic);
+			return 1;
+		}
+		if(mid == 0){
+			mosquitto__free(topic);
+			return MOSQ_ERR_PROTOCOL;
+		}
+	}
+
+	/* Handle properties */
+	if(context->protocol == mosq_p_mqtt5){
+		rc = property__read_all(CMD_PUBLISH, &context->in_packet, &properties);
+		if(rc) return rc;
+
+		p = properties;
+		p_prev = NULL;
+		msg_properties = NULL;
+		msg_properties_last = NULL;
+		while(p){
+			switch(p->identifier){
+				case MQTT_PROP_CONTENT_TYPE:
+				case MQTT_PROP_CORRELATION_DATA:
+				case MQTT_PROP_PAYLOAD_FORMAT_INDICATOR:
+				case MQTT_PROP_RESPONSE_TOPIC:
+				case MQTT_PROP_USER_PROPERTY:
+					if(msg_properties){
+						msg_properties_last->next = p;
+						msg_properties_last = p;
+					}else{
+						msg_properties = p;
+						msg_properties_last = p;
+					}
+					if(p_prev){
+						p_prev->next = p->next;
+						p = p_prev->next;
+					}else{
+						properties = p->next;
+						p = properties;
+					}
+					msg_properties_last->next = NULL;
+					break;
+
+				case MQTT_PROP_TOPIC_ALIAS:
+					topic_alias = p->value.i16;
+					p_prev = p;
+					p = p->next;
+					break;
+
+				case MQTT_PROP_MESSAGE_EXPIRY_INTERVAL:
+					message_expiry_interval = p->value.i32;
+					p_prev = p;
+					p = p->next;
+					break;
+
+				case MQTT_PROP_SUBSCRIPTION_IDENTIFIER:
+					p_prev = p;
+					p = p->next;
+					break;
+
+				default:
+					p = p->next;
+					break;
+			}
+		}
+	}
+	mosquitto_property_free_all(&properties);
+
+	if(topic && topic_alias){
+		rc = alias__add(context, topic, topic_alias);
+		if(rc) return rc;
+	}else if(topic == NULL && topic_alias){
+		rc = alias__find(context, &topic, topic_alias);
+		if(rc) return rc;
+	}else if(topic == NULL && topic_alias == 0){
+		return MOSQ_ERR_PROTOCOL;
 	}
 
 #ifdef WITH_BRIDGE
@@ -140,74 +221,6 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 		mosquitto__free(topic);
 		return 1;
 	}
-
-	if(qos > 0){
-		if(packet__read_uint16(&context->in_packet, &mid)){
-			mosquitto__free(topic);
-			return 1;
-		}
-		if(mid == 0){
-			mosquitto__free(topic);
-			return MOSQ_ERR_PROTOCOL;
-		}
-	}
-
-	/* Handle properties */
-	if(context->protocol == mosq_p_mqtt5){
-		rc = property__read_all(CMD_PUBLISH, &context->in_packet, &properties);
-		if(rc) return rc;
-
-		p = properties;
-		p_prev = NULL;
-		msg_properties = NULL;
-		msg_properties_last = NULL;
-		while(p){
-			switch(p->identifier){
-				case MQTT_PROP_CONTENT_TYPE:
-				case MQTT_PROP_CORRELATION_DATA:
-				case MQTT_PROP_PAYLOAD_FORMAT_INDICATOR:
-				case MQTT_PROP_RESPONSE_TOPIC:
-				case MQTT_PROP_USER_PROPERTY:
-					if(msg_properties){
-						msg_properties_last->next = p;
-						msg_properties_last = p;
-					}else{
-						msg_properties = p;
-						msg_properties_last = p;
-					}
-					if(p_prev){
-						p_prev->next = p->next;
-						p = p_prev->next;
-					}else{
-						properties = p->next;
-						p = properties;
-					}
-					msg_properties_last->next = NULL;
-					break;
-
-				case MQTT_PROP_TOPIC_ALIAS:
-					p_prev = p;
-					p = p->next;
-					break;
-
-				case MQTT_PROP_MESSAGE_EXPIRY_INTERVAL:
-					message_expiry_interval = p->value.i32;
-					p_prev = p;
-					p = p->next;
-					break;
-
-				case MQTT_PROP_SUBSCRIPTION_IDENTIFIER:
-					p_prev = p;
-					p = p->next;
-					break;
-
-				default:
-					p = p->next;
-					break;
-			}
-		}
-	}
-	mosquitto_property_free_all(&properties);
 
 	payloadlen = context->in_packet.remaining_length - context->in_packet.pos;
 	G_PUB_BYTES_RECEIVED_INC(payloadlen);
