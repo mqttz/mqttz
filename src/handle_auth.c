@@ -28,7 +28,7 @@ Contributors:
 int handle__auth(struct mosquitto_db *db, struct mosquitto *context)
 {
 	int rc = 0;
-	uint8_t reason_code;
+	uint8_t reason_code = 0;
 	mosquitto_property *properties = NULL;
 
 	if(!context) return MOSQ_ERR_INVAL;
@@ -38,11 +38,13 @@ int handle__auth(struct mosquitto_db *db, struct mosquitto *context)
 		return MOSQ_ERR_PROTOCOL;
 	}
 
-	if(packet__read_byte(&context->in_packet, &reason_code)) return 1;
+	if(mosq->in_packet.remaining_length > 0){
+		if(packet__read_byte(&context->in_packet, &reason_code)) return 1;
 
-	rc = property__read_all(CMD_AUTH, &context->in_packet, &properties);
-	if(rc) return rc;
-	mosquitto_property_free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
+		rc = property__read_all(CMD_AUTH, &context->in_packet, &properties);
+		if(rc) return rc;
+		mosquitto_property_free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
+	}
 
 	return MOSQ_ERR_SUCCESS;
 }
