@@ -64,7 +64,7 @@ int handle__connack(struct mosquitto_db *db, struct mosquitto *context)
 								return 1;
 							}
 						}
-						db__messages_easy_queue(db, context, context->bridge->notification_topic, 1, 1, &notification_payload, 1, NULL);
+						db__messages_easy_queue(db, context, context->bridge->notification_topic, 1, 1, &notification_payload, 1, 0, NULL);
 					}else{
 						notification_topic_len = strlen(context->bridge->remote_clientid)+strlen("$SYS/broker/connection//state");
 						notification_topic = mosquitto__malloc(sizeof(char)*(notification_topic_len+1));
@@ -80,7 +80,7 @@ int handle__connack(struct mosquitto_db *db, struct mosquitto *context)
 								return 1;
 							}
 						}
-						db__messages_easy_queue(db, context, notification_topic, 1, 1, &notification_payload, 1, NULL);
+						db__messages_easy_queue(db, context, notification_topic, 1, 1, &notification_payload, 1, 0, NULL);
 						mosquitto__free(notification_topic);
 					}
 				}

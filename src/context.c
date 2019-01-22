@@ -235,6 +235,7 @@ void context__send_will(struct mosquitto_db *db, struct mosquitto *ctxt)
 					ctxt->will->msg.payloadlen,
 					ctxt->will->msg.payload,
 					ctxt->will->msg.retain,
+					ctxt->will->expiry_interval,
 					&ctxt->will->properties);
 		}
 	}

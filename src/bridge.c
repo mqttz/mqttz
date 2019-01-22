@@ -339,7 +339,7 @@ int bridge__connect(struct mosquitto_db *db, struct mosquitto *context)
 		if(context->bridge->notification_topic){
 			if(!context->bridge->initial_notification_done){
 				notification_payload = '0';
-				db__messages_easy_queue(db, context, context->bridge->notification_topic, 1, 1, &notification_payload, 1, NULL);
+				db__messages_easy_queue(db, context, context->bridge->notification_topic, 1, 1, &notification_payload, 1, 0, NULL);
 				context->bridge->initial_notification_done = true;
 			}
 
@@ -359,7 +359,7 @@ int bridge__connect(struct mosquitto_db *db, struct mosquitto *context)
 
 			if(!context->bridge->initial_notification_done){
 				notification_payload = '0';
-				db__messages_easy_queue(db, context, notification_topic, 1, 1, &notification_payload, 1, NULL);
+				db__messages_easy_queue(db, context, notification_topic, 1, 1, &notification_payload, 1, 0, NULL);
 				context->bridge->initial_notification_done = true;
 			}
 

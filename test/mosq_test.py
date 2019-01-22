@@ -298,7 +298,7 @@ def to_string(packet):
         # Reserved
         return "0xF0"
 
-def gen_connect(client_id, clean_session=True, keepalive=60, username=None, password=None, will_topic=None, will_qos=0, will_retain=False, will_payload="", proto_ver=4, connect_reserved=False, properties=""):
+def gen_connect(client_id, clean_session=True, keepalive=60, username=None, password=None, will_topic=None, will_qos=0, will_retain=False, will_payload="", proto_ver=4, connect_reserved=False, properties="", will_properties=""):
     if (proto_ver&0x7F) == 3 or proto_ver == 0:
         remaining_length = 12
     elif (proto_ver&0x7F) == 4 or proto_ver == 5:
@@ -330,6 +330,9 @@ def gen_connect(client_id, clean_session=True, keepalive=60, username=None, pass
         connect_flags = connect_flags | 0x04 | ((will_qos&0x03) << 3)
         if will_retain:
             connect_flags = connect_flags | 32
+        if proto_ver == 5:
+            will_properties = mqtt5_props.prop_finalise(will_properties)
+            remaining_length += len(will_properties)
 
     if username != None:
         remaining_length = remaining_length + 2+len(username)
@@ -354,6 +357,7 @@ def gen_connect(client_id, clean_session=True, keepalive=60, username=None, pass
         packet = packet + struct.pack("!H", 0)
 
     if will_topic != None:
+        packet += will_properties
         packet = packet + struct.pack("!H"+str(len(will_topic))+"s", len(will_topic), will_topic)
         if len(will_payload) > 0:
             packet = packet + struct.pack("!H"+str(len(will_payload))+"s", len(will_payload), will_payload)

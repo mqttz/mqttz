@@ -159,6 +159,7 @@ struct mosquitto_message_all{
 	enum mosquitto_msg_state state;
 	bool dup;
 	struct mosquitto_message msg;
+	uint32_t expiry_interval;
 };
 
 struct mosquitto {

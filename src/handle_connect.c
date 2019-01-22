@@ -167,6 +167,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	char *will_payload = NULL, *will_topic = NULL;
 	char *will_topic_mount;
 	uint16_t will_payloadlen;
+	uint32_t will_expiry_interval = 0;
 	struct mosquitto_message_all *will_struct = NULL;
 	uint8_t will, will_retain, will_qos, clean_start;
 	uint8_t username_flag, password_flag;
@@ -384,6 +385,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		if(protocol_version == PROTOCOL_VERSION_v5){
 			rc = property__read_all(CMD_WILL, &context->in_packet, &will_struct->properties);
 			if(rc) return rc;
+			mosquitto_property_read_int32(properties, MQTT_PROP_MESSAGE_EXPIRY_INTERVAL, &will_expiry_interval, false);
 			mosquitto_property_free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
 		}
 		if(packet__read_string(&context->in_packet, &will_topic, &slen)){
@@ -736,6 +738,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		}
 		context->will->msg.qos = will_qos;
 		context->will->msg.retain = will_retain;
+		context->will->expiry_interval = will_expiry_interval;
 	}
 
 	if(db->config->connection_messages == true){

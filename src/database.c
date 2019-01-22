@@ -569,7 +569,7 @@ int db__messages_delete(struct mosquitto_db *db, struct mosquitto *context)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int db__messages_easy_queue(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain, mosquitto_property **properties)
+int db__messages_easy_queue(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain, uint32_t message_expiry_interval, mosquitto_property **properties)
 {
 	struct mosquitto_msg_store *stored;
 	char *source_id;
@@ -604,7 +604,7 @@ int db__messages_easy_queue(struct mosquitto_db *db, struct mosquitto *context, 
 		local_properties = *properties;
 		*properties = NULL;
 	}
-	if(db__message_store(db, source_id, 0, topic_heap, qos, payloadlen, &payload_uhpa, retain, &stored, 0, local_properties, 0)) return 1;
+	if(db__message_store(db, source_id, 0, topic_heap, qos, payloadlen, &payload_uhpa, retain, &stored, message_expiry_interval, local_properties, 0)) return 1;
 
 	return sub__messages_queue(db, source_id, topic_heap, qos, retain, &stored);
 }
