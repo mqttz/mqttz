@@ -1371,7 +1371,7 @@
 						<tgroup cols="6">
 							<thead>
 								<row>
-									<entry><emphasis>Topic</emphasis></entry>
+									<entry><emphasis>Pattern</emphasis></entry>
 									<entry><emphasis>Local Prefix</emphasis></entry>
 									<entry><emphasis>Remote Prefix</emphasis></entry>
 									<entry><emphasis>Validity</emphasis></entry>
@@ -1380,10 +1380,10 @@
 							</row>
 							</thead>
 							<tbody>
-								<row><entry>topic</entry><entry>L/</entry><entry>R/</entry><entry>valid</entry><entry>L/topic</entry><entry>R/topic</entry></row>
-								<row><entry>topic</entry><entry>L/</entry><entry>""</entry><entry>valid</entry><entry>L/topic</entry><entry>topic</entry></row>
-								<row><entry>topic</entry><entry>""</entry><entry>R/</entry><entry>valid</entry><entry>topic</entry><entry>R/topic</entry></row>
-								<row><entry>topic</entry><entry>""</entry><entry>""</entry><entry>valid (no remapping)</entry><entry>topic</entry><entry>topic</entry></row>
+								<row><entry>pattern</entry><entry>L/</entry><entry>R/</entry><entry>valid</entry><entry>L/pattern</entry><entry>R/pattern</entry></row>
+								<row><entry>pattern</entry><entry>L/</entry><entry>""</entry><entry>valid</entry><entry>L/pattern</entry><entry>pattern</entry></row>
+								<row><entry>pattern</entry><entry>""</entry><entry>R/</entry><entry>valid</entry><entry>pattern</entry><entry>R/pattern</entry></row>
+								<row><entry>pattern</entry><entry>""</entry><entry>""</entry><entry>valid (no remapping)</entry><entry>pattern</entry><entry>pattern</entry></row>
 								<row><entry>""</entry><entry>local</entry><entry>remote</entry><entry>valid (remap single local topic to remote)</entry><entry>local</entry><entry>remote</entry></row>
 								<row><entry>""</entry><entry>local</entry><entry>""</entry><entry>invalid</entry><entry></entry><entry></entry></row>
 								<row><entry>""</entry><entry>""</entry><entry>remote</entry><entry>invalid</entry><entry></entry><entry></entry></row>
