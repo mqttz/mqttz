@@ -12,7 +12,7 @@ def len_test(test, puback_packet):
     mid = 3265
     keepalive = 60
     connect_packet = mosq_test.gen_connect("pub-qos1-test", keepalive=keepalive, clean_session=False, proto_ver=5)
-    connack_packet = mosq_test.gen_connack(resv=0, rc=0, proto_ver=5)
+    connack_packet = mosq_test.gen_connack(flags=0, rc=0, proto_ver=5)
 
     subscribe_packet = mosq_test.gen_subscribe(mid, "qos1/len/test", 1, proto_ver=5)
     suback_packet = mosq_test.gen_suback(mid, 1, proto_ver=5)

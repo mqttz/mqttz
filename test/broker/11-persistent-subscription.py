@@ -21,7 +21,7 @@ connect_packet = mosq_test.gen_connect(
     "persitent-subscription-test", keepalive=keepalive, clean_session=False,
 )
 connack_packet = mosq_test.gen_connack(rc=0)
-connack_packet2 = mosq_test.gen_connack(rc=0, resv=1)  # session present
+connack_packet2 = mosq_test.gen_connack(rc=0, flags=1)  # session present
 
 subscribe_packet = mosq_test.gen_subscribe(mid, "subpub/qos1", 1)
 suback_packet = mosq_test.gen_suback(mid, 1)

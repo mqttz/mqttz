@@ -6,7 +6,7 @@ rc = 1
 mid = 3265
 keepalive = 60
 connect_packet = mosq_test.gen_connect("pub-qos2-disco-test", keepalive=keepalive, clean_session=False, proto_ver=3)
-connack_packet = mosq_test.gen_connack(resv=0, rc=0)
+connack_packet = mosq_test.gen_connack(flags=0, rc=0)
 
 subscribe_packet = mosq_test.gen_subscribe(mid, "qos2/disconnect/test", 2)
 suback_packet = mosq_test.gen_suback(mid, 2)

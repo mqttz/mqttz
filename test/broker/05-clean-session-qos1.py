@@ -8,8 +8,8 @@ rc = 1
 mid = 109
 keepalive = 60
 connect_packet = mosq_test.gen_connect("clean-qos2-test", keepalive=keepalive, clean_session=False)
-connack1_packet = mosq_test.gen_connack(resv=0, rc=0)
-connack2_packet = mosq_test.gen_connack(resv=1, rc=0)
+connack1_packet = mosq_test.gen_connack(flags=0, rc=0)
+connack2_packet = mosq_test.gen_connack(flags=1, rc=0)
 
 disconnect_packet = mosq_test.gen_disconnect()
 

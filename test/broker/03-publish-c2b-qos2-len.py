@@ -12,7 +12,7 @@ def len_test(test, pubrel_packet):
     mid = 3265
     keepalive = 60
     connect_packet = mosq_test.gen_connect("pub-test", keepalive=keepalive, clean_session=False, proto_ver=5)
-    connack_packet = mosq_test.gen_connack(resv=0, rc=0, proto_ver=5)
+    connack_packet = mosq_test.gen_connack(flags=0, rc=0, proto_ver=5)
 
     mid = 1
     publish_packet = mosq_test.gen_publish("qos2/len/test", qos=2, mid=mid, payload="len-message", proto_ver=5)
