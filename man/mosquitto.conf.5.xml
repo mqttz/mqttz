@@ -1359,27 +1359,35 @@
 						<replaceable>""</replaceable>. Using the empty marker
 						for the topic itself is also valid. The table below
 						defines what combination of empty or value is
-						valid.</para>
+						valid. The <option>Full Local Topic</option> and
+						<option>Full Remote Topic</option> show the resulting
+						topics that would be used on the local and remote ends
+						of the bridge. For example, for the first table row if
+						you publish to <option>L/topic</option> on the local
+						broker, then the remote broker will receive a message
+						on the topic <option>R/topic</option>.</para>
+
 					<informaltable>
-						<tgroup cols="5">
+						<tgroup cols="6">
 							<thead>
 								<row>
-									<entry></entry>
 									<entry><emphasis>Topic</emphasis></entry>
 									<entry><emphasis>Local Prefix</emphasis></entry>
 									<entry><emphasis>Remote Prefix</emphasis></entry>
 									<entry><emphasis>Validity</emphasis></entry>
+									<entry><emphasis>Full Local Topic</emphasis></entry>
+									<entry><emphasis>Full Remote Topic</emphasis></entry>
 							</row>
 							</thead>
 							<tbody>
-								<row><entry>1</entry><entry>value</entry><entry>value</entry><entry>value</entry><entry>valid</entry></row>
-								<row><entry>2</entry><entry>value</entry><entry>value</entry><entry>""</entry><entry>valid</entry></row>
-								<row><entry>3</entry><entry>value</entry><entry>""</entry><entry>value</entry><entry>valid</entry></row>
-								<row><entry>4</entry><entry>value</entry><entry>""</entry><entry>""</entry><entry>valid (no remapping)</entry></row>
-								<row><entry>5</entry><entry>""</entry><entry>value</entry><entry>value</entry><entry>valid (remap single local topic to remote)</entry></row>
-								<row><entry>6</entry><entry>""</entry><entry>value</entry><entry>""</entry><entry>invalid</entry></row>
-								<row><entry>7</entry><entry>""</entry><entry>""</entry><entry>value</entry><entry>invalid</entry></row>
-								<row><entry>8</entry><entry>""</entry><entry>""</entry><entry>""</entry><entry>invalid</entry></row>
+								<row><entry>topic</entry><entry>L/</entry><entry>R/</entry><entry>valid</entry><entry>L/topic</entry><entry>R/topic</entry></row>
+								<row><entry>topic</entry><entry>L/</entry><entry>""</entry><entry>valid</entry><entry>L/topic</entry><entry>topic</entry></row>
+								<row><entry>topic</entry><entry>""</entry><entry>R/</entry><entry>valid</entry><entry>topic</entry><entry>R/topic</entry></row>
+								<row><entry>topic</entry><entry>""</entry><entry>""</entry><entry>valid (no remapping)</entry><entry>topic</entry><entry>topic</entry></row>
+								<row><entry>""</entry><entry>local</entry><entry>remote</entry><entry>valid (remap single local topic to remote)</entry><entry>local</entry><entry>remote</entry></row>
+								<row><entry>""</entry><entry>local</entry><entry>""</entry><entry>invalid</entry><entry></entry><entry></entry></row>
+								<row><entry>""</entry><entry>""</entry><entry>remote</entry><entry>invalid</entry><entry></entry><entry></entry></row>
+								<row><entry>""</entry><entry>""</entry><entry>""</entry><entry>invalid</entry><entry></entry><entry></entry></row>
 							</tbody>
 						</tgroup>
 					</informaltable>
