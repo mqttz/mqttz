@@ -38,7 +38,7 @@ int handle__auth(struct mosquitto_db *db, struct mosquitto *context)
 		return MOSQ_ERR_PROTOCOL;
 	}
 
-	if(mosq->in_packet.remaining_length > 0){
+	if(context->in_packet.remaining_length > 0){
 		if(packet__read_byte(&context->in_packet, &reason_code)) return 1;
 
 		rc = property__read_all(CMD_AUTH, &context->in_packet, &properties);

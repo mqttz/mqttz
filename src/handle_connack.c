@@ -59,7 +59,7 @@ int handle__connack(struct mosquitto_db *db, struct mosquitto *context)
 					if(context->bridge->notification_topic){
 						if(!context->bridge->notifications_local_only){
 							if(send__real_publish(context, mosquitto__mid_generate(context),
-									context->bridge->notification_topic, 1, &notification_payload, 1, true, 0, NULL, NULL)){
+									context->bridge->notification_topic, 1, &notification_payload, 1, true, 0, NULL, NULL, 0)){
 
 								return 1;
 							}
@@ -74,7 +74,7 @@ int handle__connack(struct mosquitto_db *db, struct mosquitto *context)
 						notification_payload = '1';
 						if(!context->bridge->notifications_local_only){
 							if(send__real_publish(context, mosquitto__mid_generate(context),
-									notification_topic, 1, &notification_payload, 1, true, 0, NULL, NULL)){
+									notification_topic, 1, &notification_payload, 1, true, 0, NULL, NULL, 0)){
 
 								mosquitto__free(notification_topic);
 								return 1;

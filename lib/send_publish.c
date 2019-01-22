@@ -37,7 +37,7 @@ Contributors:
 #include "send_mosq.h"
 
 
-int send__publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint32_t payloadlen, const void *payload, int qos, bool retain, bool dup, const mosquitto_property *cmsg_props, const mosquitto_property *store_props)
+int send__publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint32_t payloadlen, const void *payload, int qos, bool retain, bool dup, const mosquitto_property *cmsg_props, const mosquitto_property *store_props, uint32_t expiry_interval)
 {
 #ifdef WITH_BROKER
 	size_t len;
@@ -110,7 +110,7 @@ int send__publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint3
 					}
 					log__printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBLISH to %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", mosq->id, dup, qos, retain, mid, mapped_topic, (long)payloadlen);
 					G_PUB_BYTES_SENT_INC(payloadlen);
-					rc =  send__real_publish(mosq, mid, mapped_topic, payloadlen, payload, qos, retain, dup, cmsg_props, store_props);
+					rc =  send__real_publish(mosq, mid, mapped_topic, payloadlen, payload, qos, retain, dup, cmsg_props, store_props, expiry_interval);
 					mosquitto__free(mapped_topic);
 					return rc;
 				}
@@ -124,16 +124,17 @@ int send__publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint3
 	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBLISH (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", mosq->id, dup, qos, retain, mid, topic, (long)payloadlen);
 #endif
 
-	return send__real_publish(mosq, mid, topic, payloadlen, payload, qos, retain, dup, cmsg_props, store_props);
+	return send__real_publish(mosq, mid, topic, payloadlen, payload, qos, retain, dup, cmsg_props, store_props, expiry_interval);
 }
 
 
-int send__real_publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint32_t payloadlen, const void *payload, int qos, bool retain, bool dup, const mosquitto_property *cmsg_props, const mosquitto_property *store_props)
+int send__real_publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint32_t payloadlen, const void *payload, int qos, bool retain, bool dup, const mosquitto_property *cmsg_props, const mosquitto_property *store_props, uint32_t expiry_interval)
 {
 	struct mosquitto__packet *packet = NULL;
 	int packetlen;
 	int proplen = 0, varbytes;
 	int rc;
+	mosquitto_property expiry_prop;
 
 	assert(mosq);
 
@@ -147,11 +148,21 @@ int send__real_publish(struct mosquitto *mosq, uint16_t mid, const char *topic, 
 		proplen = 0;
 		proplen += property__get_length_all(cmsg_props);
 		proplen += property__get_length_all(store_props);
+		if(expiry_interval > 0){
+			expiry_prop.next = NULL;
+			expiry_prop.value.i32 = expiry_interval;
+			expiry_prop.identifier = MQTT_PROP_MESSAGE_EXPIRY_INTERVAL;
+			expiry_prop.client_generated = false;
+
+			proplen += property__get_length_all(&expiry_prop);
+		}
+
 		varbytes = packet__varint_bytes(proplen);
 		if(varbytes > 4){
 			/* FIXME - Properties too big, don't publish any - should remove some first really */
 			cmsg_props = NULL;
 			store_props = NULL;
+			expiry_interval = 0;
 		}else{
 			packetlen += proplen + varbytes;
 		}
@@ -181,6 +192,9 @@ int send__real_publish(struct mosquitto *mosq, uint16_t mid, const char *topic, 
 		packet__write_varint(packet, proplen);
 		property__write_all(packet, cmsg_props, false);
 		property__write_all(packet, store_props, false);
+		if(expiry_interval > 0){
+			property__write_all(packet, &expiry_prop, false);
+		}
 	}
 
 	/* Payload */
