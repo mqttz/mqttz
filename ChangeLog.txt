@@ -4,6 +4,7 @@
 Broker:
 - Fixed comment handling for config options that have optional arguments.
 - Improved documentation around bridge topic remapping.
+- Handle mismatched handshakes (e.g. QoS1 PUBLISH with QoS2 reply) properly.
 
 Library:
 - Fix TLS connections not working over SOCKS.

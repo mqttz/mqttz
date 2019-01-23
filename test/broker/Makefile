@@ -45,6 +45,11 @@ endif
 	./02-subpub-qos0.py
 	./02-subpub-qos1.py
 	./02-subpub-qos2.py
+	./02-subpub-qos1-bad-pubrec.py
+	./02-subpub-qos1-bad-pubcomp.py
+	./02-subpub-qos2-bad-puback-1.py
+	./02-subpub-qos2-bad-puback-2.py
+	./02-subpub-qos2-bad-pubcomp.py
 	./02-unsubscribe-qos0.py
 	./02-unsubscribe-qos1.py
 	./02-unsubscribe-qos2.py

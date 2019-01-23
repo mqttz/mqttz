@@ -82,13 +82,13 @@ int mosquitto_message_copy(struct mosquitto_message *dst, const struct mosquitto
 	return MOSQ_ERR_SUCCESS;
 }
 
-int message__delete(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_direction dir)
+int message__delete(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_direction dir, int qos)
 {
 	struct mosquitto_message_all *message;
 	int rc;
 	assert(mosq);
 
-	rc = message__remove(mosq, mid, dir, &message);
+	rc = message__remove(mosq, mid, dir, &message, qos);
 	if(rc == MOSQ_ERR_SUCCESS){
 		message__cleanup(&message);
 	}
@@ -218,7 +218,7 @@ void message__reconnect_reset(struct mosquitto *mosq)
 	pthread_mutex_unlock(&mosq->out_message_mutex);
 }
 
-int message__remove(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_direction dir, struct mosquitto_message_all **message)
+int message__remove(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_direction dir, struct mosquitto_message_all **message, int qos)
 {
 	struct mosquitto_message_all *cur, *prev = NULL;
 	bool found = false;
@@ -231,6 +231,9 @@ int message__remove(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_dir
 		cur = mosq->out_messages;
 		while(cur){
 			if(cur->msg.mid == mid){
+				if(cur->msg.qos != qos){
+					return MOSQ_ERR_PROTOCOL;
+				}
 				if(prev){
 					prev->next = cur->next;
 				}else{
@@ -287,6 +290,9 @@ int message__remove(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_dir
 		cur = mosq->in_messages;
 		while(cur){
 			if(cur->msg.mid == mid){
+				if(cur->msg.qos != qos){
+					return MOSQ_ERR_PROTOCOL;
+				}
 				if(prev){
 					prev->next = cur->next;
 				}else{
@@ -370,7 +376,7 @@ void mosquitto_message_retry_set(struct mosquitto *mosq, unsigned int message_re
 {
 }
 
-int message__out_update(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_state state)
+int message__out_update(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_state state, int qos)
 {
 	struct mosquitto_message_all *message;
 	assert(mosq);
@@ -379,6 +385,9 @@ int message__out_update(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg
 	message = mosq->out_messages;
 	while(message){
 		if(message->msg.mid == mid){
+			if(message->msg.qos != qos){
+				return MOSQ_ERR_PROTOCOL;
+			}
 			message->state = state;
 			message->timestamp = mosquitto_time();
 			pthread_mutex_unlock(&mosq->out_message_mutex);

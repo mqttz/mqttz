@@ -46,11 +46,11 @@ int handle__pubrec(struct mosquitto *mosq)
 #ifdef WITH_BROKER
 	log__printf(NULL, MOSQ_LOG_DEBUG, "Received PUBREC from %s (Mid: %d)", mosq->id, mid);
 
-	rc = db__message_update(mosq, mid, mosq_md_out, mosq_ms_wait_for_pubcomp);
+	rc = db__message_update(mosq, mid, mosq_md_out, mosq_ms_wait_for_pubcomp, 2);
 #else
 	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received PUBREC (Mid: %d)", mosq->id, mid);
 
-	rc = message__out_update(mosq, mid, mosq_ms_wait_for_pubcomp);
+	rc = message__out_update(mosq, mid, mosq_ms_wait_for_pubcomp, 2);
 #endif
 	if(rc == MOSQ_ERR_NOT_FOUND){
 		log__printf(mosq, MOSQ_LOG_WARNING, "Warning: Received PUBREC from %s for an unknown packet identifier %d.", mosq->id, mid);

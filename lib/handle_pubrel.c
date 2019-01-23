@@ -55,7 +55,10 @@ int handle__pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 #ifdef WITH_BROKER
 	log__printf(NULL, MOSQ_LOG_DEBUG, "Received PUBREL from %s (Mid: %d)", mosq->id, mid);
 
-	if(db__message_release(db, mosq, mid, mosq_md_in)){
+	rc = db__message_release(db, mosq, mid, mosq_md_in);
+	if(rc == MOSQ_ERR_PROTOCOL){
+		return rc;
+	}else if(rc != MOSQ_ERR_SUCCESS){
 		/* Message not found. Still send a PUBCOMP anyway because this could be
 		 * due to a repeated PUBREL after a client has reconnected. */
 		log__printf(mosq, MOSQ_LOG_WARNING, "Warning: Received PUBREL from %s for an unknown packet identifier %d.", mosq->id, mid);
@@ -63,7 +66,10 @@ int handle__pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 #else
 	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received PUBREL (Mid: %d)", mosq->id, mid);
 
-	if(!message__remove(mosq, mid, mosq_md_in, &message)){
+	rc = message__remove(mosq, mid, mosq_md_in, &message, 2);
+	if(rc){
+		return rc;
+	}else{
 		/* Only pass the message on if we have removed it from the queue - this
 		 * prevents multiple callbacks for the same message. */
 		pthread_mutex_lock(&mosq->callback_mutex);

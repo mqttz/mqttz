@@ -288,7 +288,7 @@ void db__message_dequeue_first(struct mosquitto *context)
 	msg->next = NULL;
 }
 
-int db__message_delete(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir)
+int db__message_delete(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, int qos)
 {
 	struct mosquitto_client_msg *tail, *last = NULL;
 	int msg_index = 0;
@@ -299,6 +299,11 @@ int db__message_delete(struct mosquitto_db *db, struct mosquitto *context, uint1
 	while(tail){
 		msg_index++;
 		if(tail->mid == mid && tail->direction == dir){
+			if(tail->qos != qos){
+				return MOSQ_ERR_PROTOCOL;
+			}else if(qos == 2 && tail->state != mosq_ms_wait_for_pubcomp){
+				return MOSQ_ERR_PROTOCOL;
+			}
 			msg_index--;
 			db__message_remove(db, context, &tail, last);
 		}else{
@@ -509,13 +514,16 @@ int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint1
 #endif
 }
 
-int db__message_update(struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, enum mosquitto_msg_state state)
+int db__message_update(struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, enum mosquitto_msg_state state, int qos)
 {
 	struct mosquitto_client_msg *tail;
 
 	tail = context->inflight_msgs;
 	while(tail){
 		if(tail->mid == mid && tail->direction == dir){
+			if(tail->qos != qos){
+				return MOSQ_ERR_PROTOCOL;
+			}
 			tail->state = state;
 			tail->timestamp = mosquitto_time();
 			return MOSQ_ERR_SUCCESS;
@@ -780,7 +788,6 @@ int db__message_reconnect_reset(struct mosquitto_db *db, struct mosquitto *conte
 int db__message_release(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir)
 {
 	struct mosquitto_client_msg *tail, *last = NULL;
-	int qos;
 	int retain;
 	char *topic;
 	char *source_id;
@@ -793,7 +800,9 @@ int db__message_release(struct mosquitto_db *db, struct mosquitto *context, uint
 	while(tail){
 		msg_index++;
 		if(tail->mid == mid && tail->direction == dir){
-			qos = tail->store->qos;
+			if(tail->store->qos != 2){
+				return MOSQ_ERR_PROTOCOL;
+			}
 			topic = tail->store->topic;
 			retain = tail->retain;
 			source_id = tail->store->source_id;
@@ -802,7 +811,7 @@ int db__message_release(struct mosquitto_db *db, struct mosquitto *context, uint
 			 * denied/dropped and is being processed so the client doesn't
 			 * keep resending it. That means we don't send it to other
 			 * clients. */
-			if(!topic || !sub__messages_queue(db, source_id, topic, qos, retain, &tail->store)){
+			if(!topic || !sub__messages_queue(db, source_id, topic, 2, retain, &tail->store)){
 				db__message_remove(db, context, &tail, last);
 				deleted = true;
 			}else{

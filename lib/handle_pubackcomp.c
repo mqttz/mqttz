@@ -44,15 +44,17 @@ int handle__pubackcomp(struct mosquitto *mosq, const char *type)
 {
 	uint16_t mid;
 	int rc;
+	int qos;
 
 	assert(mosq);
 	rc = packet__read_uint16(&mosq->in_packet, &mid);
 	if(rc) return rc;
+	qos = type[3] == 'A'?1:2; /* pubAck or pubComp */
 #ifdef WITH_BROKER
 	log__printf(NULL, MOSQ_LOG_DEBUG, "Received %s from %s (Mid: %d)", type, mosq->id, mid);
 
 	if(mid){
-		rc = db__message_delete(db, mosq, mid, mosq_md_out);
+		rc = db__message_delete(db, mosq, mid, mosq_md_out, qos);
 		if(rc == MOSQ_ERR_NOT_FOUND){
 			log__printf(mosq, MOSQ_LOG_WARNING, "Warning: Received %s from %s for an unknown packet identifier %d.", type, mosq->id, mid);
 			return MOSQ_ERR_SUCCESS;
@@ -63,7 +65,10 @@ int handle__pubackcomp(struct mosquitto *mosq, const char *type)
 #else
 	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received %s (Mid: %d)", mosq->id, type, mid);
 
-	if(!message__delete(mosq, mid, mosq_md_out)){
+	rc = message__delete(mosq, mid, mosq_md_out, qos);
+	if(rc){
+		return rc;
+	}else{
 		/* Only inform the client the message has been sent once. */
 		pthread_mutex_lock(&mosq->callback_mutex);
 		if(mosq->on_publish){
