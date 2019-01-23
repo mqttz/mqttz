@@ -54,6 +54,7 @@ endif
 	./02-subpub-qos1-v5.py
 	./02-subpub-qos2-v5.py
 	./02-subpub-qos1-message-expiry.py
+	./02-subpub-qos1-message-expiry-retain.py
 	./02-subpub-qos1-message-expiry-will.py
 	./02-subpub-qos1-nolocal.py
 	./02-subpub-qos0-retain-as-publish.py

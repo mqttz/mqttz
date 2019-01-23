@@ -37,6 +37,7 @@ tests = [
     (1, './02-subpub-qos1-v5.py'),
     (1, './02-subpub-qos2-v5.py'),
     (1, './02-subpub-qos1-message-expiry.py'),
+    (1, './02-subpub-qos1-message-expiry-retain.py'),
     (1, './02-subpub-qos1-message-expiry-will.py'),
     (1, './02-subpub-qos1-nolocal.py'),
     (1, './02-subpub-qos0-retain-as-publish.py'),
