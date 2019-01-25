@@ -478,6 +478,24 @@ def gen_unsubscribe(mid, topic, proto_ver=4):
         pack_format = "!BBHH"+str(len(topic))+"s"
         return struct.pack(pack_format, 162, 2+2+len(topic), mid, len(topic), topic)
 
+def gen_unsubscribe_multiple(mid, topics, proto_ver=4):
+    packet = ""
+    remaining_length = 0
+    for t in topics:
+        remaining_length += 2+len(t)
+        print(t)
+        packet += struct.pack("!H"+str(len(t))+"s", len(t), t)
+        print(packet)
+
+    if proto_ver == 5:
+        remaining_length += 2+1
+
+        return struct.pack("!BBHB", 162, remaining_length, mid, 0) + packet
+    else:
+        remaining_length += 2
+
+        return struct.pack("!BBH", 162, remaining_length, mid) + packet
+
 def gen_unsuback(mid, proto_ver=4):
     if proto_ver == 5:
         return struct.pack('!BBHB', 176, 3, mid, 0)
