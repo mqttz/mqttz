@@ -483,9 +483,7 @@ def gen_unsubscribe_multiple(mid, topics, proto_ver=4):
     remaining_length = 0
     for t in topics:
         remaining_length += 2+len(t)
-        print(t)
         packet += struct.pack("!H"+str(len(t))+"s", len(t), t)
-        print(packet)
 
     if proto_ver == 5:
         remaining_length += 2+1

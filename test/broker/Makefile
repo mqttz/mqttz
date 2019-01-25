@@ -64,6 +64,7 @@ endif
 	./02-subpub-qos2-receive-maximum-2.py
 	./02-subpub-qos2-pubrec-error.py
 	./02-subpub-qos0-topic-alias.py
+	./02-subpub-qos0-topic-alias-unknown.py
 	./02-unsubscribe-qos0.py
 	./02-unsubscribe-qos1.py
 	./02-unsubscribe-qos2.py

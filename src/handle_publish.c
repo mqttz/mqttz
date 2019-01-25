@@ -163,7 +163,12 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 		if(rc) return rc;
 	}else if(topic == NULL && topic_alias){
 		rc = alias__find(context, &topic, topic_alias);
-		if(rc) return rc;
+		if(rc){
+			if(context->protocol == mosq_p_mqtt5){
+				send__disconnect(context, MQTT_RC_TOPIC_ALIAS_INVALID, NULL);
+			}
+			return rc;
+		}
 	}else if(topic == NULL && topic_alias == 0){
 		return MOSQ_ERR_PROTOCOL;
 	}
