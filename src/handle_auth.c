@@ -23,6 +23,7 @@ Contributors:
 #include "mqtt_protocol.h"
 #include "packet_mosq.h"
 #include "property_mosq.h"
+#include "send_mosq.h"
 
 
 int handle__auth(struct mosquitto_db *db, struct mosquitto *context)
@@ -46,5 +47,7 @@ int handle__auth(struct mosquitto_db *db, struct mosquitto *context)
 		mosquitto_property_free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
 	}
 
-	return MOSQ_ERR_SUCCESS;
+	/* FIXME - Extended auth not currently supported */
+	send__disconnect(context, MQTT_RC_NOT_AUTHORIZED, NULL);
+	return 1;
 }
