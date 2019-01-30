@@ -90,6 +90,7 @@ tests = [
     (2, './08-tls-psk-pub.py'),
     (3, './08-tls-psk-bridge.py'),
 
+    (1, './09-acl-empty-file.py'),
     (1, './09-plugin-auth-unpwd-success.py'),
     (1, './09-plugin-auth-unpwd-fail.py'),
     (1, './09-plugin-auth-acl-sub.py'),

@@ -317,7 +317,7 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 	}else{
 		security_opts = &db->config->security_options;
 	}
-	if(!security_opts->acl_list && !security_opts->acl_patterns){
+	if(!security_opts->acl_file && !security_opts->acl_list && !security_opts->acl_patterns){
 			return MOSQ_ERR_PLUGIN_DEFER;
 	}
 
@@ -535,6 +535,10 @@ static int aclfile__parse(struct mosquitto_db *db, struct mosquitto__security_op
 					fclose(aclfptr);
 					return 1;
 				}
+			}else{
+				log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid line in acl_file \"%s\": %s.", security_opts->acl_file, buf);
+				fclose(aclfptr);
+				return 1;
 			}
 		}
 	}

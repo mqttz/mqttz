@@ -11,6 +11,12 @@ Security:
   unaffected. Users who have only used the mosquitto_passwd utility to create
   and modify their password files are unaffected by this vulnerability.
   Affects version 1.0 to 1.5.5 inclusive.
+- CVE-2018-xxxxx: If an ACL file is empty, or has only blank lines or
+  comments, then mosquitto treats the ACL file as not being defined, which
+  means that no topic access is denied. Although denying access to all topics
+  is not a useful configuration, this behaviour is unexpected and could lead
+  to access being incorrectly granted in some circumstances. This is now
+  fixed. Affects versions 1.0 to 1.5.5 inclusive.
 
 Broker:
 - Fixed comment handling for config options that have optional arguments.
