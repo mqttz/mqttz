@@ -6,7 +6,7 @@ import struct
 import sys
 import time
 
-def start_broker(filename, cmd=None, port=0, use_conf=False):
+def start_broker(filename, cmd=None, port=0, use_conf=False, expect_fail=False):
     delay = 0.1
 
     if use_conf == True:
@@ -43,7 +43,11 @@ def start_broker(filename, cmd=None, port=0, use_conf=False):
             c.close()
             time.sleep(delay)
             return broker
-    raise IOError
+
+    if expect_fail == False:
+        raise IOError
+    else:
+        return None
 
 def start_client(filename, cmd, env, port=1888):
     if cmd is None:

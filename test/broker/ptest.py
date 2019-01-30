@@ -100,6 +100,7 @@ tests = [
     (1, './09-plugin-auth-defer-unpwd-fail.py'),
     (1, './09-plugin-auth-msg-params.py'),
     (1, './09-plugin-auth-context-params.py'),
+	(1, './09-pwfile-parse-invalid.py'),
 
     (2, './10-listener-mount-point.py'),
 

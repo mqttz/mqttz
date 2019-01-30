@@ -128,6 +128,7 @@ endif
 	./09-plugin-auth-defer-unpwd-fail.py
 	./09-plugin-auth-msg-params.py
 	./09-plugin-auth-context-params.py
+	./09-pwfile-parse-invalid.py
 
 10 :
 	./10-listener-mount-point.py
