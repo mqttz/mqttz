@@ -610,6 +610,49 @@ static int acl__cleanup(struct mosquitto_db *db, bool reload)
 	return MOSQ_ERR_SUCCESS;
 }
 
+
+int acl__find_acls(struct mosquitto_db *db, struct mosquitto *context)
+{
+	struct mosquitto__acl_user *acl_tail;
+	struct mosquitto__security_options *security_opts;
+
+	/* Associate user with its ACL, assuming we have ACLs loaded. */
+	if(db->config->per_listener_settings){
+		if(!context->listener){
+			return MOSQ_ERR_INVAL;
+		}
+		security_opts = &context->listener->security_options;
+	}else{
+		security_opts = &db->config->security_options;
+	}
+
+	if(security_opts->acl_list){
+		acl_tail = security_opts->acl_list;
+		while(acl_tail){
+			if(context->username){
+				if(acl_tail->username && !strcmp(context->username, acl_tail->username)){
+					context->acl_list = acl_tail;
+					break;
+				}
+			}else{
+				if(acl_tail->username == NULL){
+					context->acl_list = acl_tail;
+					break;
+				}
+			}
+			acl_tail = acl_tail->next;
+		}
+		if(context->username && context->acl_list == NULL){
+			return MOSQ_ERR_INVAL;
+		}
+	}else{
+		context->acl_list = NULL;
+	}
+
+	return MOSQ_ERR_SUCCESS;
+}
+
+
 static int pwfile__parse(const char *file, struct mosquitto__unpwd **root)
 {
 	FILE *pwfile;

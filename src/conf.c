@@ -1093,6 +1093,9 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 #else
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
 #endif
+				}else if(!strcmp(token, "check_retain_source")){
+					conf__set_cur_security_options(config, cur_listener, &cur_security_options);
+					if(conf__parse_bool(&token, "check_retain_source", &config->check_retain_source, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "ciphers")){
 #ifdef WITH_TLS
 					if(reload) continue; // Listeners not valid for reloading.

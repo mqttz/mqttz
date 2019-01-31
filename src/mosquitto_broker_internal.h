@@ -248,6 +248,7 @@ struct mosquitto__config {
 	bool allow_duplicate_messages;
 	int autosave_interval;
 	bool autosave_on_changes;
+	bool check_retain_source;
 	char *clientid_prefixes;
 	bool connection_messages;
 	bool daemon;
@@ -312,6 +313,8 @@ struct mosquitto_msg_store{
 	struct mosquitto_msg_store *prev;
 	dbid_t db_id;
 	char *source_id;
+	char *source_username;
+	struct mosquitto__listener *source_listener;
 	char **dest_ids;
 	int dest_id_count;
 	int ref_count;
@@ -553,7 +556,7 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context);
 void db__message_dequeue_first(struct mosquitto *context);
 int db__messages_delete(struct mosquitto_db *db, struct mosquitto *context);
 int db__messages_easy_queue(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain);
-int db__message_store(struct mosquitto_db *db, const char *source, uint16_t source_mid, char *topic, int qos, uint32_t payloadlen, mosquitto__payload_uhpa *payload, int retain, struct mosquitto_msg_store **stored, dbid_t store_id);
+int db__message_store(struct mosquitto_db *db, const struct mosquitto *source, uint16_t source_mid, char *topic, int qos, uint32_t payloadlen, mosquitto__payload_uhpa *payload, int retain, struct mosquitto_msg_store **stored, dbid_t store_id);
 int db__message_store_find(struct mosquitto *context, uint16_t mid, struct mosquitto_msg_store **stored);
 void db__msg_store_add(struct mosquitto_db *db, struct mosquitto_msg_store *store);
 void db__msg_store_remove(struct mosquitto_db *db, struct mosquitto_msg_store *store);
@@ -607,6 +610,7 @@ void bridge__packet_cleanup(struct mosquitto *context);
 /* ============================================================
  * Security related functions
  * ============================================================ */
+int acl__find_acls(struct mosquitto_db *db, struct mosquitto *context);
 int mosquitto_security_module_init(struct mosquitto_db *db);
 int mosquitto_security_module_cleanup(struct mosquitto_db *db);
 

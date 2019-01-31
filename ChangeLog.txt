@@ -17,6 +17,12 @@ Security:
   is not a useful configuration, this behaviour is unexpected and could lead
   to access being incorrectly granted in some circumstances. This is now
   fixed. Affects versions 1.0 to 1.5.5 inclusive.
+- Fix CVE-2018-12546. If a client publishes a retained message to a topic that
+  they have access to, and then their access to that topic is revoked, the
+  retained message will still be delivered to future subscribers. This
+  behaviour may be undesirable in some applications, so a configuration option
+  `check_retain_source` has been introduced to enforce checking of the
+  retained message source on publish.
 
 Broker:
 - Fixed comment handling for config options that have optional arguments.

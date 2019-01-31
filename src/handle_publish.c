@@ -184,7 +184,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	}
 	if(!stored){
 		dup = 0;
-		if(db__message_store(db, context->id, mid, topic, qos, payloadlen, &payload, retain, &stored, 0)){
+		if(db__message_store(db, context, mid, topic, qos, payloadlen, &payload, retain, &stored, 0)){
 			return 1;
 		}
 	}else{
@@ -229,7 +229,7 @@ process_bad_message:
 		case 2:
 			db__message_store_find(context, mid, &stored);
 			if(!stored){
-				if(db__message_store(db, context->id, mid, NULL, qos, 0, NULL, false, &stored, 0)){
+				if(db__message_store(db, context, mid, NULL, qos, 0, NULL, false, &stored, 0)){
 					return 1;
 				}
 				res = db__message_insert(db, context, mid, mosq_md_in, qos, false, stored);

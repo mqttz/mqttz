@@ -659,6 +659,27 @@ static int retain__process(struct mosquitto_db *db, struct mosquitto_msg_store *
 		return rc;
 	}
 
+	/* Check for original source access */
+	if(db->config->check_retain_source && retained->source_id){
+		struct mosquitto retain_ctxt;
+		memset(&retain_ctxt, 0, sizeof(struct mosquitto));
+
+		retain_ctxt.id = retained->source_id;
+		retain_ctxt.username = retained->source_username;
+		retain_ctxt.listener = retained->source_listener;
+
+		rc = acl__find_acls(db, &retain_ctxt);
+		if(rc) return rc;
+
+		rc = mosquitto_acl_check(db, &retain_ctxt, retained->topic, retained->payloadlen, UHPA_ACCESS(retained->payload, retained->payloadlen),
+				retained->qos, retained->retain, MOSQ_ACL_WRITE);
+		if(rc == MOSQ_ERR_ACL_DENIED){
+			return MOSQ_ERR_SUCCESS;
+		}else if(rc != MOSQ_ERR_SUCCESS){
+			return rc;
+		}
+	}
+
 	if (db->config->upgrade_outgoing_qos){
 		qos = sub_qos;
 	} else {

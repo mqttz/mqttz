@@ -76,6 +76,9 @@ endif
 	./04-retain-qos1-qos0.py
 	./04-retain-qos0-clear.py
 	./04-retain-upgrade-outgoing-qos.py
+	./04-retain-check-source.py
+	./04-retain-check-source-persist.py
+	./04-retain-check-source-persist-diff-port.py
 
 05 :
 	./05-clean-session-qos1.py

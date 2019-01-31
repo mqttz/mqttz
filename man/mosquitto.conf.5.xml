@@ -295,6 +295,24 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>check_retain_source</option> [ true | false ]</term>
+				<listitem>
+					<para>This option affects the scenario when a client
+						subscribes to a topic that has retained messages. It is
+						possible that the client that published the retained
+						message to the topic had access at the time they
+						published, but that access has been subsequently
+						removed. If <option>check_retain_source</option> is set
+						to true, the default, the source of a retained message
+						will be checked for access rights before it is
+						republished. When set to false, no check will be made
+						and the retained message will always be
+						published.</para>
+					<para>This option applies globally, regardless of the
+						<option>per_listener_settings</option> option.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>clientid_prefixes</option> <replaceable>prefix</replaceable></term>
 				<listitem>
 					<para>If defined, only clients that have a clientid with a
