@@ -247,7 +247,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 			}
 			mosq = u->mosq;
 			if(mosq){
-				if(mosq->sock > 0){
+				if(mosq->sock != INVALID_SOCKET){
 					HASH_DELETE(hh_sock, db->contexts_by_sock, mosq);
 					mosq->sock = INVALID_SOCKET;
 					mosq->pollfd_index = -1;

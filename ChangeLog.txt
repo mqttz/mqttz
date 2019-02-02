@@ -33,6 +33,7 @@ Broker:
 - Allow broker to always restart on Windows when using `log_dest file`. Closes
   #1080.
 - Fix Will not being sent for Websockets clients. Closes #1143.
+- Windows: Fix possible crash when client disconnects. Closes #1137.
 
 Library:
 - Fix TLS connections not working over SOCKS.
