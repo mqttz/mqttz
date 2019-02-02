@@ -12,7 +12,6 @@
 # Source
 
 * [mosquitto-1.5.5.tar.gz](https://mosquitto.org/files/source/mosquitto-1.5.5.tar.gz) (319kB) ([GPG signature](https://mosquitto.org/files/source/mosquitto-1.5.5.tar.gz.asc))
-* [mosquitto-1.5.4.tar.gz](https://www.eclipse.org/downloads/download.php?file=/mosquitto/source/mosquitto-1.5.4.tar.gz) (via Eclipse)
 * [Git source code repository](https://github.com/eclipse/mosquitto) (github.com)
 
 Older downloads are available at [https://mosquitto.org/files/](../files/)
@@ -25,8 +24,8 @@ distributions.
 
 ## Windows
 
-* [mosquitto-1.5.4-install-windows-x64.exe](https://www.eclipse.org/downloads/download.php?file=/mosquitto/binary/win64/mosquitto-1.5.4-install-windows-x64.exe) (~360 kB) (64-bit build, Windows Vista and up, built with Visual Studio Community 2017)
-* [mosquitto-1.5.4-install-windows-x32.exe](https://www.eclipse.org/downloads/download.php?file=/mosquitto/binary/win32/mosquitto-1.5.4-install-windows-x86.exe) (~360 kB) (32-bit build, Windows Vista and up, built with Visual Studio Community 2017)
+* [mosquitto-1.5.5-install-windows-x64.exe](https://mosquitto.org/files/binary/win64/mosquitto-1.5.5-install-windows-x64.exe) (~360 kB) (64-bit build, Windows Vista and up, built with Visual Studio Community 2017)
+* [mosquitto-1.5.5-install-windows-x32.exe](https://mosquitto.org/files/binary/win32/mosquitto-1.5.5-install-windows-x86.exe) (~360 kB) (32-bit build, Windows Vista and up, built with Visual Studio Community 2017)
 
 See also readme-windows.txt after installing.
 
