@@ -535,6 +535,10 @@
 						<option>auth_plugin</option>,
 						<option>auth_opt_*</option>,
 						<option>auto_id_prefix</option>.</para>
+					<para>Note that if set to true, then a durable client (i.e.
+						with clean session set to false) that has disconnected
+						will use the ACL settings defined for the listener that
+						it was most recently connected to.</para>
 					<para>The default behaviour is for this to be set to
 						<replaceable>false</replaceable>, which maintains the
 						settings behaviour from previous versions of

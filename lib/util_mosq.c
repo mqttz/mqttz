@@ -89,11 +89,6 @@ int mosquitto__check_keepalive(struct mosquitto *mosq)
 			pthread_mutex_unlock(&mosq->msgtime_mutex);
 		}else{
 #ifdef WITH_BROKER
-			if(mosq->listener){
-				mosq->listener->client_count--;
-				assert(mosq->listener->client_count >= 0);
-			}
-			mosq->listener = NULL;
 			net__socket_close(db, mosq);
 #else
 			net__socket_close(mosq);

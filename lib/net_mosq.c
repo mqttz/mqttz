@@ -174,8 +174,6 @@ int net__socket_close(struct mosquitto *mosq)
 #ifdef WITH_BROKER
 	if(mosq->listener){
 		mosq->listener->client_count--;
-		assert(mosq->listener->client_count >= 0);
-		mosq->listener = NULL;
 	}
 #endif
 

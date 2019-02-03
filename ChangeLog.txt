@@ -34,6 +34,8 @@ Broker:
   #1080.
 - Fix Will not being sent for Websockets clients. Closes #1143.
 - Windows: Fix possible crash when client disconnects. Closes #1137.
+- Fixed durable clients being unable to receive messages when offline, when
+  per_listener_settings was set to true. Closes #1081.
 
 Library:
 - Fix TLS connections not working over SOCKS.
