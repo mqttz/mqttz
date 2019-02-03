@@ -208,8 +208,7 @@ struct mosquitto {
 #endif
 	bool clean_session;
 #ifdef WITH_BROKER
-	char *old_id; /* for when a duplicate client connects, but we still want to
-					 know what the id was */
+	bool removed_from_by_id; /* True if removed from by_id hash */
 	bool is_dropping;
 	bool is_bridge;
 	struct mosquitto__bridge *bridge;

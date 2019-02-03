@@ -157,13 +157,9 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 		assert(db); /* db can only be NULL here if the client hasn't sent a
 					   CONNECT and hence wouldn't have an id. */
 
-		HASH_DELETE(hh_id, db->contexts_by_id, context);
+		context__remove_from_by_id(db, context);
 		mosquitto__free(context->id);
 		context->id = NULL;
-	}
-	if(context->old_id){
-		mosquitto__free(context->old_id);
-		context->old_id = NULL;
 	}
 	packet__cleanup(&(context->in_packet));
 	if(context->current_out_packet){
@@ -260,3 +256,11 @@ void context__free_disused(struct mosquitto_db *db)
 	db->ll_for_free = NULL;
 }
 
+
+void context__remove_from_by_id(struct mosquitto_db *db, struct mosquitto *context)
+{
+	if(context->removed_from_by_id == false && context->id){
+		HASH_DELETE(hh_id, db->contexts_by_id, context);
+		context->removed_from_by_id = true;
+	}
+}

@@ -32,6 +32,7 @@ Broker:
   #1131.
 - Allow broker to always restart on Windows when using `log_dest file`. Closes
   #1080.
+- Fix Will not being sent for Websockets clients. Closes #1143.
 
 Library:
 - Fix TLS connections not working over SOCKS.
