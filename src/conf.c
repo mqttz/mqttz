@@ -2026,21 +2026,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 						return MOSQ_ERR_INVAL;
 					}
-					token = strtok_r(NULL, " ", &saveptr);
-					if(token){
-						if(cur_bridge->remote_username){
-							log__printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate username value in bridge configuration.");
-							return MOSQ_ERR_INVAL;
-						}
-						cur_bridge->remote_username = mosquitto__strdup(token);
-						if(!cur_bridge->remote_username){
-							log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
-						}
-					}else{
-						log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty username value in configuration.");
-						return MOSQ_ERR_INVAL;
-					}
+					if(conf__parse_string(&token, "bridge remote_username", &cur_bridge->remote_username, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif

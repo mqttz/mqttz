@@ -28,6 +28,8 @@ Broker:
 - Fixed comment handling for config options that have optional arguments.
 - Improved documentation around bridge topic remapping.
 - Handle mismatched handshakes (e.g. QoS1 PUBLISH with QoS2 reply) properly.
+- Fix spaces not being allowed in the bridge remote_username option. Closes
+  #1131.
 
 Library:
 - Fix TLS connections not working over SOCKS.
