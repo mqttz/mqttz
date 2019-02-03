@@ -38,6 +38,7 @@ Build:
 - Fix comparison of boolean values in CMake build. Closes #1101.
 - Fix compilation when openssl deprecated APIs are not available.
   Closes #1094.
+- Man pages can now be built on any system. Closes #1139.
 
 
 1.5.5 - 20181211

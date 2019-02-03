@@ -111,7 +111,7 @@ VERSION=1.5.5
 SOVERSION=1
 
 # Man page generation requires xsltproc and docbook-xsl
-XSLTPROC=xsltproc
+XSLTPROC=xsltproc --nonet
 # For html generation
 DB_HTML_XSL=man/html.xsl
 
