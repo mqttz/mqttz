@@ -30,6 +30,8 @@ Broker:
 - Handle mismatched handshakes (e.g. QoS1 PUBLISH with QoS2 reply) properly.
 - Fix spaces not being allowed in the bridge remote_username option. Closes
   #1131.
+- Allow broker to always restart on Windows when using `log_dest file`. Closes
+  #1080.
 
 Library:
 - Fix TLS connections not working over SOCKS.

@@ -404,6 +404,21 @@ FILE *mosquitto__fopen(const char *path, const char *mode, bool restrict_read)
 			char username[UNLEN + 1];
 			int ulen = UNLEN;
 			SECURITY_DESCRIPTOR sd;
+			DWORD dwCreationDisposition;
+
+			switch(mode[0]){
+				case 'a':
+					dwCreationDisposition = OPEN_ALWAYS;
+					break;
+				case 'r':
+					dwCreationDisposition = OPEN_EXISTING;
+					break;
+				case 'w':
+					dwCreationDisposition = CREATE_ALWAYS;
+					break;
+				default:
+					return NULL;
+			}
 
 			GetUserName(username, &ulen);
 			if (!InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION)) {
@@ -424,7 +439,7 @@ FILE *mosquitto__fopen(const char *path, const char *mode, bool restrict_read)
 
 			hfile = CreateFile(buf, GENERIC_READ | GENERIC_WRITE, 0,
 				&sec,
-				CREATE_NEW,
+				dwCreationDisposition,
 				FILE_ATTRIBUTE_NORMAL,
 				NULL);
 
