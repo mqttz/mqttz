@@ -64,15 +64,17 @@
 			certificate in order to connect successfully. In this case, the
 			second and third options, use_identity_as_username and
 			use_subject_as_username, become relevant. If set to true,
-			use_identity_as_user causes the Common Name (CN) from the client
-			certificate to be used instead of the MQTT username for access
-			control purposes. The password is not replaced because it is
-			assumed that only authenticated clients have valid certificates. If
-			use_identity_as_username is false, the client must authenticate as
-			normal (if required by password_file) through the MQTT options. The
-			same principle applies for the use_subject_as_username option, but
-			the entire certificate subject is used as the username instead of
-			just the CN.</para>
+			use_identity_as_username causes the Common Name (CN) from the
+			client certificate to be used instead of the MQTT username for
+			access control purposes. The password is not used because it is
+			assumed that only authenticated clients have valid certificates.
+			This means that any CA certificates you include in cafile or capath
+			will be able to issue client certificates that are valid for
+			connecting to your broker. If use_identity_as_username is false,
+			the client must authenticate as normal (if required by
+			password_file) through the MQTT options. The same principle applies
+			for the use_subject_as_username option, but the entire certificate
+			subject is used as the username instead of just the CN.</para>
 		<para>When using pre-shared-key based encryption through the psk_hint
 			and psk_file options, the client must provide a valid identity and
 			key in order to connect to the broker before any MQTT communication
