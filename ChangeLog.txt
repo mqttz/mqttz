@@ -36,6 +36,8 @@ Broker:
 - Windows: Fix possible crash when client disconnects. Closes #1137.
 - Fixed durable clients being unable to receive messages when offline, when
   per_listener_settings was set to true. Closes #1081.
+- Add log message for the case where a client is disconnected for sending a
+  topic with invalid UTF-8. Closes #1144.
 
 Library:
 - Fix TLS connections not working over SOCKS.

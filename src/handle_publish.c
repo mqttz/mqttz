@@ -70,6 +70,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	if(mosquitto_validate_utf8(topic, slen) != MOSQ_ERR_SUCCESS){
+		log__printf(NULL, MOSQ_LOG_INFO, "Client %s sent topic with invalid UTF-8, disconnecting.", context->id);
 		mosquitto__free(topic);
 		return 1;
 	}
