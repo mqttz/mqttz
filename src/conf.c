@@ -269,7 +269,9 @@ void config__init(struct mosquitto_db *db, struct mosquitto__config *config)
 void config__cleanup(struct mosquitto__config *config)
 {
 	int i;
+#ifdef WITH_BRIDGE
 	int j;
+#endif
 
 	mosquitto__free(config->clientid_prefixes);
 	mosquitto__free(config->persistence_location);
@@ -583,7 +585,9 @@ int config__read(struct mosquitto_db *db, struct mosquitto__config *config, bool
 	int rc = MOSQ_ERR_SUCCESS;
 	struct config_recurse cr;
 	int lineno = 0;
+#ifdef WITH_PERSISTENCE
 	int len;
+#endif
 	struct mosquitto__config config_reload;
 	int i;
 

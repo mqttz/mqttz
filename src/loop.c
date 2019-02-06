@@ -128,11 +128,11 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 #endif
 #ifdef WITH_BRIDGE
 	int rc;
+	int err;
+	socklen_t len;
 #endif
 	time_t expiration_check_time = 0;
 	char *id;
-	int err;
-	socklen_t len;
 
 #ifndef WIN32
 	sigemptyset(&sigblock);

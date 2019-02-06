@@ -99,7 +99,9 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 {
 	struct mosquitto__packet *packet;
 	struct mosquitto_client_msg *msg, *next;
+#ifdef WITH_BRIDGE
 	int i;
+#endif
 
 	if(!context) return;
 

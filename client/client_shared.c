@@ -34,7 +34,9 @@ Contributors:
 #include <mosquitto.h>
 #include "client_shared.h"
 
+#ifdef WITH_SOCKS
 static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url);
+#endif
 static int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, char *argv[]);
 
 
@@ -884,7 +886,9 @@ unknown_option:
 
 int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 {
+#ifdef WITH_SOCKS
 	int rc;
+#endif
 
 	if(cfg->will_topic && mosquitto_will_set(mosq, cfg->will_topic,
 				cfg->will_payloadlen, cfg->will_payload, cfg->will_qos,
