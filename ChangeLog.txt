@@ -1,8 +1,8 @@
-1.5.6 - 201901xx
+1.5.6 - 20190206
 ================
 
 Security:
-- CVE-2018-xxxxx: If Mosquitto is configured to use a password file for
+- CVE-2018-12551: If Mosquitto is configured to use a password file for
   authentication, any malformed data in the password file will be treated as
   valid. This typically means that the malformed data becomes a username and no
   password. If this occurs, clients can circumvent authentication and get access
@@ -11,13 +11,13 @@ Security:
   unaffected. Users who have only used the mosquitto_passwd utility to create
   and modify their password files are unaffected by this vulnerability.
   Affects version 1.0 to 1.5.5 inclusive.
-- CVE-2018-xxxxx: If an ACL file is empty, or has only blank lines or
+- CVE-2018-12550: If an ACL file is empty, or has only blank lines or
   comments, then mosquitto treats the ACL file as not being defined, which
   means that no topic access is denied. Although denying access to all topics
   is not a useful configuration, this behaviour is unexpected and could lead
   to access being incorrectly granted in some circumstances. This is now
   fixed. Affects versions 1.0 to 1.5.5 inclusive.
-- Fix CVE-2018-12546. If a client publishes a retained message to a topic that
+- CVE-2018-12546. If a client publishes a retained message to a topic that
   they have access to, and then their access to that topic is revoked, the
   retained message will still be delivered to future subscribers. This
   behaviour may be undesirable in some applications, so a configuration option
