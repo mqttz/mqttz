@@ -665,7 +665,7 @@ int net__socket_connect(struct mosquitto *mosq, const char *host, uint16_t port,
 
 	mosq->sock = sock;
 
-#ifdef WITH_SOCKS
+#if defined(WITH_SOCKS) && !defined(WITH_BROKER)
 	if(!mosq->socks5_host)
 #endif
 	{
