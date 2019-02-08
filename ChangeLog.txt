@@ -5,6 +5,8 @@ Broker:
 - Fix build failure when using WITH_ADNS=yes
 - Ensure that an error occurs if `per_listener_settings true` is given after
   other security options. Closes #1149.
+- Fix include_dir not sorting config files before loading. This was partially
+  fixed in 1.5 previously.
 
 
 1.5.6 - 20190206
