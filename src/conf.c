@@ -62,6 +62,8 @@ struct config_recurse {
 extern SERVICE_STATUS_HANDLE service_handle;
 #endif
 
+static struct mosquitto__security_options *cur_security_options = NULL;
+
 static int conf__parse_bool(char **token, const char *name, bool *value, char *saveptr);
 static int conf__parse_int(char **token, const char *name, int *value, char *saveptr);
 static int conf__parse_ssize_t(char **token, const char *name, ssize_t *value, char *saveptr);
@@ -743,7 +745,6 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 	struct mosquitto__listener *cur_listener = &config->default_listener;
 	int i;
 	int lineno_ext;
-	struct mosquitto__security_options *cur_security_options = NULL;
 
 	*lineno = 0;
 
