@@ -720,6 +720,7 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 	struct mosquitto_msg_store *stored = NULL;
 	struct mosquitto_msg_store_load *load;
 	char *err;
+	int i;
 
 	payload.ptr = NULL;
 
@@ -749,7 +750,7 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 		read_e(db_fptr, &i16temp, sizeof(uint16_t));
 		source_port = ntohs(i16temp);
 		if(source_port){
-			for(int i=0; i<db->config->listener_count; i++){
+			for(i=0; i<db->config->listener_count; i++){
 				if(db->config->listeners[i].port == source_port){
 					source.listener = &db->config->listeners[i];
 					break;

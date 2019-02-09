@@ -8,6 +8,9 @@ Broker:
 - Fix include_dir not sorting config files before loading. This was partially
   fixed in 1.5 previously.
 
+Build:
+- Don't require C99 compiler.
+
 
 1.5.6 - 20190206
 ================
