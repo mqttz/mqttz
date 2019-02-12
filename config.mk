@@ -104,13 +104,13 @@ WITH_COVERAGE:=no
 
 # Also bump lib/mosquitto.h, CMakeLists.txt,
 # installer/mosquitto.nsi, installer/mosquitto64.nsi
-VERSION=1.5.5
+VERSION=1.5.6
 
 # Client library SO version. Bump if incompatible API/ABI changes are made.
 SOVERSION=1
 
 # Man page generation requires xsltproc and docbook-xsl
-XSLTPROC=xsltproc
+XSLTPROC=xsltproc --nonet
 # For html generation
 DB_HTML_XSL=man/html.xsl
 

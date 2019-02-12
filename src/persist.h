@@ -17,7 +17,7 @@ Contributors:
 #ifndef PERSIST_H
 #define PERSIST_H
 
-#define MOSQ_DB_VERSION 3
+#define MOSQ_DB_VERSION 4
 
 /* DB read/write */
 const unsigned char magic[15] = {0x00, 0xB5, 0x00, 'm','o','s','q','u','i','t','t','o',' ','d','b'};

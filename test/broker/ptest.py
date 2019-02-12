@@ -33,6 +33,11 @@ tests = [
     (1, './02-subpub-qos0.py'),
     (1, './02-subpub-qos1.py'),
     (1, './02-subpub-qos2.py'),
+	(1, './02-subpub-qos1-bad-pubrec.py'),
+	(1, './02-subpub-qos1-bad-pubcomp.py'),
+    (1, './02-subpub-qos2-bad-puback-1.py'),
+    (1, './02-subpub-qos2-bad-puback-2.py'),
+	(1, './02-subpub-qos2-bad-pubcomp.py'),
     (1, './02-subpub-qos0-v5.py'),
     (1, './02-subpub-qos1-v5.py'),
     (1, './02-subpub-qos2-v5.py'),
@@ -78,6 +83,9 @@ tests = [
     (1, './04-retain-qos1-qos0.py'),
     (1, './04-retain-qos0-clear.py'),
     (1, './04-retain-upgrade-outgoing-qos.py'),
+    (1, './04-retain-check-source.py'),
+    (1, './04-retain-check-source-persist.py'),
+    (2, './04-retain-check-source-persist-diff-port.py'),
 
     (1, './05-clean-session-qos1.py'),
 
@@ -111,6 +119,7 @@ tests = [
     (2, './08-tls-psk-pub.py'),
     (3, './08-tls-psk-bridge.py'),
 
+    (1, './09-acl-empty-file.py'),
     (1, './09-plugin-auth-unpwd-success.py'),
     (1, './09-plugin-auth-unpwd-fail.py'),
     (1, './09-plugin-auth-acl-sub.py'),
@@ -121,6 +130,7 @@ tests = [
     (1, './09-plugin-auth-defer-unpwd-fail.py'),
     (1, './09-plugin-auth-msg-params.py'),
     (1, './09-plugin-auth-context-params.py'),
+	(1, './09-pwfile-parse-invalid.py'),
 
     (2, './10-listener-mount-point.py'),
 

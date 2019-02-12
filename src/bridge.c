@@ -156,7 +156,7 @@ int bridge__connect_step1(struct mosquitto_db *db, struct mosquitto *context)
 			}
 			sub__retain_queue(db, context,
 					context->bridge->topics[i].local_topic,
-					context->bridge->topics[i].qos);
+					context->bridge->topics[i].qos, 0);
 		}
 	}
 
@@ -164,7 +164,7 @@ int bridge__connect_step1(struct mosquitto_db *db, struct mosquitto *context)
 		if(context->bridge->notification_topic){
 			if(!context->bridge->initial_notification_done){
 				notification_payload = '0';
-				db__messages_easy_queue(db, context, context->bridge->notification_topic, 1, 1, &notification_payload, 1, NULL);
+				db__messages_easy_queue(db, context, context->bridge->notification_topic, 1, 1, &notification_payload, 1, 0, NULL);
 				context->bridge->initial_notification_done = true;
 			}
 			notification_payload = '0';
@@ -181,7 +181,7 @@ int bridge__connect_step1(struct mosquitto_db *db, struct mosquitto *context)
 
 			if(!context->bridge->initial_notification_done){
 				notification_payload = '0';
-				db__messages_easy_queue(db, context, notification_topic, 1, 1, &notification_payload, 1, NULL);
+				db__messages_easy_queue(db, context, notification_topic, 1, 1, &notification_payload, 1, 0, NULL);
 				context->bridge->initial_notification_done = true;
 			}
 
@@ -247,7 +247,7 @@ int bridge__connect_step3(struct mosquitto_db *db, struct mosquitto *context)
 {
 	int rc;
 
-	rc = net__socket_connect_step3(context, context->bridge->addresses[context->bridge->cur_address].address, context->bridge->addresses[context->bridge->cur_address].port, NULL, false);
+	rc = net__socket_connect_step3(context, context->bridge->addresses[context->bridge->cur_address].address);
 	if(rc > 0){
 		if(rc == MOSQ_ERR_TLS){
 			net__socket_close(db, context);

@@ -28,6 +28,9 @@ Contributors:
 #  include <sys/stat.h>
 #endif
 
+#ifdef WITH_TLS
+#  include <openssl/bn.h>
+#endif
 
 #ifdef WITH_BROKER
 #include "mosquitto_broker_internal.h"
@@ -86,11 +89,6 @@ int mosquitto__check_keepalive(struct mosquitto *mosq)
 			pthread_mutex_unlock(&mosq->msgtime_mutex);
 		}else{
 #ifdef WITH_BROKER
-			if(mosq->listener){
-				mosq->listener->client_count--;
-				assert(mosq->listener->client_count >= 0);
-			}
-			mosq->listener = NULL;
 			net__socket_close(db, mosq);
 #else
 			net__socket_close(mosq);
@@ -195,6 +193,21 @@ FILE *mosquitto__fopen(const char *path, const char *mode, bool restrict_read)
 			char username[UNLEN + 1];
 			int ulen = UNLEN;
 			SECURITY_DESCRIPTOR sd;
+			DWORD dwCreationDisposition;
+
+			switch(mode[0]){
+				case 'a':
+					dwCreationDisposition = OPEN_ALWAYS;
+					break;
+				case 'r':
+					dwCreationDisposition = OPEN_EXISTING;
+					break;
+				case 'w':
+					dwCreationDisposition = CREATE_ALWAYS;
+					break;
+				default:
+					return NULL;
+			}
 
 			GetUserName(username, &ulen);
 			if (!InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION)) {
@@ -215,7 +228,7 @@ FILE *mosquitto__fopen(const char *path, const char *mode, bool restrict_read)
 
 			hfile = CreateFile(buf, GENERIC_READ | GENERIC_WRITE, 0,
 				&sec,
-				CREATE_NEW,
+				dwCreationDisposition,
 				FILE_ATTRIBUTE_NORMAL,
 				NULL);
 

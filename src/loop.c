@@ -128,11 +128,11 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 #endif
 #ifdef WITH_BRIDGE
 	int rc;
+	int err;
+	socklen_t len;
 #endif
 	time_t expiration_check_time = 0;
 	char *id;
-	int err;
-	socklen_t len;
 
 #ifndef WIN32
 	sigemptyset(&sigblock);
@@ -644,19 +644,13 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 			context->sock = INVALID_SOCKET;
 			context->pollfd_index = -1;
 		}
-		if(context->id){
-			HASH_DELETE(hh_id, db->contexts_by_id, context);
-			context->old_id = context->id;
-			context->id = NULL;
-		}
+		context__remove_from_by_id(db, context);
 	}else
 #endif
 	{
 		if(db->config->connection_messages == true){
 			if(context->id){
 				id = context->id;
-			}else if(context->old_id){
-				id = context->old_id;
 			}else{
 				id = "<unknown>";
 			}
@@ -681,7 +675,7 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 #endif
 			context__add_to_disused(db, context);
 			if(context->id){
-				HASH_DELETE(hh_id, db->contexts_by_id, context);
+				context__remove_from_by_id(db, context);
 				mosquitto__free(context->id);
 				context->id = NULL;
 			}

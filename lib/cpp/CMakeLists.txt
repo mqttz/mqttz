@@ -15,16 +15,16 @@ set_target_properties(mosquittopp PROPERTIES
 )
 install(TARGETS mosquittopp RUNTIME DESTINATION "${BINDIR}" LIBRARY DESTINATION "${LIBDIR}")
 
-if (${WITH_STATIC_LIBRARIES} STREQUAL ON)
+if (WITH_STATIC_LIBRARIES)
 	add_library(mosquittopp_static STATIC
 		${C_SRC}
 		${CPP_SRC}
 	)
-	if (${WITH_PIC} STREQUAL ON)
+	if (WITH_PIC)
 		set_target_properties(mosquittopp_static PROPERTIES
 			POSITION_INDEPENDENT_CODE 1
 		)
-	endif (${WITH_PIC} STREQUAL ON)
+	endif (WITH_PIC)
 
 	target_link_libraries(mosquittopp_static ${LIBRARIES})
 
@@ -35,7 +35,7 @@ if (${WITH_STATIC_LIBRARIES} STREQUAL ON)
 
 	target_compile_definitions(mosquittopp_static PUBLIC "LIBMOSQUITTO_STATIC")
 	install(TARGETS mosquittopp_static RUNTIME DESTINATION "${BINDIR}" ARCHIVE DESTINATION "${LIBDIR}")
-endif (${WITH_STATIC_LIBRARIES} STREQUAL ON)
+endif (WITH_STATIC_LIBRARIES)
 
 install(FILES mosquittopp.h DESTINATION "${INCLUDEDIR}")
 

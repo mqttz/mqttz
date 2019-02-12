@@ -317,7 +317,7 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 	}else{
 		security_opts = &db->config->security_options;
 	}
-	if(!security_opts->acl_list && !security_opts->acl_patterns){
+	if(!security_opts->acl_file && !security_opts->acl_list && !security_opts->acl_patterns){
 			return MOSQ_ERR_PLUGIN_DEFER;
 	}
 
@@ -535,6 +535,10 @@ static int aclfile__parse(struct mosquitto_db *db, struct mosquitto__security_op
 					fclose(aclfptr);
 					return 1;
 				}
+			}else{
+				log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid line in acl_file \"%s\": %s.", security_opts->acl_file, buf);
+				fclose(aclfptr);
+				return 1;
 			}
 		}
 	}
@@ -606,6 +610,49 @@ static int acl__cleanup(struct mosquitto_db *db, bool reload)
 	return MOSQ_ERR_SUCCESS;
 }
 
+
+int acl__find_acls(struct mosquitto_db *db, struct mosquitto *context)
+{
+	struct mosquitto__acl_user *acl_tail;
+	struct mosquitto__security_options *security_opts;
+
+	/* Associate user with its ACL, assuming we have ACLs loaded. */
+	if(db->config->per_listener_settings){
+		if(!context->listener){
+			return MOSQ_ERR_INVAL;
+		}
+		security_opts = &context->listener->security_options;
+	}else{
+		security_opts = &db->config->security_options;
+	}
+
+	if(security_opts->acl_list){
+		acl_tail = security_opts->acl_list;
+		while(acl_tail){
+			if(context->username){
+				if(acl_tail->username && !strcmp(context->username, acl_tail->username)){
+					context->acl_list = acl_tail;
+					break;
+				}
+			}else{
+				if(acl_tail->username == NULL){
+					context->acl_list = acl_tail;
+					break;
+				}
+			}
+			acl_tail = acl_tail->next;
+		}
+		if(context->username && context->acl_list == NULL){
+			return MOSQ_ERR_INVAL;
+		}
+	}else{
+		context->acl_list = NULL;
+	}
+
+	return MOSQ_ERR_SUCCESS;
+}
+
+
 static int pwfile__parse(const char *file, struct mosquitto__unpwd **root)
 {
 	FILE *pwfile;
@@ -623,6 +670,9 @@ static int pwfile__parse(const char *file, struct mosquitto__unpwd **root)
 
 	while(!feof(pwfile)){
 		if(fgets(buf, 256, pwfile)){
+			if(buf[0] == '#') continue;
+			if(!strchr(buf, ':')) continue;
+
 			username = strtok_r(buf, ":", &saveptr);
 			if(username){
 				unpwd = mosquitto__calloc(1, sizeof(struct mosquitto__unpwd));
@@ -655,8 +705,13 @@ static int pwfile__parse(const char *file, struct mosquitto__unpwd **root)
 						unpwd->password[len-1] = '\0';
 						len = strlen(unpwd->password);
 					}
+
+					HASH_ADD_KEYPTR(hh, *root, unpwd->username, strlen(unpwd->username), unpwd);
+				}else{
+					log__printf(NULL, MOSQ_LOG_NOTICE, "Warning: Invalid line in password file '%s': %s", file, buf);
+					mosquitto__free(unpwd->username);
+					mosquitto__free(unpwd);
 				}
-				HASH_ADD_KEYPTR(hh, *root, unpwd->username, strlen(unpwd->username), unpwd);
 			}
 		}
 	}
@@ -693,34 +748,39 @@ static int unpwd__file_parse(struct mosquitto__unpwd **unpwd, const char *passwo
 				token = strtok(NULL, "$");
 				if(token){
 					rc = base64__decode(token, &salt, &salt_len);
-					if(rc){
-						log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to decode password salt for user %s.", u->username);
-						return MOSQ_ERR_INVAL;
-					}
-					u->salt = salt;
-					u->salt_len = salt_len;
-					token = strtok(NULL, "$");
-					if(token){
-						rc = base64__decode(token, &password, &password_len);
-						if(rc){
-							log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to decode password for user %s.", u->username);
-							return MOSQ_ERR_INVAL;
+					if(rc == MOSQ_ERR_SUCCESS && salt_len == 12){
+						u->salt = salt;
+						u->salt_len = salt_len;
+						token = strtok(NULL, "$");
+						if(token){
+							rc = base64__decode(token, &password, &password_len);
+							if(rc == MOSQ_ERR_SUCCESS && password_len == 64){
+								mosquitto__free(u->password);
+								u->password = (char *)password;
+								u->password_len = password_len;
+							}else{
+								log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to decode password for user %s, removing entry.", u->username);
+								HASH_DEL(*unpwd, u);
+							}
+						}else{
+							log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid password hash for user %s, removing entry.", u->username);
+							HASH_DEL(*unpwd, u);
 						}
-						mosquitto__free(u->password);
-						u->password = (char *)password;
-						u->password_len = password_len;
 					}else{
-						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid password hash for user %s.", u->username);
-						return MOSQ_ERR_INVAL;
+						log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to decode password salt for user %s, removing entry.", u->username);
+						HASH_DEL(*unpwd, u);
 					}
 				}else{
-					log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid password hash for user %s.", u->username);
-					return MOSQ_ERR_INVAL;
+					log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid password hash for user %s, removing entry.", u->username);
+					HASH_DEL(*unpwd, u);
 				}
 			}else{
-				log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid password hash for user %s.", u->username);
-				return MOSQ_ERR_INVAL;
+				log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid password hash for user %s, removing entry.", u->username);
+				HASH_DEL(*unpwd, u);
 			}
+		}else{
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: Missing password hash for user %s, removing entry.", u->username);
+			HASH_DEL(*unpwd, u);
 		}
 	}
 #endif
@@ -794,7 +854,12 @@ int mosquitto_unpwd_check_default(struct mosquitto_db *db, struct mosquitto *con
 		if(!db->unpwd) return MOSQ_ERR_PLUGIN_DEFER;
 		unpwd_ref = db->unpwd;
 	}
-	if(!username) return MOSQ_ERR_INVAL; /* Check must be made only after checking unpwd_ref. */
+	if(!username){
+		/* Check must be made only after checking unpwd_ref.
+		 * This is DENY here, because in MQTT v5 username can be missing when
+		 * password is present, but we don't support that. */
+		return MOSQ_ERR_AUTH;
+	}
 
 	HASH_ITER(hh, unpwd_ref, u, tmp){
 		if(!strcmp(u->username, username)){

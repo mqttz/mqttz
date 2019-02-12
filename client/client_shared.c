@@ -35,7 +35,9 @@ Contributors:
 #include <mqtt_protocol.h>
 #include "client_shared.h"
 
+#ifdef WITH_SOCKS
 static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url);
+#endif
 static int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, char *argv[]);
 
 
@@ -945,7 +947,9 @@ unknown_option:
 
 int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 {
+#ifdef WITH_SOCKS
 	int rc;
+#endif
 
 	mosquitto_int_option(mosq, MOSQ_OPT_PROTOCOL_VERSION, cfg->protocol_version);
 

@@ -173,13 +173,11 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	uint8_t username_flag, password_flag;
 	char *username = NULL, *password = NULL;
 	int rc;
-	struct mosquitto__acl_user *acl_tail;
 	struct mosquitto *found_context;
 	int slen;
 	uint16_t slen16;
 	struct mosquitto__subleaf *leaf;
 	int i;
-	struct mosquitto__security_options *security_opts;
 	mosquitto_property *properties = NULL;
 	mosquitto_property *connack_props = NULL;
 #ifdef WITH_TLS
@@ -446,8 +444,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		rc = packet__read_string(&context->in_packet, &username, &slen);
 		if(rc == MOSQ_ERR_SUCCESS){
 			if(password_flag){
-				/* FIXME - MQTT 5 this is binary data */
-				rc = packet__read_string(&context->in_packet, &password, &slen);
+				rc = packet__read_binary(&context->in_packet, (uint8_t **)&password, &slen);
 				if(rc == MOSQ_ERR_NOMEM){
 					rc = MOSQ_ERR_NOMEM;
 					goto handle_connect_error;
@@ -695,36 +692,8 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		do_disconnect(db, found_context);
 	}
 
-	/* Associate user with its ACL, assuming we have ACLs loaded. */
-	if(db->config->per_listener_settings){
-		if(!context->listener){
-			return 1;
-		}
-		security_opts = &context->listener->security_options;
-	}else{
-		security_opts = &db->config->security_options;
-	}
-
-	if(security_opts->acl_list){
-		acl_tail = security_opts->acl_list;
-		while(acl_tail){
-			if(context->username){
-				if(acl_tail->username && !strcmp(context->username, acl_tail->username)){
-					context->acl_list = acl_tail;
-					break;
-				}
-			}else{
-				if(acl_tail->username == NULL){
-					context->acl_list = acl_tail;
-					break;
-				}
-			}
-			acl_tail = acl_tail->next;
-		}
-	}else{
-		context->acl_list = NULL;
-	}
-
+	rc = acl__find_acls(db, context);
+	if(rc) return rc;
 
 	if(will_struct){
 		context->will = will_struct;

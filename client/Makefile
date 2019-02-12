@@ -20,10 +20,10 @@ static : static_pub static_sub
 	# This makes mosquitto_pub/sub versions that are statically linked with
 	# libmosquitto only.
 
-static_pub : pub_client.o pub_shared.o client_shared.o ../lib/libmosquitto.a
+static_pub : pub_client.o pub_shared.o client_props.o client_shared.o ../lib/libmosquitto.a
 	${CROSS_COMPILE}${CC} $^ -o mosquitto_pub ${CLIENT_LDFLAGS} -lssl -lcrypto -lpthread
 
-static_sub : sub_client.o sub_client_output.o client_shared.o ../lib/libmosquitto.a
+static_sub : sub_client.o sub_client_output.o client_props.o client_shared.o ../lib/libmosquitto.a
 	${CROSS_COMPILE}${CC} $^ -o mosquitto_sub ${CLIENT_LDFLAGS} -lssl -lcrypto -lpthread
 
 mosquitto_pub : pub_client.o pub_shared.o client_shared.o client_props.o

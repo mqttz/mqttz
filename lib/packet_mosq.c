@@ -141,7 +141,7 @@ int packet__queue(struct mosquitto *mosq, struct mosquitto__packet *packet)
 #endif
 	}
 
-	if(mosq->in_callback == false && mosq->threaded == false){
+	if(mosq->in_callback == false && mosq->threaded == mosq_ts_none){
 		return packet__write(mosq);
 	}else{
 		return MOSQ_ERR_SUCCESS;
@@ -265,8 +265,12 @@ int packet__read(struct mosquitto *mosq)
 	ssize_t read_length;
 	int rc = 0;
 
-	if(!mosq) return MOSQ_ERR_INVAL;
-	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
+	if(!mosq){
+		return MOSQ_ERR_INVAL;
+	}
+	if(mosq->sock == INVALID_SOCKET){
+		return MOSQ_ERR_NO_CONN;
+	}
 	if(mosq->state == mosq_cs_connect_pending){
 		return MOSQ_ERR_SUCCESS;
 	}
@@ -292,10 +296,14 @@ int packet__read(struct mosquitto *mosq)
 #ifdef WITH_BROKER
 			G_BYTES_RECEIVED_INC(1);
 			/* Clients must send CONNECT as their first command. */
-			if(!(mosq->bridge) && mosq->state == mosq_cs_new && (byte&0xF0) != CMD_CONNECT) return MOSQ_ERR_PROTOCOL;
+			if(!(mosq->bridge) && mosq->state == mosq_cs_new && (byte&0xF0) != CMD_CONNECT){
+				return MOSQ_ERR_PROTOCOL;
+			}
 #endif
 		}else{
-			if(read_length == 0) return MOSQ_ERR_CONN_LOST; /* EOF */
+			if(read_length == 0){
+				return MOSQ_ERR_CONN_LOST; /* EOF */
+			}
 #ifdef WIN32
 			errno = WSAGetLastError();
 #endif
@@ -328,13 +336,17 @@ int packet__read(struct mosquitto *mosq)
 				/* Max 4 bytes length for remaining length as defined by protocol.
 				 * Anything more likely means a broken/malicious client.
 				 */
-				if(mosq->in_packet.remaining_count < -4) return MOSQ_ERR_PROTOCOL;
+				if(mosq->in_packet.remaining_count < -4){
+					return MOSQ_ERR_PROTOCOL;
+				}
 
 				G_BYTES_RECEIVED_INC(1);
 				mosq->in_packet.remaining_length += (byte & 127) * mosq->in_packet.remaining_mult;
 				mosq->in_packet.remaining_mult *= 128;
 			}else{
-				if(read_length == 0) return MOSQ_ERR_CONN_LOST; /* EOF */
+				if(read_length == 0){
+					return MOSQ_ERR_CONN_LOST; /* EOF */
+				}
 #ifdef WIN32
 				errno = WSAGetLastError();
 #endif
@@ -356,7 +368,9 @@ int packet__read(struct mosquitto *mosq)
 
 		if(mosq->in_packet.remaining_length > 0){
 			mosq->in_packet.payload = mosquitto__malloc(mosq->in_packet.remaining_length*sizeof(uint8_t));
-			if(!mosq->in_packet.payload) return MOSQ_ERR_NOMEM;
+			if(!mosq->in_packet.payload){
+				return MOSQ_ERR_NOMEM;
+			}
 			mosq->in_packet.to_process = mosq->in_packet.remaining_length;
 		}
 	}

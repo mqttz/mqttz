@@ -172,6 +172,11 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	}else if(topic == NULL && topic_alias == 0){
 		return MOSQ_ERR_PROTOCOL;
 	}
+	if(mosquitto_validate_utf8(topic, slen) != MOSQ_ERR_SUCCESS){
+		log__printf(NULL, MOSQ_LOG_INFO, "Client %s sent topic with invalid UTF-8, disconnecting.", context->id);
+		mosquitto__free(topic);
+		return 1;
+	}
 
 #ifdef WITH_BRIDGE
 	if(context->bridge && context->bridge->topics && context->bridge->topic_remapping){
@@ -280,7 +285,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	}
 	if(!stored){
 		dup = 0;
-		if(db__message_store(db, context->id, mid, topic, qos, payloadlen, &payload, retain, &stored, message_expiry_interval, msg_properties, 0)){
+		if(db__message_store(db, context, mid, topic, qos, payloadlen, &payload, retain, &stored, message_expiry_interval, msg_properties, 0)){
 			mosquitto_property_free_all(&msg_properties);
 			return 1;
 		}
@@ -328,7 +333,7 @@ process_bad_message:
 		case 2:
 			db__message_store_find(context, mid, &stored);
 			if(!stored){
-				if(db__message_store(db, context->id, mid, NULL, qos, 0, NULL, false, &stored, 0, NULL, 0)){
+				if(db__message_store(db, context, mid, NULL, qos, 0, NULL, false, &stored, 0, NULL, 0)){
 					return 1;
 				}
 				res = db__message_insert(db, context, mid, mosq_md_in, qos, false, stored, NULL);
