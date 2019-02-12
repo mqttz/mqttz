@@ -27,7 +27,7 @@ static void byte_prop_write_helper(
 	packet.packet_length = packet.remaining_length+10;
 	packet.payload = calloc(packet.remaining_length+10, 1);
 
-	property__write_all(&packet, &property);
+	property__write_all(&packet, &property, true);
 	packet.pos = 0;
 
 	rc = property__read_all(command, &packet, &properties);
@@ -68,7 +68,7 @@ static void int32_prop_write_helper(
 	packet.packet_length = packet.remaining_length+10;
 	packet.payload = calloc(packet.remaining_length+10, 1);
 
-	property__write_all(&packet, &property);
+	property__write_all(&packet, &property, true);
 	packet.pos = 0;
 
 	rc = property__read_all(command, &packet, &properties);
@@ -109,7 +109,7 @@ static void int16_prop_write_helper(
 	packet.packet_length = packet.remaining_length+10;
 	packet.payload = calloc(packet.remaining_length+10, 1);
 
-	property__write_all(&packet, &property);
+	property__write_all(&packet, &property, true);
 	packet.pos = 0;
 
 	rc = property__read_all(command, &packet, &properties);
@@ -150,7 +150,7 @@ static void string_prop_write_helper(
 	packet.packet_length = packet.remaining_length+10;
 	packet.payload = calloc(packet.remaining_length+10, 1);
 
-	property__write_all(&packet, &property);
+	property__write_all(&packet, &property, true);
 	packet.pos = 0;
 
 	rc = property__read_all(command, &packet, &properties);
@@ -196,7 +196,7 @@ static void binary_prop_write_helper(
 	packet.packet_length = packet.remaining_length+10;
 	packet.payload = calloc(packet.remaining_length+10, 1);
 
-	property__write_all(&packet, &property);
+	property__write_all(&packet, &property, true);
 	packet.pos = 0;
 
 	rc = property__read_all(command, &packet, &properties);
@@ -242,7 +242,7 @@ static void string_pair_prop_write_helper(
 	packet.packet_length = packet.remaining_length+10;
 	packet.payload = calloc(packet.remaining_length+10, 1);
 
-	property__write_all(&packet, &property);
+	property__write_all(&packet, &property, true);
 	packet.pos = 0;
 
 	rc = property__read_all(CMD_CONNECT, &packet, &properties);
@@ -290,7 +290,7 @@ static void varint_prop_write_helper(
 	packet.packet_length = packet.remaining_length+10;
 	packet.payload = calloc(packet.remaining_length+10, 1);
 
-	property__write_all(&packet, &property);
+	property__write_all(&packet, &property, true);
 	packet.pos = 0;
 
 	rc = property__read_all(CMD_PUBLISH, &packet, &properties);
@@ -334,7 +334,7 @@ static void TEST_bad_identifier(void)
 	packet.packet_length = 10;
 	packet.remaining_length = 8;
 	packet.payload = payload;
-	rc = property__write_all(&packet, &property);
+	rc = property__write_all(&packet, &property, true);
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_INVAL);
 }
 
