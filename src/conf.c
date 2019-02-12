@@ -727,12 +727,12 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 	char *tmp_char;
 	struct mosquitto__bridge *cur_bridge = NULL;
 	struct mosquitto__bridge_topic *cur_topic;
+	int len;
 #endif
 	struct mosquitto__auth_plugin_config *cur_auth_plugin_config = NULL;
 
 	time_t expiration_mult;
 	char *key;
-	int len;
 	struct mosquitto__listener *cur_listener = &config->default_listener;
 	int i;
 	int lineno_ext;

@@ -15,6 +15,7 @@ Library:
 
 Build:
 - Don't require C99 compiler.
+- Add rewritten build test script and remove some build warnings.
 
 
 1.5.6 - 20190206

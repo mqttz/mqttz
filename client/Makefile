@@ -21,10 +21,10 @@ static : static_pub static_sub
 	# libmosquitto only.
 
 static_pub : pub_client.o client_shared.o ../lib/libmosquitto.a
-	${CROSS_COMPILE}${CC} $^ -o mosquitto_pub ${CLIENT_LDFLAGS} -lssl -lcrypto -lpthread
+	${CROSS_COMPILE}${CC} $^ -o mosquitto_pub ${CLIENT_LDFLAGS} ${STATIC_LIB_DEPS}
 
 static_sub : sub_client.o sub_client_output.o client_shared.o ../lib/libmosquitto.a
-	${CROSS_COMPILE}${CC} $^ -o mosquitto_sub ${CLIENT_LDFLAGS} -lssl -lcrypto -lpthread
+	${CROSS_COMPILE}${CC} $^ -o mosquitto_sub ${CLIENT_LDFLAGS} ${STATIC_LIB_DEPS}
 
 mosquitto_pub : pub_client.o client_shared.o
 	${CROSS_COMPILE}${CC} $^ -o $@ ${CLIENT_LDFLAGS}
