@@ -8,7 +8,7 @@ LD_LIBRARY_PATH=../../lib
 all :
 
 ptest : test-compile
-	./ptest.py
+	./test.py
 
 test : c cpp
 
