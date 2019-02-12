@@ -149,7 +149,6 @@ static void TEST_valid_no_matching(void)
 	no_match_helper(MOSQ_ERR_SUCCESS, "foo/+/#", "fo2/bar/baz");
 
 	no_match_helper(MOSQ_ERR_SUCCESS, "/#", "foo/bar");
-	no_match_helper(MOSQ_ERR_SUCCESS, "/#a", "foo/bar");
 
 	no_match_helper(MOSQ_ERR_SUCCESS, "#", "$SYS/bar");
 	no_match_helper(MOSQ_ERR_SUCCESS, "$BOB/bar", "$SYS/bar");
@@ -162,6 +161,11 @@ static void TEST_invalid(void)
 	no_match_helper(MOSQ_ERR_INVAL, "fo#o/", "foo");
 	no_match_helper(MOSQ_ERR_INVAL, "foo#", "fooa");
 	no_match_helper(MOSQ_ERR_INVAL, "foo+", "foo");
+	no_match_helper(MOSQ_ERR_INVAL, "foo/#a", "foo");
+	no_match_helper(MOSQ_ERR_INVAL, "#a", "foo");
+	no_match_helper(MOSQ_ERR_INVAL, "foo/#abc", "foo");
+	no_match_helper(MOSQ_ERR_INVAL, "#abc", "foo");
+	no_match_helper(MOSQ_ERR_INVAL, "/#a", "foo/bar");
 }
 
 /* ========================================================================
