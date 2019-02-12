@@ -23,7 +23,6 @@ write_config(conf_file, port1, port2)
 rc = 1
 keepalive = 10
 connect_packet = mosq_test.gen_connect("connect-revoked-test", keepalive=keepalive)
-connack_packet = mosq_test.gen_connack(rc=0)
 
 broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port2, use_conf=True)
 
@@ -33,6 +32,7 @@ try:
     ssock.settimeout(20)
     try:
         ssock.connect(("localhost", port1))
+        mosq_test.do_send_receive(ssock, connect_packet, "", "connack")
     except ssl.SSLError as err:
         if err.errno == 1 and "certificate revoked" in err.strerror:
             rc = 0
