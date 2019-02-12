@@ -156,6 +156,7 @@ def next_test(tests, ports):
     if test[0] == 1:
         port = ports.pop()
         p = subprocess.Popen([test[1], str(port)])
+        p.start_time = time.time()
         p.mosq_port = port
         return p
     elif test[0] == 2:
@@ -167,6 +168,7 @@ def next_test(tests, ports):
             port2 = ports.pop()
 
             p = subprocess.Popen([test[1], str(port1), str(port2)])
+            p.start_time = time.time()
             p.mosq_port = (port1, port2)
             return p
     elif test[0] == 3:
@@ -179,6 +181,7 @@ def next_test(tests, ports):
             port3 = ports.pop()
 
             p = subprocess.Popen([test[1], str(port1), str(port2), str(port3)])
+            p.start_time = time.time()
             p.mosq_port = (port1, port2, port3)
             return p
     else:
@@ -211,16 +214,21 @@ def run_tests(tests, ports):
                     ports.append(t.mosq_port)
                 t.terminate()
                 t.wait()
+                runtime = time.time() - t.start_time
                 #(stdo, stde) = t.communicate()
                 if t.returncode == 1:
-                    print("\033[31m" + t.args[0] + "\033[0m")
+                    print("%0.3fs : \033[31m%s\033[0m" % (runtime, t.args[0]))
                     failed = failed + 1
+                    failed_tests.append(t.args[0])
                 else:
                     passed = passed + 1
-                    print("\033[32m" + t.args[0] + "\033[0m")
+                    print("%0.3fs : \033[32m%s\033[0m" % (runtime, t.args[0]))
 
     print("Passed: %d\nFailed: %d\nTotal: %d" % (passed, failed, passed+failed))
     if failed > 0:
+        print("Failing tests:")
+        for f in failed_tests:
+            print(f)
         sys.exit(1)
 
 
