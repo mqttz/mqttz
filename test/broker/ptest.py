@@ -153,39 +153,23 @@ def next_test(tests, ports):
         return
 
     test = tests.pop()
-    if test[0] == 1:
-        port = ports.pop()
-        p = subprocess.Popen([test[1], str(port)])
-        p.start_time = time.time()
-        p.mosq_port = port
-        return p
-    elif test[0] == 2:
-        if len(ports) < 2:
-            tests.insert(0,test)
-            return None
-        else:
-            port1 = ports.pop()
-            port2 = ports.pop()
+    proc_ports = ()
 
-            p = subprocess.Popen([test[1], str(port1), str(port2)])
-            p.start_time = time.time()
-            p.mosq_port = (port1, port2)
-            return p
-    elif test[0] == 3:
-        if len(ports) < 3:
-            tests.insert(0,test)
-            return None
-        else:
-            port1 = ports.pop()
-            port2 = ports.pop()
-            port3 = ports.pop()
-
-            p = subprocess.Popen([test[1], str(port1), str(port2), str(port3)])
-            p.start_time = time.time()
-            p.mosq_port = (port1, port2, port3)
-            return p
-    else:
+    if len(ports) < test[0]:
+        tests.insert(0, test)
         return None
+    else:
+        args = [test[1]]
+
+        for i in range(0, test[0]):
+            proc_port = ports.pop()
+            proc_ports = proc_ports + (proc_port,)
+            args.append(str(proc_port))
+
+        proc = subprocess.Popen(args)
+        proc.start_time = time.time()
+        proc.mosq_port = proc_ports
+        return proc
 
 
 def run_tests(tests, ports):
