@@ -62,6 +62,8 @@ struct config_recurse {
 extern SERVICE_STATUS_HANDLE service_handle;
 #endif
 
+static struct mosquitto__security_options *cur_security_options = NULL;
+
 static int conf__parse_bool(char **token, const char *name, bool *value, char *saveptr);
 static int conf__parse_int(char **token, const char *name, int *value, char *saveptr);
 static int conf__parse_ssize_t(char **token, const char *name, ssize_t *value, char *saveptr);
@@ -725,25 +727,15 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 	char *tmp_char;
 	struct mosquitto__bridge *cur_bridge = NULL;
 	struct mosquitto__bridge_topic *cur_topic;
+	int len;
 #endif
 	struct mosquitto__auth_plugin_config *cur_auth_plugin_config = NULL;
 
 	time_t expiration_mult;
 	char *key;
-	char *conf_file;
-#ifdef WIN32
-	HANDLE fh;
-	char dirpath[MAX_PATH];
-	WIN32_FIND_DATA find_data;
-#else
-	DIR *dh;
-	struct dirent *de;
-#endif
-	int len;
 	struct mosquitto__listener *cur_listener = &config->default_listener;
 	int i;
 	int lineno_ext;
-	struct mosquitto__security_options *cur_security_options = NULL;
 
 	*lineno = 0;
 
@@ -1218,66 +1210,27 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 							log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty include_dir value in configuration.");
 							return 1;
 						}
-#ifdef WIN32
-						snprintf(dirpath, MAX_PATH, "%s\\*.conf", token);
-						fh = FindFirstFile(dirpath, &find_data);
-						if(fh == INVALID_HANDLE_VALUE){
-							/* No files found */
-							continue;
-						}
 
-						do{
-							len = strlen(token)+1+strlen(find_data.cFileName)+1;
-							conf_file = mosquitto__malloc(len+1);
-							if(!conf_file){
-								FindClose(fh);
-								return MOSQ_ERR_NOMEM;
-							}
-							snprintf(conf_file, len, "%s\\%s", token, find_data.cFileName);
-							conf_file[len] = '\0';
+						char **files;
+						int file_count;
+						rc = config__get_dir_files(token, &files, &file_count);
+						if(rc) return rc;
 
-							rc = config__read_file(config, reload, conf_file, cr, level+1, &lineno_ext);
+						for(i=0; i<file_count; i++){
+							log__printf(NULL, MOSQ_LOG_INFO, "Loading config file %s", files[i]);
+
+							rc = config__read_file(config, reload, files[i], cr, level+1, &lineno_ext);
 							if(rc){
-								FindClose(fh);
-								log__printf(NULL, MOSQ_LOG_ERR, "Error found at %s:%d.", conf_file, lineno_ext);
-								mosquitto__free(conf_file);
-								return rc;
-							}
-							mosquitto__free(conf_file);
-						}while(FindNextFile(fh, &find_data));
-
-						FindClose(fh);
-#else
-						dh = opendir(token);
-						if(!dh){
-							log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open include_dir '%s'.", token);
-							return 1;
-						}
-						while((de = readdir(dh)) != NULL){
-							if(strlen(de->d_name) > 5){
-								if(!strcmp(&de->d_name[strlen(de->d_name)-5], ".conf")){
-									len = strlen(token)+1+strlen(de->d_name)+1;
-									conf_file = mosquitto__malloc(len+1);
-									if(!conf_file){
-										closedir(dh);
-										return MOSQ_ERR_NOMEM;
-									}
-									snprintf(conf_file, len, "%s/%s", token, de->d_name);
-									conf_file[len] = '\0';
-
-									rc = config__read_file(config, reload, conf_file, cr, level+1, &lineno_ext);
-									if(rc){
-										closedir(dh);
-										log__printf(NULL, MOSQ_LOG_ERR, "Error found at %s:%d.", conf_file, lineno_ext);
-										mosquitto__free(conf_file);
-										return rc;
-									}
-									mosquitto__free(conf_file);
-								}
+								log__printf(NULL, MOSQ_LOG_ERR, "Error found at %s:%d.", files[i], lineno_ext);
+								/* Free happens below */
+								break;
 							}
 						}
-						closedir(dh);
-#endif
+						for(i=0; i<file_count; i++){
+							mosquitto__free(files[i]);
+						}
+						mosquitto__free(files);
+						if(rc) return rc; /* This returns if config__read_file() fails above */
 					}
 				}else if(!strcmp(token, "keepalive_interval")){
 #ifdef WITH_BRIDGE

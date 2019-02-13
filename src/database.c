@@ -235,6 +235,21 @@ void db__msg_store_deref(struct mosquitto_db *db, struct mosquitto_msg_store **s
 }
 
 
+void db__msg_store_compact(struct mosquitto_db *db)
+{
+	struct mosquitto_msg_store *store, *next;
+
+	store = db->msg_store;
+	while(store){
+		next = store->next;
+		if(store->ref_count < 1){
+			db__msg_store_remove(db, store);
+		}
+		store = next;
+	}
+}
+
+
 static void db__message_remove(struct mosquitto_db *db, struct mosquitto *context, struct mosquitto_client_msg **msg, struct mosquitto_client_msg *last)
 {
 	if(!context || !msg || !(*msg)){
@@ -1017,10 +1032,5 @@ void db__limits_set(int inflight, unsigned long inflight_bytes, int queued, unsi
 	max_inflight_bytes = inflight_bytes;
 	max_queued = queued;
 	max_queued_bytes = queued_bytes;
-}
-
-void db__vacuum(void)
-{
-	/* FIXME - reimplement? */
 }
 

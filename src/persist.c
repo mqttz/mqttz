@@ -151,6 +151,11 @@ static int persist__message_store_write(struct mosquitto_db *db, FILE *db_fptr)
 
 	stored = db->msg_store;
 	while(stored){
+		if(stored->ref_count < 1){
+			stored = stored->next;
+			continue;
+		}
+
 		if(stored->topic && !strncmp(stored->topic, "$SYS", 4)){
 			if(stored->ref_count <= 1 && stored->dest_id_count == 0){
 				/* $SYS messages that are only retained shouldn't be persisted. */
@@ -720,6 +725,7 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 	struct mosquitto_msg_store *stored = NULL;
 	struct mosquitto_msg_store_load *load;
 	char *err;
+	int i;
 
 	payload.ptr = NULL;
 
@@ -749,7 +755,7 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 		read_e(db_fptr, &i16temp, sizeof(uint16_t));
 		source_port = ntohs(i16temp);
 		if(source_port){
-			for(int i=0; i<db->config->listener_count; i++){
+			for(i=0; i<db->config->listener_count; i++){
 				if(db->config->listeners[i].port == source_port){
 					source.listener = &db->config->listeners[i];
 					break;
@@ -981,6 +987,9 @@ int persist__restore(struct mosquitto_db *db)
 		HASH_DELETE(hh, db->msg_store_load, load);
 		mosquitto__free(load);
 	}
+
+	db__msg_store_compact(db);
+
 	return rc;
 error:
 	err = strerror(errno);

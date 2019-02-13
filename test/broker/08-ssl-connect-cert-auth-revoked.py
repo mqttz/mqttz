@@ -44,6 +44,7 @@ try:
     ssock.settimeout(20)
     try:
         ssock.connect(("localhost", port1))
+        mosq_test.do_send_receive(ssock, connect_packet, "", "connack")
     except ssl.SSLError as err:
         if err.errno == 1 and "certificate revoked" in err.strerror:
             rc = 0

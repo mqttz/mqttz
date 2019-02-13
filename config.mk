@@ -105,7 +105,7 @@ WITH_BUNDLED_DEPS:=yes
 
 # Also bump lib/mosquitto.h, CMakeLists.txt,
 # installer/mosquitto.nsi, installer/mosquitto64.nsi
-VERSION=1.5.6
+VERSION=1.5.7
 
 # Client library SO version. Bump if incompatible API/ABI changes are made.
 SOVERSION=1
@@ -129,6 +129,7 @@ else
 	CFLAGS?=-Wall -ggdb -O2
 endif
 
+STATIC_LIB_DEPS:=
 LIB_CFLAGS:=${CFLAGS} ${CPPFLAGS} -I. -I.. -I../lib
 LIB_CXXFLAGS:=$(CFLAGS) ${CPPFLAGS} -I. -I.. -I../lib
 LIB_LDFLAGS:=${LDFLAGS}
@@ -192,6 +193,7 @@ ifeq ($(WITH_TLS),yes)
 	LIB_CFLAGS:=$(LIB_CFLAGS) -DWITH_TLS
 	PASSWD_LIBS:=-lcrypto
 	CLIENT_CFLAGS:=$(CLIENT_CFLAGS) -DWITH_TLS
+	STATIC_LIB_DEPS:=$(STATIC_LIB_DEPS) -lssl -lcrypto
 
 	ifeq ($(WITH_TLS_PSK),yes)
 		BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_TLS_PSK
@@ -204,6 +206,7 @@ ifeq ($(WITH_THREADING),yes)
 	LIB_LIBS:=$(LIB_LIBS) -lpthread
 	LIB_CFLAGS:=$(LIB_CFLAGS) -DWITH_THREADING
 	CLIENT_CFLAGS:=$(CLIENT_CFLAGS) -DWITH_THREADING
+	STATIC_LIB_DEPS:=$(STATIC_LIB_DEPS) -lpthread
 endif
 
 ifeq ($(WITH_SOCKS),yes)
@@ -249,6 +252,7 @@ ifeq ($(WITH_SRV),yes)
 	LIB_CFLAGS:=$(LIB_CFLAGS) -DWITH_SRV
 	LIB_LIBS:=$(LIB_LIBS) -lcares
 	CLIENT_CFLAGS:=$(CLIENT_CFLAGS) -DWITH_SRV
+	STATIC_LIB_DEPS:=$(STATIC_LIB_DEPS) -lcares
 endif
 
 ifeq ($(UNAME),SunOS)

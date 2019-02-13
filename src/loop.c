@@ -756,7 +756,7 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 				if(!getsockopt(context->sock, SOL_SOCKET, SO_ERROR, (char *)&err, &len)){
 					if(err == 0){
 						context->state = mosq_cs_new;
-#ifdef WITH_ADNS
+#if defined(WITH_ADNS) && defined(WITH_BRIDGE)
 						if(context->bridge){
 							bridge__connect_step3(db, context);
 							continue;
