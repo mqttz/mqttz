@@ -151,6 +151,11 @@ static int persist__message_store_write(struct mosquitto_db *db, FILE *db_fptr)
 
 	stored = db->msg_store;
 	while(stored){
+		if(stored->ref_count < 1){
+			stored = stored->next;
+			continue;
+		}
+
 		if(stored->topic && !strncmp(stored->topic, "$SYS", 4)){
 			if(stored->ref_count <= 1 && stored->dest_id_count == 0){
 				/* $SYS messages that are only retained shouldn't be persisted. */
@@ -982,6 +987,9 @@ int persist__restore(struct mosquitto_db *db)
 		HASH_DELETE(hh, db->msg_store_load, load);
 		mosquitto__free(load);
 	}
+
+	db__msg_store_compact(db);
+
 	return rc;
 error:
 	err = strerror(errno);
