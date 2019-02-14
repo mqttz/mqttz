@@ -642,9 +642,6 @@ int acl__find_acls(struct mosquitto_db *db, struct mosquitto *context)
 			}
 			acl_tail = acl_tail->next;
 		}
-		if(context->username && context->acl_list == NULL){
-			return MOSQ_ERR_INVAL;
-		}
 	}else{
 		context->acl_list = NULL;
 	}

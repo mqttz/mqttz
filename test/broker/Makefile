@@ -121,6 +121,7 @@ endif
 endif
 
 09 :
+	./09-acl-access-variants.py
 	./09-acl-empty-file.py
 	./09-plugin-auth-unpwd-success.py
 	./09-plugin-auth-unpwd-fail.py

@@ -1,3 +1,12 @@
+1.5.8 - 2019xxxx
+================
+
+Broker:
+- Fix clients being disconnected when ACLs are in use. This only affects the
+  case where a client connects using a username, and the anonymous ACL list is
+  defined but specific user ACLs are not defined. Closes #1162.
+
+
 1.5.7 - 20190213
 ================
 
