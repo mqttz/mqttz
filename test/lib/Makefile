@@ -32,6 +32,7 @@ c : test-compile
 	./02-subscribe-qos1.py $@/02-subscribe-qos1.test
 	./02-subscribe-qos2.py $@/02-subscribe-qos2.test
 	./02-unsubscribe.py $@/02-unsubscribe.test
+	./02-unsubscribe-v5.py $@/02-unsubscribe-v5.test
 	./03-publish-qos0.py $@/03-publish-qos0.test
 	./03-publish-qos0-no-payload.py $@/03-publish-qos0-no-payload.test
 	./03-publish-c2b-qos1-disconnect.py $@/03-publish-c2b-qos1-disconnect.test

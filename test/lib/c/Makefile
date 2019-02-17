@@ -15,6 +15,7 @@ SRC = \
 	02-subscribe-qos1.c \
 	02-subscribe-qos2.c \
 	02-unsubscribe.c \
+	02-unsubscribe-v5.c \
 	03-publish-qos0.c \
 	03-publish-qos0-no-payload.c \
 	03-publish-c2b-qos1-disconnect.c \
