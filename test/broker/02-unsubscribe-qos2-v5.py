@@ -12,7 +12,7 @@ connect_packet = mosq_test.gen_connect("unsubscribe-qos2-test", keepalive=keepal
 connack_packet = mosq_test.gen_connack(rc=0, proto_ver=5)
 
 unsubscribe_packet = mosq_test.gen_unsubscribe(mid, "qos2/test", proto_ver=5)
-unsuback_packet = mosq_test.gen_unsuback(mid, proto_ver=5)
+unsuback_packet = mosq_test.gen_unsuback(mid, proto_ver=5, reason_code=17)
 
 port = mosq_test.get_port()
 broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port)

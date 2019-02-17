@@ -324,7 +324,7 @@ static int sub__add_recurse(struct mosquitto_db *db, struct mosquitto *context, 
 	}
 }
 
-static int sub__remove_recurse(struct mosquitto_db *db, struct mosquitto *context, struct mosquitto__subhier *subhier, struct sub__token *tokens)
+static int sub__remove_recurse(struct mosquitto_db *db, struct mosquitto *context, struct mosquitto__subhier *subhier, struct sub__token *tokens, uint8_t *reason)
 {
 	struct mosquitto__subhier *branch;
 	struct mosquitto__subleaf *leaf;
@@ -357,6 +357,7 @@ static int sub__remove_recurse(struct mosquitto_db *db, struct mosquitto *contex
 						break;
 					}
 				}
+				*reason = 0;
 				return MOSQ_ERR_SUCCESS;
 			}
 			leaf = leaf->next;
@@ -366,7 +367,7 @@ static int sub__remove_recurse(struct mosquitto_db *db, struct mosquitto *contex
 
 	HASH_FIND(hh, subhier->children, UHPA_ACCESS_TOPIC(tokens), tokens->topic_len, branch);
 	if(branch){
-		sub__remove_recurse(db, context, branch, tokens->next);
+		sub__remove_recurse(db, context, branch, tokens->next, reason);
 		if(!branch->children && !branch->subs && !branch->retained){
 			HASH_DELETE(hh, subhier->children, branch);
 			UHPA_FREE_TOPIC(branch);
@@ -478,7 +479,7 @@ int sub__add(struct mosquitto_db *db, struct mosquitto *context, const char *sub
 	return rc;
 }
 
-int sub__remove(struct mosquitto_db *db, struct mosquitto *context, const char *sub, struct mosquitto__subhier *root)
+int sub__remove(struct mosquitto_db *db, struct mosquitto *context, const char *sub, struct mosquitto__subhier *root, uint8_t *reason)
 {
 	int rc = 0;
 	struct mosquitto__subhier *subhier;
@@ -491,7 +492,8 @@ int sub__remove(struct mosquitto_db *db, struct mosquitto *context, const char *
 
 	HASH_FIND(hh, root, UHPA_ACCESS_TOPIC(tokens), tokens->topic_len, subhier);
 	if(subhier){
-		rc = sub__remove_recurse(db, context, subhier, tokens);
+		*reason = MQTT_RC_NO_SUBSCRIPTION_EXISTED;
+		rc = sub__remove_recurse(db, context, subhier, tokens, reason);
 	}
 
 	sub__topic_tokens_free(tokens);

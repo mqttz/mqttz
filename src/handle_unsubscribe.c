@@ -31,6 +31,7 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 	char *sub;
 	int slen;
 	int rc;
+	uint8_t reason;
 	int reason_code_count = 0;
 	int reason_code_max;
 	uint8_t *reason_codes = NULL, *reason_tmp;
@@ -89,11 +90,12 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 		}
 
 		log__printf(NULL, MOSQ_LOG_DEBUG, "\t%s", sub);
-		sub__remove(db, context, sub, db->subs);
+		rc = sub__remove(db, context, sub, db->subs, &reason);
 		log__printf(NULL, MOSQ_LOG_UNSUBSCRIBE, "%s %s", context->id, sub);
 		mosquitto__free(sub);
+		if(rc) return rc;
 
-		reason_codes[reason_code_count] = 0;
+		reason_codes[reason_code_count] = reason;
 		reason_code_count++;
 		if(reason_code_count == reason_code_max){
 			reason_tmp = mosquitto__realloc(reason_codes, reason_code_max*2);
