@@ -33,7 +33,7 @@ Contributors:
 #include "util_mosq.h"
 
 
-int send__unsubscribe(struct mosquitto *mosq, int *mid, const char *topic, const mosquitto_property *properties)
+int send__unsubscribe(struct mosquitto *mosq, int *mid, int topic_count, char *const *const topic, const mosquitto_property *properties)
 {
 	/* FIXME - only deals with a single topic */
 	struct mosquitto__packet *packet = NULL;
@@ -41,6 +41,7 @@ int send__unsubscribe(struct mosquitto *mosq, int *mid, const char *topic, const
 	uint16_t local_mid;
 	int rc;
 	int proplen, varbytes;
+	int i;
 
 	assert(mosq);
 	assert(topic);
@@ -48,7 +49,11 @@ int send__unsubscribe(struct mosquitto *mosq, int *mid, const char *topic, const
 	packet = mosquitto__calloc(1, sizeof(struct mosquitto__packet));
 	if(!packet) return MOSQ_ERR_NOMEM;
 
-	packetlen = 2 + 2+strlen(topic);
+	packetlen = 2;
+
+	for(i=0; i<topic_count; i++){
+		packetlen += 2+strlen(topic[i]);
+	}
 	if(mosq->protocol == mosq_p_mqtt5){
 		proplen = property__get_length_all(properties);
 		varbytes = packet__varint_bytes(proplen);
@@ -74,14 +79,20 @@ int send__unsubscribe(struct mosquitto *mosq, int *mid, const char *topic, const
 	}
 
 	/* Payload */
-	packet__write_string(packet, topic, strlen(topic));
+	for(i=0; i<topic_count; i++){
+		packet__write_string(packet, topic[i], strlen(topic[i]));
+	}
 
 #ifdef WITH_BROKER
 # ifdef WITH_BRIDGE
-	log__printf(mosq, MOSQ_LOG_DEBUG, "Bridge %s sending UNSUBSCRIBE (Mid: %d, Topic: %s)", mosq->id, local_mid, topic);
+	for(i=0; i<topic_count; i++){
+		log__printf(mosq, MOSQ_LOG_DEBUG, "Bridge %s sending UNSUBSCRIBE (Mid: %d, Topic: %s)", mosq->id, local_mid, topic[i]);
+	}
 # endif
 #else
-	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending UNSUBSCRIBE (Mid: %d, Topic: %s)", mosq->id, local_mid, topic);
+	for(i=0; i<topic_count; i++){
+		log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending UNSUBSCRIBE (Mid: %d, Topic: %s)", mosq->id, local_mid, topic[i]);
+	}
 #endif
 	return packet__queue(mosq, packet);
 }

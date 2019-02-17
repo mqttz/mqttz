@@ -91,7 +91,7 @@ int handle__connack(struct mosquitto_db *db, struct mosquitto *context)
 						}
 					}else{
 						if(context->bridge->attempt_unsubscribe){
-							if(send__unsubscribe(context, NULL, context->bridge->topics[i].remote_topic, NULL)){
+							if(send__unsubscribe(context, NULL, 1, &context->bridge->topics[i].remote_topic, NULL)){
 								/* direction = inwards only. This means we should not be subscribed
 								* to the topic. It is possible that we used to be subscribed to
 								* this topic so unsubscribe. */

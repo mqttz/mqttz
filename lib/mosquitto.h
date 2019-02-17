@@ -986,6 +986,35 @@ libmosq_EXPORT int mosquitto_unsubscribe(struct mosquitto *mosq, int *mid, const
  */
 libmosq_EXPORT int mosquitto_unsubscribe_v5(struct mosquitto *mosq, int *mid, const char *sub, const mosquitto_property *properties);
 
+/*
+ * Function: mosquitto_unsubscribe_multiple
+ *
+ * Unsubscribe from multiple topics.
+ *
+ * Parameters:
+ *	mosq - a valid mosquitto instance.
+ *	mid -  a pointer to an int. If not NULL, the function will set this to
+ *	       the message id of this particular message. This can be then used
+ *	       with the subscribe callback to determine when the message has been
+ *	       sent.
+ *  sub_count - the count of unsubscriptions to be made
+ *	sub -  array of sub_count pointers, each pointing to an unsubscription string.
+ *	       The "char *const *const" datatype ensures that neither the array of
+ *	       pointers nor the strings that they point to are mutable. If you aren't
+ *	       familiar with this, just think of it as a safer "char **",
+ *	       equivalent to "const char *" for a simple string pointer.
+ * 	properties - a valid mosquitto_property list, or NULL. Only used with MQTT
+ * 	             v5 clients.
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS -        on success.
+ * 	MOSQ_ERR_INVAL -          if the input parameters were invalid.
+ * 	MOSQ_ERR_NOMEM -          if an out of memory condition occurred.
+ * 	MOSQ_ERR_NO_CONN -        if the client isn't connected to a broker.
+ * 	MOSQ_ERR_MALFORMED_UTF8 - if a topic is not valid UTF-8
+ */
+int mosquitto_unsubscribe_multiple(struct mosquitto *mosq, int *mid, int sub_count, char *const *const sub, const mosquitto_property *properties);
+
 
 /* ======================================================================
  *

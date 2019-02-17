@@ -127,6 +127,7 @@ MOSQ_1.6 {
 		mosquitto_subscribe_v5;
 		mosquitto_unsubscribe_v5_callback_set;
 		mosquitto_unsubscribe_v5;
+		mosquitto_unsubscribe_multiple;
 		mosquitto_void_option;
 		mosquitto_will_set_v5;
 } MOSQ_1.5;
