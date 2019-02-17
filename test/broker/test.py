@@ -57,6 +57,7 @@ tests = [
     (1, './02-unsubscribe-qos2-v5.py'),
     (1, './02-unsubscribe-invalid-no-topic.py'),
     (1, './02-unsubscribe-qos2-multiple.py'),
+    (1, './02-unsubscribe-qos2-multiple-v5.py'),
     (1, './02-subscribe-invalid-utf8.py'),
     (1, './02-subscribe-persistence-flipflop.py'),
     (1, './02-subhier-crash.py'),

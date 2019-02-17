@@ -76,6 +76,7 @@ endif
 	./02-unsubscribe-qos2-v5.py
 	./02-unsubscribe-invalid-no-topic.py
 	./02-unsubscribe-qos2-multiple.py
+	./02-unsubscribe-qos2-multiple-v5.py
 	./02-subscribe-invalid-utf8.py
 	./02-subscribe-persistence-flipflop.py
 	./02-subhier-crash.py

@@ -31,6 +31,9 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 	char *sub;
 	int slen;
 	int rc;
+	int reason_code_count = 0;
+	int reason_code_max;
+	uint8_t *reason_codes = NULL, *reason_tmp;
 	mosquitto_property *properties = NULL;
 
 	if(!context) return MOSQ_ERR_INVAL;
@@ -57,32 +60,49 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 			return MOSQ_ERR_PROTOCOL;
 		}
 	}
+
+	reason_code_max = 10;
+	reason_codes = mosquitto__malloc(reason_code_max);
+	if(!reason_codes){
+		return MOSQ_ERR_NOMEM;
+	}
+
 	while(context->in_packet.pos < context->in_packet.remaining_length){
 		sub = NULL;
 		if(packet__read_string(&context->in_packet, &sub, &slen)){
 			return 1;
 		}
 
-		if(sub){
-			if(!slen){
-				log__printf(NULL, MOSQ_LOG_INFO,
-						"Empty unsubscription string from %s, disconnecting.",
-						context->id);
-				mosquitto__free(sub);
-				return 1;
-			}
-			if(mosquitto_sub_topic_check(sub)){
-				log__printf(NULL, MOSQ_LOG_INFO,
-						"Invalid unsubscription string from %s, disconnecting.",
-						context->id);
-				mosquitto__free(sub);
-				return 1;
-			}
-
-			log__printf(NULL, MOSQ_LOG_DEBUG, "\t%s", sub);
-			sub__remove(db, context, sub, db->subs);
-			log__printf(NULL, MOSQ_LOG_UNSUBSCRIBE, "%s %s", context->id, sub);
+		if(!slen){
+			log__printf(NULL, MOSQ_LOG_INFO,
+					"Empty unsubscription string from %s, disconnecting.",
+					context->id);
 			mosquitto__free(sub);
+			return 1;
+		}
+		if(mosquitto_sub_topic_check(sub)){
+			log__printf(NULL, MOSQ_LOG_INFO,
+					"Invalid unsubscription string from %s, disconnecting.",
+					context->id);
+			mosquitto__free(sub);
+			return 1;
+		}
+
+		log__printf(NULL, MOSQ_LOG_DEBUG, "\t%s", sub);
+		sub__remove(db, context, sub, db->subs);
+		log__printf(NULL, MOSQ_LOG_UNSUBSCRIBE, "%s %s", context->id, sub);
+		mosquitto__free(sub);
+
+		reason_codes[reason_code_count] = 0;
+		reason_code_count++;
+		if(reason_code_count == reason_code_max){
+			reason_tmp = mosquitto__realloc(reason_codes, reason_code_max*2);
+			if(!reason_tmp){
+				mosquitto__free(reason_codes);
+				return MOSQ_ERR_NOMEM;
+			}
+			reason_codes = reason_tmp;
+			reason_code_max *= 2;
 		}
 	}
 #ifdef WITH_PERSISTENCE
@@ -92,6 +112,8 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 	log__printf(NULL, MOSQ_LOG_DEBUG, "Sending UNSUBACK to %s", context->id);
 
 	/* We don't use Reason String or User Property yet. */
-	return send__unsuback(context, mid, NULL);
+	rc = send__unsuback(context, mid, reason_code_count, reason_codes, NULL);
+	mosquitto__free(reason_codes);
+	return rc;
 }
 

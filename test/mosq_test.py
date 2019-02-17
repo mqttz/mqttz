@@ -498,9 +498,16 @@ def gen_unsubscribe_multiple(mid, topics, proto_ver=4):
 
         return struct.pack("!BBH", 162, remaining_length, mid) + packet
 
-def gen_unsuback(mid, proto_ver=4):
+def gen_unsuback(mid, proto_ver=4, reason_code=0):
     if proto_ver == 5:
-        return struct.pack('!BBHB', 176, 3, mid, 0)
+        if isinstance(reason_code, list):
+            reason_code_count = len(reason_code)
+            p = struct.pack('!BBHB', 176, 3+reason_code_count, mid, 0)
+            for r in reason_code:
+                p += struct.pack('B', r)
+            return p
+        else:
+            return struct.pack('!BBHBB', 176, 4, mid, 0, reason_code)
     else:
         return struct.pack('!BBH', 176, 2, mid)
 

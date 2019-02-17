@@ -25,7 +25,7 @@ Contributors:
 #include "property_mosq.h"
 
 
-int send__unsuback(struct mosquitto *mosq, uint16_t mid, const mosquitto_property *properties)
+int send__unsuback(struct mosquitto *mosq, uint16_t mid, int reason_code_count, uint8_t *reason_codes, const mosquitto_property *properties)
 {
 	struct mosquitto__packet *packet = NULL;
 	int rc;
@@ -41,7 +41,7 @@ int send__unsuback(struct mosquitto *mosq, uint16_t mid, const mosquitto_propert
 	if(mosq->protocol == mosq_p_mqtt5){
 		proplen = property__get_length_all(properties);
 		varbytes = packet__varint_bytes(proplen);
-		packet->remaining_length += varbytes + proplen;
+		packet->remaining_length += varbytes + proplen + reason_code_count;
 	}
 
 	rc = packet__alloc(packet);
@@ -54,6 +54,7 @@ int send__unsuback(struct mosquitto *mosq, uint16_t mid, const mosquitto_propert
 
 	if(mosq->protocol == mosq_p_mqtt5){
 		property__write_all(packet, properties, true);
+        packet__write_bytes(packet, reason_codes, reason_code_count);
 	}
 
 	return packet__queue(mosq, packet);
