@@ -167,6 +167,15 @@ int send__real_publish(struct mosquitto *mosq, uint16_t mid, const char *topic, 
 			packetlen += proplen + varbytes;
 		}
 	}
+	if(packet__check_oversize(mosq, packetlen)){
+#ifdef WITH_BROKER
+		log__printf(NULL, MOSQ_LOG_NOTICE, "Dropping too large outgoing PUBLISH for %s (%d bytes)", mosq->id, packetlen);
+#else
+		log__printf(NULL, MOSQ_LOG_NOTICE, "Dropping too large outgoing PUBLISH (%d bytes)", packetlen);
+#endif
+		return MOSQ_ERR_OVERSIZE_PACKET;
+	}
+
 	packet = mosquitto__calloc(1, sizeof(struct mosquitto__packet));
 	if(!packet) return MOSQ_ERR_NOMEM;
 

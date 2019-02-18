@@ -186,6 +186,7 @@ struct mosquitto {
 	struct mosquitto__packet *out_packet;
 	struct mosquitto_message_all *will;
 	struct mosquitto__alias *aliases;
+	uint32_t maximum_packet_size;
 	int alias_count;
 #ifdef WITH_TLS
 	SSL *ssl;

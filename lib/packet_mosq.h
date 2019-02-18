@@ -27,6 +27,8 @@ int packet__alloc(struct mosquitto__packet *packet);
 void packet__cleanup(struct mosquitto__packet *packet);
 int packet__queue(struct mosquitto *mosq, struct mosquitto__packet *packet);
 
+int packet__check_oversize(struct mosquitto *mosq, uint32_t remaining_length);
+
 int packet__read_byte(struct mosquitto__packet *packet, uint8_t *byte);
 int packet__read_bytes(struct mosquitto__packet *packet, void *bytes, uint32_t count);
 int packet__read_binary(struct mosquitto__packet *packet, uint8_t **data, int *length);

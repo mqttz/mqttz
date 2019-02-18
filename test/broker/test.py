@@ -142,6 +142,8 @@ tests = [
 	(1, './12-prop-server-keepalive.py'),
     (1, './12-prop-response-topic.py'),
     (1, './12-prop-response-topic-correlation-data.py'),
+    (1, './12-prop-maximum-packet-size-connect.py'),
+    (1, './12-prop-maximum-packet-size-publish.py'),
     ]
 
 ptest.run_tests(tests)

@@ -175,3 +175,5 @@ endif
 	./12-prop-server-keepalive.py
 	./12-prop-response-topic.py
 	./12-prop-response-topic-correlation-data.py
+	./12-prop-maximum-packet-size-connect.py
+	./12-prop-maximum-packet-size-publish.py
