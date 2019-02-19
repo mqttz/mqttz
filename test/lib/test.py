@@ -41,6 +41,7 @@ tests = [
     (1, ['./08-ssl-connect-cert-auth.py', 'c/08-ssl-connect-cert-auth.test']),
     (1, ['./08-ssl-connect-no-auth.py', 'c/08-ssl-connect-no-auth.test']),
     (1, ['./09-util-topic-tokenise.py', 'c/09-util-topic-tokenise.test']),
+    (1, ['./11-prop-oversize-packet.py', 'c/11-prop-oversize-packet.test']),
     (1, ['./11-prop-send-payload-format.py', 'c/11-prop-send-payload-format.test']),
     (1, ['./11-prop-send-content-type.py', 'c/11-prop-send-content-type.test']),
 

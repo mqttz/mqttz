@@ -24,6 +24,7 @@ Contributors:
 #include "messages_mosq.h"
 #include "mqtt_protocol.h"
 #include "net_mosq.h"
+#include "packet_mosq.h"
 #include "send_mosq.h"
 #include "util_mosq.h"
 
@@ -43,6 +44,8 @@ int mosquitto_publish_v5(struct mosquitto *mosq, int *mid, const char *topic, in
 	mosquitto_property local_property;
 	bool have_topic_alias;
 	int rc;
+	int tlen = 0;
+	uint32_t remaining_length;
 
 	if(!mosq || qos<0 || qos>2) return MOSQ_ERR_INVAL;
 	if(mosq->protocol != mosq_p_mqtt5 && properties) return MOSQ_ERR_NOT_SUPPORTED;
@@ -81,10 +84,21 @@ int mosquitto_publish_v5(struct mosquitto *mosq, int *mid, const char *topic, in
 			return MOSQ_ERR_INVAL;
 		}
 	}else{
-		if(mosquitto_validate_utf8(topic, strlen(topic))) return MOSQ_ERR_MALFORMED_UTF8;
+		tlen = strlen(topic);
+		if(mosquitto_validate_utf8(topic, tlen)) return MOSQ_ERR_MALFORMED_UTF8;
 		if(payloadlen < 0 || payloadlen > MQTT_MAX_PAYLOAD) return MOSQ_ERR_PAYLOAD_SIZE;
 		if(mosquitto_pub_topic_check(topic) != MOSQ_ERR_SUCCESS){
 			return MOSQ_ERR_INVAL;
+		}
+	}
+
+	if(mosq->maximum_packet_size > 0){
+		remaining_length = 1 + 2+tlen + payloadlen + property__get_length_all(outgoing_properties);
+		if(qos > 0){
+			remaining_length++;
+		}
+		if(packet__check_oversize(mosq, remaining_length)){
+			return MOSQ_ERR_OVERSIZE_PACKET;
 		}
 	}
 
@@ -161,6 +175,8 @@ int mosquitto_subscribe_multiple(struct mosquitto *mosq, int *mid, int sub_count
 	mosquitto_property local_property;
 	int i;
 	int rc;
+	uint32_t remaining_length = 0;
+	int slen;
 
 	if(!mosq || !sub_count || !sub) return MOSQ_ERR_INVAL;
 	if(mosq->protocol != mosq_p_mqtt5 && properties) return MOSQ_ERR_NOT_SUPPORTED;
@@ -183,7 +199,16 @@ int mosquitto_subscribe_multiple(struct mosquitto *mosq, int *mid, int sub_count
 
 	for(i=0; i<sub_count; i++){
 		if(mosquitto_sub_topic_check(sub[i])) return MOSQ_ERR_INVAL;
-		if(mosquitto_validate_utf8(sub[i], strlen(sub[i]))) return MOSQ_ERR_MALFORMED_UTF8;
+		slen = strlen(sub[i]);
+		if(mosquitto_validate_utf8(sub[i], slen)) return MOSQ_ERR_MALFORMED_UTF8;
+		remaining_length += 2+slen + 1;
+	}
+
+	if(mosq->maximum_packet_size > 0){
+		remaining_length += 2 + property__get_length_all(outgoing_properties);
+		if(packet__check_oversize(mosq, remaining_length)){
+			return MOSQ_ERR_OVERSIZE_PACKET;
+		}
 	}
 
 	return send__subscribe(mosq, mid, sub_count, sub, qos|options, outgoing_properties);
@@ -206,6 +231,8 @@ int mosquitto_unsubscribe_multiple(struct mosquitto *mosq, int *mid, int sub_cou
 	mosquitto_property local_property;
 	int rc;
 	int i;
+	uint32_t remaining_length = 0;
+	int slen;
 
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(mosq->protocol != mosq_p_mqtt5 && properties) return MOSQ_ERR_NOT_SUPPORTED;
@@ -226,7 +253,16 @@ int mosquitto_unsubscribe_multiple(struct mosquitto *mosq, int *mid, int sub_cou
 
 	for(i=0; i<sub_count; i++){
 		if(mosquitto_sub_topic_check(sub[i])) return MOSQ_ERR_INVAL;
-		if(mosquitto_validate_utf8(sub[i], strlen(sub[i]))) return MOSQ_ERR_MALFORMED_UTF8;
+		slen = strlen(sub[i]);
+		if(mosquitto_validate_utf8(sub[i], slen)) return MOSQ_ERR_MALFORMED_UTF8;
+		remaining_length += 2+slen;
+	}
+
+	if(mosq->maximum_packet_size > 0){
+		remaining_length += 2 + property__get_length_all(outgoing_properties);
+		if(packet__check_oversize(mosq, remaining_length)){
+			return MOSQ_ERR_OVERSIZE_PACKET;
+		}
 	}
 
 	return send__unsubscribe(mosq, mid, sub_count, sub, outgoing_properties);

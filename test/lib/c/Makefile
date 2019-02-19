@@ -43,6 +43,7 @@ SRC = \
 	08-ssl-bad-cacert.c \
 	08-ssl-fake-cacert.c \
 	09-util-topic-tokenise.c \
+	11-prop-oversize-packet.c \
 	11-prop-send-payload-format.c \
 	11-prop-send-content-type.c
 

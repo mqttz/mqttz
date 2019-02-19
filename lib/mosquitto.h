@@ -743,6 +743,8 @@ libmosq_EXPORT int mosquitto_disconnect_v5(struct mosquitto *mosq, int reason_co
  * 	MOSQ_ERR_MALFORMED_UTF8 - if the topic is not valid UTF-8
  *	MOSQ_ERR_QOS_NOT_SUPPORTED - if the QoS is greater than that supported by
  *	                             the broker.
+ *	MOSQ_ERR_OVERSIZE_PACKET - if the resulting packet would be larger than
+ *	                           supported by the broker.
  *
  * See Also:
  *	<mosquitto_max_inflight_messages_set>
@@ -793,6 +795,8 @@ libmosq_EXPORT int mosquitto_publish(struct mosquitto *mosq, int *mid, const cha
  *	MOSQ_ERR_PROTOCOL - if any property is invalid for use with PUBLISH.
  *	MOSQ_ERR_QOS_NOT_SUPPORTED - if the QoS is greater than that supported by
  *	                             the broker.
+ *	MOSQ_ERR_OVERSIZE_PACKET - if the resulting packet would be larger than
+ *	                           supported by the broker.
  */
 libmosq_EXPORT int mosquitto_publish_v5(
 		struct mosquitto *mosq,
@@ -825,6 +829,8 @@ libmosq_EXPORT int mosquitto_publish_v5(
  * 	MOSQ_ERR_NOMEM -          if an out of memory condition occurred.
  * 	MOSQ_ERR_NO_CONN -        if the client isn't connected to a broker.
  * 	MOSQ_ERR_MALFORMED_UTF8 - if the topic is not valid UTF-8
+ *	MOSQ_ERR_OVERSIZE_PACKET - if the resulting packet would be larger than
+ *	                           supported by the broker.
  */
 libmosq_EXPORT int mosquitto_subscribe(struct mosquitto *mosq, int *mid, const char *sub, int qos);
 
@@ -882,6 +888,8 @@ libmosq_EXPORT int mosquitto_subscribe(struct mosquitto *mosq, int *mid, const c
  * 	MOSQ_ERR_MALFORMED_UTF8 - if the topic is not valid UTF-8
  *	MOSQ_ERR_DUPLICATE_PROPERTY - if a property is duplicated where it is forbidden.
  *	MOSQ_ERR_PROTOCOL - if any property is invalid for use with SUBSCRIBE.
+ *	MOSQ_ERR_OVERSIZE_PACKET - if the resulting packet would be larger than
+ *	                           supported by the broker.
  */
 libmosq_EXPORT int mosquitto_subscribe_v5(struct mosquitto *mosq, int *mid, const char *sub, int qos, int options, const mosquitto_property *properties);
 
@@ -936,6 +944,8 @@ libmosq_EXPORT int mosquitto_subscribe_v5(struct mosquitto *mosq, int *mid, cons
  * 	MOSQ_ERR_NOMEM -          if an out of memory condition occurred.
  * 	MOSQ_ERR_NO_CONN -        if the client isn't connected to a broker.
  * 	MOSQ_ERR_MALFORMED_UTF8 - if a topic is not valid UTF-8
+ *	MOSQ_ERR_OVERSIZE_PACKET - if the resulting packet would be larger than
+ *	                           supported by the broker.
  */
 int mosquitto_subscribe_multiple(struct mosquitto *mosq, int *mid, int sub_count, char *const *const sub, int qos, int options, const mosquitto_property *properties);
 
@@ -958,6 +968,8 @@ int mosquitto_subscribe_multiple(struct mosquitto *mosq, int *mid, int sub_count
  * 	MOSQ_ERR_NOMEM -          if an out of memory condition occurred.
  * 	MOSQ_ERR_NO_CONN -        if the client isn't connected to a broker.
  * 	MOSQ_ERR_MALFORMED_UTF8 - if the topic is not valid UTF-8
+ *	MOSQ_ERR_OVERSIZE_PACKET - if the resulting packet would be larger than
+ *	                           supported by the broker.
  */
 libmosq_EXPORT int mosquitto_unsubscribe(struct mosquitto *mosq, int *mid, const char *sub);
 
@@ -984,6 +996,8 @@ libmosq_EXPORT int mosquitto_unsubscribe(struct mosquitto *mosq, int *mid, const
  * 	MOSQ_ERR_MALFORMED_UTF8 - if the topic is not valid UTF-8
  *	MOSQ_ERR_DUPLICATE_PROPERTY - if a property is duplicated where it is forbidden.
  *	MOSQ_ERR_PROTOCOL - if any property is invalid for use with UNSUBSCRIBE.
+ *	MOSQ_ERR_OVERSIZE_PACKET - if the resulting packet would be larger than
+ *	                           supported by the broker.
  */
 libmosq_EXPORT int mosquitto_unsubscribe_v5(struct mosquitto *mosq, int *mid, const char *sub, const mosquitto_property *properties);
 
@@ -1013,6 +1027,8 @@ libmosq_EXPORT int mosquitto_unsubscribe_v5(struct mosquitto *mosq, int *mid, co
  * 	MOSQ_ERR_NOMEM -          if an out of memory condition occurred.
  * 	MOSQ_ERR_NO_CONN -        if the client isn't connected to a broker.
  * 	MOSQ_ERR_MALFORMED_UTF8 - if a topic is not valid UTF-8
+ *	MOSQ_ERR_OVERSIZE_PACKET - if the resulting packet would be larger than
+ *	                           supported by the broker.
  */
 int mosquitto_unsubscribe_multiple(struct mosquitto *mosq, int *mid, int sub_count, char *const *const sub, const mosquitto_property *properties);
 
