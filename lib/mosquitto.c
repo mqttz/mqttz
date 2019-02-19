@@ -361,6 +361,12 @@ const char *mosquitto_strerror(int mosq_errno)
 			return "Malformed UTF-8";
 		case MOSQ_ERR_DUPLICATE_PROPERTY:
 			return "Duplicate property in property list";
+		case MOSQ_ERR_TLS_HANDSHAKE:
+			return "TLS handshake failed.";
+		case MOSQ_ERR_QOS_NOT_SUPPORTED:
+			return "Requested QoS not supported on server.";
+		case MOSQ_ERR_OVERSIZE_PACKET:
+			return "Packet larger than supported by the server.";
 		default:
 			return "Unknown error.";
 	}
