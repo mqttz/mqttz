@@ -36,6 +36,7 @@ Contributors:
 #include "read_handle.h"
 #ifdef WITH_BROKER
 #  include "sys_tree.h"
+#  include "send_mosq.h"
 #else
 #  define G_BYTES_RECEIVED_INC(A)
 #  define G_BYTES_SENT_INC(A)
@@ -381,6 +382,17 @@ int packet__read(struct mosquitto *mosq)
 		 * positive. */
 		mosq->in_packet.remaining_count *= -1;
 
+#ifdef WITH_BROKER
+		if(db->config->max_packet_size > 0 && mosq->in_packet.remaining_length+1 > db->config->max_packet_size){
+			log__printf(NULL, MOSQ_LOG_INFO, "Client %s sent too large packet %d, disconnecting.", mosq->id, mosq->in_packet.remaining_length+1);
+			if(mosq->protocol == mosq_p_mqtt5){
+				send__disconnect(mosq, MQTT_RC_PACKET_TOO_LARGE, NULL);
+			}
+			return MOSQ_ERR_OVERSIZE_PACKET;
+		}
+#else
+		// FIXME - client case for incoming message received from broker too large
+#endif
 		if(mosq->in_packet.remaining_length > 0){
 			mosq->in_packet.payload = mosquitto__malloc(mosq->in_packet.remaining_length*sizeof(uint8_t));
 			if(!mosq->in_packet.payload){

@@ -214,6 +214,7 @@ static void config__init_reload(struct mosquitto_db *db, struct mosquitto__confi
 #endif
 	config->log_timestamp = true;
 	config->max_keepalive = 65535;
+	config->max_packet_size = 0;
 	config->max_inflight_messages = 20;
 	config->persistence = false;
 	mosquitto__free(config->persistence_location);
@@ -1503,6 +1504,13 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						return MOSQ_ERR_INVAL;
 					}
 					config->max_keepalive = tmp_int;
+				}else if(!strcmp(token, "max_packet_size")){
+					if(conf__parse_int(&token, "max_packet_size", &tmp_int, saveptr)) return MOSQ_ERR_INVAL;
+					if(tmp_int < 20){
+						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid max_packet_size value (%d).", tmp_int);
+						return MOSQ_ERR_INVAL;
+					}
+					config->max_packet_size = tmp_int;
 				}else if(!strcmp(token, "max_queued_bytes")){
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){

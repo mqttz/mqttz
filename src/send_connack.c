@@ -54,6 +54,14 @@ int send__connack(struct mosquitto_db *db, struct mosquitto *context, int ack, i
 				return rc;
 			}
 		}
+		if(db->config->max_packet_size > 0){
+			rc = mosquitto_property_add_int32(&connack_props, MQTT_PROP_MAXIMUM_PACKET_SIZE, db->config->max_packet_size);
+			if(rc){
+				mosquitto_property_free_all(&connack_props);
+				return rc;
+			}
+		}
+
 		/* FIXME - disable support until available */
 		rc = mosquitto_property_add_byte(&connack_props, MQTT_PROP_SHARED_SUB_AVAILABLE, 0);
 		if(rc){
