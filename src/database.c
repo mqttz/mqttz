@@ -898,7 +898,7 @@ int db__message_release(struct mosquitto_db *db, struct mosquitto *context, uint
 int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 {
 	int rc;
-	struct mosquitto_client_msg *tail, *last = NULL;
+	struct mosquitto_client_msg *tail, *last = NULL, *tmp;
 	uint16_t mid;
 	int retries;
 	int retain;
@@ -959,13 +959,16 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 					tail->timestamp = mosquitto_time();
 					tail->dup = 1; /* Any retry attempts are a duplicate. */
 					tail->state = mosq_ms_wait_for_puback;
+
+					last = tail;
+					tail = tail->next;
 				}else if(rc == MOSQ_ERR_OVERSIZE_PACKET){
+					tmp = tail->next;
 					db__message_remove(db, context, &tail, last);
+					tail = tmp;
 				}else{
 					return rc;
 				}
-				last = tail;
-				tail = tail->next;
 				break;
 
 			case mosq_ms_publish_qos2:
@@ -974,13 +977,16 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 					tail->timestamp = mosquitto_time();
 					tail->dup = 1; /* Any retry attempts are a duplicate. */
 					tail->state = mosq_ms_wait_for_pubrec;
+
+					last = tail;
+					tail = tail->next;
 				}else if(rc == MOSQ_ERR_OVERSIZE_PACKET){
+					tmp = tail->next;
 					db__message_remove(db, context, &tail, last);
+					tail = tmp;
 				}else{
 					return rc;
 				}
-				last = tail;
-				tail = tail->next;
 				break;
 
 			case mosq_ms_send_pubrec:

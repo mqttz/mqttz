@@ -145,6 +145,8 @@ tests = [
     (1, './12-prop-maximum-packet-size-broker.py'),
     (1, './12-prop-maximum-packet-size-connect.py'),
     (1, './12-prop-maximum-packet-size-publish.py'),
+    (1, './12-prop-maximum-packet-size-publish-qos1.py'),
+    (1, './12-prop-maximum-packet-size-publish-qos2.py'),
     ]
 
 ptest.run_tests(tests)

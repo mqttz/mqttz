@@ -178,3 +178,5 @@ endif
 	./12-prop-maximum-packet-size-broker.py
 	./12-prop-maximum-packet-size-connect.py
 	./12-prop-maximum-packet-size-publish.py
+	./12-prop-maximum-packet-size-publish-qos1.py
+	./12-prop-maximum-packet-size-publish-qos2.py
