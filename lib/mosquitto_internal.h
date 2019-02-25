@@ -195,6 +195,8 @@ struct mosquitto {
 	struct mosquitto__alias *aliases;
 	uint32_t maximum_packet_size;
 	int alias_count;
+	uint32_t will_delay_interval;
+	time_t will_delay_time;
 #ifdef WITH_TLS
 	SSL *ssl;
 	SSL_CTX *ssl_ctx;

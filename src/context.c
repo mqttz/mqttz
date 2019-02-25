@@ -218,6 +218,11 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 void context__send_will(struct mosquitto_db *db, struct mosquitto *ctxt)
 {
 	if(ctxt->state != mosq_cs_disconnecting && ctxt->will){
+		if(ctxt->will_delay_interval > 0){
+			will_delay__add(ctxt);
+			return;
+		}
+
 		if(mosquitto_acl_check(db, ctxt,
 					ctxt->will->msg.topic,
 					ctxt->will->msg.payloadlen,

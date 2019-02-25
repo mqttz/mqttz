@@ -295,6 +295,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 		topic = stored->topic;
 		dup = 1;
 		mosquitto_property_free_all(&msg_properties);
+		UHPA_FREE(payload, payloadlen);
 	}
 
 	switch(qos){

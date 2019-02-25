@@ -384,9 +384,13 @@ int main(int argc, char *argv[])
 	}
 #endif
 
+	/* FIXME - this isn't quite right, all wills with will delay zero should be
+	 * sent now, but those with positive will delay should be persisted and
+	 * restored, pending the client reconnecting in time. */
 	HASH_ITER(hh_id, int_db.contexts_by_id, ctxt, ctxt_tmp){
 		context__send_will(&int_db, ctxt);
 	}
+	will_delay__send_all(&int_db);
 
 #ifdef WITH_PERSISTENCE
 	if(config.persistence){

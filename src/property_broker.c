@@ -54,6 +54,62 @@ int property__process_connect(struct mosquitto *context, mosquitto_property *pro
 	return MOSQ_ERR_SUCCESS;
 }
 
+
+int property__process_will(struct mosquitto *context, struct mosquitto_message_all *msg, mosquitto_property *props)
+{
+	mosquitto_property *p, *p_prev;
+	mosquitto_property *msg_properties, *msg_properties_last;
+
+	p = props;
+	p_prev = NULL;
+	msg_properties = NULL;
+	msg_properties_last = NULL;
+	while(p){
+		switch(p->identifier){
+			case MQTT_PROP_CONTENT_TYPE:
+			case MQTT_PROP_CORRELATION_DATA:
+			case MQTT_PROP_PAYLOAD_FORMAT_INDICATOR:
+			case MQTT_PROP_RESPONSE_TOPIC:
+				if(msg_properties){
+					msg_properties_last->next = p;
+					msg_properties_last = p;
+				}else{
+					msg_properties = p;
+					msg_properties_last = p;
+				}
+				if(p_prev){
+					p_prev->next = p->next;
+					p = p_prev->next;
+				}else{
+					props = p->next;
+					p = props;
+				}
+				msg_properties_last->next = NULL;
+				break;
+
+			case MQTT_PROP_WILL_DELAY_INTERVAL:
+				context->will_delay_interval = p->value.i32;
+				p_prev = p;
+				p = p->next;
+				break;
+
+			case MQTT_PROP_MESSAGE_EXPIRY_INTERVAL:
+				msg->expiry_interval = p->value.i32;
+				p_prev = p;
+				p = p->next;
+				break;
+
+			default:
+				return MOSQ_ERR_PROTOCOL;
+				break;
+		}
+	}
+
+	msg->properties = msg_properties;
+	return MOSQ_ERR_SUCCESS;
+}
+
+
 /* Process the incoming properties, we should be able to assume that only valid
  * properties for DISCONNECT are present here. */
 int property__process_disconnect(struct mosquitto *context, mosquitto_property *props)

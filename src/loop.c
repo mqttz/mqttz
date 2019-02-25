@@ -555,6 +555,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 			}
 		}
 #endif
+		will_delay__check(db, time(NULL));
 #ifdef WITH_PERSISTENCE
 		if(db->config->persistence && db->config->autosave_interval){
 			if(db->config->autosave_on_changes){
@@ -673,11 +674,14 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 #else
 		if(context->clean_start){
 #endif
-			context__add_to_disused(db, context);
-			if(context->id){
-				context__remove_from_by_id(db, context);
-				mosquitto__free(context->id);
-				context->id = NULL;
+			if(context->will_delay_interval == 0){
+				/* This will be done later, after the will is published */
+				context__add_to_disused(db, context);
+				if(context->id){
+					context__remove_from_by_id(db, context);
+					mosquitto__free(context->id);
+					context->id = NULL;
+				}
 			}
 		}
 		context->state = mosq_cs_disconnected;

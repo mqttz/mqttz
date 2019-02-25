@@ -128,6 +128,9 @@ endif
 	./07-will-null-topic.py
 	./07-will-invalid-utf8.py
 	./07-will-no-flag.py
+	./07-will-delay.py
+	./07-will-delay-recover.py
+	./07-will-delay-reconnect.py
 
 08 :
 ifeq ($(WITH_TLS),yes)

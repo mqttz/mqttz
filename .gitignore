@@ -37,6 +37,8 @@ man/mosquitto_pub.1
 man/mosquitto_sub.1
 man/mqtt.7
 
+out/
+
 src/db_dump/mosquitto_db_dump
 src/mosquitto
 src/mosquitto_passwd

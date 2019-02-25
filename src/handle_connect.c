@@ -165,6 +165,7 @@ static int will__read(struct mosquitto *context, struct mosquitto_message_all **
 	struct mosquitto_message_all *will_struct = NULL;
 	char *will_topic_mount = NULL;
 	uint16_t payloadlen;
+	mosquitto_property *properties = NULL;
 
 	will_struct = mosquitto__calloc(1, sizeof(struct mosquitto_message_all));
 	if(!will_struct){
@@ -172,11 +173,12 @@ static int will__read(struct mosquitto *context, struct mosquitto_message_all **
 		goto error_cleanup;
 	}
 	if(context->protocol == PROTOCOL_VERSION_v5){
-		rc = property__read_all(CMD_WILL, &context->in_packet, &will_struct->properties);
+		rc = property__read_all(CMD_WILL, &context->in_packet, &properties);
 		if(rc) goto error_cleanup;
 
-		mosquitto_property_read_int32(will_struct->properties, MQTT_PROP_MESSAGE_EXPIRY_INTERVAL, &will_struct->expiry_interval, false);
-		mosquitto_property_free_all(&will_struct->properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
+		rc = property__process_will(context, will_struct, properties);
+		mosquitto_property_free_all(&properties);
+		if(rc) goto error_cleanup;
 	}
 	rc = packet__read_string(&context->in_packet, &will_struct->msg.topic, &slen);
 	if(rc) goto error_cleanup;
@@ -228,6 +230,7 @@ error_cleanup:
 	if(will_struct){
 		mosquitto__free(will_struct->msg.topic);
 		mosquitto__free(will_struct->msg.payload);
+		mosquitto_property_free_all(&will_struct->properties);
 		mosquitto__free(will_struct);
 	}
 	return rc;

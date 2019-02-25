@@ -26,7 +26,7 @@ def start_broker(filename, cmd=None, port=0, use_conf=False, expect_fail=False):
             port = 1888
             
     if os.environ.get('MOSQ_USE_VALGRIND') is not None:
-        cmd = ['valgrind', '--trace-children=yes', '--leak-check=full', '--show-leak-kinds=all', '--log-file='+filename+'.vglog'] + cmd
+        cmd = ['valgrind', '-q', '--trace-children=yes', '--leak-check=full', '--show-leak-kinds=all', '--log-file='+filename+'.vglog'] + cmd
         delay = 1
 
     #print(port)
