@@ -502,14 +502,14 @@ int net__socket_listen(struct mosquitto__listener *listener)
 			}
 			if(listener->tls_keyform == mosq_k_engine){
 				UI_METHOD *ui_method = net__get_ui_method();
-				if(listener->tls_engine_kpass_sha){
+				if(listener->tls_engine_kpass_sha1){
 					if(!ENGINE_ctrl_cmd(engine, ENGINE_SECRET_MODE, ENGINE_SECRET_MODE_SHA, NULL, NULL, 0)){
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set engine secret mode sha");
 						COMPAT_CLOSE(sock);
 						ENGINE_FINISH(engine);
 						return 1;
 					}
-					if(!ENGINE_ctrl_cmd(engine, ENGINE_PIN, 0, listener->tls_engine_kpass_sha, NULL, 0)){
+					if(!ENGINE_ctrl_cmd(engine, ENGINE_PIN, 0, listener->tls_engine_kpass_sha1, NULL, 0)){
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set engine pin");
 						COMPAT_CLOSE(sock);
 						ENGINE_FINISH(engine);

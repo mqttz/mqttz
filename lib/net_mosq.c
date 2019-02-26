@@ -126,7 +126,6 @@ int net__init(void)
 	SSL_load_error_strings();
 	SSL_library_init();
 	OpenSSL_add_all_algorithms();
-	OPENSSL_config(NULL);
 	ENGINE_load_builtin_engines();
 	setup_ui_method();
 	if(tls_ex_index_mosq == -1){
@@ -616,15 +615,15 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 			if(mosq->tls_keyfile){
 				if(mosq->tls_keyform == mosq_k_engine){
 					UI_METHOD *ui_method = net__get_ui_method();
-					if(mosq->tls_engine_kpass_sha){
+					if(mosq->tls_engine_kpass_sha1){
 						if(!ENGINE_ctrl_cmd(engine, ENGINE_SECRET_MODE, ENGINE_SECRET_MODE_SHA, NULL, NULL, 0)){
-							log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to set engine secret mode sha");
+							log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to set engine secret mode sha1");
 							ENGINE_FINISH(engine);
 							COMPAT_CLOSE(mosq->sock);
 							net__print_ssl_error(mosq);
 							return MOSQ_ERR_TLS;
 						}
-						if(!ENGINE_ctrl_cmd(engine, ENGINE_PIN, 0, mosq->tls_engine_kpass_sha, NULL, 0)){
+						if(!ENGINE_ctrl_cmd(engine, ENGINE_PIN, 0, mosq->tls_engine_kpass_sha1, NULL, 0)){
 							log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to set engine pin");
 							ENGINE_FINISH(engine);
 							COMPAT_CLOSE(mosq->sock);

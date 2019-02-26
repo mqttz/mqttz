@@ -225,16 +225,16 @@ struct mosquitto__listener {
 	char *certfile;
 	char *keyfile;
 	char *tls_engine;
-	enum _mosquitto_keyform tls_keyform;
-	char *tls_engine_kpass_sha;
+	char *tls_engine_kpass_sha1;
 	char *ciphers;
 	char *psk_hint;
 	SSL_CTX *ssl_ctx;
 	char *crlfile;
+	char *tls_version;
 	bool use_identity_as_username;
 	bool use_subject_as_username;
 	bool require_certificate;
-	char *tls_version;
+	enum mosquitto__keyform tls_keyform;
 #endif
 #ifdef WITH_WEBSOCKETS
 	struct libwebsocket_context *ws_context;

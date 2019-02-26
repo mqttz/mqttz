@@ -351,17 +351,16 @@ int mosquitto__hex2bin_sha1(const char *hex, unsigned char **bin)
 {
 	unsigned char *sha, tmp[SHA_DIGEST_LENGTH];
 
-	if(mosquitto__hex2bin(hex, tmp, SHA_DIGEST_LENGTH) != SHA_DIGEST_LENGTH)
+	if(mosquitto__hex2bin(hex, tmp, SHA_DIGEST_LENGTH) != SHA_DIGEST_LENGTH){
 		return MOSQ_ERR_INVAL;
+	}
 
 	sha = mosquitto__malloc(SHA_DIGEST_LENGTH);
 	memcpy(sha, tmp, SHA_DIGEST_LENGTH);
 	*bin = sha;
 	return MOSQ_ERR_SUCCESS;
 }
-#endif
 
-#if defined(WITH_TLS_PSK) || defined(WITH_TLS)
 int mosquitto__hex2bin(const char *hex, unsigned char *bin, int bin_max_len)
 {
 	BIGNUM *bn = NULL;

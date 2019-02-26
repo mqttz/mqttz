@@ -895,33 +895,6 @@
 					</listitem>
 				</varlistentry>
 				<varlistentry>
-					<term><option>tls_engine</option> <replaceable>engine</replaceable></term>
-					<listitem>
-						<para>A valid openssl engine id. These can be listed with
-						openssl engine command.</para>
-					</listitem>
-				</varlistentry>
-				<varlistentry>
-					<term><option>tls_keyform</option> [ pem | engine ]</term>
-					<listitem>
-						<para>Specifies the type of key in use. This could be pem or
-						engine. This parameter is useful for example when a TPM
-						module is being used and the key has been created with
-						it. If not specified, pem keys are assumed</para>
-					</listitem>
-				</varlistentry>
-				<varlistentry>
-					<term><option>tls_engine_kpass_sha</option> <replaceable>engine_kpass_sha</replaceable></term>
-					<listitem>
-						<para>SHA1 of private key password when using an SSL engine.
-						Some SSL engines may require the usage of a password
-						in order to being accessed, like the TPM engine. Instead
-						of being prompted for the password, this option allows
-						a SHA1 hash of the password to be passed on to the
-						engine directly, without user interaction.</para>
-					</listitem>
-				</varlistentry>
-				<varlistentry>
 					<term><option>crlfile</option> <replaceable>file path</replaceable></term>
 					<listitem>
 						<para>If you have <option>require_certificate</option>
@@ -953,6 +926,36 @@
 							network connection to proceed. This allows access
 							to the broker to be controlled outside of the
 							mechanisms provided by MQTT.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>tls_engine</option> <replaceable>engine</replaceable></term>
+					<listitem>
+						<para>A valid openssl engine id. These can be listed with
+						openssl engine command.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>tls_engine_kpass_sha1</option> <replaceable>engine_kpass_sha1</replaceable></term>
+					<listitem>
+						<para>SHA1 of the private key password when using an
+							TLS engine.  Some TLS engines such as the TPM
+							engine may require the use of a password in order
+							to be accessed.  This option allows a hex encoded
+							SHA1 hash of the password to the engine directly,
+							instead of the user being prompted for the
+							password.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>tls_keyform</option> [ pem | engine ]</term>
+					<listitem>
+						<para>Specifies the type of private key in use when
+							making TLS connections.. This can be "pem" or
+							"engine". This parameter is useful when a TPM
+							module is being used and the private key has been
+							created with it. Defaults to "pem", which means
+							normal private key files are used.</para>
 					</listitem>
 				</varlistentry>
 				<varlistentry>

@@ -94,7 +94,12 @@ enum mosq_opt_t {
 	MOSQ_OPT_PROTOCOL_VERSION = 1,
 	MOSQ_OPT_SSL_CTX = 2,
 	MOSQ_OPT_SSL_CTX_WITH_DEFAULTS = 3,
+
+	MOSQ_OPT_TLS_KEYFORM = 6,
+	MOSQ_OPT_TLS_ENGINE = 7,
+	MOSQ_OPT_TLS_ENGINE_KPASS_SHA1 = 8,
 };
+
 
 /* MQTT specification restricts client ids to a maximum of 23 characters */
 #define MOSQ_MQTT_ID_MAX_LENGTH 23
@@ -1161,65 +1166,6 @@ libmosq_EXPORT int mosquitto_tls_opts_set(struct mosquitto *mosq, int cert_reqs,
 libmosq_EXPORT int mosquitto_tls_psk_set(struct mosquitto *mosq, const char *psk, const char *identity, const char *ciphers);
 
 /*
- * Function: mosquitto_tls_engine_set
- *
- * Configure the client for TLS engine support. Must be called
- * before <mosquitto_connect>.
- *
- * Parameters:
- *  mosq -       a valid mosquitto instance.
- *  engine_id - the engine ID that wants to be used.
- *
- * Returns:
- *  MOSQ_ERR_SUCCESS - on success.
- *  MOSQ_ERR_INVAL -   if the input parameters were invalid.
- *
- * See Also:
- * <mosquitto_tls_set>
- */
-libmosq_EXPORT int mosquitto_tls_engine_set(struct mosquitto *mosq, const char *engine_id);
-
-/*
- * Function: mosquitto_tls_keyform_set
- *
- * Configure the client to treat the keyfile differently depending on its type.
- * Must be called before <mosquitto_connect>.
- *
- * Parameters:
- *  mosq -    a valid mosquitto instance.
- *  keyform - the key type. Currently only "pem" or "engine" are supported.
- *
- * Returns:
- *  MOSQ_ERR_SUCCESS - on success.
- *  MOSQ_ERR_INVAL -   if the input parameters were invalid.
- *
- * See Also:
- * <mosquitto_tls_set>
- */
-libmosq_EXPORT int mosquitto_tls_keyform_set(struct mosquitto *mosq, const char *keyform);
-
-/*
- * Function: mosquitto_tls_engine_kpass_sha_set
- *
- * Some SSL engines may require the usage of a password in order to being
- * accessed, like the TPM engine. This function allows a SHA1 hash of the
- * password to be passed on to the engine directly.
- * Must be called before <mosquitto_connect>.
- *
- * Parameters:
- *  mosq -      a valid mosquitto instance.
- *  kpass_sha - SHA1 of the private key password.
- *
- * Returns:
- *  MOSQ_ERR_SUCCESS - on success.
- *  MOSQ_ERR_INVAL -   if the input parameters were invalid.
- *
- * See Also:
- * <mosquitto_tls_set>
- */
-libmosq_EXPORT int mosquitto_tls_engine_kpass_sha_set(struct mosquitto *mosq, const char *kpass_sha);
-
-/*
  * Function: mosquitto_connect_callback_set
  *
  * Set the connect callback. This is called when the broker sends a CONNACK
@@ -1390,6 +1336,37 @@ libmosq_EXPORT void mosquitto_unsubscribe_callback_set(struct mosquitto *mosq, v
  *	str -   the message string.
  */
 libmosq_EXPORT void mosquitto_log_callback_set(struct mosquitto *mosq, void (*on_log)(struct mosquitto *, void *, int, const char *));
+
+
+/*
+ * Function: mosquitto_string_option
+ *
+ * Used to set const char* options for the client.
+ *
+ * Parameters:
+ *	mosq -   a valid mosquitto instance.
+ *	option - the option to set.
+ *	value -  the option specific value.
+ *
+ * Options:
+ *	MOSQ_OPT_TLS_ENGINE
+ *	          Configure the client for TLS Engine support. Pass a TLS Engine ID
+ *	          to be used when creating TLS connections.
+ *	          Must be set before <mosquitto_connect>.
+ *	MOSQ_OPT_TLS_KEYFORM
+ *            Configure the client to treat the keyfile differently depending
+ *            on its type.  Must be set before <mosquitto_connect>.
+ *	          Set as either "pem" or "engine", to determine from where the
+ *	          private key for a TLS connection will be obtained. Defaults to
+ *	          "pem", a normal private key file.
+ *	MOSQ_OPT_TLS_KPASS_SHA1
+ *	          Where the TLS Engine requires the use of a password to be
+ *	          accessed, this option allows a hex encoded SHA1 hash of the
+ *	          private key password to be passed to the engine directly.
+ *	          Must be set before <mosquitto_connect>.
+ */
+libmosq_EXPORT int mosquitto_string_option(struct mosquitto *mosq, enum mosq_opt_t option, const char *value);
+
 
 /*
  * Function: mosquitto_reconnect_delay_set

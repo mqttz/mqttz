@@ -154,7 +154,7 @@ struct mosquitto_message_all{
 };
 
 #ifdef WITH_TLS
-enum _mosquitto_keyform {
+enum mosquitto__keyform {
 	mosq_k_pem = 0,
 	mosq_k_engine = 1,
 };
@@ -199,8 +199,8 @@ struct mosquitto {
 	bool tls_insecure;
 	bool ssl_ctx_defaults;
 	char *tls_engine;
-	char *tls_engine_kpass_sha;
-	enum _mosquitto_keyform tls_keyform;
+	char *tls_engine_kpass_sha1;
+	enum mosquitto__keyform tls_keyform;
 #endif
 	bool want_write;
 	bool want_connect;
