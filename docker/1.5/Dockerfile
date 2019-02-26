@@ -3,8 +3,8 @@ FROM alpine:3.8
 LABEL maintainer="Roger Light <roger@atchoo.org>" \
     description="Eclipse Mosquitto MQTT Broker"
 
-ENV VERSION=1.5.4 \
-    DOWNLOAD_SHA256=5fd7f3454fd6d286645d032bc07f44a1c8583cec02ef2422c9eb32e0a89a9b2f \
+ENV VERSION=1.5.6 \
+    DOWNLOAD_SHA256=d5bdc13cc668350026376d57fc14de10aaee029f6840707677637d15e0751a40 \
     GPG_KEYS=A0D6EEA1DCAE49A635A3B2F0779B22DFB3E717B7 \
     LWS_VERSION=2.4.2
 
@@ -67,8 +67,8 @@ RUN set -x && \
         WITH_WEBSOCKETS=yes \
         prefix=/usr \
         binary && \
-    addgroup -S mosquitto 2>/dev/null && \
-    adduser -S -D -H -h /var/empty -s /sbin/nologin -G mosquitto -g mosquitto mosquitto 2>/dev/null && \
+    addgroup -S -g 1883 mosquitto 2>/dev/null && \
+    adduser -S -u 1883 -D -H -h /var/empty -s /sbin/nologin -G mosquitto -g mosquitto mosquitto 2>/dev/null && \
     mkdir -p /mosquitto/config /mosquitto/data /mosquitto/log && \
     install -d /usr/sbin/ && \
     install -s -m755 /build/mosq/src/mosquitto /usr/sbin/mosquitto && \

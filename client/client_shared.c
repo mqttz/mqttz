@@ -32,9 +32,12 @@ Contributors:
 #endif
 
 #include <mosquitto.h>
+#include <mqtt_protocol.h>
 #include "client_shared.h"
 
+#ifdef WITH_SOCKS
 static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url);
+#endif
 static int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, char *argv[]);
 
 
@@ -154,7 +157,7 @@ void client_config_cleanup(struct mosq_config *cfg)
 	free(cfg->tls_engine);
 	free(cfg->tls_engine_kpass_sha1);
 	free(cfg->keyform);
-#  ifdef WITH_TLS_PSK
+#  ifdef FINAL_WITH_TLS_PSK
 	free(cfg->psk);
 	free(cfg->psk_identity);
 #  endif
@@ -182,6 +185,12 @@ void client_config_cleanup(struct mosq_config *cfg)
 	free(cfg->socks5_username);
 	free(cfg->socks5_password);
 #endif
+	mosquitto_property_free_all(&cfg->connect_props);
+	mosquitto_property_free_all(&cfg->publish_props);
+	mosquitto_property_free_all(&cfg->subscribe_props);
+	mosquitto_property_free_all(&cfg->unsubscribe_props);
+	mosquitto_property_free_all(&cfg->disconnect_props);
+	mosquitto_property_free_all(&cfg->will_props);
 }
 
 int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *argv[])
@@ -320,7 +329,7 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 		return 1;
 	}
 #endif
-#ifdef WITH_TLS_PSK
+#ifdef FINAL_WITH_TLS_PSK
 	if((cfg->cafile || cfg->capath) && cfg->psk){
 		if(!cfg->quiet) fprintf(stderr, "Error: Only one of --psk or --cafile/--capath may be used at once.\n");
 		return 1;
@@ -344,8 +353,44 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 	}
 
 	if(!cfg->host){
-		cfg->host = "localhost";
+		cfg->host = strdup("localhost");
+		if(!cfg->host){
+			if(!cfg->quiet) fprintf(stderr, "Error: Out of memory.\n");
+			return 1;
+		}
 	}
+
+	rc = mosquitto_property_check_all(CMD_CONNECT, cfg->connect_props);
+	if(rc){
+		if(!cfg->quiet) fprintf(stderr, "Error in CONNECT properties: %s\n", mosquitto_strerror(rc));
+		return 1;
+	}
+	rc = mosquitto_property_check_all(CMD_PUBLISH, cfg->publish_props);
+	if(rc){
+		if(!cfg->quiet) fprintf(stderr, "Error in PUBLISH properties: %s\n", mosquitto_strerror(rc));
+		return 1;
+	}
+	rc = mosquitto_property_check_all(CMD_SUBSCRIBE, cfg->subscribe_props);
+	if(rc){
+		if(!cfg->quiet) fprintf(stderr, "Error in SUBSCRIBE properties: %s\n", mosquitto_strerror(rc));
+		return 1;
+	}
+	rc = mosquitto_property_check_all(CMD_UNSUBSCRIBE, cfg->unsubscribe_props);
+	if(rc){
+		if(!cfg->quiet) fprintf(stderr, "Error in UNSUBSCRIBE properties: %s\n", mosquitto_strerror(rc));
+		return 1;
+	}
+	rc = mosquitto_property_check_all(CMD_DISCONNECT, cfg->disconnect_props);
+	if(rc){
+		if(!cfg->quiet) fprintf(stderr, "Error in DISCONNECT properties: %s\n", mosquitto_strerror(rc));
+		return 1;
+	}
+	rc = mosquitto_property_check_all(CMD_WILL, cfg->will_props);
+	if(rc){
+		if(!cfg->quiet) fprintf(stderr, "Error in Will properties: %s\n", mosquitto_strerror(rc));
+		return 1;
+	}
+
 	return MOSQ_ERR_SUCCESS;
 }
 
@@ -487,6 +532,12 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 			}
 		}else if(!strcmp(argv[i], "-d") || !strcmp(argv[i], "--debug")){
 			cfg->debug = true;
+		}else if(!strcmp(argv[i], "-D") || !strcmp(argv[i], "--property")){
+			i++;
+			if(cfg_parse_property(cfg, argc, argv, &i)){
+				return 1;
+			}
+			cfg->protocol_version = MQTT_PROTOCOL_V5;
 		}else if(!strcmp(argv[i], "-f") || !strcmp(argv[i], "--file")){
 			if(pub_or_sub == CLIENT_SUB){
 				goto unknown_option;
@@ -686,15 +737,22 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 			}else{
 				cfg->pub_mode = MSGMODE_NULL;
 			}
+		}else if(!strcmp(argv[i], "--retain-as-published")){
+			if(pub_or_sub == CLIENT_PUB){
+				goto unknown_option;
+			}
+			cfg->sub_opts |= MQTT_SUB_OPT_RETAIN_AS_PUBLISHED;
 		}else if(!strcmp(argv[i], "-V") || !strcmp(argv[i], "--protocol-version")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: --protocol-version argument given but no version specified.\n\n");
 				return 1;
 			}else{
-				if(!strcmp(argv[i+1], "mqttv31")){
+				if(!strcmp(argv[i+1], "mqttv31") || !strcmp(argv[i+1], "31")){
 					cfg->protocol_version = MQTT_PROTOCOL_V31;
-				}else if(!strcmp(argv[i+1], "mqttv311")){
+				}else if(!strcmp(argv[i+1], "mqttv311") || !strcmp(argv[i+1], "311")){
 					cfg->protocol_version = MQTT_PROTOCOL_V311;
+				}else if(!strcmp(argv[i+1], "mqttv5") || !strcmp(argv[i+1], "5")){
+					cfg->protocol_version = MQTT_PROTOCOL_V5;
 				}else{
 					fprintf(stderr, "Error: Invalid protocol version argument given.\n\n");
 					return 1;
@@ -713,7 +771,7 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				i++;
 			}
 #endif
-#ifdef WITH_TLS_PSK
+#ifdef FINAL_WITH_TLS_PSK
 		}else if(!strcmp(argv[i], "--psk")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: --psk argument given but no key specified.\n\n");
@@ -924,16 +982,22 @@ unknown_option:
 
 int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 {
+#ifdef WITH_SOCKS
 	int rc;
+#endif
 
-	if(cfg->will_topic && mosquitto_will_set(mosq, cfg->will_topic,
+	mosquitto_int_option(mosq, MOSQ_OPT_PROTOCOL_VERSION, cfg->protocol_version);
+
+	if(cfg->will_topic && mosquitto_will_set_v5(mosq, cfg->will_topic,
 				cfg->will_payloadlen, cfg->will_payload, cfg->will_qos,
-				cfg->will_retain)){
+				cfg->will_retain, cfg->will_props)){
 
 		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting will.\n");
 		mosquitto_lib_cleanup();
 		return 1;
 	}
+	cfg->will_props = NULL;
+
 	if(cfg->username && mosquitto_username_pw_set(mosq, cfg->username, cfg->password)){
 		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting username and password.\n");
 		mosquitto_lib_cleanup();
@@ -967,7 +1031,7 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 		mosquitto_lib_cleanup();
 		return 1;
 	}
-#  ifdef WITH_TLS_PSK
+#  ifdef FINAL_WITH_TLS_PSK
 	if(cfg->psk && mosquitto_tls_psk_set(mosq, cfg->psk, cfg->psk_identity, NULL)){
 		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting TLS-PSK options.\n");
 		mosquitto_lib_cleanup();
@@ -990,7 +1054,6 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 		}
 	}
 #endif
-	mosquitto_opts_set(mosq, MOSQ_OPT_PROTOCOL_VERSION, &(cfg->protocol_version));
 	return MOSQ_ERR_SUCCESS;
 }
 
@@ -1007,7 +1070,7 @@ int client_id_generate(struct mosq_config *cfg, const char *id_base)
 			return 1;
 		}
 		snprintf(cfg->id, strlen(cfg->id_prefix)+10, "%s%d", cfg->id_prefix, getpid());
-	}else if(!cfg->id){
+	}else if(!cfg->id && (cfg->protocol_version == MQTT_PROTOCOL_V31 || cfg->protocol_version == MQTT_PROTOCOL_V311)){
 		hostname[0] = '\0';
 		gethostname(hostname, 256);
 		hostname[255] = '\0';
@@ -1040,7 +1103,7 @@ int client_connect(struct mosquitto *mosq, struct mosq_config *cfg)
 	if(cfg->port < 0){
 #ifdef WITH_TLS
 		if(cfg->cafile || cfg->capath
-#  ifdef WITH_TLS_PSK
+#  ifdef FINAL_WITH_TLS_PSK
 				|| cfg->psk
 #  endif
 				){
@@ -1058,10 +1121,10 @@ int client_connect(struct mosquitto *mosq, struct mosq_config *cfg)
 	if(cfg->use_srv){
 		rc = mosquitto_connect_srv(mosq, cfg->host, cfg->keepalive, cfg->bind_address);
 	}else{
-		rc = mosquitto_connect_bind(mosq, cfg->host, port, cfg->keepalive, cfg->bind_address);
+		rc = mosquitto_connect_bind_v5(mosq, cfg->host, port, cfg->keepalive, cfg->bind_address, cfg->connect_props);
 	}
 #else
-	rc = mosquitto_connect_bind(mosq, cfg->host, port, cfg->keepalive, cfg->bind_address);
+	rc = mosquitto_connect_bind_v5(mosq, cfg->host, port, cfg->keepalive, cfg->bind_address, cfg->connect_props);
 #endif
 	if(rc>0){
 		if(!cfg->quiet){

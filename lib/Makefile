@@ -6,7 +6,9 @@ MOSQ_OBJS=mosquitto.o \
 		  actions.o \
 		  callbacks.o \
 		  connect.o \
+		  handle_auth.o \
 		  handle_connack.o \
+		  handle_disconnect.o \
 		  handle_ping.o \
 		  handle_pubackcomp.o \
 		  handle_publish.o \
@@ -21,7 +23,9 @@ MOSQ_OBJS=mosquitto.o \
 		  messages_mosq.o \
 		  net_mosq.o \
 		  options.o \
+		  packet_datatypes.o \
 		  packet_mosq.o \
+		  property_mosq.o \
 		  read_handle.o \
 		  send_connect.o \
 		  send_disconnect.o \
@@ -36,6 +40,7 @@ MOSQ_OBJS=mosquitto.o \
 		  tls_mosq.o \
 		  utf8_mosq.o \
 		  util_mosq.o \
+		  util_topic.o \
 		  will_mosq.o
 
 ALL_DEPS:=
@@ -80,7 +85,7 @@ uninstall :
 reallyclean : clean
 
 clean :
-	-rm -f *.o libmosquitto.so.${SOVERSION} libmosquitto.so libmosquitto.a
+	-rm -f *.o libmosquitto.so.${SOVERSION} libmosquitto.so libmosquitto.a *.gcno *.gcda
 	$(MAKE) -C cpp clean
 
 libmosquitto.so.${SOVERSION} : ${MOSQ_OBJS}
@@ -101,7 +106,13 @@ callbacks.o : callbacks.c mosquitto.h mosquitto_internal.h
 connect.o : connect.c mosquitto.h mosquitto_internal.h
 	${CROSS_COMPILE}$(CC) $(LIB_CFLAGS) -c $< -o $@
 
+handle_auth.o : handle_auth.c read_handle.h
+	${CROSS_COMPILE}$(CC) $(LIB_CFLAGS) -c $< -o $@
+
 handle_connack.o : handle_connack.c read_handle.h
+	${CROSS_COMPILE}$(CC) $(LIB_CFLAGS) -c $< -o $@
+
+handle_disconnect.o : handle_disconnect.c read_handle.h
 	${CROSS_COMPILE}$(CC) $(LIB_CFLAGS) -c $< -o $@
 
 handle_publish.o : handle_publish.c read_handle.h
@@ -146,7 +157,13 @@ net_mosq.o : net_mosq.c net_mosq.h
 options.o : options.c mosquitto.h mosquitto_internal.h
 	${CROSS_COMPILE}$(CC) $(LIB_CFLAGS) -c $< -o $@
 
+packet_datatypes.o : packet_datatypes.c packet_mosq.h
+	${CROSS_COMPILE}$(CC) $(LIB_CFLAGS) -c $< -o $@
+
 packet_mosq.o : packet_mosq.c packet_mosq.h
+	${CROSS_COMPILE}$(CC) $(LIB_CFLAGS) -c $< -o $@
+
+property_mosq.o : property_mosq.c property_mosq.h
 	${CROSS_COMPILE}$(CC) $(LIB_CFLAGS) -c $< -o $@
 
 read_handle.o : read_handle.c read_handle.h
@@ -189,6 +206,9 @@ utf8_mosq.o : utf8_mosq.c
 	${CROSS_COMPILE}$(CC) $(LIB_CFLAGS) -c $< -o $@
 
 util_mosq.o : util_mosq.c util_mosq.h
+	${CROSS_COMPILE}$(CC) $(LIB_CFLAGS) -c $< -o $@
+
+util_topic.o : util_topic.c util_mosq.h
 	${CROSS_COMPILE}$(CC) $(LIB_CFLAGS) -c $< -o $@
 
 will_mosq.o : will_mosq.c will_mosq.h

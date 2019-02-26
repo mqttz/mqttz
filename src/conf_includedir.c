@@ -44,15 +44,15 @@ Contributors:
 #include "memory_mosq.h"
 #include "tls_mosq.h"
 #include "util_mosq.h"
-#include "mqtt3_protocol.h"
+#include "mqtt_protocol.h"
 
-int strcasecmp_p(const void *p1, const void *p2)
+
+#ifdef WIN32
+int scmp_p(const void *p1, const void *p2)
 {
 	return strcasecmp(*(const char **)p1, *(const char **)p2);
 }
 
-
-#ifdef WIN32
 int config__get_dir_files(const char *include_dir, char ***files, int *file_count)
 {
 	int len;
@@ -102,6 +102,7 @@ int config__get_dir_files(const char *include_dir, char ***files, int *file_coun
 
 	FindClose(fh);
 
+	qsort(l_files, l_file_count, sizeof(char *), scmp_p);
 	*files = l_files;
 	*file_count = l_file_count;
 
@@ -111,6 +112,11 @@ int config__get_dir_files(const char *include_dir, char ***files, int *file_coun
 
 
 #ifndef WIN32
+int scmp_p(const void *p1, const void *p2)
+{
+	return strcmp(*(const char **)p1, *(const char **)p2);
+}
+
 int config__get_dir_files(const char *include_dir, char ***files, int *file_count)
 {
 	char **l_files = NULL;
@@ -160,6 +166,7 @@ int config__get_dir_files(const char *include_dir, char ***files, int *file_coun
 	}
 	closedir(dh);
 
+	qsort(l_files, l_file_count, sizeof(char *), scmp_p);
 	*files = l_files;
 	*file_count = l_file_count;
 

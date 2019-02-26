@@ -26,16 +26,18 @@ Contributors:
 #endif
 
 #ifdef WITH_BROKER
-void mosquitto__check_keepalive(struct mosquitto_db *db, struct mosquitto *mosq);
+int mosquitto__check_keepalive(struct mosquitto_db *db, struct mosquitto *mosq);
 #else
-void mosquitto__check_keepalive(struct mosquitto *mosq);
+int mosquitto__check_keepalive(struct mosquitto *mosq);
 #endif
 uint16_t mosquitto__mid_generate(struct mosquitto *mosq);
 FILE *mosquitto__fopen(const char *path, const char *mode, bool restrict_read);
 
-#ifdef WITH_TLS
+#ifdef FINAL_WITH_TLS_PSK
 int mosquitto__hex2bin_sha1(const char *hex, unsigned char **bin);
 int mosquitto__hex2bin(const char *hex, unsigned char *bin, int bin_max_len);
 #endif
 
+void util__increment_receive_quota(struct mosquitto *mosq);
+void util__increment_send_quota(struct mosquitto *mosq);
 #endif

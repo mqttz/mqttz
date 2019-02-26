@@ -115,7 +115,8 @@ enum mosquitto__protocol {
 	mosq_p_invalid = 0,
 	mosq_p_mqtt31 = 1,
 	mosq_p_mqtt311 = 2,
-	mosq_p_mqtts = 3
+	mosq_p_mqtts = 3,
+	mosq_p_mqtt5 = 5,
 };
 
 enum mosquitto__threaded_state {
@@ -129,6 +130,12 @@ enum mosquitto__transport {
 	mosq_t_tcp = 1,
 	mosq_t_ws = 2,
 	mosq_t_sctp = 3
+};
+
+
+struct mosquitto__alias{
+	char *topic;
+	uint16_t alias;
 };
 
 struct mosquitto__packet{
@@ -146,11 +153,13 @@ struct mosquitto__packet{
 
 struct mosquitto_message_all{
 	struct mosquitto_message_all *next;
+	mosquitto_property *properties;
 	time_t timestamp;
 	//enum mosquitto_msg_direction direction;
 	enum mosquitto_msg_state state;
 	bool dup;
 	struct mosquitto_message msg;
+	uint32_t expiry_interval;
 };
 
 #ifdef WITH_TLS
@@ -182,7 +191,10 @@ struct mosquitto {
 	struct mosquitto__packet in_packet;
 	struct mosquitto__packet *current_out_packet;
 	struct mosquitto__packet *out_packet;
-	struct mosquitto_message *will;
+	struct mosquitto_message_all *will;
+	struct mosquitto__alias *aliases;
+	uint32_t maximum_packet_size;
+	int alias_count;
 #ifdef WITH_TLS
 	SSL *ssl;
 	SSL_CTX *ssl_ctx;
@@ -216,10 +228,10 @@ struct mosquitto {
 	pthread_mutex_t mid_mutex;
 	pthread_t thread_id;
 #endif
-	bool clean_session;
+	bool clean_start;
+	uint32_t session_expiry_interval;
 #ifdef WITH_BROKER
-	char *old_id; /* for when a duplicate client connects, but we still want to
-					 know what the id was */
+	bool removed_from_by_id; /* True if removed from by_id hash */
 	bool is_dropping;
 	bool is_bridge;
 	struct mosquitto__bridge *bridge;
@@ -262,11 +274,17 @@ struct mosquitto {
 	struct mosquitto_message_all *out_messages_last;
 	void (*on_connect)(struct mosquitto *, void *userdata, int rc);
 	void (*on_connect_with_flags)(struct mosquitto *, void *userdata, int rc, int flags);
+	void (*on_connect_v5)(struct mosquitto *, void *userdata, int rc, int flags, const mosquitto_property *props);
 	void (*on_disconnect)(struct mosquitto *, void *userdata, int rc);
+	void (*on_disconnect_v5)(struct mosquitto *, void *userdata, int rc, const mosquitto_property *props);
 	void (*on_publish)(struct mosquitto *, void *userdata, int mid);
+	void (*on_publish_v5)(struct mosquitto *, void *userdata, int mid, int reason_code, const mosquitto_property *props);
 	void (*on_message)(struct mosquitto *, void *userdata, const struct mosquitto_message *message);
+	void (*on_message_v5)(struct mosquitto *, void *userdata, const struct mosquitto_message *message, const mosquitto_property *props);
 	void (*on_subscribe)(struct mosquitto *, void *userdata, int mid, int qos_count, const int *granted_qos);
+	void (*on_subscribe_v5)(struct mosquitto *, void *userdata, int mid, int qos_count, const int *granted_qos, const mosquitto_property *props);
 	void (*on_unsubscribe)(struct mosquitto *, void *userdata, int mid);
+	void (*on_unsubscribe_v5)(struct mosquitto *, void *userdata, int mid, const mosquitto_property *props);
 	void (*on_log)(struct mosquitto *, void *userdata, int level, const char *str);
 	//void (*on_error)();
 	char *host;
@@ -279,12 +297,15 @@ struct mosquitto {
 	bool reconnect_exponential_backoff;
 	char threaded;
 	struct mosquitto__packet *out_packet_last;
-	int inflight_messages;
-	int max_inflight_messages;
 #  ifdef WITH_SRV
 	ares_channel achan;
 #  endif
 #endif
+	int send_quota;
+	int receive_quota;
+	uint16_t send_maximum;
+	uint16_t receive_maximum;
+	uint8_t maximum_qos;
 
 #ifdef WITH_BROKER
 	UT_hash_handle hh_id;
@@ -297,6 +318,8 @@ struct mosquitto {
 };
 
 #define STREMPTY(str) (str[0] == '\0')
+
+void do_client_disconnect(struct mosquitto *mosq, int reason_code, const mosquitto_property *properties);
 
 #endif
 

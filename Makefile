@@ -81,3 +81,6 @@ copy : sign
 	cd dist; scp *.html mosquitto:site/mosquitto.org/man/
 	scp ChangeLog.txt mosquitto:site/mosquitto.org/
 
+coverage :
+	lcov --capture --directory . --output-file coverage.info
+	genhtml coverage.info --output-directory out

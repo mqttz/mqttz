@@ -1,5 +1,5 @@
 name: mosquitto
-version: 1.5.4
+version: 1.5.90
 summary: Eclipse Mosquitto MQTT broker
 description: This is a message broker that supports version 3.1 and 3.1.1 of the MQTT
     protocol.
@@ -54,14 +54,12 @@ parts:
 
     build-packages:
       - libssl-dev
-      - uuid-dev
       - xsltproc
       - docbook-xsl
       - gcc
       - g++
     stage-packages:
       - libssl1.0.0
-      - libuuid1
     prime:
       - usr/sbin/mosquitto
       - usr/bin/mosquitto_pub
@@ -70,7 +68,6 @@ parts:
       - usr/lib/libmosquitto.so*
       - lib/*-linux-gnu/libcrypto.so*
       - lib/*-linux-gnu/libssl.so*
-      - lib/*-linux-gnu/libuuid.so*
       - usr/include/mosquitto.h
       - usr/include/mosquitto_broker.h
       - usr/include/mosquitto_plugin.h

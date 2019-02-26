@@ -13,12 +13,17 @@ test-compile :
 	$(MAKE) -C c
 
 ptest : test-compile
-	./ptest.py
+	./test.py
 
-test : test-compile 01 02 03 04 05 06 07 08 09 10 11
+test : test-compile 01 02 03 04 05 06 07 08 09 10 11 12
 
 01 :
+	./01-connect-bad-packet.py
+	./01-connect-duplicate.py
+	./01-connect-duplicate-v5.py
 	./01-connect-success.py
+	./01-connect-success-v5.py
+	./01-connect-disconnect-v5.py
 	./01-connect-invalid-protonum.py
 	./01-connect-invalid-id-0.py
 	./01-connect-invalid-id-0-311.py
@@ -45,10 +50,33 @@ endif
 	./02-subpub-qos0.py
 	./02-subpub-qos1.py
 	./02-subpub-qos2.py
+	./02-subpub-qos1-bad-pubrec.py
+	./02-subpub-qos1-bad-pubcomp.py
+	./02-subpub-qos2-bad-puback-1.py
+	./02-subpub-qos2-bad-puback-2.py
+	./02-subpub-qos2-bad-pubcomp.py
+	./02-subpub-qos0-v5.py
+	./02-subpub-qos1-v5.py
+	./02-subpub-qos2-v5.py
+	./02-subpub-qos1-message-expiry.py
+	./02-subpub-qos1-message-expiry-retain.py
+	./02-subpub-qos1-message-expiry-will.py
+	./02-subpub-qos1-nolocal.py
+	./02-subpub-qos0-retain-as-publish.py
+	./02-subpub-qos0-send-retain.py
+	./02-subpub-qos0-subscription-id.py
+	./02-subpub-qos2-receive-maximum-1.py
+	./02-subpub-qos2-receive-maximum-2.py
+	./02-subpub-qos2-pubrec-error.py
+	./02-subpub-qos0-topic-alias.py
+	./02-subpub-qos0-topic-alias-unknown.py
 	./02-unsubscribe-qos0.py
 	./02-unsubscribe-qos1.py
 	./02-unsubscribe-qos2.py
+	./02-unsubscribe-qos2-v5.py
 	./02-unsubscribe-invalid-no-topic.py
+	./02-unsubscribe-qos2-multiple.py
+	./02-unsubscribe-qos2-multiple-v5.py
 	./02-subscribe-invalid-utf8.py
 	./02-subscribe-persistence-flipflop.py
 	./02-subhier-crash.py
@@ -59,10 +87,14 @@ endif
 	./03-publish-b2c-disconnect-qos1.py
 	./03-publish-c2b-disconnect-qos2.py
 	./03-publish-b2c-disconnect-qos2.py
+	./03-publish-b2c-qos1-len.py
+	./03-publish-b2c-qos2-len.py
+	./03-publish-c2b-qos2-len.py
 	./03-pattern-matching.py
 	#./03-publish-qos1-queued-bytes.py
 	./03-publish-invalid-utf8.py
 	./03-publish-dollar.py
+	./03-publish-qos1-retain-disabled.py
 
 04 :
 	./04-retain-qos0.py
@@ -71,6 +103,9 @@ endif
 	./04-retain-qos1-qos0.py
 	./04-retain-qos0-clear.py
 	./04-retain-upgrade-outgoing-qos.py
+	./04-retain-check-source.py
+	./04-retain-check-source-persist.py
+	./04-retain-check-source-persist-diff-port.py
 
 05 :
 	./05-clean-session-qos1.py
@@ -113,6 +148,7 @@ endif
 endif
 
 09 :
+	./09-acl-empty-file.py
 	./09-plugin-auth-unpwd-success.py
 	./09-plugin-auth-unpwd-fail.py
 	./09-plugin-auth-acl-sub.py
@@ -123,9 +159,24 @@ endif
 	./09-plugin-auth-defer-unpwd-fail.py
 	./09-plugin-auth-msg-params.py
 	./09-plugin-auth-context-params.py
+	./09-pwfile-parse-invalid.py
 
 10 :
 	./10-listener-mount-point.py
 
 11 :
 	./11-persistent-subscription.py
+
+12 :
+	./12-prop-session-expiry-invalid.py
+	./12-prop-subpub-payload-format.py
+	./12-prop-subpub-content-type.py
+	./12-prop-assigned-client-identifier.py
+	./12-prop-server-keepalive.py
+	./12-prop-response-topic.py
+	./12-prop-response-topic-correlation-data.py
+	./12-prop-maximum-packet-size-broker.py
+	./12-prop-maximum-packet-size-connect.py
+	./12-prop-maximum-packet-size-publish.py
+	./12-prop-maximum-packet-size-publish-qos1.py
+	./12-prop-maximum-packet-size-publish-qos2.py

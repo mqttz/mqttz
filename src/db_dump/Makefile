@@ -1,6 +1,6 @@
 include ../../config.mk
 
-CFLAGS_FINAL=${CFLAGS} -I.. -I../../lib -I../..
+CFLAGS_FINAL=${CFLAGS} -I.. -I../../lib -I../.. -I../deps
 
 .PHONY: all clean reallyclean
 

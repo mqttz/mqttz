@@ -17,9 +17,10 @@ Contributors:
 #include "config.h"
 
 #include "mosquitto_broker_internal.h"
-#include "mqtt3_protocol.h"
+#include "mqtt_protocol.h"
 #include "memory_mosq.h"
 #include "packet_mosq.h"
+#include "property_mosq.h"
 #include "util_mosq.h"
 
 
@@ -27,20 +28,33 @@ int send__suback(struct mosquitto *context, uint16_t mid, uint32_t payloadlen, c
 {
 	struct mosquitto__packet *packet = NULL;
 	int rc;
+	mosquitto_property *properties = NULL;
+	int proplen, varbytes;
 
 	log__printf(NULL, MOSQ_LOG_DEBUG, "Sending SUBACK to %s", context->id);
 
 	packet = mosquitto__calloc(1, sizeof(struct mosquitto__packet));
 	if(!packet) return MOSQ_ERR_NOMEM;
 
-	packet->command = SUBACK;
+	packet->command = CMD_SUBACK;
 	packet->remaining_length = 2+payloadlen;
+	if(context->protocol == mosq_p_mqtt5){
+		proplen = property__get_length_all(properties);
+		varbytes = packet__varint_bytes(proplen);
+		packet->remaining_length += proplen + varbytes;
+	}
 	rc = packet__alloc(packet);
 	if(rc){
 		mosquitto__free(packet);
 		return rc;
 	}
 	packet__write_uint16(packet, mid);
+
+	if(context->protocol == mosq_p_mqtt5){
+		/* We don't use Reason String or User Property yet. */
+		property__write_all(packet, properties, true);
+	}
+
 	if(payloadlen){
 		packet__write_bytes(packet, payload, payloadlen);
 	}

@@ -28,29 +28,63 @@ Contributors:
 #include "logging_mosq.h"
 #include "memory_mosq.h"
 #include "messages_mosq.h"
-#include "mqtt3_protocol.h"
+#include "mqtt_protocol.h"
 #include "net_mosq.h"
 #include "packet_mosq.h"
 #include "read_handle.h"
 #include "send_mosq.h"
 #include "util_mosq.h"
 
-int handle__pubrec(struct mosquitto *mosq)
+int handle__pubrec(struct mosquitto_db *db, struct mosquitto *mosq)
 {
+	uint8_t reason_code = 0;
 	uint16_t mid;
 	int rc;
+	mosquitto_property *properties = NULL;
 
 	assert(mosq);
 	rc = packet__read_uint16(&mosq->in_packet, &mid);
 	if(rc) return rc;
+	if(mid == 0) return MOSQ_ERR_PROTOCOL;
+
+	if(mosq->protocol == mosq_p_mqtt5 && mosq->in_packet.remaining_length > 2){
+		rc = packet__read_byte(&mosq->in_packet, &reason_code);
+		if(rc) return rc;
+
+		if(mosq->in_packet.remaining_length > 3){
+			rc = property__read_all(CMD_PUBREC, &mosq->in_packet, &properties);
+			if(rc) return rc;
+			/* Immediately free, we don't do anything with Reason String or User Property at the moment */
+			mosquitto_property_free_all(&properties);
+		}
+	}
+
 #ifdef WITH_BROKER
 	log__printf(NULL, MOSQ_LOG_DEBUG, "Received PUBREC from %s (Mid: %d)", mosq->id, mid);
 
-	rc = db__message_update(mosq, mid, mosq_md_out, mosq_ms_wait_for_pubcomp);
+	if(reason_code < 0x80){
+		rc = db__message_update(mosq, mid, mosq_md_out, mosq_ms_wait_for_pubcomp, 2);
+	}else{
+		return db__message_delete(db, mosq, mid, mosq_md_out, mosq_ms_wait_for_pubrec, 2);
+	}
 #else
 	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received PUBREC (Mid: %d)", mosq->id, mid);
 
-	rc = message__out_update(mosq, mid, mosq_ms_wait_for_pubcomp);
+	if(reason_code < 0x80){
+		rc = message__out_update(mosq, mid, mosq_ms_wait_for_pubcomp, 2);
+	}else{
+		if(!message__delete(mosq, mid, mosq_md_out, 2)){
+			/* Only inform the client the message has been sent once. */
+			pthread_mutex_lock(&mosq->callback_mutex);
+			if(mosq->on_publish_v5){
+				mosq->in_callback = true;
+				mosq->on_publish_v5(mosq, mosq->userdata, mid, reason_code, properties);
+				mosq->in_callback = false;
+			}
+			pthread_mutex_unlock(&mosq->callback_mutex);
+		}
+		return MOSQ_ERR_SUCCESS;
+	}
 #endif
 	if(rc == MOSQ_ERR_NOT_FOUND){
 		log__printf(mosq, MOSQ_LOG_WARNING, "Warning: Received PUBREC from %s for an unknown packet identifier %d.", mosq->id, mid);

@@ -83,7 +83,9 @@ struct db_msg
 	uint8_t qos, retain;
 	uint8_t *payload;
 	char *source_id;
+	char *source_username;
 	char *topic;
+	uint16_t source_port;
 };
 
 static uint32_t db_version;
@@ -177,6 +179,8 @@ print_db_msg(struct db_msg *msg, int length)
 	printf("\tLength: %d\n", length);
 	printf("\tStore ID: %" PRIu64 "\n", msg->store_id);
 	printf("\tSource ID: %s\n", msg->source_id);
+	printf("\tSource Username: %s\n", msg->source_username);
+	printf("\tSource Port: %d\n", msg->source_port);
 	printf("\tSource MID: %d\n", msg->source_mid);
 	printf("\tMID: %d\n", msg->mid);
 	printf("\tTopic: %s\n", msg->topic);
@@ -194,26 +198,49 @@ print_db_msg(struct db_msg *msg, int length)
 }
 
 
+static int persist__read_string(FILE *db_fptr, char **str)
+{
+	uint16_t i16temp;
+	uint16_t slen;
+	char *s = NULL;
+
+	if(fread(&i16temp, 1, sizeof(uint16_t), db_fptr) != sizeof(uint16_t)){
+		return MOSQ_ERR_INVAL;
+	}
+
+	slen = ntohs(i16temp);
+	if(slen){
+		s = mosquitto__malloc(slen+1);
+		if(!s){
+			fclose(db_fptr);
+			fprintf(stderr, "Error: Out of memory.\n");
+			return MOSQ_ERR_NOMEM;
+		}
+		if(fread(s, 1, slen, db_fptr) != slen){
+			mosquitto__free(s);
+			fprintf(stderr, "Error: %s.\n", strerror(errno));
+			return MOSQ_ERR_INVAL;
+		}
+		s[slen] = '\0';
+	}
+
+	*str = s;
+	return MOSQ_ERR_SUCCESS;
+}
+
+
 static int db__client_chunk_restore(struct mosquitto_db *db, FILE *db_fd, struct db_client *client)
 {
-	uint16_t i16temp, slen;
+	uint16_t i16temp;
 	int rc = 0;
 	struct client_chunk *cc;
 
-	read_e(db_fd, &i16temp, sizeof(uint16_t));
-	slen = ntohs(i16temp);
-	if(!slen){
+	rc = persist__read_string(db_fd, &client->client_id);
+	if(rc){
 		fprintf(stderr, "Error: Corrupt persistent database.");
 		fclose(db_fd);
-		return 1;
+		return rc;
 	}
-	client->client_id = calloc(slen+1, sizeof(char));
-	if(!client->client_id){
-		fclose(db_fd);
-		fprintf(stderr, "Error: Out of memory.");
-		return 1;
-	}
-	read_e(db_fd, client->client_id, slen);
 
 	read_e(db_fd, &i16temp, sizeof(uint16_t));
 	client->last_mid = ntohs(i16temp);
@@ -245,24 +272,17 @@ error:
 static int db__client_msg_chunk_restore(struct mosquitto_db *db, FILE *db_fd, uint32_t length, struct db_client_msg *msg)
 {
 	dbid_t i64temp;
-	uint16_t i16temp, slen;
+	uint16_t i16temp;
 	struct client_chunk *cc;
 	struct msg_store_chunk *msc;
+	int rc;
 
-	read_e(db_fd, &i16temp, sizeof(uint16_t));
-	slen = ntohs(i16temp);
-	if(!slen){
+	rc = persist__read_string(db_fd, &msg->client_id);
+	if(rc){
 		fprintf(stderr, "Error: Corrupt persistent database.");
 		fclose(db_fd);
-		return 1;
+		return rc;
 	}
-	msg->client_id = calloc(slen+1, sizeof(char));
-	if(!msg->client_id){
-		fclose(db_fd);
-		fprintf(stderr, "Error: Out of memory.");
-		return 1;
-	}
-	read_e(db_fd, msg->client_id, slen);
 
 	read_e(db_fd, &i64temp, sizeof(dbid_t));
 	msg->store_id = i64temp;
@@ -301,58 +321,48 @@ static int db__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fd, uin
 {
 	dbid_t i64temp;
 	uint32_t i32temp;
-	uint16_t i16temp, slen;
+	uint16_t i16temp;
 	int rc = 0;
 	struct msg_store_chunk *mcs;
 
 	read_e(db_fd, &i64temp, sizeof(dbid_t));
 	msg->store_id = i64temp;
 
-	read_e(db_fd, &i16temp, sizeof(uint16_t));
-	slen = ntohs(i16temp);
-	if(slen){
-		msg->source_id = calloc(slen+1, sizeof(char));
-		if(!msg->source_id){
-			fclose(db_fd);
-			fprintf(stderr, "Error: Out of memory.");
-			return 1;
-		}
-		if(fread(msg->source_id, 1, slen, db_fd) != slen){
+	rc = persist__read_string(db_fd, &msg->source_id);
+	if(rc){
+		fprintf(stderr, "Error: Corrupt persistent database.");
+		fclose(db_fd);
+		return rc;
+	}
+	if(db_version == 4){
+		rc = persist__read_string(db_fd, &msg->source_username);
+		if(rc){
 			fprintf(stderr, "Error: %s.", strerror(errno));
 			fclose(db_fd);
 			free(msg->source_id);
+			free(msg->topic);
+			free(msg->payload);
+			free(msg->source_id);
 			return 1;
 		}
+		read_e(db_fd, &i16temp, sizeof(uint16_t));
+		msg->source_port = ntohs(i16temp);
 	}
+
+
 	read_e(db_fd, &i16temp, sizeof(uint16_t));
 	msg->source_mid = ntohs(i16temp);
 
 	read_e(db_fd, &i16temp, sizeof(uint16_t));
 	msg->mid = ntohs(i16temp);
 
-	read_e(db_fd, &i16temp, sizeof(uint16_t));
-	slen = ntohs(i16temp);
-	if(slen){
-		msg->topic = calloc(slen+1, sizeof(char));
-		if(!msg->topic){
-			fclose(db_fd);
-			free(msg->source_id);
-			fprintf(stderr, "Error: Out of memory.");
-			return 1;
-		}
-		if(fread(msg->topic, 1, slen, db_fd) != slen){
-			fprintf(stderr, "Error: %s.", strerror(errno));
-			fclose(db_fd);
-			free(msg->source_id);
-			free(msg->topic);
-			return 1;
-		}
-	}else{
-		fprintf(stderr, "Error: Invalid msg_store chunk when restoring persistent database.");
+	rc = persist__read_string(db_fd, &msg->topic);
+	if(rc){
+		fprintf(stderr, "Error: Corrupt persistent database.");
 		fclose(db_fd);
-		free(msg->source_id);
-		return 1;
+		return rc;
 	}
+
 	read_e(db_fd, &msg->qos, sizeof(uint8_t));
 	read_e(db_fd, &msg->retain, sizeof(uint8_t));
 	
@@ -415,29 +425,23 @@ static int db__retain_chunk_restore(struct mosquitto_db *db, FILE *db_fd)
 
 static int db__sub_chunk_restore(struct mosquitto_db *db, FILE *db_fd, uint32_t length, struct db_sub *sub)
 {
-	uint16_t i16temp, slen;
 	int rc = 0;
 	struct client_chunk *cc;
 
-	read_e(db_fd, &i16temp, sizeof(uint16_t));
-	slen = ntohs(i16temp);
-	sub->client_id = calloc(slen+1, sizeof(char));
-	if(!sub->client_id){
+	rc = persist__read_string(db_fd, &sub->client_id);
+	if(rc){
+		fprintf(stderr, "Error: Corrupt persistent database.");
 		fclose(db_fd);
-		fprintf(stderr, "Error: Out of memory.");
-		return 1;
+		return rc;
 	}
-	read_e(db_fd, sub->client_id, slen);
-	read_e(db_fd, &i16temp, sizeof(uint16_t));
-	slen = ntohs(i16temp);
-	sub->topic = calloc(slen+1, sizeof(char));
-	if(!sub->topic){
+
+	rc = persist__read_string(db_fd, &sub->topic);
+	if(rc){
+		fprintf(stderr, "Error: Corrupt persistent database.");
 		fclose(db_fd);
-		fprintf(stderr, "Error: Out of memory.");
-		free(sub->client_id);
-		return 1;
+		return rc;
 	}
-	read_e(db_fd, sub->topic, slen);
+
 	read_e(db_fd, &sub->qos, sizeof(uint8_t));
 
 	if(client_stats){

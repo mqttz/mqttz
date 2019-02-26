@@ -20,8 +20,10 @@ Contributors:
 #include <time.h>
 
 #include "mosquitto_broker_internal.h"
+#include "alias_mosq.h"
 #include "memory_mosq.h"
 #include "packet_mosq.h"
+#include "property_mosq.h"
 #include "time_mosq.h"
 
 #include "uthash.h"
@@ -40,7 +42,7 @@ struct mosquitto *context__init(struct mosquitto_db *db, mosq_sock_t sock)
 	context->last_msg_in = mosquitto_time();
 	context->next_msg_out = mosquitto_time() + 60;
 	context->keepalive = 60; /* Default to 60s */
-	context->clean_session = true;
+	context->clean_start = true;
 	context->disconnect_t = 0;
 	context->id = NULL;
 	context->last_mid = 0;
@@ -75,6 +77,9 @@ struct mosquitto *context__init(struct mosquitto_db *db, mosq_sock_t sock)
 	context->last_inflight_msg = NULL;
 	context->queued_msgs = NULL;
 	context->last_queued_msg = NULL;
+	context->receive_maximum = db->config->max_inflight_messages;
+	context->send_maximum = db->config->max_inflight_messages;
+	context->maximum_qos = 2;
 	context->msg_bytes = 0;
 	context->msg_bytes12 = 0;
 	context->msg_count = 0;
@@ -99,7 +104,9 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 {
 	struct mosquitto__packet *packet;
 	struct mosquitto_client_msg *msg, *next;
+#ifdef WITH_BRIDGE
 	int i;
+#endif
 
 	if(!context) return;
 
@@ -136,6 +143,8 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 	}
 #endif
 
+	alias__free_all(context);
+
 	mosquitto__free(context->username);
 	context->username = NULL;
 
@@ -143,7 +152,7 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 	context->password = NULL;
 
 	net__socket_close(db, context);
-	if((do_free || context->clean_session) && db){
+	if((do_free || context->clean_start) && db){
 		sub__clean_session(db, context);
 		db__messages_delete(db, context);
 	}
@@ -157,13 +166,9 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 		assert(db); /* db can only be NULL here if the client hasn't sent a
 					   CONNECT and hence wouldn't have an id. */
 
-		HASH_DELETE(hh_id, db->contexts_by_id, context);
+		context__remove_from_by_id(db, context);
 		mosquitto__free(context->id);
 		context->id = NULL;
-	}
-	if(context->old_id){
-		mosquitto__free(context->old_id);
-		context->old_id = NULL;
 	}
 	packet__cleanup(&(context->in_packet));
 	if(context->current_out_packet){
@@ -177,7 +182,7 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 		context->out_packet = context->out_packet->next;
 		mosquitto__free(packet);
 	}
-	if(do_free || context->clean_session){
+	if(do_free || context->clean_start){
 		msg = context->inflight_msgs;
 		while(msg){
 			next = msg->next;
@@ -197,6 +202,13 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 		context->queued_msgs = NULL;
 		context->last_queued_msg = NULL;
 	}
+#if defined(WITH_BROKER) && defined(__GLIBC__) && defined(WITH_ADNS)
+	if(context->adns){
+		gai_cancel(context->adns);
+		mosquitto__free((struct addrinfo *)context->adns->ar_request);
+		mosquitto__free(context->adns);
+	}
+#endif
 	if(do_free){
 		mosquitto__free(context);
 	}
@@ -206,15 +218,29 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 void context__send_will(struct mosquitto_db *db, struct mosquitto *ctxt)
 {
 	if(ctxt->state != mosq_cs_disconnecting && ctxt->will){
-		if(mosquitto_acl_check(db, ctxt, ctxt->will->topic, ctxt->will->payloadlen, ctxt->will->payload,
-							   ctxt->will->qos, ctxt->will->retain, MOSQ_ACL_WRITE) == MOSQ_ERR_SUCCESS){
+		if(mosquitto_acl_check(db, ctxt,
+					ctxt->will->msg.topic,
+					ctxt->will->msg.payloadlen,
+					ctxt->will->msg.payload,
+					ctxt->will->msg.qos,
+					ctxt->will->msg.retain,
+					MOSQ_ACL_WRITE) == MOSQ_ERR_SUCCESS){
+
 			/* Unexpected disconnect, queue the client will. */
-			db__messages_easy_queue(db, ctxt, ctxt->will->topic, ctxt->will->qos, ctxt->will->payloadlen, ctxt->will->payload, ctxt->will->retain);
+			db__messages_easy_queue(db, ctxt,
+					ctxt->will->msg.topic,
+					ctxt->will->msg.qos,
+					ctxt->will->msg.payloadlen,
+					ctxt->will->msg.payload,
+					ctxt->will->msg.retain,
+					ctxt->will->expiry_interval,
+					&ctxt->will->properties);
 		}
 	}
 	if(ctxt->will){
-		mosquitto__free(ctxt->will->topic);
-		mosquitto__free(ctxt->will->payload);
+		mosquitto_property_free_all(&ctxt->will->properties);
+		mosquitto__free(ctxt->will->msg.topic);
+		mosquitto__free(ctxt->will->msg.payload);
 		mosquitto__free(ctxt->will);
 		ctxt->will = NULL;
 	}
@@ -253,3 +279,11 @@ void context__free_disused(struct mosquitto_db *db)
 	db->ll_for_free = NULL;
 }
 
+
+void context__remove_from_by_id(struct mosquitto_db *db, struct mosquitto *context)
+{
+	if(context->removed_from_by_id == false && context->id){
+		HASH_DELETE(hh_id, db->contexts_by_id, context);
+		context->removed_from_by_id = true;
+	}
+}

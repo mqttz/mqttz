@@ -69,7 +69,7 @@ struct mosq_config {
 	char *tls_engine;
 	char *tls_engine_kpass_sha1;
 	char *keyform;
-#  ifdef WITH_TLS_PSK
+#  ifdef FINAL_WITH_TLS_PSK
 	char *psk;
 	char *psk_identity;
 #  endif
@@ -89,12 +89,20 @@ struct mosq_config {
 	int msg_count; /* sub */
 	char *format; /* sub */
 	int timeout; /* sub */
+	int sub_opts; /* sub */
 #ifdef WITH_SOCKS
 	char *socks5_host;
 	int socks5_port;
 	char *socks5_username;
 	char *socks5_password;
 #endif
+	mosquitto_property *connect_props;
+	mosquitto_property *publish_props;
+	mosquitto_property *subscribe_props;
+	mosquitto_property *unsubscribe_props;
+	mosquitto_property *disconnect_props;
+	mosquitto_property *will_props;
+	bool have_topic_alias; /* pub */
 };
 
 int client_config_load(struct mosq_config *config, int pub_or_sub, int argc, char *argv[]);
@@ -102,5 +110,7 @@ void client_config_cleanup(struct mosq_config *cfg);
 int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg);
 int client_id_generate(struct mosq_config *cfg, const char *id_base);
 int client_connect(struct mosquitto *mosq, struct mosq_config *cfg);
+
+int cfg_parse_property(struct mosq_config *cfg, int argc, char *argv[], int *idx);
 
 #endif

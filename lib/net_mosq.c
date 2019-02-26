@@ -64,7 +64,7 @@ Contributors:
 
 #include "logging_mosq.h"
 #include "memory_mosq.h"
-#include "mqtt3_protocol.h"
+#include "mqtt_protocol.h"
 #include "net_mosq.h"
 #include "time_mosq.h"
 #include "util_mosq.h"
@@ -123,11 +123,17 @@ int net__init(void)
 #endif
 
 #ifdef WITH_TLS
+#  if OPENSSL_VERSION_NUMBER < 0x10100000L || OPENSSL_API_COMPAT < 0x10100000L
 	SSL_load_error_strings();
 	SSL_library_init();
 	OpenSSL_add_all_algorithms();
 	ENGINE_load_builtin_engines();
 	setup_ui_method();
+#  else
+	OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS \
+			| OPENSSL_INIT_ADD_ALL_DIGESTS \
+			| OPENSSL_INIT_LOAD_CONFIG, NULL);
+#  endif
 	if(tls_ex_index_mosq == -1){
 		tls_ex_index_mosq = SSL_get_ex_new_index(0, "client context", NULL, NULL, NULL);
 	}
@@ -138,16 +144,18 @@ int net__init(void)
 void net__cleanup(void)
 {
 #ifdef WITH_TLS
-	#if OPENSSL_VERSION_NUMBER < 0x10100000L
-		ERR_remove_state(0);
-	#endif
-	#ifndef OPENSSL_NO_ENGINE
-		ENGINE_cleanup();
-	#endif
-	CONF_modules_unload(1);
-	ERR_free_strings();
-	EVP_cleanup();
+#  if OPENSSL_VERSION_NUMBER < 0x10100000L || OPENSSL_API_COMPAT < 0x10100000L
 	CRYPTO_cleanup_all_ex_data();
+	ERR_free_strings();
+	ERR_remove_state(0);
+	EVP_cleanup();
+
+#    if !defined(OPENSSL_NO_ENGINE)
+	ENGINE_cleanup();
+#    endif
+#  endif
+
+	CONF_modules_unload(1);
 #endif
 
 #ifdef WITH_SRV
@@ -183,10 +191,6 @@ int net__socket_close(struct mosquitto *mosq)
 			SSL_free(mosq->ssl);
 			mosq->ssl = NULL;
 		}
-		if(mosq->ssl_ctx){
-			SSL_CTX_free(mosq->ssl_ctx);
-			mosq->ssl_ctx = NULL;
-		}
 	}
 #endif
 
@@ -200,7 +204,7 @@ int net__socket_close(struct mosquitto *mosq)
 	}else
 #endif
 	{
-		if((int)mosq->sock >= 0){
+		if(mosq->sock != INVALID_SOCKET){
 #ifdef WITH_BROKER
 			HASH_DELETE(hh_sock, db->contexts_by_sock, mosq);
 #endif
@@ -212,8 +216,6 @@ int net__socket_close(struct mosquitto *mosq)
 #ifdef WITH_BROKER
 	if(mosq->listener){
 		mosq->listener->client_count--;
-		assert(mosq->listener->client_count >= 0);
-		mosq->listener = NULL;
 	}
 #endif
 
@@ -221,7 +223,7 @@ int net__socket_close(struct mosquitto *mosq)
 }
 
 
-#ifdef WITH_TLS_PSK
+#ifdef FINAL_WITH_TLS_PSK
 static unsigned int psk_client_callback(SSL *ssl, const char *hint,
 		char *identity, unsigned int max_identity_len,
 		unsigned char *psk, unsigned int max_psk_len)
@@ -246,21 +248,39 @@ int net__try_connect_step1(struct mosquitto *mosq, const char *host)
 {
 	int s;
 	void *sevp = NULL;
+	struct addrinfo *hints;
 
 	if(mosq->adns){
+		gai_cancel(mosq->adns);
+		mosquitto__free((struct addrinfo *)mosq->adns->ar_request);
 		mosquitto__free(mosq->adns);
 	}
 	mosq->adns = mosquitto__calloc(1, sizeof(struct gaicb));
 	if(!mosq->adns){
 		return MOSQ_ERR_NOMEM;
 	}
+
+	hints = mosquitto__calloc(1, sizeof(struct addrinfo));
+	if(!hints){
+		mosquitto__free(mosq->adns);
+		mosq->adns = NULL;
+		return MOSQ_ERR_NOMEM;
+	}
+
+	hints->ai_family = AF_UNSPEC;
+	hints->ai_socktype = SOCK_STREAM;
+
 	mosq->adns->ar_name = host;
+	mosq->adns->ar_request = hints;
 
 	s = getaddrinfo_a(GAI_NOWAIT, &mosq->adns, 1, sevp);
 	if(s){
 		errno = s;
-		mosquitto__free(mosq->adns);
-		mosq->adns = NULL;
+		if(mosq->adns){
+			mosquitto__free((struct addrinfo *)mosq->adns->ar_request);
+			mosquitto__free(mosq->adns);
+			mosq->adns = NULL;
+		}
 		return MOSQ_ERR_EAI;
 	}
 
@@ -316,6 +336,7 @@ int net__try_connect_step2(struct mosquitto *mosq, uint16_t port, mosq_sock_t *s
 	freeaddrinfo(mosq->adns->ar_result);
 	mosq->adns->ar_result = NULL;
 
+	mosquitto__free((struct addrinfo *)mosq->adns->ar_request);
 	mosquitto__free(mosq->adns);
 	mosq->adns = NULL;
 
@@ -672,7 +693,7 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 					return MOSQ_ERR_TLS;
 				}
 			}
-#ifdef WITH_TLS_PSK
+#ifdef FINAL_WITH_TLS_PSK
 		}else if(mosq->tls_psk){
 			SSL_CTX_set_psk_client_callback(mosq->ssl_ctx, psk_client_callback);
 #endif
@@ -684,7 +705,7 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 #endif
 
 
-int net__socket_connect_step3(struct mosquitto *mosq, const char *host, uint16_t port, const char *bind_address, bool blocking)
+int net__socket_connect_step3(struct mosquitto *mosq, const char *host)
 {
 #ifdef WITH_TLS
 	BIO *bio;
@@ -745,8 +766,13 @@ int net__socket_connect(struct mosquitto *mosq, const char *host, uint16_t port,
 
 	mosq->sock = sock;
 
-	rc = net__socket_connect_step3(mosq, host, port, bind_address, blocking);
-	if(rc) return rc;
+#if defined(WITH_SOCKS) && !defined(WITH_BROKER)
+	if(!mosq->socks5_host)
+#endif
+	{
+		rc = net__socket_connect_step3(mosq, host);
+		if(rc) return rc;
+	}
 
 	return MOSQ_ERR_SUCCESS;
 }

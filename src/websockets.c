@@ -34,13 +34,14 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <libwebsockets.h>
 #include "mosquitto_internal.h"
 #include "mosquitto_broker_internal.h"
-#include "mqtt3_protocol.h"
+#include "mqtt_protocol.h"
 #include "memory_mosq.h"
 #include "packet_mosq.h"
 #include "sys_tree.h"
 
 #include <stdlib.h>
 #include <errno.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
 
 extern struct mosquitto_db int_db;
@@ -229,7 +230,9 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				return -1;
 			}
 			if(mosq->listener->max_connections > 0 && mosq->listener->client_count > mosq->listener->max_connections){
-				log__printf(NULL, MOSQ_LOG_NOTICE, "Client connection from %s denied: max_connections exceeded.", mosq->address);
+				if(db->config->connection_messages == true){
+					log__printf(NULL, MOSQ_LOG_NOTICE, "Client connection from %s denied: max_connections exceeded.", mosq->address);
+				}
 				mosquitto__free(mosq);
 				u->mosq = NULL;
 				return -1;
@@ -244,7 +247,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 			}
 			mosq = u->mosq;
 			if(mosq){
-				if(mosq->sock > 0){
+				if(mosq->sock != INVALID_SOCKET){
 					HASH_DELETE(hh_sock, db->contexts_by_sock, mosq);
 					mosq->sock = INVALID_SOCKET;
 					mosq->pollfd_index = -1;
@@ -310,7 +313,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 
 #ifdef WITH_SYS_TREE
 				g_msgs_sent++;
-				if(((packet->command)&0xF6) == PUBLISH){
+				if(((packet->command)&0xF6) == CMD_PUBLISH){
 					g_pub_msgs_sent++;
 				}
 #endif
@@ -350,7 +353,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 					mosq->in_packet.command = buf[pos];
 					pos++;
 					/* Clients must send CONNECT as their first command. */
-					if(mosq->state == mosq_cs_new && (mosq->in_packet.command&0xF0) != CONNECT){
+					if(mosq->state == mosq_cs_new && (mosq->in_packet.command&0xF0) != CMD_CONNECT){
 						return -1;
 					}
 				}
@@ -401,7 +404,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 
 #ifdef WITH_SYS_TREE
 				G_MSGS_RECEIVED_INC(1);
-				if(((mosq->in_packet.command)&0xF5) == PUBLISH){
+				if(((mosq->in_packet.command)&0xF5) == CMD_PUBLISH){
 					G_PUB_MSGS_RECEIVED_INC(1);
 				}
 #endif
@@ -729,6 +732,9 @@ struct libwebsocket_context *mosq_websockets_init(struct mosquitto__listener *li
 #if LWS_LIBRARY_VERSION_MAJOR>1
 	info.options |= LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
 #endif
+	if(listener->socket_domain == AF_INET){
+		info.options |= LWS_SERVER_OPTION_DISABLE_IPV6;
+	}
 
 	user = mosquitto__calloc(1, sizeof(struct libws_mqtt_hack));
 	if(!user){

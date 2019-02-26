@@ -44,7 +44,7 @@ Contributors:
 #include "memory_mosq.h"
 #include "tls_mosq.h"
 #include "util_mosq.h"
-#include "mqtt3_protocol.h"
+#include "mqtt_protocol.h"
 
 struct config_recurse {
 	int log_dest;
@@ -53,7 +53,6 @@ struct config_recurse {
 	int log_type_set;
 	unsigned long max_inflight_bytes;
 	unsigned long max_queued_bytes;
-	int max_inflight_messages;
 	int max_queued_messages;
 };
 
@@ -61,6 +60,8 @@ struct config_recurse {
 #include <windows.h>
 extern SERVICE_STATUS_HANDLE service_handle;
 #endif
+
+static struct mosquitto__security_options *cur_security_options = NULL;
 
 static int conf__parse_bool(char **token, const char *name, bool *value, char *saveptr);
 static int conf__parse_int(char **token, const char *name, int *value, char *saveptr);
@@ -212,6 +213,9 @@ static void config__init_reload(struct mosquitto_db *db, struct mosquitto__confi
 	}
 #endif
 	config->log_timestamp = true;
+	config->max_keepalive = 65535;
+	config->max_packet_size = 0;
+	config->max_inflight_messages = 20;
 	config->persistence = false;
 	mosquitto__free(config->persistence_location);
 	config->persistence_location = NULL;
@@ -219,6 +223,7 @@ static void config__init_reload(struct mosquitto_db *db, struct mosquitto__confi
 	config->persistence_file = NULL;
 	config->persistent_client_expiration = 0;
 	config->queue_qos0_messages = false;
+	config->retain_available = true;
 	config->set_tcp_nodelay = false;
 	config->sys_interval = 10;
 	config->upgrade_outgoing_qos = false;
@@ -264,12 +269,15 @@ void config__init(struct mosquitto_db *db, struct mosquitto__config *config)
 	config->default_listener.max_connections = -1;
 	config->default_listener.protocol = mp_mqtt;
 	config->default_listener.security_options.allow_anonymous = -1;
+	config->default_listener.maximum_qos = 2;
 }
 
 void config__cleanup(struct mosquitto__config *config)
 {
 	int i;
+#ifdef WITH_BRIDGE
 	int j;
+#endif
 
 	mosquitto__free(config->clientid_prefixes);
 	mosquitto__free(config->persistence_location);
@@ -343,7 +351,7 @@ void config__cleanup(struct mosquitto__config *config)
 #ifdef WITH_TLS
 			mosquitto__free(config->bridges[i].tls_version);
 			mosquitto__free(config->bridges[i].tls_cafile);
-#ifdef WITH_TLS_PSK
+#ifdef FINAL_WITH_TLS_PSK
 			mosquitto__free(config->bridges[i].tls_psk_identity);
 			mosquitto__free(config->bridges[i].tls_psk);
 #endif
@@ -449,8 +457,10 @@ int config__parse_args(struct mosquitto_db *db, struct mosquitto__config *config
 			|| config->default_listener.host
 			|| config->default_listener.port
 			|| config->default_listener.max_connections != -1
+			|| config->default_listener.maximum_qos != 2
 			|| config->default_listener.mount_point
 			|| config->default_listener.protocol != mp_mqtt
+			|| config->default_listener.socket_domain
 			|| config->default_listener.security_options.password_file
 			|| config->default_listener.security_options.psk_file
 			|| config->default_listener.security_options.auth_plugin_config_count
@@ -481,11 +491,13 @@ int config__parse_args(struct mosquitto_db *db, struct mosquitto__config *config
 		}
 		config->listeners[config->listener_count-1].max_connections = config->default_listener.max_connections;
 		config->listeners[config->listener_count-1].protocol = config->default_listener.protocol;
+		config->listeners[config->listener_count-1].socket_domain = config->default_listener.socket_domain;
 		config->listeners[config->listener_count-1].client_count = 0;
 		config->listeners[config->listener_count-1].socks = NULL;
 		config->listeners[config->listener_count-1].sock_count = 0;
 		config->listeners[config->listener_count-1].client_count = 0;
 		config->listeners[config->listener_count-1].use_username_as_clientid = config->default_listener.use_username_as_clientid;
+		config->listeners[config->listener_count-1].maximum_qos = config->default_listener.maximum_qos;
 #ifdef WITH_TLS
 		config->listeners[config->listener_count-1].tls_version = config->default_listener.tls_version;
 		config->listeners[config->listener_count-1].tls_engine = config->default_listener.tls_engine;
@@ -503,6 +515,7 @@ int config__parse_args(struct mosquitto_db *db, struct mosquitto__config *config
 		config->listeners[config->listener_count-1].use_identity_as_username = config->default_listener.use_identity_as_username;
 		config->listeners[config->listener_count-1].use_subject_as_username = config->default_listener.use_subject_as_username;
 #endif
+		config->listeners[config->listener_count-1].security_options.acl_file = config->default_listener.security_options.acl_file;
 		config->listeners[config->listener_count-1].security_options.password_file = config->default_listener.security_options.password_file;
 		config->listeners[config->listener_count-1].security_options.psk_file = config->default_listener.security_options.psk_file;
 		config->listeners[config->listener_count-1].security_options.auth_plugin_configs = config->default_listener.security_options.auth_plugin_configs;
@@ -588,7 +601,9 @@ int config__read(struct mosquitto_db *db, struct mosquitto__config *config, bool
 	int rc = MOSQ_ERR_SUCCESS;
 	struct config_recurse cr;
 	int lineno = 0;
+#ifdef WITH_PERSISTENCE
 	int len;
+#endif
 	struct mosquitto__config config_reload;
 	int i;
 
@@ -601,7 +616,6 @@ int config__read(struct mosquitto_db *db, struct mosquitto__config *config, bool
 	cr.log_type = MOSQ_LOG_NONE;
 	cr.log_type_set = 0;
 	cr.max_inflight_bytes = 0;
-	cr.max_inflight_messages = 20;
 	cr.max_queued_bytes = 0;
 	cr.max_queued_messages = 100;
 
@@ -684,7 +698,7 @@ int config__read(struct mosquitto_db *db, struct mosquitto__config *config, bool
 		config->user = "mosquitto";
 	}
 
-	db__limits_set(cr.max_inflight_messages, cr.max_inflight_bytes, cr.max_queued_messages, cr.max_queued_bytes);
+	db__limits_set(cr.max_inflight_bytes, cr.max_queued_messages, cr.max_queued_bytes);
 
 #ifdef WITH_BRIDGE
 	for(i=0; i<config->bridge_count; i++){
@@ -692,7 +706,7 @@ int config__read(struct mosquitto_db *db, struct mosquitto__config *config, bool
 			log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 			return MOSQ_ERR_INVAL;
 		}
-#ifdef WITH_TLS_PSK
+#ifdef FINAL_WITH_TLS_PSK
 		if(config->bridges[i].tls_psk && !config->bridges[i].tls_psk_identity){
 			log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration: missing bridge_identity.\n");
 			return MOSQ_ERR_INVAL;
@@ -731,20 +745,10 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 
 	time_t expiration_mult;
 	char *key;
-	char *conf_file;
-#ifdef WIN32
-	HANDLE fh;
-	char dirpath[MAX_PATH];
-	WIN32_FIND_DATA find_data;
-#else
-	DIR *dh;
-	struct dirent *de;
-#endif
 	int len;
 	struct mosquitto__listener *cur_listener = &config->default_listener;
 	int i;
 	int lineno_ext;
-	struct mosquitto__security_options *cur_security_options = NULL;
 
 	*lineno = 0;
 
@@ -771,6 +775,9 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						return MOSQ_ERR_INVAL;
 					}
 					while((token = strtok_r(NULL, " ", &saveptr))){
+						if (token[0] == '#'){
+							break;
+						}
 						cur_bridge->address_count++;
 						cur_bridge->addresses = mosquitto__realloc(cur_bridge->addresses, sizeof(struct bridge_address)*cur_bridge->address_count);
 						if(!cur_bridge->addresses){
@@ -824,6 +831,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 					conf__set_cur_security_options(config, cur_listener, &cur_security_options);
 					if(conf__parse_bool(&token, "allow_zero_length_clientid", &cur_security_options->allow_zero_length_clientid, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strncmp(token, "auth_opt_", 9)){
+					if(reload) continue; // Auth plugin not currently valid for reloading.
 					if(!cur_auth_plugin_config){
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: An auth_opt_ option exists in the config file without an auth_plugin.");
 						return MOSQ_ERR_INVAL;
@@ -925,7 +933,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 						return MOSQ_ERR_INVAL;
 					}
-#ifdef WITH_TLS_PSK
+#ifdef FINAL_WITH_TLS_PSK
 					if(cur_bridge->tls_psk_identity || cur_bridge->tls_psk){
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single bridge.");
 						return MOSQ_ERR_INVAL;
@@ -942,7 +950,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 						return MOSQ_ERR_INVAL;
 					}
-#ifdef WITH_TLS_PSK
+#ifdef FINAL_WITH_TLS_PSK
 					if(cur_bridge->tls_psk_identity || cur_bridge->tls_psk){
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single bridge.");
 						return MOSQ_ERR_INVAL;
@@ -959,7 +967,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 						return MOSQ_ERR_INVAL;
 					}
-#ifdef WITH_TLS_PSK
+#ifdef FINAL_WITH_TLS_PSK
 					if(cur_bridge->tls_psk_identity || cur_bridge->tls_psk){
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single bridge.");
 						return MOSQ_ERR_INVAL;
@@ -970,7 +978,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or TLS support not available.");
 #endif
 				}else if(!strcmp(token, "bridge_identity")){
-#if defined(WITH_BRIDGE) && defined(WITH_TLS_PSK)
+#if defined(WITH_BRIDGE) && defined(FINAL_WITH_TLS_PSK)
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
@@ -1005,7 +1013,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 						return MOSQ_ERR_INVAL;
 					}
-#ifdef WITH_TLS_PSK
+#ifdef FINAL_WITH_TLS_PSK
 					if(cur_bridge->tls_psk_identity || cur_bridge->tls_psk){
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single bridge.");
 						return MOSQ_ERR_INVAL;
@@ -1040,7 +1048,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "bridge_psk")){
-#if defined(WITH_BRIDGE) && defined(WITH_TLS_PSK)
+#if defined(WITH_BRIDGE) && defined(FINAL_WITH_TLS_PSK)
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
@@ -1094,38 +1102,9 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 #else
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
 #endif
-				}else if(!strcmp(token, "tls_engine")){
-#ifdef WITH_TLS
-					if(reload) continue; // Listeners not valid for reloading.
-					if(conf__parse_string(&token, "tls_engine", &cur_listener->tls_engine, saveptr)) return MOSQ_ERR_INVAL;
-#else
-					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
-#endif
-				}else if(!strcmp(token, "tls_keyform")){
-#ifdef WITH_TLS
-					if(reload) continue; // Listeners not valid for reloading.
-					char *keyform = NULL;
-					if(conf__parse_string(&token, "tls_keyform", &keyform, saveptr)) return MOSQ_ERR_INVAL;
-					cur_listener->tls_keyform = mosq_k_pem;
-					if(!strcmp(keyform, "engine")) cur_listener->tls_keyform = mosq_k_engine;
-					mosquitto__free(keyform);
-#else
-					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
-#endif
-				}else if(!strcmp(token, "tls_engine_kpass_sha1")){
-#ifdef WITH_TLS
-					if(reload) continue; // Listeners not valid for reloading.
-					char *kpass_sha = NULL, *kpass_sha_bin = NULL;
-					if(conf__parse_string(&token, "tls_engine_kpass_sha1", &kpass_sha, saveptr)) return MOSQ_ERR_INVAL;
-					if(mosquitto__hex2bin_sha1(kpass_sha, (unsigned char**)&kpass_sha_bin) != MOSQ_ERR_SUCCESS){
-						mosquitto__free(kpass_sha);
-						return MOSQ_ERR_INVAL;
-					}
-					cur_listener->tls_engine_kpass_sha1 = kpass_sha_bin;
-					mosquitto__free(kpass_sha);
-#else
-					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
-#endif
+				}else if(!strcmp(token, "check_retain_source")){
+					conf__set_cur_security_options(config, cur_listener, &cur_security_options);
+					if(conf__parse_bool(&token, "check_retain_source", &config->check_retain_source, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "ciphers")){
 #ifdef WITH_TLS
 					if(reload) continue; // Listeners not valid for reloading.
@@ -1151,7 +1130,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 						return MOSQ_ERR_INVAL;
 					}
-					if(conf__parse_bool(&token, "cleansession", &cur_bridge->clean_session, saveptr)) return MOSQ_ERR_INVAL;
+					if(conf__parse_bool(&token, "cleansession", &cur_bridge->clean_start, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
@@ -1244,66 +1223,27 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 							log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty include_dir value in configuration.");
 							return 1;
 						}
-#ifdef WIN32
-						snprintf(dirpath, MAX_PATH, "%s\\*.conf", token);
-						fh = FindFirstFile(dirpath, &find_data);
-						if(fh == INVALID_HANDLE_VALUE){
-							/* No files found */
-							continue;
-						}
 
-						do{
-							len = strlen(token)+1+strlen(find_data.cFileName)+1;
-							conf_file = mosquitto__malloc(len+1);
-							if(!conf_file){
-								FindClose(fh);
-								return MOSQ_ERR_NOMEM;
-							}
-							snprintf(conf_file, len, "%s\\%s", token, find_data.cFileName);
-							conf_file[len] = '\0';
+						char **files;
+						int file_count;
+						rc = config__get_dir_files(token, &files, &file_count);
+						if(rc) return rc;
 
-							rc = config__read_file(config, reload, conf_file, cr, level+1, &lineno_ext);
+						for(i=0; i<file_count; i++){
+							log__printf(NULL, MOSQ_LOG_INFO, "Loading config file %s", files[i]);
+
+							rc = config__read_file(config, reload, files[i], cr, level+1, &lineno_ext);
 							if(rc){
-								FindClose(fh);
-								log__printf(NULL, MOSQ_LOG_ERR, "Error found at %s:%d.", conf_file, lineno_ext);
-								mosquitto__free(conf_file);
-								return rc;
-							}
-							mosquitto__free(conf_file);
-						}while(FindNextFile(fh, &find_data));
-
-						FindClose(fh);
-#else
-						dh = opendir(token);
-						if(!dh){
-							log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open include_dir '%s'.", token);
-							return 1;
-						}
-						while((de = readdir(dh)) != NULL){
-							if(strlen(de->d_name) > 5){
-								if(!strcmp(&de->d_name[strlen(de->d_name)-5], ".conf")){
-									len = strlen(token)+1+strlen(de->d_name)+1;
-									conf_file = mosquitto__malloc(len+1);
-									if(!conf_file){
-										closedir(dh);
-										return MOSQ_ERR_NOMEM;
-									}
-									snprintf(conf_file, len, "%s/%s", token, de->d_name);
-									conf_file[len] = '\0';
-
-									rc = config__read_file(config, reload, conf_file, cr, level+1, &lineno_ext);
-									if(rc){
-										closedir(dh);
-										log__printf(NULL, MOSQ_LOG_ERR, "Error found at %s:%d.", conf_file, lineno_ext);
-										mosquitto__free(conf_file);
-										return rc;
-									}
-									mosquitto__free(conf_file);
-								}
+								log__printf(NULL, MOSQ_LOG_ERR, "Error found at %s:%d.", files[i], lineno_ext);
+								/* Free happens below */
+								break;
 							}
 						}
-						closedir(dh);
-#endif
+						for(i=0; i<file_count; i++){
+							mosquitto__free(files[i]);
+						}
+						mosquitto__free(files);
+						if(rc) return rc; /* This returns if config__read_file() fails above */
 					}
 				}else if(!strcmp(token, "keepalive_interval")){
 #ifdef WITH_BRIDGE
@@ -1363,7 +1303,11 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						cur_listener->security_options.allow_anonymous = -1;
 						cur_listener->protocol = mp_mqtt;
 						cur_listener->port = tmp_int;
-						token = strtok_r(NULL, "", &saveptr);
+						cur_listener->maximum_qos = 2;
+						token = strtok_r(NULL, " ", &saveptr);
+						if (token != NULL && token[0] == '#'){
+							token = NULL;
+						}
 						mosquitto__free(cur_listener->host);
 						if(token){
 							cur_listener->host = mosquitto__strdup(token);
@@ -1537,6 +1481,14 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 					}else{
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty max_connections value in configuration.");
 					}
+				}else if(!strcmp(token, "maximum_qos")){
+					if(reload) continue; // Listeners not valid for reloading.
+					if(conf__parse_int(&token, "maximum_qos", &tmp_int, saveptr)) return MOSQ_ERR_INVAL;
+					if(tmp_int < 0 || tmp_int > 2){
+						log__printf(NULL, MOSQ_LOG_ERR, "Error: maximum_qos must be between 0 and 2 inclusive.");
+						return MOSQ_ERR_INVAL;
+					}
+					cur_listener->maximum_qos = tmp_int;
 				}else if(!strcmp(token, "max_inflight_bytes")){
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
@@ -1545,13 +1497,28 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty max_inflight_bytes value in configuration.");
 					}
 				}else if(!strcmp(token, "max_inflight_messages")){
-					token = strtok_r(NULL, " ", &saveptr);
-					if(token){
-						cr->max_inflight_messages = atoi(token);
-						if(cr->max_inflight_messages < 0) cr->max_inflight_messages = 0;
-					}else{
-						log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty max_inflight_messages value in configuration.");
+					if(conf__parse_int(&token, "max_inflight_messages", &tmp_int, saveptr)) return MOSQ_ERR_INVAL;
+					if(tmp_int < 0 || tmp_int == 65535){
+						tmp_int = 0;
+					}else if(tmp_int > 65535){
+						log__printf(NULL, MOSQ_LOG_ERR, "Error: max_inflight_messages must be <= 65535.");
+						return MOSQ_ERR_INVAL;
 					}
+					config->max_inflight_messages = tmp_int;
+				}else if(!strcmp(token, "max_keepalive")){
+					if(conf__parse_int(&token, "max_keepalive", &tmp_int, saveptr)) return MOSQ_ERR_INVAL;
+					if(tmp_int < 10 || tmp_int > 65535){
+						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid max_keepalive value (%d).", tmp_int);
+						return MOSQ_ERR_INVAL;
+					}
+					config->max_keepalive = tmp_int;
+				}else if(!strcmp(token, "max_packet_size")){
+					if(conf__parse_int(&token, "max_packet_size", &tmp_int, saveptr)) return MOSQ_ERR_INVAL;
+					if(tmp_int < 20){
+						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid max_packet_size value (%d).", tmp_int);
+						return MOSQ_ERR_INVAL;
+					}
+					config->max_packet_size = tmp_int;
 				}else if(!strcmp(token, "max_queued_bytes")){
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
@@ -1728,7 +1695,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty protocol value in configuration.");
 					}
 				}else if(!strcmp(token, "psk_file")){
-#ifdef WITH_TLS_PSK
+#ifdef FINAL_WITH_TLS_PSK
 					conf__set_cur_security_options(config, cur_listener, &cur_security_options);
 					if(reload){
 						mosquitto__free(cur_security_options->psk_file);
@@ -1739,7 +1706,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS/TLS-PSK support not available.");
 #endif
 				}else if(!strcmp(token, "psk_hint")){
-#ifdef WITH_TLS_PSK
+#ifdef FINAL_WITH_TLS_PSK
 					if(reload) continue; // Listeners not valid for reloading.
 					if(conf__parse_string(&token, "psk_hint", &cur_listener->psk_hint, saveptr)) return MOSQ_ERR_INVAL;
 #else
@@ -1769,6 +1736,8 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 #else
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
+				}else if(!strcmp(token, "retain_available")){
+					if(conf__parse_bool(&token, token, &config->retain_available, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "retry_interval")){
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: The retry_interval option is no longer available.");
 				}else if(!strcmp(token, "round_robin")){
@@ -1813,6 +1782,22 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 #else
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
+				}else if(!strcmp(token, "socket_domain")){
+					if(reload) continue; // Listeners not valid for reloading.
+					token = strtok_r(NULL, " ", &saveptr);
+					if(token){
+						if(!strcmp(token, "ipv4")){
+							cur_listener->socket_domain = AF_INET;
+						}else if(!strcmp(token, "ipv6")){
+							cur_listener->socket_domain = AF_INET6;
+						}else{
+							log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid socket_domain value \"%s\" in configuration.", token);
+							return MOSQ_ERR_INVAL;
+						}
+					}else{
+						log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty socket_domain value in configuration.");
+						return MOSQ_ERR_INVAL;
+					}
 				}else if(!strcmp(token, "store_clean_interval")){
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: store_clean_interval is no longer needed.");
 				}else if(!strcmp(token, "sys_interval")){
@@ -1835,6 +1820,38 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 					}
 #else
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+#endif
+				}else if(!strcmp(token, "tls_engine")){
+#ifdef WITH_TLS
+					if(reload) continue; // Listeners not valid for reloading.
+					if(conf__parse_string(&token, "tls_engine", &cur_listener->tls_engine, saveptr)) return MOSQ_ERR_INVAL;
+#else
+					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
+#endif
+				}else if(!strcmp(token, "tls_engine_kpass_sha1")){
+#ifdef WITH_TLS
+					if(reload) continue; // Listeners not valid for reloading.
+					char *kpass_sha = NULL, *kpass_sha_bin = NULL;
+					if(conf__parse_string(&token, "tls_engine_kpass_sha1", &kpass_sha, saveptr)) return MOSQ_ERR_INVAL;
+					if(mosquitto__hex2bin_sha1(kpass_sha, (unsigned char**)&kpass_sha_bin) != MOSQ_ERR_SUCCESS){
+						mosquitto__free(kpass_sha);
+						return MOSQ_ERR_INVAL;
+					}
+					cur_listener->tls_engine_kpass_sha1 = kpass_sha_bin;
+					mosquitto__free(kpass_sha);
+#else
+					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
+#endif
+				}else if(!strcmp(token, "tls_keyform")){
+#ifdef WITH_TLS
+					if(reload) continue; // Listeners not valid for reloading.
+					char *keyform = NULL;
+					if(conf__parse_string(&token, "tls_keyform", &keyform, saveptr)) return MOSQ_ERR_INVAL;
+					cur_listener->tls_keyform = mosq_k_pem;
+					if(!strcmp(keyform, "engine")) cur_listener->tls_keyform = mosq_k_engine;
+					mosquitto__free(keyform);
+#else
+					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
 #endif
 				}else if(!strcmp(token, "tls_version")){
 #if defined(WITH_TLS)
@@ -1891,6 +1908,9 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						}
 						token = strtok_r(NULL, " ", &saveptr);
 						if(token){
+							if (token[0] == '#'){
+								strtok_r(NULL, "", &saveptr);
+							}
 							cur_topic->qos = atoi(token);
 							if(cur_topic->qos < 0 || cur_topic->qos > 2){
 								log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge QoS level '%s'.", token);
@@ -1900,8 +1920,11 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 							token = strtok_r(NULL, " ", &saveptr);
 							if(token){
 								cur_bridge->topic_remapping = true;
-								if(!strcmp(token, "\"\"")){
+								if(!strcmp(token, "\"\"") || token[0] == '#'){
 									cur_topic->local_prefix = NULL;
+									if (token[0] == '#'){
+										strtok_r(NULL, "", &saveptr);
+									}
 								}else{
 									if(mosquitto_pub_topic_check(token) != MOSQ_ERR_SUCCESS){
 										log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge topic local prefix '%s'.", token);
@@ -1916,7 +1939,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 
 								token = strtok_r(NULL, " ", &saveptr);
 								if(token){
-									if(!strcmp(token, "\"\"")){
+									if(!strcmp(token, "\"\"") || token[0] == '#'){
 										cur_topic->remote_prefix = NULL;
 									}else{
 										if(mosquitto_pub_topic_check(token) != MOSQ_ERR_SUCCESS){
@@ -2031,21 +2054,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
 						return MOSQ_ERR_INVAL;
 					}
-					token = strtok_r(NULL, " ", &saveptr);
-					if(token){
-						if(cur_bridge->remote_username){
-							log__printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate username value in bridge configuration.");
-							return MOSQ_ERR_INVAL;
-						}
-						cur_bridge->remote_username = mosquitto__strdup(token);
-						if(!cur_bridge->remote_username){
-							log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
-						}
-					}else{
-						log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty username value in configuration.");
-						return MOSQ_ERR_INVAL;
-					}
+					if(conf__parse_string(&token, "bridge remote_username", &cur_bridge->remote_username, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
@@ -2103,8 +2112,10 @@ static int config__check(struct mosquitto__config *config)
 {
 	/* Checks that are easy to make after the config has been loaded. */
 
+	int i;
+
 #ifdef WITH_BRIDGE
-	int i, j;
+	int j;
 	struct mosquitto__bridge *bridge1, *bridge2;
 	char hostname[256];
 	int len;
@@ -2152,6 +2163,28 @@ static int config__check(struct mosquitto__config *config)
 		}
 	}
 #endif
+
+	/* Default to auto_id_prefix = 'auto-' if none set. */
+	if(config->per_listener_settings){
+		for(i=0; i<config->listener_count; i++){
+			if(!config->listeners[i].security_options.auto_id_prefix){
+				config->listeners[i].security_options.auto_id_prefix = mosquitto__strdup("auto-");
+				if(!config->listeners[i].security_options.auto_id_prefix){
+					return MOSQ_ERR_NOMEM;
+				}
+				config->listeners[i].security_options.auto_id_prefix_len = strlen("auto-");
+			}
+		}
+	}else{
+		if(!config->security_options.auto_id_prefix){
+			config->security_options.auto_id_prefix = mosquitto__strdup("auto-");
+			if(!config->security_options.auto_id_prefix){
+				return MOSQ_ERR_NOMEM;
+			}
+			config->security_options.auto_id_prefix_len = strlen("auto-");
+		}
+	}
+
 	return MOSQ_ERR_SUCCESS;
 }
 

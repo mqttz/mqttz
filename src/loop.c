@@ -87,7 +87,9 @@ static void temp__expire_websockets_clients(struct mosquitto_db *db)
 						}else{
 							id = "<unknown>";
 						}
-						log__printf(NULL, MOSQ_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", id);
+						if(db->config->connection_messages == true){
+							log__printf(NULL, MOSQ_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", id);
+						}
 					}
 					/* Client has exceeded keepalive*1.5 */
 					do_disconnect(db, context);
@@ -126,11 +128,11 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 #endif
 #ifdef WITH_BRIDGE
 	int rc;
+	int err;
+	socklen_t len;
 #endif
 	time_t expiration_check_time = 0;
 	char *id;
-	int err;
-	socklen_t len;
 
 #ifndef WIN32
 	sigemptyset(&sigblock);
@@ -408,6 +410,10 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 								context->bridge->restart_t = 0;
 							}
 						}else{
+#ifdef WITH_EPOLL
+							/* clean any events triggered in previous connection */
+							context->events = 0;
+#endif
 							rc = bridge__connect_step1(db, context);
 							if(rc){
 								context->bridge->cur_address++;
@@ -466,7 +472,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 		now_time = time(NULL);
 		if(db->config->persistent_client_expiration > 0 && now_time > expiration_check_time){
 			HASH_ITER(hh_id, db->contexts_by_id, context, ctxt_tmp){
-				if(context->sock == INVALID_SOCKET && context->clean_session == 0){
+				if(context->sock == INVALID_SOCKET && context->clean_start == 0){
 					/* This is a persistent client, check to see if the
 					 * last time it connected was longer than
 					 * persistent_client_expiration seconds ago. If so,
@@ -480,7 +486,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 						}
 						log__printf(NULL, MOSQ_LOG_NOTICE, "Expiring persistent client %s due to timeout.", id);
 						G_CLIENTS_EXPIRED_INC();
-						context->clean_session = true;
+						context->clean_start = true;
 						context->state = mosq_cs_expiring;
 						do_disconnect(db, context);
 					}
@@ -638,19 +644,13 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 			context->sock = INVALID_SOCKET;
 			context->pollfd_index = -1;
 		}
-		if(context->id){
-			HASH_DELETE(hh_id, db->contexts_by_id, context);
-			context->old_id = context->id;
-			context->id = NULL;
-		}
+		context__remove_from_by_id(db, context);
 	}else
 #endif
 	{
 		if(db->config->connection_messages == true){
 			if(context->id){
 				id = context->id;
-			}else if(context->old_id){
-				id = context->old_id;
 			}else{
 				id = "<unknown>";
 			}
@@ -662,18 +662,20 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 		}
 #ifdef WITH_EPOLL
 		if (context->sock != INVALID_SOCKET && epoll_ctl(db->epollfd, EPOLL_CTL_DEL, context->sock, &ev) == -1) {
-			log__printf(NULL, MOSQ_LOG_DEBUG, "Error in epoll disconnecting: %s", strerror(errno));
+			if(db->config->connection_messages == true){
+				log__printf(NULL, MOSQ_LOG_DEBUG, "Error in epoll disconnecting: %s", strerror(errno));
+			}
 		}
 #endif		
 		context__disconnect(db, context);
 #ifdef WITH_BRIDGE
-		if(context->clean_session && !context->bridge){
+		if(context->clean_start && !context->bridge){
 #else
-		if(context->clean_session){
+		if(context->clean_start){
 #endif
 			context__add_to_disused(db, context);
 			if(context->id){
-				HASH_DELETE(hh_id, db->contexts_by_id, context);
+				context__remove_from_by_id(db, context);
 				mosquitto__free(context->id);
 				context->id = NULL;
 			}

@@ -9,11 +9,13 @@ all : mosquitto
 endif
 
 OBJS=	mosquitto.o \
+		alias_mosq.o \
 		bridge.o \
 		conf.o \
 		conf_includedir.o \
 		context.o \
 		database.o \
+		handle_auth.o \
 		handle_connack.o \
 		handle_connect.o \
 		handle_ping.o \
@@ -30,7 +32,10 @@ OBJS=	mosquitto.o \
 		memory_mosq.o \
 		net.o \
 		net_mosq.o \
+		packet_datatypes.o \
 		packet_mosq.o \
+		property_broker.o \
+		property_mosq.o \
 		persist.o \
 		plugin.o \
 		read_handle.o \
@@ -43,6 +48,7 @@ OBJS=	mosquitto.o \
 		send_publish.o \
 		send_suback.o \
 		send_subscribe.o \
+		send_unsuback.o \
 		send_unsubscribe.o \
 		service.o \
 		signals.o \
@@ -52,13 +58,17 @@ OBJS=	mosquitto.o \
 		tls_mosq.o \
 		utf8_mosq.o \
 		util_mosq.o \
+		util_topic.o \
 		websockets.o \
 		will_mosq.o
 
 mosquitto : ${OBJS}
-	${CROSS_COMPILE}${CC} $^ -o $@ ${LDFLAGS} $(BROKER_LIBS)
+	${CROSS_COMPILE}${CC} $^ -o $@ ${BROKER_LDFLAGS} $(BROKER_LIBS)
 
 mosquitto.o : mosquitto.c mosquitto_broker_internal.h
+	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
+
+alias_mosq.o : ../lib/alias_mosq.c ../lib/alias_mosq.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
 bridge.o : bridge.c mosquitto_broker_internal.h
@@ -74,6 +84,9 @@ context.o : context.c mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
 database.o : database.c mosquitto_broker_internal.h
+	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
+
+handle_auth.o : handle_auth.c mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
 handle_connack.o : handle_connack.c mosquitto_broker_internal.h
@@ -127,7 +140,16 @@ net_mosq.o : ../lib/net_mosq.c ../lib/net_mosq.h
 persist.o : persist.c persist.h mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
+packet_datatypes.o : ../lib/packet_datatypes.c ../lib/packet_mosq.h
+	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
+
 packet_mosq.o : ../lib/packet_mosq.c ../lib/packet_mosq.h
+	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
+
+property_broker.o : property_broker.c mosquitto_broker_internal.h
+	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
+
+property_mosq.o : ../lib/property_mosq.c ../lib/property_mosq.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
 plugin.o : plugin.c mosquitto_plugin.h mosquitto_broker_internal.h
@@ -163,6 +185,9 @@ send_suback.o : send_suback.c mosquitto_broker_internal.h
 send_subscribe.o : ../lib/send_subscribe.c ../lib/send_mosq.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
+send_unsuback.o : send_unsuback.c mosquitto_broker_internal.h
+	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
+
 send_unsubscribe.o : ../lib/send_unsubscribe.c ../lib/send_mosq.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
@@ -185,6 +210,9 @@ tls_mosq.o : ../lib/tls_mosq.c
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
 util_mosq.o : ../lib/util_mosq.c ../lib/util_mosq.h
+	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
+
+util_topic.o : ../lib/util_topic.c ../lib/util_mosq.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
 utf8_mosq.o : ../lib/utf8_mosq.c
@@ -223,7 +251,7 @@ uninstall :
 	-rm -f "${DESTDIR}${prefix}/bin/mosquitto_passwd"
 
 clean : 
-	-rm -f *.o mosquitto mosquitto_passwd
+	-rm -f *.o mosquitto mosquitto_passwd *.gcda *.gcno
 
 reallyclean : clean
 	-rm -rf *.orig *.db

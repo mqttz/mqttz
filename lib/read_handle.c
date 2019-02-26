@@ -24,7 +24,7 @@ Contributors:
 #include "logging_mosq.h"
 #include "memory_mosq.h"
 #include "messages_mosq.h"
-#include "mqtt3_protocol.h"
+#include "mqtt_protocol.h"
 #include "net_mosq.h"
 #include "packet_mosq.h"
 #include "read_handle.h"
@@ -37,26 +37,30 @@ int handle__packet(struct mosquitto *mosq)
 	assert(mosq);
 
 	switch((mosq->in_packet.command)&0xF0){
-		case PINGREQ:
+		case CMD_PINGREQ:
 			return handle__pingreq(mosq);
-		case PINGRESP:
+		case CMD_PINGRESP:
 			return handle__pingresp(mosq);
-		case PUBACK:
+		case CMD_PUBACK:
 			return handle__pubackcomp(mosq, "PUBACK");
-		case PUBCOMP:
+		case CMD_PUBCOMP:
 			return handle__pubackcomp(mosq, "PUBCOMP");
-		case PUBLISH:
+		case CMD_PUBLISH:
 			return handle__publish(mosq);
-		case PUBREC:
-			return handle__pubrec(mosq);
-		case PUBREL:
+		case CMD_PUBREC:
+			return handle__pubrec(NULL, mosq);
+		case CMD_PUBREL:
 			return handle__pubrel(NULL, mosq);
-		case CONNACK:
+		case CMD_CONNACK:
 			return handle__connack(mosq);
-		case SUBACK:
+		case CMD_SUBACK:
 			return handle__suback(mosq);
-		case UNSUBACK:
+		case CMD_UNSUBACK:
 			return handle__unsuback(mosq);
+		case CMD_DISCONNECT:
+			return handle__disconnect(mosq);
+		case CMD_AUTH:
+			return handle__auth(mosq);
 		default:
 			/* If we don't recognise the command, return an error straight away. */
 			log__printf(mosq, MOSQ_LOG_ERR, "Error: Unrecognised command %d\n", (mosq->in_packet.command)&0xF0);

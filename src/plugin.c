@@ -32,7 +32,7 @@ const char *mosquitto_client_address(const struct mosquitto *client)
 
 bool mosquitto_client_clean_session(const struct mosquitto *client)
 {
-	return client->clean_session;
+	return client->clean_start;
 }
 
 

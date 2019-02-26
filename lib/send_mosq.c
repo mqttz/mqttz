@@ -30,10 +30,11 @@ Contributors:
 #include "mosquitto.h"
 #include "mosquitto_internal.h"
 #include "logging_mosq.h"
-#include "mqtt3_protocol.h"
+#include "mqtt_protocol.h"
 #include "memory_mosq.h"
 #include "net_mosq.h"
 #include "packet_mosq.h"
+#include "property_mosq.h"
 #include "send_mosq.h"
 #include "time_mosq.h"
 #include "util_mosq.h"
@@ -47,7 +48,7 @@ int send__pingreq(struct mosquitto *mosq)
 #else
 	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PINGREQ", mosq->id);
 #endif
-	rc = send__simple_command(mosq, PINGREQ);
+	rc = send__simple_command(mosq, CMD_PINGREQ);
 	if(rc == MOSQ_ERR_SUCCESS){
 		mosq->ping_t = mosquitto_time();
 	}
@@ -61,7 +62,7 @@ int send__pingresp(struct mosquitto *mosq)
 #else
 	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PINGRESP", mosq->id);
 #endif
-	return send__simple_command(mosq, PINGRESP);
+	return send__simple_command(mosq, CMD_PINGRESP);
 }
 
 int send__puback(struct mosquitto *mosq, uint16_t mid)
@@ -71,7 +72,9 @@ int send__puback(struct mosquitto *mosq, uint16_t mid)
 #else
 	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBACK (Mid: %d)", mosq->id, mid);
 #endif
-	return send__command_with_mid(mosq, PUBACK, mid, false);
+	util__increment_receive_quota(mosq);
+	/* We don't use Reason String or User Property yet. */
+	return send__command_with_mid(mosq, CMD_PUBACK, mid, false, 0, NULL);
 }
 
 int send__pubcomp(struct mosquitto *mosq, uint16_t mid)
@@ -81,7 +84,9 @@ int send__pubcomp(struct mosquitto *mosq, uint16_t mid)
 #else
 	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBCOMP (Mid: %d)", mosq->id, mid);
 #endif
-	return send__command_with_mid(mosq, PUBCOMP, mid, false);
+	util__increment_receive_quota(mosq);
+	/* We don't use Reason String or User Property yet. */
+	return send__command_with_mid(mosq, CMD_PUBCOMP, mid, false, 0, NULL);
 }
 
 
@@ -92,7 +97,13 @@ int send__pubrec(struct mosquitto *mosq, uint16_t mid)
 #else
 	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBREC (Mid: %d)", mosq->id, mid);
 #endif
-	return send__command_with_mid(mosq, PUBREC, mid, false);
+	/* FIXME - if rc >= 0x80 quota needs incrementing
+	if(rc >= 0x80){
+		util__increment_receive_quota(mosq);
+	}
+	*/
+	/* We don't use Reason String or User Property yet. */
+	return send__command_with_mid(mosq, CMD_PUBREC, mid, false, 0, NULL);
 }
 
 int send__pubrel(struct mosquitto *mosq, uint16_t mid)
@@ -102,14 +113,16 @@ int send__pubrel(struct mosquitto *mosq, uint16_t mid)
 #else
 	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBREL (Mid: %d)", mosq->id, mid);
 #endif
-	return send__command_with_mid(mosq, PUBREL|2, mid, false);
+	/* We don't use Reason String or User Property yet. */
+	return send__command_with_mid(mosq, CMD_PUBREL|2, mid, false, 0, NULL);
 }
 
 /* For PUBACK, PUBCOMP, PUBREC, and PUBREL */
-int send__command_with_mid(struct mosquitto *mosq, uint8_t command, uint16_t mid, bool dup)
+int send__command_with_mid(struct mosquitto *mosq, uint8_t command, uint16_t mid, bool dup, uint8_t reason_code, const mosquitto_property *properties)
 {
 	struct mosquitto__packet *packet = NULL;
 	int rc;
+	int proplen, varbytes;
 
 	assert(mosq);
 	packet = mosquitto__calloc(1, sizeof(struct mosquitto__packet));
@@ -120,14 +133,35 @@ int send__command_with_mid(struct mosquitto *mosq, uint8_t command, uint16_t mid
 		packet->command |= 8;
 	}
 	packet->remaining_length = 2;
+
+	if(mosq->protocol == mosq_p_mqtt5){
+		if(reason_code != 0 || properties){
+			packet->remaining_length += 1;
+		}
+
+		if(properties){
+			proplen = property__get_length_all(properties);
+			varbytes = packet__varint_bytes(proplen);
+			packet->remaining_length += varbytes + proplen;
+		}
+	}
+
 	rc = packet__alloc(packet);
 	if(rc){
 		mosquitto__free(packet);
 		return rc;
 	}
 
-	packet->payload[packet->pos+0] = MOSQ_MSB(mid);
-	packet->payload[packet->pos+1] = MOSQ_LSB(mid);
+	packet__write_uint16(packet, mid);
+
+	if(mosq->protocol == mosq_p_mqtt5){
+		if(reason_code != 0 || properties){
+			packet__write_byte(packet, reason_code);
+		}
+		if(properties){
+			property__write_all(packet, properties, true);
+		}
+	}
 
 	return packet__queue(mosq, packet);
 }

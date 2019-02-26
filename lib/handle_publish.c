@@ -23,8 +23,10 @@ Contributors:
 #include "mosquitto_internal.h"
 #include "logging_mosq.h"
 #include "memory_mosq.h"
+#include "mqtt_protocol.h"
 #include "messages_mosq.h"
 #include "packet_mosq.h"
+#include "property_mosq.h"
 #include "send_mosq.h"
 #include "time_mosq.h"
 
@@ -36,6 +38,7 @@ int handle__publish(struct mosquitto *mosq)
 	int rc = 0;
 	uint16_t mid;
 	int slen;
+	mosquitto_property *properties = NULL;
 
 	assert(mosq);
 
@@ -59,12 +62,30 @@ int handle__publish(struct mosquitto *mosq)
 	}
 
 	if(message->msg.qos > 0){
+		if(mosq->protocol == mosq_p_mqtt5){
+			if(mosq->receive_quota == 0){
+				message__cleanup(&message);
+				/* FIXME - should send a DISCONNECT here */
+				return MOSQ_ERR_PROTOCOL;
+			}
+			mosq->receive_quota--;
+		}
+
 		rc = packet__read_uint16(&mosq->in_packet, &mid);
 		if(rc){
 			message__cleanup(&message);
 			return rc;
 		}
+		if(mid == 0){
+			message__cleanup(&message);
+			return MOSQ_ERR_PROTOCOL;
+		}
 		message->msg.mid = (int)mid;
+	}
+
+	if(mosq->protocol == mosq_p_mqtt5){
+		rc = property__read_all(CMD_PUBLISH, &mosq->in_packet, &properties);
+		if(rc) return rc;
 	}
 
 	message->msg.payloadlen = mosq->in_packet.remaining_length - mosq->in_packet.pos;
@@ -72,11 +93,13 @@ int handle__publish(struct mosquitto *mosq)
 		message->msg.payload = mosquitto__calloc(message->msg.payloadlen+1, sizeof(uint8_t));
 		if(!message->msg.payload){
 			message__cleanup(&message);
+			mosquitto_property_free_all(&properties);
 			return MOSQ_ERR_NOMEM;
 		}
 		rc = packet__read_bytes(&mosq->in_packet, message->msg.payload, message->msg.payloadlen);
 		if(rc){
 			message__cleanup(&message);
+			mosquitto_property_free_all(&properties);
 			return rc;
 		}
 	}
@@ -95,8 +118,14 @@ int handle__publish(struct mosquitto *mosq)
 				mosq->on_message(mosq, mosq->userdata, &message->msg);
 				mosq->in_callback = false;
 			}
+			if(mosq->on_message_v5){
+				mosq->in_callback = true;
+				mosq->on_message_v5(mosq, mosq->userdata, &message->msg, properties);
+				mosq->in_callback = false;
+			}
 			pthread_mutex_unlock(&mosq->callback_mutex);
 			message__cleanup(&message);
+			mosquitto_property_free_all(&properties);
 			return MOSQ_ERR_SUCCESS;
 		case 1:
 			rc = send__puback(mosq, message->msg.mid);
@@ -106,8 +135,14 @@ int handle__publish(struct mosquitto *mosq)
 				mosq->on_message(mosq, mosq->userdata, &message->msg);
 				mosq->in_callback = false;
 			}
+			if(mosq->on_message_v5){
+				mosq->in_callback = true;
+				mosq->on_message_v5(mosq, mosq->userdata, &message->msg, properties);
+				mosq->in_callback = false;
+			}
 			pthread_mutex_unlock(&mosq->callback_mutex);
 			message__cleanup(&message);
+			mosquitto_property_free_all(&properties);
 			return rc;
 		case 2:
 			rc = send__pubrec(mosq, message->msg.mid);
@@ -115,9 +150,11 @@ int handle__publish(struct mosquitto *mosq)
 			message->state = mosq_ms_wait_for_pubrel;
 			message__queue(mosq, message, mosq_md_in);
 			pthread_mutex_unlock(&mosq->in_message_mutex);
+			mosquitto_property_free_all(&properties);
 			return rc;
 		default:
 			message__cleanup(&message);
+			mosquitto_property_free_all(&properties);
 			return MOSQ_ERR_PROTOCOL;
 	}
 }

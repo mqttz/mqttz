@@ -13,6 +13,11 @@ Two docker volumes have been created in the image to be used for persistent stor
 /mosquitto/log
 ```
 
+## User/Group
+
+The image runs mosqutto under the mosquitto user and group, which are created
+with a uid and gid of 1883.
+
 ## Configuration
 When creating a container from the image, the default configuration values are used.
 To use a custom configuration file, mount a **local** configuration file to `/mosquitto/config/mosquitto.conf`

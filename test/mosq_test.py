@@ -6,7 +6,9 @@ import struct
 import sys
 import time
 
-def start_broker(filename, cmd=None, port=0, use_conf=False):
+import mqtt5_props
+
+def start_broker(filename, cmd=None, port=0, use_conf=False, expect_fail=False):
     delay = 0.1
 
     if use_conf == True:
@@ -43,7 +45,11 @@ def start_broker(filename, cmd=None, port=0, use_conf=False):
             c.close()
             time.sleep(delay)
             return broker
-    raise IOError
+
+    if expect_fail == False:
+        raise IOError
+    else:
+        return None
 
 def start_client(filename, cmd, env, port=1888):
     if cmd is None:
@@ -72,10 +78,14 @@ def packet_matches(name, recvd, expected):
             print("Received: "+to_string(recvd))
         except struct.error:
             print("Received (not decoded, len=%d): %s" % (len(recvd), recvd))
+            for i in range(0, len(recvd)):
+                print('%c'%(recvd[i]),)
         try:
             print("Expected: "+to_string(expected))
         except struct.error:
             print("Expected (not decoded, len=%d): %s" % (len(expected), expected))
+            for i in range(0, len(expected)):
+                print('%c'%(expected[i]),)
 
         return 0
     else:
@@ -292,16 +302,18 @@ def to_string(packet):
         # Reserved
         return "0xF0"
 
-def gen_connect(client_id, clean_session=True, keepalive=60, username=None, password=None, will_topic=None, will_qos=0, will_retain=False, will_payload="", proto_ver=4, connect_reserved=False):
+def gen_connect(client_id, clean_session=True, keepalive=60, username=None, password=None, will_topic=None, will_qos=0, will_retain=False, will_payload="", proto_ver=4, connect_reserved=False, properties="", will_properties=""):
     if (proto_ver&0x7F) == 3 or proto_ver == 0:
         remaining_length = 12
-    elif (proto_ver&0x7F) == 4:
+    elif (proto_ver&0x7F) == 4 or proto_ver == 5:
         remaining_length = 10
     else:
         raise ValueError
 
     if client_id != None:
         remaining_length = remaining_length + 2+len(client_id)
+    else:
+        remaining_length = remaining_length + 2
 
     connect_flags = 0
 
@@ -311,11 +323,20 @@ def gen_connect(client_id, clean_session=True, keepalive=60, username=None, pass
     if clean_session:
         connect_flags = connect_flags | 0x02
 
+    if proto_ver == 5:
+        if properties == "":
+            properties += mqtt5_props.gen_uint16_prop(mqtt5_props.PROP_RECEIVE_MAXIMUM, 20)
+        properties = mqtt5_props.prop_finalise(properties)
+        remaining_length += len(properties)
+
     if will_topic != None:
         remaining_length = remaining_length + 2+len(will_topic) + 2+len(will_payload)
         connect_flags = connect_flags | 0x04 | ((will_qos&0x03) << 3)
         if will_retain:
             connect_flags = connect_flags | 32
+        if proto_ver == 5:
+            will_properties = mqtt5_props.prop_finalise(will_properties)
+            remaining_length += len(will_properties)
 
     if username != None:
         remaining_length = remaining_length + 2+len(username)
@@ -328,13 +349,19 @@ def gen_connect(client_id, clean_session=True, keepalive=60, username=None, pass
     packet = struct.pack("!B"+str(len(rl))+"s", 0x10, rl)
     if (proto_ver&0x7F) == 3 or proto_ver == 0:
         packet = packet + struct.pack("!H6sBBH", len("MQIsdp"), "MQIsdp", proto_ver, connect_flags, keepalive)
-    elif (proto_ver&0x7F) == 4:
+    elif (proto_ver&0x7F) == 4 or proto_ver == 5:
         packet = packet + struct.pack("!H4sBBH", len("MQTT"), "MQTT", proto_ver, connect_flags, keepalive)
+
+    if proto_ver == 5:
+        packet += properties
 
     if client_id != None:
         packet = packet + struct.pack("!H"+str(len(client_id))+"s", len(client_id), client_id)
+    else:
+        packet = packet + struct.pack("!H", 0)
 
     if will_topic != None:
+        packet += will_properties
         packet = packet + struct.pack("!H"+str(len(will_topic))+"s", len(will_topic), will_topic)
         if len(will_payload) > 0:
             packet = packet + struct.pack("!H"+str(len(will_payload))+"s", len(will_payload), will_payload)
@@ -347,15 +374,30 @@ def gen_connect(client_id, clean_session=True, keepalive=60, username=None, pass
             packet = packet + struct.pack("!H"+str(len(password))+"s", len(password), password)
     return packet
 
-def gen_connack(resv=0, rc=0):
-    return struct.pack('!BBBB', 32, 2, resv, rc);
+def gen_connack(flags=0, rc=0, proto_ver=4, properties=""):
+    if proto_ver == 5:
+        properties += mqtt5_props.gen_byte_prop(mqtt5_props.PROP_SHARED_SUB_AVAILABLE, 0)
+        properties = mqtt5_props.prop_finalise(properties)
 
-def gen_publish(topic, qos, payload=None, retain=False, dup=False, mid=0):
+        packet = struct.pack('!BBBB', 32, 2+len(properties), flags, rc) + properties
+    else:
+        packet = struct.pack('!BBBB', 32, 2, flags, rc);
+
+    return packet
+
+def gen_publish(topic, qos, payload=None, retain=False, dup=False, mid=0, proto_ver=4, properties=""):
     rl = 2+len(topic)
     pack_format = "H"+str(len(topic))+"s"
     if qos > 0:
         rl = rl + 2
         pack_format = pack_format + "H"
+
+    if proto_ver == 5:
+        properties = mqtt5_props.prop_finalise(properties)
+        rl += len(properties)
+        # This will break if len(properties) > 127
+        pack_format = pack_format + "%ds"%(len(properties))
+
     if payload != None:
         rl = rl + len(payload)
         pack_format = pack_format + str(len(payload))+"s"
@@ -370,40 +412,104 @@ def gen_publish(topic, qos, payload=None, retain=False, dup=False, mid=0):
     if dup:
         cmd = cmd + 8
 
-    if qos > 0:
-        return struct.pack("!B" + str(len(rlpacked))+"s" + pack_format, cmd, rlpacked, len(topic), topic, mid, payload)
+    if proto_ver == 5:
+        if qos > 0:
+            return struct.pack("!B" + str(len(rlpacked))+"s" + pack_format, cmd, rlpacked, len(topic), topic, mid, properties, payload)
+        else:
+            return struct.pack("!B" + str(len(rlpacked))+"s" + pack_format, cmd, rlpacked, len(topic), topic, properties, payload)
     else:
-        return struct.pack("!B" + str(len(rlpacked))+"s" + pack_format, cmd, rlpacked, len(topic), topic, payload)
+        if qos > 0:
+            return struct.pack("!B" + str(len(rlpacked))+"s" + pack_format, cmd, rlpacked, len(topic), topic, mid, payload)
+        else:
+            return struct.pack("!B" + str(len(rlpacked))+"s" + pack_format, cmd, rlpacked, len(topic), topic, payload)
 
-def gen_puback(mid):
-    return struct.pack('!BBH', 64, 2, mid)
+def _gen_command_with_mid(cmd, mid, proto_ver=4, reason_code=-1, properties=None):
+    if proto_ver == 5 and (reason_code != -1 or properties is not None):
+        if reason_code == -1:
+            reason_code = 0
 
-def gen_pubrec(mid):
-    return struct.pack('!BBH', 80, 2, mid)
+        if properties is None:
+            return struct.pack('!BBHB', cmd, 3, mid, reason_code)
+        elif properties == "":
+            return struct.pack('!BBHBB', cmd, 4, mid, reason_code, 0)
+        else:
+            properties = mqtt5_props.prop_finalise(properties)
+            pack_format = "!BBHB"+str(len(properties))+"s"
+            return struct.pack(pack_format, cmd, 2+1+len(properties), mid, reason_code, properties)
+    else:
+        return struct.pack('!BBH', cmd, 2, mid)
 
-def gen_pubrel(mid, dup=False):
+def gen_puback(mid, proto_ver=4, reason_code=-1, properties=None):
+    return _gen_command_with_mid(64, mid, proto_ver, reason_code, properties)
+
+def gen_pubrec(mid, proto_ver=4, reason_code=-1, properties=None):
+    return _gen_command_with_mid(80, mid, proto_ver, reason_code, properties)
+
+def gen_pubrel(mid, dup=False, proto_ver=4, reason_code=-1, properties=None):
     if dup:
         cmd = 96+8+2
     else:
         cmd = 96+2
-    return struct.pack('!BBH', cmd, 2, mid)
+    return _gen_command_with_mid(cmd, mid, proto_ver, reason_code, properties)
 
-def gen_pubcomp(mid):
-    return struct.pack('!BBH', 112, 2, mid)
+def gen_pubcomp(mid, proto_ver=4, reason_code=-1, properties=None):
+    return _gen_command_with_mid(112, mid, proto_ver, reason_code, properties)
 
-def gen_subscribe(mid, topic, qos):
-    pack_format = "!BBHH"+str(len(topic))+"sB"
-    return struct.pack(pack_format, 130, 2+2+len(topic)+1, mid, len(topic), topic, qos)
+def gen_subscribe(mid, topic, qos, proto_ver=4, properties=""):
+    if proto_ver == 5:
+        if properties == "":
+            pack_format = "!BBHBH"+str(len(topic))+"sB"
+            return struct.pack(pack_format, 130, 2+1+2+len(topic)+1, mid, 0, len(topic), topic, qos)
+        else:
+            properties = mqtt5_props.prop_finalise(properties)
+            pack_format = "!BBH"+str(len(properties))+"s"+"H"+str(len(topic))+"sB"
+            return struct.pack(pack_format, 130, 2+1+2+len(topic)+len(properties), mid, properties, len(topic), topic, qos)
+    else:
+        pack_format = "!BBHH"+str(len(topic))+"sB"
+        return struct.pack(pack_format, 130, 2+2+len(topic)+1, mid, len(topic), topic, qos)
 
-def gen_suback(mid, qos):
-    return struct.pack('!BBHB', 144, 2+1, mid, qos)
+def gen_suback(mid, qos, proto_ver=4):
+    if proto_ver == 5:
+        return struct.pack('!BBHBB', 144, 2+1+1, mid, 0, qos)
+    else:
+        return struct.pack('!BBHB', 144, 2+1, mid, qos)
 
-def gen_unsubscribe(mid, topic):
-    pack_format = "!BBHH"+str(len(topic))+"s"
-    return struct.pack(pack_format, 162, 2+2+len(topic), mid, len(topic), topic)
+def gen_unsubscribe(mid, topic, proto_ver=4):
+    if proto_ver == 5:
+        pack_format = "!BBHBH"+str(len(topic))+"s"
+        return struct.pack(pack_format, 162, 2+2+len(topic)+1, mid, 0, len(topic), topic)
+    else:
+        pack_format = "!BBHH"+str(len(topic))+"s"
+        return struct.pack(pack_format, 162, 2+2+len(topic), mid, len(topic), topic)
 
-def gen_unsuback(mid):
-    return struct.pack('!BBH', 176, 2, mid)
+def gen_unsubscribe_multiple(mid, topics, proto_ver=4):
+    packet = ""
+    remaining_length = 0
+    for t in topics:
+        remaining_length += 2+len(t)
+        packet += struct.pack("!H"+str(len(t))+"s", len(t), t)
+
+    if proto_ver == 5:
+        remaining_length += 2+1
+
+        return struct.pack("!BBHB", 162, remaining_length, mid, 0) + packet
+    else:
+        remaining_length += 2
+
+        return struct.pack("!BBH", 162, remaining_length, mid) + packet
+
+def gen_unsuback(mid, proto_ver=4, reason_code=0):
+    if proto_ver == 5:
+        if isinstance(reason_code, list):
+            reason_code_count = len(reason_code)
+            p = struct.pack('!BBHB', 176, 3+reason_code_count, mid, 0)
+            for r in reason_code:
+                p += struct.pack('B', r)
+            return p
+        else:
+            return struct.pack('!BBHBB', 176, 4, mid, 0, reason_code)
+    else:
+        return struct.pack('!BBH', 176, 2, mid)
 
 def gen_pingreq():
     return struct.pack('!BB', 192, 0)
@@ -411,8 +517,20 @@ def gen_pingreq():
 def gen_pingresp():
     return struct.pack('!BB', 208, 0)
 
-def gen_disconnect():
-    return struct.pack('!BB', 224, 0)
+def gen_disconnect(reason_code=-1, proto_ver=4, properties=None):
+    if proto_ver == 5 and (reason_code != -1 or properties is not None):
+        if reason_code == -1:
+             reason_code = 0
+
+        if properties is None:
+            return struct.pack('!BBB', 224, 1, reason_code)
+        elif properties == "":
+            return struct.pack('!BBBB', 224, 2, reason_code, 0)
+        else:
+            properties = mqtt5_props.prop_finalise(properties)
+            return struct.pack("!BBB", 224, 1+len(properties), reason_code) + properties
+    else:
+        return struct.pack('!BB', 224, 0)
 
 def pack_remaining_length(remaining_length):
     s = ""

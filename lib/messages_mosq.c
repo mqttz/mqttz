@@ -26,6 +26,7 @@ Contributors:
 #include "messages_mosq.h"
 #include "send_mosq.h"
 #include "time_mosq.h"
+#include "util_mosq.h"
 
 void message__cleanup(struct mosquitto_message_all **message)
 {
@@ -82,13 +83,13 @@ int mosquitto_message_copy(struct mosquitto_message *dst, const struct mosquitto
 	return MOSQ_ERR_SUCCESS;
 }
 
-int message__delete(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_direction dir)
+int message__delete(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_direction dir, int qos)
 {
 	struct mosquitto_message_all *message;
 	int rc;
 	assert(mosq);
 
-	rc = message__remove(mosq, mid, dir, &message);
+	rc = message__remove(mosq, mid, dir, &message, qos);
 	if(rc == MOSQ_ERR_SUCCESS){
 		message__cleanup(&message);
 	}
@@ -123,6 +124,7 @@ int message__queue(struct mosquitto *mosq, struct mosquitto_message_all *message
 	/* mosq->*_message_mutex should be locked before entering this function */
 	assert(mosq);
 	assert(message);
+	assert(message->msg.qos != 0);
 
 	if(dir == mosq_md_out){
 		mosq->out_queue_len++;
@@ -133,12 +135,10 @@ int message__queue(struct mosquitto *mosq, struct mosquitto_message_all *message
 			mosq->out_messages = message;
 		}
 		mosq->out_messages_last = message;
-		if(message->msg.qos > 0){
-			if(mosq->max_inflight_messages == 0 || mosq->inflight_messages < mosq->max_inflight_messages){
-				mosq->inflight_messages++;
-			}else{
-				rc = 1;
-			}
+		if(mosq->send_quota > 0){
+			mosq->send_quota--;
+		}else{
+			rc = 1;
 		}
 	}else{
 		mosq->in_queue_len++;
@@ -187,17 +187,15 @@ void message__reconnect_reset(struct mosquitto *mosq)
 
 
 	pthread_mutex_lock(&mosq->out_message_mutex);
-	mosq->inflight_messages = 0;
+	mosq->send_quota = mosq->send_maximum;
 	message = mosq->out_messages;
 	mosq->out_queue_len = 0;
 	while(message){
 		mosq->out_queue_len++;
 		message->timestamp = 0;
 
-		if(mosq->max_inflight_messages == 0 || mosq->inflight_messages < mosq->max_inflight_messages){
-			if(message->msg.qos > 0){
-				mosq->inflight_messages++;
-			}
+		if(mosq->send_quota > 0){
+			mosq->send_quota--;
 			if(message->msg.qos == 1){
 				message->state = mosq_ms_publish_qos1;
 			}else if(message->msg.qos == 2){
@@ -218,7 +216,7 @@ void message__reconnect_reset(struct mosquitto *mosq)
 	pthread_mutex_unlock(&mosq->out_message_mutex);
 }
 
-int message__remove(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_direction dir, struct mosquitto_message_all **message)
+int message__remove(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_direction dir, struct mosquitto_message_all **message, int qos)
 {
 	struct mosquitto_message_all *cur, *prev = NULL;
 	bool found = false;
@@ -231,6 +229,9 @@ int message__remove(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_dir
 		cur = mosq->out_messages;
 		while(cur){
 			if(cur->msg.mid == mid){
+				if(cur->msg.qos != qos){
+					return MOSQ_ERR_PROTOCOL;
+				}
 				if(prev){
 					prev->next = cur->next;
 				}else{
@@ -243,9 +244,7 @@ int message__remove(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_dir
 				}else if(!mosq->out_messages){
 					mosq->out_messages_last = NULL;
 				}
-				if(cur->msg.qos > 0){
-					mosq->inflight_messages--;
-				}
+				util__increment_send_quota(mosq);
 				found = true;
 				break;
 			}
@@ -256,15 +255,15 @@ int message__remove(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_dir
 		if(found){
 			cur = mosq->out_messages;
 			while(cur){
-				if(mosq->max_inflight_messages == 0 || mosq->inflight_messages < mosq->max_inflight_messages){
+				if(mosq->send_quota > 0){
 					if(cur->msg.qos > 0 && cur->state == mosq_ms_invalid){
-						mosq->inflight_messages++;
+						mosq->send_quota--;
 						if(cur->msg.qos == 1){
 							cur->state = mosq_ms_wait_for_puback;
 						}else if(cur->msg.qos == 2){
 							cur->state = mosq_ms_wait_for_pubrec;
 						}
-						rc = send__publish(mosq, cur->msg.mid, cur->msg.topic, cur->msg.payloadlen, cur->msg.payload, cur->msg.qos, cur->msg.retain, cur->dup);
+						rc = send__publish(mosq, cur->msg.mid, cur->msg.topic, cur->msg.payloadlen, cur->msg.payload, cur->msg.qos, cur->msg.retain, cur->dup, NULL, NULL, 0);
 						if(rc){
 							pthread_mutex_unlock(&mosq->out_message_mutex);
 							return rc;
@@ -287,6 +286,9 @@ int message__remove(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_dir
 		cur = mosq->in_messages;
 		while(cur){
 			if(cur->msg.mid == mid){
+				if(cur->msg.qos != qos){
+					return MOSQ_ERR_PROTOCOL;
+				}
 				if(prev){
 					prev->next = cur->next;
 				}else{
@@ -334,7 +336,7 @@ void message__retry_check_actual(struct mosquitto *mosq, struct mosquitto_messag
 			case mosq_ms_publish_qos2:
 				messages->timestamp = now;
 				messages->dup = true;
-				send__publish(mosq, messages->msg.mid, messages->msg.topic, messages->msg.payloadlen, messages->msg.payload, messages->msg.qos, messages->msg.retain, messages->dup);
+				send__publish(mosq, messages->msg.mid, messages->msg.topic, messages->msg.payloadlen, messages->msg.payload, messages->msg.qos, messages->msg.retain, messages->dup, NULL, NULL, 0);
 				break;
 			case mosq_ms_wait_for_pubrel:
 				messages->timestamp = now;
@@ -370,7 +372,7 @@ void mosquitto_message_retry_set(struct mosquitto *mosq, unsigned int message_re
 {
 }
 
-int message__out_update(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_state state)
+int message__out_update(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_state state, int qos)
 {
 	struct mosquitto_message_all *message;
 	assert(mosq);
@@ -379,6 +381,9 @@ int message__out_update(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg
 	message = mosq->out_messages;
 	while(message){
 		if(message->msg.mid == mid){
+			if(message->msg.qos != qos){
+				return MOSQ_ERR_PROTOCOL;
+			}
 			message->state = state;
 			message->timestamp = mosquitto_time();
 			pthread_mutex_unlock(&mosq->out_message_mutex);
@@ -394,7 +399,7 @@ int mosquitto_max_inflight_messages_set(struct mosquitto *mosq, unsigned int max
 {
 	if(!mosq) return MOSQ_ERR_INVAL;
 
-	mosq->max_inflight_messages = max_inflight_messages;
+	mosq->send_maximum = max_inflight_messages;
 
 	return MOSQ_ERR_SUCCESS;
 }

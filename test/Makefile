@@ -7,6 +7,7 @@ all :
 test :
 	$(MAKE) -C broker test
 	$(MAKE) -C lib test
+	$(MAKE) -C unit test
 
 ptest :
 	$(MAKE) -C broker ptest

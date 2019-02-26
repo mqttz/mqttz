@@ -1,15 +1,6 @@
 #!/usr/bin/env python
 
-import subprocess
-import time
-
-import inspect, os, sys
-# From http://stackoverflow.com/questions/279237/python-import-a-module-from-a-folder
-cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"..")))
-if cmd_subfolder not in sys.path:
-    sys.path.insert(0, cmd_subfolder)
-
-import mosq_test
+from mosq_test_helper import *
 
 def pattern_test(sub_topic, pub_topic):
     rc = 1
@@ -29,11 +20,9 @@ def pattern_test(sub_topic, pub_topic):
     unsuback_packet = mosq_test.gen_unsuback(mid)
 
     port = mosq_test.get_port()
-    broker = subprocess.Popen(['../../src/mosquitto', '-p', str(port)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port)
 
     try:
-        time.sleep(0.5)
-
         sock = mosq_test.do_client_connect(connect_packet, connack_packet, timeout=20, port=port)
         mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
 
@@ -57,7 +46,7 @@ def pattern_test(sub_topic, pub_topic):
         if rc:
             print(stde)
             print(stdo)
-            raise
+            sys.exit(rc)
 
     return rc
 

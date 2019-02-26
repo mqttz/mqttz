@@ -28,9 +28,10 @@ Contributors:
 #include "logging_mosq.h"
 #include "memory_mosq.h"
 #include "messages_mosq.h"
-#include "mqtt3_protocol.h"
+#include "mqtt_protocol.h"
 #include "net_mosq.h"
 #include "packet_mosq.h"
+#include "property_mosq.h"
 #include "read_handle.h"
 #include "send_mosq.h"
 #include "util_mosq.h"
@@ -40,6 +41,7 @@ int handle__unsuback(struct mosquitto *mosq)
 {
 	uint16_t mid;
 	int rc;
+	mosquitto_property *properties = NULL;
 
 	assert(mosq);
 #ifdef WITH_BROKER
@@ -49,14 +51,30 @@ int handle__unsuback(struct mosquitto *mosq)
 #endif
 	rc = packet__read_uint16(&mosq->in_packet, &mid);
 	if(rc) return rc;
-#ifndef WITH_BROKER
+	if(mid == 0) return MOSQ_ERR_PROTOCOL;
+
+	if(mosq->protocol == mosq_p_mqtt5){
+		rc = property__read_all(CMD_UNSUBACK, &mosq->in_packet, &properties);
+		if(rc) return rc;
+	}
+
+#ifdef WITH_BROKER
+	/* Immediately free, we don't do anything with Reason String or User Property at the moment */
+	mosquitto_property_free_all(&properties);
+#else
 	pthread_mutex_lock(&mosq->callback_mutex);
 	if(mosq->on_unsubscribe){
 		mosq->in_callback = true;
 		mosq->on_unsubscribe(mosq, mosq->userdata, mid);
 		mosq->in_callback = false;
 	}
+	if(mosq->on_unsubscribe_v5){
+		mosq->in_callback = true;
+		mosq->on_unsubscribe_v5(mosq, mosq->userdata, mid, properties);
+		mosq->in_callback = false;
+	}
 	pthread_mutex_unlock(&mosq->callback_mutex);
+	mosquitto_property_free_all(&properties);
 #endif
 
 	return MOSQ_ERR_SUCCESS;

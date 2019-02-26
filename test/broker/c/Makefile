@@ -1,47 +1,33 @@
-.PHONY: all test clean reallyclean 08
+.PHONY: all test clean reallyclean
 
 CFLAGS=-I../../../lib -I../../../src -Wall -Werror
 
-PLUGINS= \
-	auth_plugin.so \
-	auth_plugin_pwd.so \
-	auth_plugin_acl.so \
-	auth_plugin_v2.so \
-	auth_plugin_msg_params.so \
-	auth_plugin_context_params.so \
-	auth_plugin_acl_sub_denied.so
+PLUGIN_SRC = \
+	auth_plugin.c \
+	auth_plugin_pwd.c \
+	auth_plugin_acl.c \
+	auth_plugin_acl_sub_denied.c \
+	auth_plugin_v2.c \
+	auth_plugin_context_params.c \
+	auth_plugin_msg_params.c
+
+PLUGINS = ${PLUGIN_SRC:.c=.so}
+
+SRC = \
+	08-tls-psk-pub.c \
+	08-tls-psk-bridge.c
+
+TESTS = ${SRC:.c=.test}
 
 
-all : ${PLUGINS} 08
+all : ${PLUGINS} ${TESTS}
 
-08 : 08-tls-psk-pub.test 08-tls-psk-bridge.test
+${PLUGINS} : %.so: %.c
+	$(CC) ${CFLAGS} -fPIC -shared $< -o $@
 
-auth_plugin.so : auth_plugin.c
-	$(CC) ${CFLAGS} -fPIC -shared $^ -o $@
 
-auth_plugin_pwd.so : auth_plugin_pwd.c
-	$(CC) ${CFLAGS} -fPIC -shared $^ -o $@
-
-auth_plugin_acl.so : auth_plugin_acl.c
-	$(CC) ${CFLAGS} -fPIC -shared $^ -o $@
-
-auth_plugin_v2.so : auth_plugin_v2.c
-	$(CC) ${CFLAGS} -fPIC -shared $^ -o $@
-
-auth_plugin_context_params.so : auth_plugin_context_params.c
-	$(CC) ${CFLAGS} -fPIC -shared $^ -o $@
-
-auth_plugin_msg_params.so : auth_plugin_msg_params.c
-	$(CC) ${CFLAGS} -fPIC -shared $^ -o $@
-
-auth_plugin_acl_sub_denied.so : auth_plugin_acl_sub_denied.c
-	$(CC) ${CFLAGS} -fPIC -shared $^ -o $@
-
-08-tls-psk-pub.test : 08-tls-psk-pub.c
-	$(CC) ${CFLAGS} $^ -o $@ ../../../lib/libmosquitto.so.1
-
-08-tls-psk-bridge.test : 08-tls-psk-bridge.c
-	$(CC) ${CFLAGS} $^ -o $@ ../../../lib/libmosquitto.so.1
+${TESTS} : %.test: %.c
+	$(CC) ${CFLAGS} $< -o $@ ../../../lib/libmosquitto.so.1
 
 
 reallyclean : clean

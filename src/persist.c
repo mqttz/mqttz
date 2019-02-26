@@ -39,6 +39,8 @@ static uint32_t db_version;
 
 
 static int persist__restore_sub(struct mosquitto_db *db, const char *client_id, const char *sub, int qos);
+static int persist__read_string(FILE *db_fptr, char **str);
+static int persist__write_string(FILE *db_fptr, const char *str, bool nullok);
 
 static struct mosquitto *persist__find_or_add_context(struct mosquitto_db *db, const char *client_id, uint16_t last_mid)
 {
@@ -55,7 +57,7 @@ static struct mosquitto *persist__find_or_add_context(struct mosquitto_db *db, c
 			return NULL;
 		}
 
-		context->clean_session = false;
+		context->clean_start = false;
 
 		HASH_ADD_KEYPTR(hh_id, db->contexts_by_id, context->id, strlen(context->id), context);
 	}
@@ -139,7 +141,7 @@ static int persist__message_store_write(struct mosquitto_db *db, FILE *db_fptr)
 	uint32_t length;
 	dbid_t i64temp;
 	uint32_t i32temp;
-	uint16_t i16temp, slen, tlen;
+	uint16_t i16temp, tlen;
 	uint8_t i8temp;
 	struct mosquitto_msg_store *stored;
 	bool force_no_retain;
@@ -168,10 +170,19 @@ static int persist__message_store_write(struct mosquitto_db *db, FILE *db_fptr)
 		}else{
 			tlen = 0;
 		}
-		length = htonl(sizeof(dbid_t) + 2+strlen(stored->source_id) +
+		length = sizeof(dbid_t) + 2+strlen(stored->source_id) +
 				sizeof(uint16_t) + sizeof(uint16_t) +
 				2+tlen + sizeof(uint32_t) +
-				stored->payloadlen + sizeof(uint8_t) + sizeof(uint8_t));
+				stored->payloadlen + sizeof(uint8_t) + sizeof(uint8_t)
+				+ 2*sizeof(uint16_t);
+
+		if(stored->source_id){
+			length += strlen(stored->source_id);
+		}
+		if(stored->source_username){
+			length += strlen(stored->source_username);
+		}
+		length = htonl(length);
 
 		i16temp = htons(DB_CHUNK_MSG_STORE);
 		write_e(db_fptr, &i16temp, sizeof(uint16_t));
@@ -180,12 +191,15 @@ static int persist__message_store_write(struct mosquitto_db *db, FILE *db_fptr)
 		i64temp = stored->db_id;
 		write_e(db_fptr, &i64temp, sizeof(dbid_t));
 
-		slen = strlen(stored->source_id);
-		i16temp = htons(slen);
-		write_e(db_fptr, &i16temp, sizeof(uint16_t));
-		if(slen){
-			write_e(db_fptr, stored->source_id, slen);
+		if(persist__write_string(db_fptr, stored->source_id, false)) return 1;
+		if(persist__write_string(db_fptr, stored->source_username, true)) return 1;
+		if(stored->source_listener){
+			i16temp = htons(stored->source_listener->port);
+		}else{
+			i16temp = 0;
 		}
+		write_e(db_fptr, &i16temp, sizeof(uint16_t));
+
 
 		i16temp = htons(stored->source_mid);
 		write_e(db_fptr, &i16temp, sizeof(uint16_t));
@@ -214,6 +228,7 @@ static int persist__message_store_write(struct mosquitto_db *db, FILE *db_fptr)
 		if(stored->payloadlen){
 			write_e(db_fptr, UHPA_ACCESS_PAYLOAD(stored), (unsigned int)stored->payloadlen);
 		}
+
 		stored = stored->next;
 	}
 
@@ -234,7 +249,7 @@ static int persist__client_write(struct mosquitto_db *db, FILE *db_fptr)
 	assert(db_fptr);
 
 	HASH_ITER(hh_id, db->contexts_by_id, context, ctxt_tmp){
-		if(context && context->clean_session == false){
+		if(context && context->clean_start == false){
 			length = htonl(2+strlen(context->id) + sizeof(uint16_t) + sizeof(time_t));
 
 			i16temp = htons(DB_CHUNK_CLIENT);
@@ -265,6 +280,60 @@ error:
 	return 1;
 }
 
+
+static int persist__read_string(FILE *db_fptr, char **str)
+{
+	uint16_t i16temp;
+	uint16_t slen;
+	char *s = NULL;
+
+	if(fread(&i16temp, 1, sizeof(uint16_t), db_fptr) != sizeof(uint16_t)){
+		return MOSQ_ERR_INVAL;
+	}
+
+	slen = ntohs(i16temp);
+	if(slen){
+		s = mosquitto__malloc(slen+1);
+		if(!s){
+			fclose(db_fptr);
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+			return MOSQ_ERR_NOMEM;
+		}
+		if(fread(s, 1, slen, db_fptr) != slen){
+			mosquitto__free(s);
+			return MOSQ_ERR_NOMEM;
+		}
+		s[slen] = '\0';
+	}
+
+	*str = s;
+	return MOSQ_ERR_SUCCESS;
+}
+
+
+static int persist__write_string(FILE *db_fptr, const char *str, bool nullok)
+{
+	uint16_t i16temp, slen;
+
+	if(str){
+		slen = strlen(str);
+		i16temp = htons(slen);
+		write_e(db_fptr, &i16temp, sizeof(uint16_t));
+		write_e(db_fptr, str, slen);
+	}else if(nullok){
+		i16temp = htons(0);
+		write_e(db_fptr, &i16temp, sizeof(uint16_t));
+	}else{
+		return 1;
+	}
+
+	return MOSQ_ERR_SUCCESS;
+error:
+	log__printf(NULL, MOSQ_LOG_ERR, "Error: %s.", strerror(errno));
+	return 1;
+}
+
+
 static int persist__subs_retain_write(struct mosquitto_db *db, FILE *db_fptr, struct mosquitto__subhier *node, const char *topic, int level)
 {
 	struct mosquitto__subhier *subhier, *subhier_tmp;
@@ -287,7 +356,7 @@ static int persist__subs_retain_write(struct mosquitto_db *db, FILE *db_fptr, st
 
 	sub = node->subs;
 	while(sub){
-		if(sub->context->clean_session == false){
+		if(sub->context->clean_start == false && sub->context->id){
 			length = htonl(2+strlen(sub->context->id) + 2+strlen(thistopic) + sizeof(uint8_t));
 
 			i16temp = htons(DB_CHUNK_SUB);
@@ -642,15 +711,16 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 {
 	dbid_t i64temp, store_id;
 	uint32_t i32temp, payloadlen = 0;
-	uint16_t i16temp, slen, source_mid;
+	uint16_t i16temp, source_mid, source_port = 0;
 	uint8_t qos, retain;
 	mosquitto__payload_uhpa payload;
-	char *source_id = NULL;
+	struct mosquitto source;
 	char *topic = NULL;
 	int rc = 0;
 	struct mosquitto_msg_store *stored = NULL;
 	struct mosquitto_msg_store_load *load;
 	char *err;
+	int i;
 
 	payload.ptr = NULL;
 
@@ -664,41 +734,45 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 	read_e(db_fptr, &i64temp, sizeof(dbid_t));
 	store_id = i64temp;
 
-	read_e(db_fptr, &i16temp, sizeof(uint16_t));
-	slen = ntohs(i16temp);
-	if(slen){
-		source_id = mosquitto__malloc(slen+1);
-		if(!source_id){
-			mosquitto__free(load);
-			fclose(db_fptr);
-			log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-			return MOSQ_ERR_NOMEM;
-		}
-		read_e(db_fptr, source_id, slen);
-		source_id[slen] = '\0';
+	memset(&source, 0, sizeof(struct mosquitto));
+
+	rc = persist__read_string(db_fptr, &source.id);
+	if(rc){
+		mosquitto__free(load);
+		return rc;
 	}
+	if(db_version == 4){
+		rc = persist__read_string(db_fptr, &source.username);
+		if(rc){
+			mosquitto__free(load);
+			return rc;
+		}
+		read_e(db_fptr, &i16temp, sizeof(uint16_t));
+		source_port = ntohs(i16temp);
+		if(source_port){
+			for(i=0; i<db->config->listener_count; i++){
+				if(db->config->listeners[i].port == source_port){
+					source.listener = &db->config->listeners[i];
+					break;
+				}
+			}
+		}
+	}
+
 	read_e(db_fptr, &i16temp, sizeof(uint16_t));
 	source_mid = ntohs(i16temp);
 
 	/* This is the mid - don't need it */
 	read_e(db_fptr, &i16temp, sizeof(uint16_t));
 
-	read_e(db_fptr, &i16temp, sizeof(uint16_t));
-	slen = ntohs(i16temp);
-	if(slen){
-		topic = mosquitto__malloc(slen+1);
-		if(!topic){
-			mosquitto__free(load);
-			fclose(db_fptr);
-			mosquitto__free(source_id);
-			log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-			return MOSQ_ERR_NOMEM;
-		}
-		read_e(db_fptr, topic, slen);
-		topic[slen] = '\0';
-	}else{
-		topic = NULL;
+	rc = persist__read_string(db_fptr, &topic);
+	if(rc){
+		mosquitto__free(load);
+		fclose(db_fptr);
+		mosquitto__free(source.id);
+		return rc;
 	}
+
 	read_e(db_fptr, &qos, sizeof(uint8_t));
 	read_e(db_fptr, &retain, sizeof(uint8_t));
 	
@@ -709,7 +783,7 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 		if(UHPA_ALLOC(payload, payloadlen) == 0){
 			mosquitto__free(load);
 			fclose(db_fptr);
-			mosquitto__free(source_id);
+			mosquitto__free(source.id);
 			mosquitto__free(topic);
 			log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
@@ -717,8 +791,8 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 		read_e(db_fptr, UHPA_ACCESS(payload, payloadlen), payloadlen);
 	}
 
-	rc = db__message_store(db, source_id, source_mid, topic, qos, payloadlen, &payload, retain, &stored, store_id);
-	mosquitto__free(source_id);
+	rc = db__message_store(db, &source, source_mid, topic, qos, payloadlen, &payload, retain, &stored, 0, NULL, store_id);
+	mosquitto__free(source.id);
 
 	if(rc == MOSQ_ERR_SUCCESS){
 		load->db_id = stored->db_id;
@@ -737,7 +811,7 @@ error:
 	err = strerror(errno);
 	log__printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
 	fclose(db_fptr);
-	mosquitto__free(source_id);
+	mosquitto__free(source.id);
 	mosquitto__free(topic);
 	UHPA_FREE(payload, payloadlen);
 	return 1;
@@ -768,38 +842,27 @@ static int persist__retain_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 
 static int persist__sub_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 {
-	uint16_t i16temp, slen;
 	uint8_t qos;
 	char *client_id;
 	char *topic;
 	int rc = 0;
 	char *err;
 
-	read_e(db_fptr, &i16temp, sizeof(uint16_t));
-	slen = ntohs(i16temp);
-	client_id = mosquitto__malloc(slen+1);
-	if(!client_id){
+	rc = persist__read_string(db_fptr, &client_id);
+	if(rc){
 		fclose(db_fptr);
-		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-		return MOSQ_ERR_NOMEM;
+		return rc;
 	}
-	read_e(db_fptr, client_id, slen);
-	client_id[slen] = '\0';
 
-	read_e(db_fptr, &i16temp, sizeof(uint16_t));
-	slen = ntohs(i16temp);
-	topic = mosquitto__malloc(slen+1);
-	if(!topic){
-		fclose(db_fptr);
-		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+	rc = persist__read_string(db_fptr, &topic);
+	if(rc){
 		mosquitto__free(client_id);
-		return MOSQ_ERR_NOMEM;
+		fclose(db_fptr);
+		return rc;
 	}
-	read_e(db_fptr, topic, slen);
-	topic[slen] = '\0';
 
 	read_e(db_fptr, &qos, sizeof(uint8_t));
-	if(persist__restore_sub(db, client_id, topic, qos)){
+	if(persist__restore_sub(db, client_id, topic, qos) > 0){
 		rc = 1;
 	}
 	mosquitto__free(client_id);
@@ -852,7 +915,9 @@ int persist__restore(struct mosquitto_db *db)
 		 * Is your DB change still compatible with previous versions?
 		 */
 		if(db_version > MOSQ_DB_VERSION && db_version != 0){
-			if(db_version == 2){
+			if(db_version == 3){
+				/* Addition of source_username and source_port to msg_store chunk in v4, v1.5.6 */
+			}else if(db_version == 2){
 				/* Addition of disconnect_t to client chunk in v3. */
 			}else{
 				fclose(fptr);
@@ -935,7 +1000,8 @@ static int persist__restore_sub(struct mosquitto_db *db, const char *client_id, 
 
 	context = persist__find_or_add_context(db, client_id, 0);
 	if(!context) return 1;
-	return sub__add(db, context, sub, qos, &db->subs);
+	/* FIXME - identifer, options need saving */
+	return sub__add(db, context, sub, qos, 0, 0, &db->subs);
 }
 
 #endif

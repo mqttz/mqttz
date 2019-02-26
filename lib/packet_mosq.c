@@ -30,12 +30,13 @@ Contributors:
 #endif
 
 #include "memory_mosq.h"
-#include "mqtt3_protocol.h"
+#include "mqtt_protocol.h"
 #include "net_mosq.h"
 #include "packet_mosq.h"
 #include "read_handle.h"
 #ifdef WITH_BROKER
 #  include "sys_tree.h"
+#  include "send_mosq.h"
 #else
 #  define G_BYTES_RECEIVED_INC(A)
 #  define G_BYTES_SENT_INC(A)
@@ -141,7 +142,7 @@ int packet__queue(struct mosquitto *mosq, struct mosquitto__packet *packet)
 #endif
 	}
 
-	if(mosq->in_callback == false && mosq->threaded == false){
+	if(mosq->in_callback == false && mosq->threaded == mosq_ts_none){
 		return packet__write(mosq);
 	}else{
 		return MOSQ_ERR_SUCCESS;
@@ -150,105 +151,18 @@ int packet__queue(struct mosquitto *mosq, struct mosquitto__packet *packet)
 }
 
 
-int packet__read_byte(struct mosquitto__packet *packet, uint8_t *byte)
+int packet__check_oversize(struct mosquitto *mosq, uint32_t remaining_length)
 {
-	assert(packet);
-	if(packet->pos+1 > packet->remaining_length) return MOSQ_ERR_PROTOCOL;
+	int len;
 
-	*byte = packet->payload[packet->pos];
-	packet->pos++;
+	if(mosq->maximum_packet_size == 0) return MOSQ_ERR_SUCCESS;
 
-	return MOSQ_ERR_SUCCESS;
-}
-
-
-void packet__write_byte(struct mosquitto__packet *packet, uint8_t byte)
-{
-	assert(packet);
-	assert(packet->pos+1 <= packet->packet_length);
-
-	packet->payload[packet->pos] = byte;
-	packet->pos++;
-}
-
-
-int packet__read_bytes(struct mosquitto__packet *packet, void *bytes, uint32_t count)
-{
-	assert(packet);
-	if(packet->pos+count > packet->remaining_length) return MOSQ_ERR_PROTOCOL;
-
-	memcpy(bytes, &(packet->payload[packet->pos]), count);
-	packet->pos += count;
-
-	return MOSQ_ERR_SUCCESS;
-}
-
-
-void packet__write_bytes(struct mosquitto__packet *packet, const void *bytes, uint32_t count)
-{
-	assert(packet);
-	assert(packet->pos+count <= packet->packet_length);
-
-	memcpy(&(packet->payload[packet->pos]), bytes, count);
-	packet->pos += count;
-}
-
-
-int packet__read_string(struct mosquitto__packet *packet, char **str, int *length)
-{
-	uint16_t slen;
-	int rc;
-
-	assert(packet);
-	rc = packet__read_uint16(packet, &slen);
-	if(rc) return rc;
-
-	if(packet->pos+slen > packet->remaining_length) return MOSQ_ERR_PROTOCOL;
-
-	*str = mosquitto__malloc(slen+1);
-	if(*str){
-		memcpy(*str, &(packet->payload[packet->pos]), slen);
-		(*str)[slen] = '\0';
-		packet->pos += slen;
+	len = remaining_length + packet__varint_bytes(remaining_length);
+	if(len > mosq->maximum_packet_size){
+		return MOSQ_ERR_OVERSIZE_PACKET;
 	}else{
-		return MOSQ_ERR_NOMEM;
+		return MOSQ_ERR_SUCCESS;
 	}
-
-	*length = slen;
-	return MOSQ_ERR_SUCCESS;
-}
-
-
-void packet__write_string(struct mosquitto__packet *packet, const char *str, uint16_t length)
-{
-	assert(packet);
-	packet__write_uint16(packet, length);
-	packet__write_bytes(packet, str, length);
-}
-
-
-int packet__read_uint16(struct mosquitto__packet *packet, uint16_t *word)
-{
-	uint8_t msb, lsb;
-
-	assert(packet);
-	if(packet->pos+2 > packet->remaining_length) return MOSQ_ERR_PROTOCOL;
-
-	msb = packet->payload[packet->pos];
-	packet->pos++;
-	lsb = packet->payload[packet->pos];
-	packet->pos++;
-
-	*word = (msb<<8) + lsb;
-
-	return MOSQ_ERR_SUCCESS;
-}
-
-
-void packet__write_uint16(struct mosquitto__packet *packet, uint16_t word)
-{
-	packet__write_byte(packet, MOSQ_MSB(word));
-	packet__write_byte(packet, MOSQ_LSB(word));
 }
 
 
@@ -309,7 +223,7 @@ int packet__write(struct mosquitto *mosq)
 		}
 
 		G_MSGS_SENT_INC(1);
-		if(((packet->command)&0xF6) == PUBLISH){
+		if(((packet->command)&0xF6) == CMD_PUBLISH){
 			G_PUB_MSGS_SENT_INC(1);
 #ifndef WITH_BROKER
 			pthread_mutex_lock(&mosq->callback_mutex);
@@ -319,41 +233,17 @@ int packet__write(struct mosquitto *mosq)
 				mosq->on_publish(mosq, mosq->userdata, packet->mid);
 				mosq->in_callback = false;
 			}
-			pthread_mutex_unlock(&mosq->callback_mutex);
-		}else if(((packet->command)&0xF0) == DISCONNECT){
-			/* FIXME what cleanup needs doing here?
-			 * incoming/outgoing messages? */
-			net__socket_close(mosq);
-
-			/* Start of duplicate, possibly unnecessary code.
-			 * This does leave things in a consistent state at least. */
-			/* Free data and reset values */
-			pthread_mutex_lock(&mosq->out_packet_mutex);
-			mosq->current_out_packet = mosq->out_packet;
-			if(mosq->out_packet){
-				mosq->out_packet = mosq->out_packet->next;
-				if(!mosq->out_packet){
-					mosq->out_packet_last = NULL;
-				}
-			}
-			pthread_mutex_unlock(&mosq->out_packet_mutex);
-
-			packet__cleanup(packet);
-			mosquitto__free(packet);
-
-			pthread_mutex_lock(&mosq->msgtime_mutex);
-			mosq->next_msg_out = mosquitto_time() + mosq->keepalive;
-			pthread_mutex_unlock(&mosq->msgtime_mutex);
-			/* End of duplicate, possibly unnecessary code */
-
-			pthread_mutex_lock(&mosq->callback_mutex);
-			if(mosq->on_disconnect){
+			if(mosq->on_publish_v5){
+				/* This is a QoS=0 message */
 				mosq->in_callback = true;
-				mosq->on_disconnect(mosq, mosq->userdata, MOSQ_ERR_SUCCESS);
+				mosq->on_publish_v5(mosq, mosq->userdata, packet->mid, 0, NULL);
 				mosq->in_callback = false;
 			}
 			pthread_mutex_unlock(&mosq->callback_mutex);
-			pthread_mutex_unlock(&mosq->current_out_packet_mutex);
+		}else if(((packet->command)&0xF0) == CMD_DISCONNECT){
+			do_client_disconnect(mosq, MOSQ_ERR_SUCCESS, NULL);
+			packet__cleanup(packet);
+			mosquitto__free(packet);
 			return MOSQ_ERR_SUCCESS;
 #endif
 		}
@@ -391,8 +281,12 @@ int packet__read(struct mosquitto *mosq)
 	ssize_t read_length;
 	int rc = 0;
 
-	if(!mosq) return MOSQ_ERR_INVAL;
-	if(mosq->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
+	if(!mosq){
+		return MOSQ_ERR_INVAL;
+	}
+	if(mosq->sock == INVALID_SOCKET){
+		return MOSQ_ERR_NO_CONN;
+	}
 	if(mosq->state == mosq_cs_connect_pending){
 		return MOSQ_ERR_SUCCESS;
 	}
@@ -418,10 +312,14 @@ int packet__read(struct mosquitto *mosq)
 #ifdef WITH_BROKER
 			G_BYTES_RECEIVED_INC(1);
 			/* Clients must send CONNECT as their first command. */
-			if(!(mosq->bridge) && mosq->state == mosq_cs_new && (byte&0xF0) != CONNECT) return MOSQ_ERR_PROTOCOL;
+			if(!(mosq->bridge) && mosq->state == mosq_cs_new && (byte&0xF0) != CMD_CONNECT){
+				return MOSQ_ERR_PROTOCOL;
+			}
 #endif
 		}else{
-			if(read_length == 0) return MOSQ_ERR_CONN_LOST; /* EOF */
+			if(read_length == 0){
+				return MOSQ_ERR_CONN_LOST; /* EOF */
+			}
 #ifdef WIN32
 			errno = WSAGetLastError();
 #endif
@@ -454,13 +352,17 @@ int packet__read(struct mosquitto *mosq)
 				/* Max 4 bytes length for remaining length as defined by protocol.
 				 * Anything more likely means a broken/malicious client.
 				 */
-				if(mosq->in_packet.remaining_count < -4) return MOSQ_ERR_PROTOCOL;
+				if(mosq->in_packet.remaining_count < -4){
+					return MOSQ_ERR_PROTOCOL;
+				}
 
 				G_BYTES_RECEIVED_INC(1);
 				mosq->in_packet.remaining_length += (byte & 127) * mosq->in_packet.remaining_mult;
 				mosq->in_packet.remaining_mult *= 128;
 			}else{
-				if(read_length == 0) return MOSQ_ERR_CONN_LOST; /* EOF */
+				if(read_length == 0){
+					return MOSQ_ERR_CONN_LOST; /* EOF */
+				}
 #ifdef WIN32
 				errno = WSAGetLastError();
 #endif
@@ -480,9 +382,22 @@ int packet__read(struct mosquitto *mosq)
 		 * positive. */
 		mosq->in_packet.remaining_count *= -1;
 
+#ifdef WITH_BROKER
+		if(db->config->max_packet_size > 0 && mosq->in_packet.remaining_length+1 > db->config->max_packet_size){
+			log__printf(NULL, MOSQ_LOG_INFO, "Client %s sent too large packet %d, disconnecting.", mosq->id, mosq->in_packet.remaining_length+1);
+			if(mosq->protocol == mosq_p_mqtt5){
+				send__disconnect(mosq, MQTT_RC_PACKET_TOO_LARGE, NULL);
+			}
+			return MOSQ_ERR_OVERSIZE_PACKET;
+		}
+#else
+		// FIXME - client case for incoming message received from broker too large
+#endif
 		if(mosq->in_packet.remaining_length > 0){
 			mosq->in_packet.payload = mosquitto__malloc(mosq->in_packet.remaining_length*sizeof(uint8_t));
-			if(!mosq->in_packet.payload) return MOSQ_ERR_NOMEM;
+			if(!mosq->in_packet.payload){
+				return MOSQ_ERR_NOMEM;
+			}
 			mosq->in_packet.to_process = mosq->in_packet.remaining_length;
 		}
 	}
@@ -523,7 +438,7 @@ int packet__read(struct mosquitto *mosq)
 	mosq->in_packet.pos = 0;
 #ifdef WITH_BROKER
 	G_MSGS_RECEIVED_INC(1);
-	if(((mosq->in_packet.command)&0xF5) == PUBLISH){
+	if(((mosq->in_packet.command)&0xF5) == CMD_PUBLISH){
 		G_PUB_MSGS_RECEIVED_INC(1);
 	}
 	rc = handle__packet(db, mosq);

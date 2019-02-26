@@ -239,10 +239,10 @@ int log__vprintf(int priority, const char *fmt, va_list va)
 					return MOSQ_ERR_NOMEM;
 				}
 				snprintf(st, len, "%d: %s", (int)now, s);
-				db__messages_easy_queue(&int_db, NULL, topic, 2, strlen(st), st, 0);
+				db__messages_easy_queue(&int_db, NULL, topic, 2, strlen(st), st, 0, 20, NULL);
 				mosquitto__free(st);
 			}else{
-				db__messages_easy_queue(&int_db, NULL, topic, 2, strlen(s), s, 0);
+				db__messages_easy_queue(&int_db, NULL, topic, 2, strlen(s), s, 0, 20, NULL);
 			}
 		}
 		mosquitto__free(s);

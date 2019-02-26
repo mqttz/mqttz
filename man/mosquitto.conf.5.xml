@@ -64,15 +64,17 @@
 			certificate in order to connect successfully. In this case, the
 			second and third options, use_identity_as_username and
 			use_subject_as_username, become relevant. If set to true,
-			use_identity_as_user causes the Common Name (CN) from the client
-			certificate to be used instead of the MQTT username for access
-			control purposes. The password is not replaced because it is
-			assumed that only authenticated clients have valid certificates. If
-			use_identity_as_username is false, the client must authenticate as
-			normal (if required by password_file) through the MQTT options. The
-			same principle applies for the use_subject_as_username option, but
-			the entire certificate subject is used as the username instead of
-			just the CN.</para>
+			use_identity_as_username causes the Common Name (CN) from the
+			client certificate to be used instead of the MQTT username for
+			access control purposes. The password is not used because it is
+			assumed that only authenticated clients have valid certificates.
+			This means that any CA certificates you include in cafile or capath
+			will be able to issue client certificates that are valid for
+			connecting to your broker. If use_identity_as_username is false,
+			the client must authenticate as normal (if required by
+			password_file) through the MQTT options. The same principle applies
+			for the use_subject_as_username option, but the entire certificate
+			subject is used as the username instead of just the CN.</para>
 		<para>When using pre-shared-key based encryption through the psk_hint
 			and psk_file options, the client must provide a valid identity and
 			key in order to connect to the broker before any MQTT communication
@@ -262,7 +264,7 @@
 						<replaceable>true</replaceable>, this option allows you
 						to set a string that will be prefixed to the
 						automatically generated client ids to aid visibility in
-						logs. Defaults to no prefix.</para>
+						logs. Defaults to <option>auto-</option>.</para>
 					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
@@ -292,6 +294,24 @@
 						<option>autosave_interval</option> as a time in
 						seconds.</para>
 					<para>Reloaded on reload signal.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>check_retain_source</option> [ true | false ]</term>
+				<listitem>
+					<para>This option affects the scenario when a client
+						subscribes to a topic that has retained messages. It is
+						possible that the client that published the retained
+						message to the topic had access at the time they
+						published, but that access has been subsequently
+						removed. If <option>check_retain_source</option> is set
+						to true, the default, the source of a retained message
+						will be checked for access rights before it is
+						republished. When set to false, no check will be made
+						and the retained message will always be
+						published.</para>
+					<para>This option applies globally, regardless of the
+						<option>per_listener_settings</option> option.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -436,6 +456,47 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>max_keepalive</option> <replaceable>value</replaceable></term>
+				<listitem>
+					<para>For MQTT v5 clients, it is possible to have the
+						server send a "server keepalive" value that will
+						override the keepalive value set by the client.  This
+						is intended to be used as a mechanism to say that the
+						server will disconnect the client earlier than it
+						anticipated, and that the client should use the new
+						keepalive value. The max_keepalive option allows you to
+						specify that clients may only connect with keepalive
+						less than or equal to this value, otherwise they will
+						be sent a server keepalive telling them to use
+						max_keepalive. This only applies to MQTT v5 clients.
+						The maximum value allowable, and default value, is
+						65535. Do not set below 10 seconds.</para>
+					<para>Reloaded on reload signal.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>max_packet_size</option> <replaceable>value</replaceable></term>
+				<listitem>
+					<para>For MQTT v5 clients, it is possible to have the
+						server send a "maximum packet size" value that will
+						instruct the client it will not accept MQTT packets
+						with size greater than <option>value</option> bytes.
+						This applies to the full MQTT packet, not just the
+						payload. Setting this option to a positive value will
+						set the maximum packet size to that number of bytes. If
+						a client sends a packet which is larger than this
+						value, it will be disconnected. This applies to all
+						clients regardless of the protocol version they are
+						using, but v3.1.1 and earlier clients will of course
+						not have received the maximum packet size information.
+						Defaults to no limit.</para>
+					<para>Setting below 20 bytes is forbidden because it is
+						likely to interfere with normal client operation even
+						with small payloads.</para>
+					<para>Reloaded on reload signal.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>max_queued_bytes</option> <replaceable>count</replaceable></term>
 				<listitem>
 					<para>QoS 1 and 2 messages above those currently in-flight will be
@@ -515,6 +576,10 @@
 						<option>auth_plugin</option>,
 						<option>auth_opt_*</option>,
 						<option>auto_id_prefix</option>.</para>
+					<para>Note that if set to true, then a durable client (i.e.
+						with clean session set to false) that has disconnected
+						will use the ACL settings defined for the listener that
+						it was most recently connected to.</para>
 					<para>The default behaviour is for this to be set to
 						<replaceable>false</replaceable>, which maintains the
 						settings behaviour from previous versions of
@@ -625,6 +690,16 @@
 					<para>Note that the MQTT v3.1.1 spec states that only QoS 1
 						and 2 messages should be saved in this situation so
 						this is a non-standard option.</para>
+					<para>Reloaded on reload signal.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>retain_available</option> [ true | false ]</term>
+				<listitem>
+					<para>If set to false, then retained messages are not
+						supported. Clients that send a message with the retain
+						bit will be disconnected if this option is set to
+						false. Defaults to true.</para>
 					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>
@@ -774,6 +849,20 @@
 					</listitem>
 				</varlistentry>
 				<varlistentry>
+					<term><option>maximum_qos</option> <replaceable>count</replaceable></term>
+					<listitem>
+						<para>Limit the QoS value allowed when using this
+							listener. Defaults to 2, which means any QoS can be
+							used. Set to 0 or 1 to limit to those QoS values.
+							This makes use of an MQTT v5 feature to notify
+							clients of the limitation. MQTT v3.1.1 clients will
+							not be aware of the limitation. Clients publshing
+							to this listener with a too-high QoS will be
+							disconnected.</para>
+						<para>Not reloaded on reload signal.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
 					<term><option>mount_point</option> <replaceable>topic prefix</replaceable></term>
 					<listitem>
 						<para>This option is used with the listener option to
@@ -810,6 +899,27 @@
 							<option>keyfile</option> and
 							<option>ciphers</option> options are
 							supported.</para>
+						<para>Not reloaded on reload signal.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>socket_domain</option> [ ipv4 | ipv6 ]</term>
+					<listitem>
+						<para>By default, a listener will attempt to listen on
+							all supported IP protocol versions. If you do not
+							have an IPv4 or IPv6 interface you may wish to
+							disable support for either of those protocol
+							versions. In particular, note that due to the
+							limitations of the websockets library, it will only
+							ever attempt to open IPv6 sockets if IPv6 support
+							is compiled in, and so will fail if IPv6 is not
+							available.</para>
+						<para>Set to <option>ipv4</option> to force the
+							listener to only use IPv4, or set to
+							<option>ipv6</option> to force the listener to only
+							use IPv6. If you want support for both IPv4 and
+							IPv6, then do not use the
+							<option>socket_domain</option> option.</para>
 						<para>Not reloaded on reload signal.</para>
 					</listitem>
 				</varlistentry>
@@ -1368,27 +1478,35 @@
 						<replaceable>""</replaceable>. Using the empty marker
 						for the topic itself is also valid. The table below
 						defines what combination of empty or value is
-						valid.</para>
+						valid. The <option>Full Local Topic</option> and
+						<option>Full Remote Topic</option> show the resulting
+						topics that would be used on the local and remote ends
+						of the bridge. For example, for the first table row if
+						you publish to <option>L/topic</option> on the local
+						broker, then the remote broker will receive a message
+						on the topic <option>R/topic</option>.</para>
+
 					<informaltable>
-						<tgroup cols="5">
+						<tgroup cols="6">
 							<thead>
 								<row>
-									<entry></entry>
-									<entry><emphasis>Topic</emphasis></entry>
+									<entry><emphasis>Pattern</emphasis></entry>
 									<entry><emphasis>Local Prefix</emphasis></entry>
 									<entry><emphasis>Remote Prefix</emphasis></entry>
 									<entry><emphasis>Validity</emphasis></entry>
+									<entry><emphasis>Full Local Topic</emphasis></entry>
+									<entry><emphasis>Full Remote Topic</emphasis></entry>
 							</row>
 							</thead>
 							<tbody>
-								<row><entry>1</entry><entry>value</entry><entry>value</entry><entry>value</entry><entry>valid</entry></row>
-								<row><entry>2</entry><entry>value</entry><entry>value</entry><entry>""</entry><entry>valid</entry></row>
-								<row><entry>3</entry><entry>value</entry><entry>""</entry><entry>value</entry><entry>valid</entry></row>
-								<row><entry>4</entry><entry>value</entry><entry>""</entry><entry>""</entry><entry>valid (no remapping)</entry></row>
-								<row><entry>5</entry><entry>""</entry><entry>value</entry><entry>value</entry><entry>valid (remap single local topic to remote)</entry></row>
-								<row><entry>6</entry><entry>""</entry><entry>value</entry><entry>""</entry><entry>invalid</entry></row>
-								<row><entry>7</entry><entry>""</entry><entry>""</entry><entry>value</entry><entry>invalid</entry></row>
-								<row><entry>8</entry><entry>""</entry><entry>""</entry><entry>""</entry><entry>invalid</entry></row>
+								<row><entry>pattern</entry><entry>L/</entry><entry>R/</entry><entry>valid</entry><entry>L/pattern</entry><entry>R/pattern</entry></row>
+								<row><entry>pattern</entry><entry>L/</entry><entry>""</entry><entry>valid</entry><entry>L/pattern</entry><entry>pattern</entry></row>
+								<row><entry>pattern</entry><entry>""</entry><entry>R/</entry><entry>valid</entry><entry>pattern</entry><entry>R/pattern</entry></row>
+								<row><entry>pattern</entry><entry>""</entry><entry>""</entry><entry>valid (no remapping)</entry><entry>pattern</entry><entry>pattern</entry></row>
+								<row><entry>""</entry><entry>local</entry><entry>remote</entry><entry>valid (remap single local topic to remote)</entry><entry>local</entry><entry>remote</entry></row>
+								<row><entry>""</entry><entry>local</entry><entry>""</entry><entry>invalid</entry><entry></entry><entry></entry></row>
+								<row><entry>""</entry><entry>""</entry><entry>remote</entry><entry>invalid</entry><entry></entry><entry></entry></row>
+								<row><entry>""</entry><entry>""</entry><entry>""</entry><entry>invalid</entry><entry></entry><entry></entry></row>
 							</tbody>
 						</tgroup>
 					</informaltable>

@@ -1,11 +1,17 @@
-*.o
-*.so
-*.exe
 *.db
+*.gcda
+*.gcno
+*.exe
+*.o
+*.old
+*.pyc
+*.so
+*.vglog
+massif.out.*
+vglog*
+
 c/*.test
 cpp/*.test
-*.pyc
-*.vglog
 
 build/
 
@@ -49,6 +55,10 @@ test/ssl/*.csr
 
 test/lib/c/*.test
 test/lib/cpp/*.test
+
+test/unit/coverage.info
+test/unit/mosq_test
+test/unit/out
 
 www/cache/
 __pycache__
