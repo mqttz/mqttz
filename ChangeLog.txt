@@ -6,6 +6,10 @@ Broker:
   case where a client connects using a username, and the anonymous ACL list is
   defined but specific user ACLs are not defined. Closes #1162.
 
+Library:
+- Use higher resolution timer for random initialisation of client id
+  generation. Closes #1177.
+
 
 1.5.7 - 20190213
 ================
