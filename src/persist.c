@@ -770,6 +770,7 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 		mosquitto__free(load);
 		fclose(db_fptr);
 		mosquitto__free(source.id);
+		mosquitto__free(source.id);
 		return rc;
 	}
 
@@ -784,6 +785,7 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 			mosquitto__free(load);
 			fclose(db_fptr);
 			mosquitto__free(source.id);
+			mosquitto__free(source.username);
 			mosquitto__free(topic);
 			log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
@@ -793,6 +795,9 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 
 	rc = db__message_store(db, &source, source_mid, topic, qos, payloadlen, &payload, retain, &stored, 0, NULL, store_id);
 	mosquitto__free(source.id);
+	source.id = NULL;
+	mosquitto__free(source.username);
+	source.username = NULL;
 
 	if(rc == MOSQ_ERR_SUCCESS){
 		load->db_id = stored->db_id;
@@ -812,6 +817,7 @@ error:
 	log__printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
 	fclose(db_fptr);
 	mosquitto__free(source.id);
+	mosquitto__free(source.username);
 	mosquitto__free(topic);
 	UHPA_FREE(payload, payloadlen);
 	return 1;

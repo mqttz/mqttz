@@ -254,11 +254,12 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 			log__printf(NULL, MOSQ_LOG_DEBUG, "Dropped too large PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->id, dup, qos, retain, mid, topic, (long)payloadlen);
 			goto process_bad_message;
 		}
-		if(UHPA_ALLOC(payload, payloadlen+1) == 0){
+		if(UHPA_ALLOC(payload, payloadlen) == 0){
 			mosquitto__free(topic);
 			mosquitto_property_free_all(&msg_properties);
 			return MOSQ_ERR_NOMEM;
 		}
+
 		if(packet__read_bytes(&context->in_packet, UHPA_ACCESS(payload, payloadlen), payloadlen)){
 			mosquitto__free(topic);
 			UHPA_FREE(payload, payloadlen);

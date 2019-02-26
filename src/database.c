@@ -261,6 +261,7 @@ static void db__message_remove(struct mosquitto_db *db, struct mosquitto *contex
 			context->last_inflight_msg = NULL;
 		}
 	}
+	mosquitto_property_free_all(&(*msg)->properties);
 	mosquitto__free(*msg);
 	if(last){
 		*msg = last->next;

@@ -8,7 +8,17 @@ import time
 
 import mqtt5_props
 
+import __main__
+
+import atexit
+vg_index = 1
+vg_logfiles = []
+
+
 def start_broker(filename, cmd=None, port=0, use_conf=False, expect_fail=False):
+    global vg_index
+    global vg_logfiles
+
     delay = 0.1
 
     if use_conf == True:
@@ -26,7 +36,10 @@ def start_broker(filename, cmd=None, port=0, use_conf=False, expect_fail=False):
             port = 1888
             
     if os.environ.get('MOSQ_USE_VALGRIND') is not None:
-        cmd = ['valgrind', '-q', '--trace-children=yes', '--leak-check=full', '--show-leak-kinds=all', '--log-file='+filename+'.vglog'] + cmd
+        logfile = filename+'.'+str(vg_index)+'.vglog'
+        cmd = ['valgrind', '-q', '--trace-children=yes', '--leak-check=full', '--show-leak-kinds=all', '--log-file='+logfile] + cmd
+        vg_logfiles.append(logfile)
+        vg_index += 1
         delay = 1
 
     #print(port)
@@ -567,3 +580,16 @@ def get_lib_port():
         return int(sys.argv[2])
     else:
         return 1888
+
+
+@atexit.register
+def test_cleanup():
+    global vg_logfiles
+
+    if os.environ.get('MOSQ_USE_VALGRIND') is not None:
+        for f in vg_logfiles:
+            try:
+                if os.stat(f).st_size == 0:
+                    os.remove(f)
+            except OSError:
+                pass

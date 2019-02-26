@@ -720,25 +720,28 @@ static int pwfile__parse(const char *file, struct mosquitto__unpwd **root)
 	return MOSQ_ERR_SUCCESS;
 }
 
-static int unpwd__file_parse(struct mosquitto__unpwd **unpwd, const char *password_file)
-{
-	int rc;
+
 #ifdef WITH_TLS
+
+static void unpwd__free_item(struct mosquitto__unpwd **unpwd, struct mosquitto__unpwd *item)
+{
+	mosquitto__free(item->username);
+	mosquitto__free(item->password);
+	mosquitto__free(item->salt);
+	HASH_DEL(*unpwd, item);
+	mosquitto__free(item);
+}
+
+
+static int unpwd__decode_passwords(struct mosquitto__unpwd **unpwd)
+{
 	struct mosquitto__unpwd *u, *tmp;
 	char *token;
 	unsigned char *salt;
 	unsigned int salt_len;
 	unsigned char *password;
 	unsigned int password_len;
-#endif
-
-	if(!unpwd) return MOSQ_ERR_INVAL;
-
-	if(!password_file) return MOSQ_ERR_SUCCESS;
-
-	rc = pwfile__parse(password_file, unpwd);
-#ifdef WITH_TLS
-	if(rc) return rc;
+	int rc;
 
 	HASH_ITER(hh, *unpwd, u, tmp){
 		/* Need to decode password into hashed data + salt. */
@@ -760,30 +763,49 @@ static int unpwd__file_parse(struct mosquitto__unpwd **unpwd, const char *passwo
 								u->password_len = password_len;
 							}else{
 								log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to decode password for user %s, removing entry.", u->username);
-								HASH_DEL(*unpwd, u);
+								unpwd__free_item(unpwd, u);
 							}
 						}else{
 							log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid password hash for user %s, removing entry.", u->username);
-							HASH_DEL(*unpwd, u);
+							unpwd__free_item(unpwd, u);
 						}
 					}else{
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to decode password salt for user %s, removing entry.", u->username);
-						HASH_DEL(*unpwd, u);
+						unpwd__free_item(unpwd, u);
 					}
 				}else{
 					log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid password hash for user %s, removing entry.", u->username);
-					HASH_DEL(*unpwd, u);
+					unpwd__free_item(unpwd, u);
 				}
 			}else{
 				log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid password hash for user %s, removing entry.", u->username);
-				HASH_DEL(*unpwd, u);
+				unpwd__free_item(unpwd, u);
 			}
 		}else{
 			log__printf(NULL, MOSQ_LOG_ERR, "Error: Missing password hash for user %s, removing entry.", u->username);
-			HASH_DEL(*unpwd, u);
+			unpwd__free_item(unpwd, u);
 		}
 	}
+
+	return MOSQ_ERR_SUCCESS;
+}
 #endif
+
+
+static int unpwd__file_parse(struct mosquitto__unpwd **unpwd, const char *password_file)
+{
+	int rc;
+	if(!unpwd) return MOSQ_ERR_INVAL;
+
+	if(!password_file) return MOSQ_ERR_SUCCESS;
+
+	rc = pwfile__parse(password_file, unpwd);
+
+#ifdef WITH_TLS
+	if(rc) return rc;
+	rc = unpwd__decode_passwords(unpwd);
+#endif
+
 	return rc;
 }
 
@@ -1063,20 +1085,42 @@ int pw__digest(const char *password, const unsigned char *salt, unsigned int sal
 int base64__decode(char *in, unsigned char **decoded, unsigned int *decoded_len)
 {
 	BIO *bmem, *b64;
+	int slen;
+
+	slen = strlen(in);
 
 	b64 = BIO_new(BIO_f_base64());
+	if(!b64){
+		return 1;
+	}
 	BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+
 	bmem = BIO_new(BIO_s_mem());
+	if(!bmem){
+		BIO_free_all(b64);
+		return 1;
+	}
 	b64 = BIO_push(b64, bmem);
-	BIO_write(bmem, in, strlen(in));
+	BIO_write(bmem, in, slen);
 
 	if(BIO_flush(bmem) != 1){
 		BIO_free_all(b64);
 		return 1;
 	}
-	*decoded = mosquitto__calloc(strlen(in), 1);
-	*decoded_len =  BIO_read(b64, *decoded, strlen(in));
+	*decoded = mosquitto__calloc(slen, 1);
+	if(!(*decoded)){
+		BIO_free_all(b64);
+		return 1;
+	}
+	*decoded_len =  BIO_read(b64, *decoded, slen);
 	BIO_free_all(b64);
+
+	if(*decoded_len <= 0){
+		mosquitto__free(*decoded);
+		*decoded = NULL;
+		*decoded_len = 0;
+		return 1;
+	}
 
 	return 0;
 }

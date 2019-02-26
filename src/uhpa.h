@@ -155,7 +155,7 @@ Contributors:
 #  define UHPA_ALLOC(u, size) ((u).ptr = uhpa_malloc(size))
 #  define UHPA_ACCESS(u, size) (u).ptr
 #  define UHPA_FREE(u, size) uhpa_free((u).ptr); (u).ptr = NULL;
-#  define UHPA_MOVE(dest, src, src_size) {(dest).ptr = (src).ptr; (src).ptr = NULL}
+#  define UHPA_MOVE(dest, src, src_size) {(dest).ptr = (src).ptr; (src).ptr = NULL;}
 #else
 #  define UHPA_ALLOC(u, size) UHPA_ALLOC_CHK(u, size)
 #  define UHPA_ACCESS(u, size) UHPA_ACCESS_CHK(u, size)
