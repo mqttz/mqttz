@@ -149,6 +149,7 @@ int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result
 /* Does a topic match a subscription? */
 int mosquitto_topic_matches_sub2(const char *sub, size_t sublen, const char *topic, size_t topiclen, bool *result)
 {
+	int i;
 	int spos, tpos;
 	bool multilevel_wildcard = false;
 
@@ -224,7 +225,7 @@ int mosquitto_topic_matches_sub2(const char *sub, size_t sublen, const char *top
 				}
 
 				/* There is no match at this point, but is the sub invalid? */
-				for(int i=spos; i<sublen; i++){
+				for(i=spos; i<sublen; i++){
 					if(sub[i] == '#' && i+1 != sublen){
 						return MOSQ_ERR_INVAL;
 					}
