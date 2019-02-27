@@ -50,6 +50,45 @@ Contributors:
 #define MAX_BUFFER_LEN 1024
 #define SALT_LEN 12
 
+#ifdef WIN32
+static FILE *mpw_tmpfile(void)
+{
+	return tmpfile();
+}
+#else
+
+static char alphanum[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+static unsigned char tmpfile_path[36];
+static FILE *mpw_tmpfile(void)
+{
+	int fd;
+	int i;
+
+	if(RAND_bytes(tmpfile_path, sizeof(tmpfile_path)) != 1){
+		return NULL;
+	}
+
+	strcpy((char *)tmpfile_path, "/tmp/");
+
+	for(i=strlen((char *)tmpfile_path); i<sizeof(tmpfile_path)-8; i++){
+		tmpfile_path[i] = alphanum[tmpfile_path[i]%(sizeof(alphanum)-1)];
+	}
+	tmpfile_path[sizeof(tmpfile_path)-8] = '-';
+	for(i=sizeof(tmpfile_path)-7; i<sizeof(tmpfile_path)-1; i++){
+		tmpfile_path[i] = 'X';
+	}
+	tmpfile_path[sizeof(tmpfile_path)-1] = '\0';
+
+	fd = mkstemp((char *)tmpfile_path);
+	if(fd < 0) return NULL;
+	unlink((char *)tmpfile_path);
+
+	return fdopen(fd, "w+");
+}
+#endif
+
+
 int base64_encode(unsigned char *in, unsigned int in_len, char **encoded)
 {
 	BIO *bmem, *b64;
@@ -499,7 +538,7 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 
-		ftmp = tmpfile();
+		ftmp = mpw_tmpfile();
 		if(!ftmp){
 			fprintf(stderr, "Error: Unable to open temporary file. %s.\n", strerror(errno));
 			fclose(fptr);
