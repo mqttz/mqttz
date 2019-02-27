@@ -28,8 +28,10 @@ Contributors:
 #  include <sys/stat.h>
 #endif
 
-#ifdef __linux__
-#  include <sys/random.h>
+#if !defined(WITH_TLS) && defined(__linux__)
+#  if defined(__GLIBC__) && __GLIBC_PREREQ(2, 25)
+#    include <sys/random.h>
+#  endif
 #endif
 
 #ifdef WITH_TLS
@@ -310,12 +312,11 @@ int util__random_bytes(void *bytes, int count)
 	if(RAND_bytes(bytes, count) == 1){
 		rc = MOSQ_ERR_SUCCESS;
 	}
-#else
-#  ifdef __GLIBC__
+#elif defined(__GLIBC__) && __GLIBC_PREREQ(2, 25)
 	if(getrandom(bytes, count, 0) == 0){
 		rc = MOSQ_ERR_SUCCESS;
 	}
-#  elif defined(WIN32)
+#elif defined(WIN32)
 	HRYPTPROV provider;
 
 	if(!CryptAcquireContext(&provider, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT)){
@@ -327,14 +328,13 @@ int util__random_bytes(void *bytes, int count)
 	}
 
 	CryptReleaseContext(provider, 0);
-#  else
+#else
 	int i;
 
 	for(i=0; i<count; i++){
 		((uint8_t *)bytes)[i] = (uint8_t )(random()&0xFF);
 	}
 	rc = MOSQ_ERR_SUCCESS;
-#  endif
 #endif
 	return rc;
 }
