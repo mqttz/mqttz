@@ -18,6 +18,8 @@ build/
 client/mosquitto_pub
 client/mosquitto_sub
 
+cov-int/
+
 dist/
 
 examples/mysql_log/mosquitto_mysql_log

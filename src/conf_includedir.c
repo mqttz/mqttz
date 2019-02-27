@@ -102,7 +102,9 @@ int config__get_dir_files(const char *include_dir, char ***files, int *file_coun
 
 	FindClose(fh);
 
-	qsort(l_files, l_file_count, sizeof(char *), scmp_p);
+	if(l_files){
+		qsort(l_files, l_file_count, sizeof(char *), scmp_p);
+	}
 	*files = l_files;
 	*file_count = l_file_count;
 
@@ -166,7 +168,9 @@ int config__get_dir_files(const char *include_dir, char ***files, int *file_coun
 	}
 	closedir(dh);
 
-	qsort(l_files, l_file_count, sizeof(char *), scmp_p);
+	if(l_files){
+		qsort(l_files, l_file_count, sizeof(char *), scmp_p);
+	}
 	*files = l_files;
 	*file_count = l_file_count;
 

@@ -47,4 +47,15 @@
 #  endif
 #endif
 
+
+#ifdef __COVERITY__
+#  include <stdint.h>
+/* These are "wrong", but we don't use them so it doesn't matter */
+#  define _Float32 uint32_t
+#  define _Float32x uint32_t
+#  define _Float64 uint64_t
+#  define _Float64x uint64_t
+#  define _Float128 uint64_t
+#endif
+
 #endif

@@ -36,11 +36,14 @@ reallyclean :
 	$(MAKE) -C test reallyclean
 	-rm -f *.orig
 
+test : mosquitto
+	$(MAKE) -C test test
+
 ptest : mosquitto
 	$(MAKE) -C test ptest
 
-test : mosquitto
-	$(MAKE) -C test test
+utest : mosquitto
+	$(MAKE) -C test utest
 
 install : mosquitto
 	set -e; for d in ${DIRS}; do $(MAKE) -C $${d} install; done

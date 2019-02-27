@@ -36,12 +36,10 @@ int send__connack(struct mosquitto_db *db, struct mosquitto *context, int ack, i
 		return rc;
 	}
 
-	if(context){
-		if(context->id){
-			log__printf(NULL, MOSQ_LOG_DEBUG, "Sending CONNACK to %s (%d, %d)", context->id, ack, reason_code);
-		}else{
-			log__printf(NULL, MOSQ_LOG_DEBUG, "Sending CONNACK to %s (%d, %d)", context->address, ack, reason_code);
-		}
+	if(context->id){
+		log__printf(NULL, MOSQ_LOG_DEBUG, "Sending CONNACK to %s (%d, %d)", context->id, ack, reason_code);
+	}else{
+		log__printf(NULL, MOSQ_LOG_DEBUG, "Sending CONNACK to %s (%d, %d)", context->address, ack, reason_code);
 	}
 
 	remaining_length = 2;

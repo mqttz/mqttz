@@ -39,6 +39,8 @@ int property__read(struct mosquitto__packet *packet, int32_t *len, mosquitto_pro
 	char *str1, *str2;
 	int slen1, slen2;
 
+	if(!property) return MOSQ_ERR_INVAL;
+
 	rc = packet__read_varint(packet, &property_identifier, NULL);
 	if(rc) return rc;
 	*len -= 1;
@@ -131,7 +133,7 @@ int property__read(struct mosquitto__packet *packet, int32_t *len, mosquitto_pro
 			break;
 
 		default:
-			log__printf(NULL, MOSQ_LOG_DEBUG, "Unsupported property type: %d", byte);
+			log__printf(NULL, MOSQ_LOG_DEBUG, "Unsupported property type: %d", property_identifier);
 			return MOSQ_ERR_MALFORMED_PACKET;
 	}
 
@@ -154,6 +156,10 @@ int property__read_all(int command, struct mosquitto__packet *packet, mosquitto_
 	 * same order for all */
 	while(proplen > 0){
 		p = mosquitto__calloc(1, sizeof(mosquitto_property));
+		if(!p){
+			mosquitto_property_free_all(properties);
+			return MOSQ_ERR_NOMEM;
+		}
 
 		rc = property__read(packet, &proplen, p); 
 		if(rc){
@@ -1002,7 +1008,7 @@ const mosquitto_property *mosquitto_property_read_binary(const mosquitto_propert
 	if(value){
 		*len = p->value.bin.len;
 		*value = malloc(*len);
-		if(!value) return NULL;
+		if(!(*value)) return NULL;
 
 		memcpy(*value, p->value.bin.v, *len);
 	}
@@ -1031,11 +1037,10 @@ const mosquitto_property *mosquitto_property_read_string(const mosquitto_propert
 
 	if(value){
 		*value = calloc(1, p->value.s.len+1);
-		if(!value) return NULL;
+		if(!(*value)) return NULL;
 
 		memcpy(*value, p->value.s.v, p->value.s.len);
 	}
-
 
 	return p;
 }
@@ -1052,13 +1057,13 @@ const mosquitto_property *mosquitto_property_read_string_pair(const mosquitto_pr
 
 	if(name){
 		*name = calloc(1, p->name.len+1);
-		if(!name) return NULL;
+		if(!(*name)) return NULL;
 		memcpy(*name, p->name.v, p->name.len);
 	}
 
 	if(value){
 		*value = calloc(1, p->value.s.len+1);
-		if(!value){
+		if(!(*value)){
 			if(name) free(*name);
 			return NULL;
 		}

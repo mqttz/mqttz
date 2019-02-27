@@ -230,6 +230,7 @@ int message__remove(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_dir
 		while(cur){
 			if(cur->msg.mid == mid){
 				if(cur->msg.qos != qos){
+					pthread_mutex_unlock(&mosq->out_message_mutex);
 					return MOSQ_ERR_PROTOCOL;
 				}
 				if(prev){
@@ -287,6 +288,7 @@ int message__remove(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_dir
 		while(cur){
 			if(cur->msg.mid == mid){
 				if(cur->msg.qos != qos){
+					pthread_mutex_unlock(&mosq->in_message_mutex);
 					return MOSQ_ERR_PROTOCOL;
 				}
 				if(prev){
@@ -382,6 +384,7 @@ int message__out_update(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg
 	while(message){
 		if(message->msg.mid == mid){
 			if(message->msg.qos != qos){
+				pthread_mutex_unlock(&mosq->out_message_mutex);
 				return MOSQ_ERR_PROTOCOL;
 			}
 			message->state = state;

@@ -703,6 +703,7 @@ error:
 		mosquitto__free(temp);
 	}
 	mosquitto_property_free_all(&properties);
+	UHPA_FREE(*payload, payloadlen);
 	return rc;
 }
 

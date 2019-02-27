@@ -68,9 +68,9 @@ int send__pingresp(struct mosquitto *mosq)
 int send__puback(struct mosquitto *mosq, uint16_t mid)
 {
 #ifdef WITH_BROKER
-	if(mosq) log__printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBACK to %s (Mid: %d)", mosq->id, mid);
+	log__printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBACK to %s (Mid: %d)", mosq->id, mid);
 #else
-	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBACK (Mid: %d)", mosq->id, mid);
+	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBACK (Mid: %d)", mosq->id, mid);
 #endif
 	util__increment_receive_quota(mosq);
 	/* We don't use Reason String or User Property yet. */
@@ -80,9 +80,9 @@ int send__puback(struct mosquitto *mosq, uint16_t mid)
 int send__pubcomp(struct mosquitto *mosq, uint16_t mid)
 {
 #ifdef WITH_BROKER
-	if(mosq) log__printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBCOMP to %s (Mid: %d)", mosq->id, mid);
+	log__printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBCOMP to %s (Mid: %d)", mosq->id, mid);
 #else
-	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBCOMP (Mid: %d)", mosq->id, mid);
+	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBCOMP (Mid: %d)", mosq->id, mid);
 #endif
 	util__increment_receive_quota(mosq);
 	/* We don't use Reason String or User Property yet. */

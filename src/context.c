@@ -152,7 +152,7 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 	context->password = NULL;
 
 	net__socket_close(db, context);
-	if((do_free || context->clean_start) && db){
+	if(do_free || context->clean_start){
 		sub__clean_session(db, context);
 		db__messages_delete(db, context);
 	}
@@ -163,9 +163,6 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 	context__send_will(db, context);
 
 	if(context->id){
-		assert(db); /* db can only be NULL here if the client hasn't sent a
-					   CONNECT and hence wouldn't have an id. */
-
 		context__remove_from_by_id(db, context);
 		mosquitto__free(context->id);
 		context->id = NULL;
