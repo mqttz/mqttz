@@ -808,8 +808,24 @@
 					<listitem>
 						<para>Listen for incoming network connections only on
 							the specified interface. This is similar to the
-							preceding option but useful when an interface has
-							multiple addresses or the address may change.</para>
+							<option>bind_address</option> option but is useful
+							when an interface has multiple addresses or the
+							address may change.</para>
+						<para>It is valid to use this option together with
+							<option>bind_address</option> for the default
+							listener, or the <replaceable>bind
+								address/host</replaceable> part of the
+							<option>listener</option> definition.  Care should
+							be taken to ensure that the address being bound to
+							is on the interface being bound to.  If you set the
+							<option>bind_interface</option> to be
+							<replaceable>eth0</replaceable>, and
+							<option>bind_address</option> to
+							<replaceable>127.0.0.1</replaceable>, then the
+							broker will start correctly but you will be unable
+							to connect.</para>
+						<para>This option is currently only available on
+							Linux, and requires elevated privileges.</para>
 						<para>Not reloaded on reload signal.</para>
 					</listitem>
 				</varlistentry>

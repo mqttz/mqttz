@@ -7,16 +7,22 @@ Broker features:
 - auto_id_prefix now defaults to 'auto-'.
 - Add max_keepalive option, to allow a maximum keepalive value to be set for
   MQTT v5 clients only.
+- Add TLS Engine support.
+- Add `bind_interface` option which allows a listener to be bound to a
+  specific network interface, in a similar fashion to the `bind_address` option.
+  Linux only.
 
 Client library features:
 - Add mosquitto_subscribe_multiple() for sending subscriptions to multiple
   topics in one command.
+- Add TLS Engine support.
 
 Client features:
 - Add -E to mosquitto_sub, which causes it to exit immediately after having
   its subscriptions acknowledged. Use with -c to create a durable client
   session without requiring a message to be received.
 - -V now accepts `5, `311`, `31`, as well as `mqttv5` etc.
+- Add TLS Engine support.
 
 Client fixes:
 - mosquitto_pub wouldn't always publish all messages when using `-l` and
