@@ -11,6 +11,7 @@ Broker features:
 - Add `bind_interface` option which allows a listener to be bound to a
   specific network interface, in a similar fashion to the `bind_address` option.
   Linux only.
+- Add improved bridge restart interval based on Decorrelated Jitter.
 
 Client library features:
 - Add mosquitto_subscribe_multiple() for sending subscriptions to multiple

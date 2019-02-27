@@ -44,7 +44,7 @@ Contributors:
 
 #ifdef WITH_BRIDGE
 
-static void bridge_backoff_step(struct mosquitto *context);
+static void bridge__backoff_step(struct mosquitto *context);
 static void bridge__backoff_reset(struct mosquitto *context);
 
 int bridge__new(struct mosquitto_db *db, struct mosquitto__bridge *bridge)
@@ -164,7 +164,7 @@ int bridge__connect_step1(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	/* prepare backoff for a possible failure. Restart timeout will be reset if connection gets established */
-	bridge_backoff_step(context);
+	bridge__backoff_step(context);
 
 	if(context->bridge->notifications){
 		if(context->bridge->notification_topic){
@@ -344,7 +344,7 @@ int bridge__connect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	/* prepare backoff for a possible failure. Restart timeout will be reset if connection gets established */
-	bridge_backoff_step(context);
+	bridge__backoff_step(context);
 
 	if(context->bridge->notifications){
 		if(context->bridge->notification_topic){
@@ -453,7 +453,7 @@ static int rand_between(int base, int cap)
 	return (rand() % (cap - base)) + base;
 }
 
-static void bridge_backoff_step(struct mosquitto *context)
+static void bridge__backoff_step(struct mosquitto *context)
 {
 	struct mosquitto__bridge *bridge;
 	if(!context || !context->bridge) return;

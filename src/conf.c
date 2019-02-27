@@ -1180,7 +1180,9 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						cur_bridge->notifications_local_only = false;
 						cur_bridge->start_type = bst_automatic;
 						cur_bridge->idle_timeout = 60;
-						cur_bridge->restart_timeout = 30;
+						cur_bridge->restart_timeout = 0;
+						cur_bridge->backoff_base = 5;
+						cur_bridge->backoff_cap = 30;
 						cur_bridge->threshold = 10;
 						cur_bridge->try_private = true;
 						cur_bridge->attempt_unsubscribe = true;
@@ -1752,7 +1754,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						cur_bridge->backoff_base = cur_bridge->restart_timeout;
 						cur_bridge->backoff_cap = atoi(token);
 						if(cur_bridge->backoff_cap < cur_bridge->backoff_base){
-							log__printf(NULL, MOSQ_LOG_ERR, "Error: backoff cap is lower than the base.");
+							log__printf(NULL, MOSQ_LOG_ERR, "Error: backoff cap is lower than the base in restart_timeout.");
 							return MOSQ_ERR_INVAL;
 						}
 					}
