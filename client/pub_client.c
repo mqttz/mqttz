@@ -182,7 +182,7 @@ void print_usage(void)
 	printf(" --key : client private key for authentication, if required by server.\n");
 	printf(" --keyform : keyfile type, can be either \"pem\" or \"engine\".\n");
 	printf(" --ciphers : openssl compatible list of TLS ciphers to support.\n");
-	printf(" --tls-version : TLS protocol version, can be one of tlsv1.2 tlsv1.1 or tlsv1.\n");
+	printf(" --tls-version : TLS protocol version, can be one of tlsv1.3 tlsv1.2 or tlsv1.1.\n");
 	printf("                 Defaults to tlsv1.2 if available.\n");
 	printf(" --insecure : do not check that the server certificate hostname matches the remote\n");
 	printf("              hostname. Using this option means that you cannot be sure that the\n");

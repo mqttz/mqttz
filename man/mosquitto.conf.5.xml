@@ -1111,11 +1111,11 @@ openssl dhparam -out dhparam.pem 2048</programlisting>
 					<listitem>
 						<para>Configure the version of the TLS protocol to be
 							used for this listener. Possible values are
-							<replaceable>tlsv1.2</replaceable>,
-							<replaceable>tlsv1.1</replaceable> and
-							<replaceable>tlsv1</replaceable>. If left unset,
-							the default of allowing all of TLS v1.2, v1.1 and
-							v1.0 is used.</para>
+							<replaceable>tlsv1.3</replaceable>,
+							<replaceable>tlsv1.2</replaceable> and
+							<replaceable>tlsv1.1</replaceable>. If left unset,
+							the default of allowing all of TLS v1.3, v1.2 and
+							v1.1 is used.</para>
 					</listitem>
 				</varlistentry>
 				<varlistentry>
@@ -1194,11 +1194,11 @@ openssl dhparam -out dhparam.pem 2048</programlisting>
 					<listitem>
 						<para>Configure the version of the TLS protocol to be
 							used for this listener. Possible values are
-							<replaceable>tlsv1.2</replaceable>,
-							<replaceable>tlsv1.1</replaceable> and
-							<replaceable>tlsv1</replaceable>. If left unset,
-							the default of allowing all of TLS v1.2, v1.1 and
-							v1.0 is used.</para>
+							<replaceable>tlsv1.3</replaceable>,
+							<replaceable>tlsv1.2</replaceable> and
+							<replaceable>tlsv1.1</replaceable>. If left unset,
+							the default of allowing all of TLS v1.3, v1.2 and
+							v1.1 is used.</para>
 					</listitem>
 				</varlistentry>
 				<varlistentry>
@@ -1707,9 +1707,9 @@ topic clients/total in 0 test/mosquitto/org $SYS/broker/
 					<listitem>
 						<para>Configure the version of the TLS protocol to be
 							used for this bridge. Possible values are
-							<replaceable>tlsv1.2</replaceable>,
-							<replaceable>tlsv1.1</replaceable> and
-							<replaceable>tlsv1</replaceable>. Defaults to
+							<replaceable>tlsv1.3</replaceable>,
+							<replaceable>tlsv1.2</replaceable> and
+							<replaceable>tlsv1.1</replaceable>. Defaults to
 							<replaceable>tlsv1.2</replaceable>. The remote
 							broker must support the same version of TLS for the
 							connection to succeed.</para>

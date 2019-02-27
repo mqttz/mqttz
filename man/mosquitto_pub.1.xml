@@ -480,12 +480,10 @@
 				<listitem>
 					<para>Choose which TLS protocol version to use when
 						communicating with the broker. Valid options are
-						<option>tlsv1.2</option>, <option>tlsv1.1</option> and
-						<option>tlsv1</option>. The default value is
-						<option>tlsv1.2</option>. If the installed version of
-						openssl is too old, only <option>tlsv1</option> will be
-						available. Must match the protocol version used by the
-						broker.</para>
+						<option>tlsv1.3</option>, <option>tlsv1.2</option> and
+						<option>tlsv1.1</option>. The default value is
+						<option>tlsv1.2</option>. Must match the protocol
+						version used by the broker.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
