@@ -8,11 +8,13 @@ static int run = -1;
 
 void on_connect(struct mosquitto *mosq, void *obj, int rc, int flags, const mosquitto_property *properties)
 {
+	int i;
+
 	if(rc){
 		exit(1);
 	}
 
-	for(int i=0; i<5; i++){
+	for(i=0; i<5; i++){
 		mosquitto_publish_v5(mosq, NULL, "topic", 5, "12345", 2, false, NULL);
 	}
 }
