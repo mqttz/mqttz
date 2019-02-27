@@ -30,55 +30,10 @@ Contributors:
 #include "tls_mosq.h"
 #include "util_mosq.h"
 
-#ifdef WITH_TLS
-#  include <openssl/rand.h>
-#endif
-
-#ifdef __linux__
-#  include <sys/random.h>
-#endif
-
 #ifdef WITH_WEBSOCKETS
 #  include <libwebsockets.h>
 #endif
 
-
-static int random_16_bytes(uint8_t *bytes)
-{
-	int rc = MOSQ_ERR_UNKNOWN;
-
-#ifdef WITH_TLS
-	if(RAND_bytes(bytes, 16) == 1){
-		rc = MOSQ_ERR_SUCCESS;
-	}
-#else
-#  ifdef __GLIBC__
-	if(getrandom(bytes, 16, 0) == 0){
-		rc = MOSQ_ERR_SUCCESS;
-	}
-#  elif defined(WIN32)
-	HRYPTPROV provider;
-
-	if(!CryptAcquireContext(&provider, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT)){
-		return MOSQ_ERR_UNKNOWN;
-	}
-
-	if(CryptGenRandom(provider, 16, bytes)){
-		rc = MOSQ_ERR_SUCCESS;
-	}
-
-	CryptReleaseContext(provider, 0);
-#  else
-	int i;
-
-	for(i=0; i<16; i++){
-		bytes[i] = (uint8_t )(random()&0xFF);
-	}
-	rc = MOSQ_ERR_SUCCESS;
-#  endif
-#endif
-	return rc;
-}
 
 static char nibble_to_hex(uint8_t value)
 {
@@ -96,7 +51,7 @@ static char *client_id_gen(struct mosquitto_db *db, int *idlen, const char *auto
 	int i;
 	int pos;
 
-	if(random_16_bytes(rnd)) return NULL;
+	if(util__random_bytes(rnd, 16)) return NULL;
 
 	*idlen = 36 + auto_id_prefix_len;
 

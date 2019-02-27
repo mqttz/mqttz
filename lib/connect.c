@@ -28,6 +28,7 @@ Contributors:
 #include "net_mosq.h"
 #include "send_mosq.h"
 #include "socks_mosq.h"
+#include "util_mosq.h"
 
 static int mosquitto__reconnect(struct mosquitto *mosq, bool blocking, const mosquitto_property *properties);
 static int mosquitto__connect_init(struct mosquitto *mosq, const char *host, int port, int keepalive, const char *bind_address);
@@ -36,6 +37,7 @@ static int mosquitto__connect_init(struct mosquitto *mosq, const char *host, int
 static int mosquitto__connect_init(struct mosquitto *mosq, const char *host, int port, int keepalive, const char *bind_address)
 {
 	int i;
+	int rc;
 
 	if(!mosq) return MOSQ_ERR_INVAL;
 	if(!host || port <= 0) return MOSQ_ERR_INVAL;
@@ -51,8 +53,11 @@ static int mosquitto__connect_init(struct mosquitto *mosq, const char *host, int
 		mosq->id[3] = 'q';
 		mosq->id[4] = '/';
 
+		rc = util__random_bytes(&mosq->id[5], 18);
+		if(rc) return rc;
+
 		for(i=5; i<23; i++){
-			mosq->id[i] = (random()%73)+48;
+			mosq->id[i] = (mosq->id[i]%73)+48;
 		}
 	}
 

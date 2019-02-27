@@ -450,7 +450,9 @@ void bridge__packet_cleanup(struct mosquitto *context)
 
 static int rand_between(int base, int cap)
 {
-	return (rand() % (cap - base)) + base;
+	int r;
+	util__random_bytes(&r, sizeof(int));
+	return (r % (cap - base)) + base;
 }
 
 static void bridge__backoff_step(struct mosquitto *context)
