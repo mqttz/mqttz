@@ -12,6 +12,7 @@ test :
 ptest :
 	$(MAKE) -C broker ptest
 	$(MAKE) -C lib ptest
+	$(MAKE) -C unit test
 
 clean : 
 	$(MAKE) -C lib clean

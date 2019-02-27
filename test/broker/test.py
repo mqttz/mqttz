@@ -107,6 +107,7 @@ tests = [
     (1, './07-will-delay.py'),
     (1, './07-will-delay-recover.py'),
     (1, './07-will-delay-reconnect.py'),
+    (1, './07-will-disconnect-with-will.py'),
 
     (2, './08-ssl-connect-no-auth.py'),
     (2, './08-ssl-connect-no-auth-wrong-ca.py'),

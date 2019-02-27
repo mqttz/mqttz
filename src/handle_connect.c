@@ -796,7 +796,7 @@ handle_connect_error:
 int handle__disconnect(struct mosquitto_db *db, struct mosquitto *context)
 {
 	int rc;
-	uint8_t reason_code;
+	uint8_t reason_code = 0;
 	mosquitto_property *properties = NULL;
 
 	if(!context){
@@ -833,7 +833,11 @@ int handle__disconnect(struct mosquitto_db *db, struct mosquitto *context)
 			return MOSQ_ERR_PROTOCOL;
 		}
 	}
-	context->state = mosq_cs_disconnecting;
+	if(reason_code == MQTT_RC_DISCONNECT_WITH_WILL_MSG){
+		context->state = mosq_cs_disconnect_with_will;
+	}else{
+		context->state = mosq_cs_disconnecting;
+	}
 	do_disconnect(db, context);
 	return MOSQ_ERR_SUCCESS;
 }

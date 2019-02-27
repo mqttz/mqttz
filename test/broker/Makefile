@@ -131,6 +131,7 @@ endif
 	./07-will-delay.py
 	./07-will-delay-recover.py
 	./07-will-delay-reconnect.py
+	./07-will-disconnect-with-will.py
 
 08 :
 ifeq ($(WITH_TLS),yes)
