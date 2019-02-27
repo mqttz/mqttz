@@ -1059,9 +1059,6 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 
 int client_id_generate(struct mosq_config *cfg, const char *id_base)
 {
-	int len;
-	char hostname[256];
-
 	if(cfg->id_prefix){
 		cfg->id = malloc(strlen(cfg->id_prefix)+10);
 		if(!cfg->id){
@@ -1070,22 +1067,6 @@ int client_id_generate(struct mosq_config *cfg, const char *id_base)
 			return 1;
 		}
 		snprintf(cfg->id, strlen(cfg->id_prefix)+10, "%s%d", cfg->id_prefix, getpid());
-	}else if(!cfg->id && (cfg->protocol_version == MQTT_PROTOCOL_V31 || cfg->protocol_version == MQTT_PROTOCOL_V311)){
-		hostname[0] = '\0';
-		gethostname(hostname, 256);
-		hostname[255] = '\0';
-		len = strlen(id_base) + strlen("|-") + 6 + strlen(hostname);
-		cfg->id = malloc(len);
-		if(!cfg->id){
-			if(!cfg->quiet) fprintf(stderr, "Error: Out of memory.\n");
-			mosquitto_lib_cleanup();
-			return 1;
-		}
-		snprintf(cfg->id, len, "%s|%d-%s", id_base, getpid(), hostname);
-		if(strlen(cfg->id) > MOSQ_MQTT_ID_MAX_LENGTH){
-			/* Enforce maximum client id length of 23 characters */
-			cfg->id[MOSQ_MQTT_ID_MAX_LENGTH] = '\0';
-		}
 	}
 	return MOSQ_ERR_SUCCESS;
 }
