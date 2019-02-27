@@ -234,6 +234,7 @@ struct mosquitto__listener {
 	SSL_CTX *ssl_ctx;
 	char *crlfile;
 	char *tls_version;
+	char *dhparamfile;
 	bool use_identity_as_username;
 	bool use_subject_as_username;
 	bool require_certificate;

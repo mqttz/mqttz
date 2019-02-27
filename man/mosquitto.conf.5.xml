@@ -1042,6 +1042,18 @@
 					</listitem>
 				</varlistentry>
 				<varlistentry>
+					<term><option>dhparamfile</option> <replaceable>file path</replaceable></term>
+					<listitem>
+						<para>To allow the use of ephemeral DH key exchange,
+							which provides forward security, the listener must
+							load DH parameters. This can be specified with the
+							dhparamfile option. The dhparamfile can be
+							generated with the command e.g.</para>
+						<programlisting>
+openssl dhparam -out dhparam.pem 2048</programlisting>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
 					<term><option>keyfile</option> <replaceable>file path</replaceable></term>
 					<listitem>
 						<para>Path to the PEM encoded keyfile.</para>
