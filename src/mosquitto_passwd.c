@@ -45,6 +45,7 @@ Contributors:
 #  include <stdbool.h>
 #  include <unistd.h>
 #  include <termios.h>
+#  include <sys/stat.h>
 #endif
 
 #define MAX_BUFFER_LEN 1024
@@ -80,6 +81,7 @@ static FILE *mpw_tmpfile(void)
 	}
 	tmpfile_path[sizeof(tmpfile_path)-1] = '\0';
 
+	umask(077);
 	fd = mkstemp((char *)tmpfile_path);
 	if(fd < 0) return NULL;
 	unlink((char *)tmpfile_path);
