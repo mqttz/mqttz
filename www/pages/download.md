@@ -1,7 +1,7 @@
 <!--
 .. title: Download
 .. slug: download
-.. date: 2018-01-07 20:15:04 UTC
+.. date: 2019-02-28 17:01:00 UTC
 .. tags: tag
 .. category: category
 .. link: link
@@ -11,7 +11,7 @@
 
 # Source
 
-* [mosquitto-1.5.7.tar.gz](https://mosquitto.org/files/source/mosquitto-1.5.7.tar.gz) (319kB) ([GPG signature](https://mosquitto.org/files/source/mosquitto-1.5.7.tar.gz.asc))
+* [mosquitto-1.5.8.tar.gz](https://mosquitto.org/files/source/mosquitto-1.5.8.tar.gz) (319kB) ([GPG signature](https://mosquitto.org/files/source/mosquitto-1.5.8.tar.gz.asc))
 * [Git source code repository](https://github.com/eclipse/mosquitto) (github.com)
 
 Older downloads are available at [https://mosquitto.org/files/](../files/)
@@ -24,8 +24,8 @@ distributions.
 
 ## Windows
 
-* [mosquitto-1.5.6-install-windows-x64.exe](https://mosquitto.org/files/binary/win64/mosquitto-1.5.6-install-windows-x64.exe) (~360 kB) (64-bit build, Windows Vista and up, built with Visual Studio Community 2017)
-* [mosquitto-1.5.6-install-windows-x32.exe](https://mosquitto.org/files/binary/win32/mosquitto-1.5.6-install-windows-x86.exe) (~360 kB) (32-bit build, Windows Vista and up, built with Visual Studio Community 2017)
+* [mosquitto-1.5.8-install-windows-x64.exe](https://mosquitto.org/files/binary/win64/mosquitto-1.5.8-install-windows-x64.exe) (~360 kB) (64-bit build, Windows Vista and up, built with Visual Studio Community 2017)
+* [mosquitto-1.5.8-install-windows-x32.exe](https://mosquitto.org/files/binary/win32/mosquitto-1.5.8-install-windows-x86.exe) (~360 kB) (32-bit build, Windows Vista and up, built with Visual Studio Community 2017)
 
 See also readme-windows.txt after installing.
 
@@ -36,13 +36,6 @@ Mosquitto can be installed from the homebrew project. See
 ## Linux distributions with snap support
 
 * `snap install mosquitto`
-
-## CentOS
-Download the repository config file for your CentOS version from below and copy it to /etc/yum.repos.d/ You'll now be able to install and keep mosquitto up to date using the normal package management tools.
-
-The available packages are: mosquitto, mosquitto-clients, libmosquitto1, libmosquitto-devel, libmosquittopp1, libmosquittopp-devel, python-mosquitto.
-* [CentOS 7](https://download.opensuse.org/repositories/home:/oojah:/mqtt/CentOS_CentOS-7/home:oojah:mqtt.repo)
-* [CentOS 6](https://download.opensuse.org/repositories/home:/oojah:/mqtt/CentOS_CentOS-6/home:oojah:mqtt.repo)
 
 ## Debian
 * Mosquitto is now in Debian proper. There will be a short delay between a new
@@ -56,15 +49,6 @@ Mosquitto is available through the main repository.
 There are also Debian repositories provided by the mosquitto project, as
 described at <https://mosquitto.org/2013/01/mosquitto-debian-repository/>
 
-## Redhat Enterprise Linux
-Download the repository config file for your RHEL version from below and copy
-it to /etc/yum.repos.d/ You'll now be able to install and keep mosquitto up to
-date using the normal package management tools.
-
-The available packages are: mosquitto, mosquitto-clients, libmosquitto1, libmosquitto-devel, libmosquittopp1, libmosquittopp-devel, python-mosquitto.
-* [RHEL 7](https://download.opensuse.org/repositories/home:/oojah:/mqtt/RedHat_RHEL-7/home:oojah:mqtt.repo)
-* [RHEL 6](https://download.opensuse.org/repositories/home:/oojah:/mqtt/RedHat_RHEL-6/home:oojah:mqtt.repo)
-
 ## Ubuntu
 Mosquitto is available in the Ubuntu repositories so you can install as with
 any other package. If you are on an earlier version of Ubuntu or want a more
@@ -75,12 +59,3 @@ from your package manager.
 
 * `sudo apt-add-repository ppa:mosquitto-dev/mosquitto-ppa`
 * `sudo apt-get update`
-
-# Other packages known to exist
-
-* Arch Linux
-* Fedora
-* FreeBSD
-* Gentoo
-* OpenWrt
-* OpenSUSE
