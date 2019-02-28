@@ -5,6 +5,7 @@ Broker:
 - Fix clients being disconnected when ACLs are in use. This only affects the
   case where a client connects using a username, and the anonymous ACL list is
   defined but specific user ACLs are not defined. Closes #1162.
+- Make error messages for missing config file clearer.
 
 Library:
 - Use higher resolution timer for random initialisation of client id
