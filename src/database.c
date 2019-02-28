@@ -691,6 +691,7 @@ error:
 		mosquitto__free(temp->topic);
 		mosquitto__free(temp);
 	}
+	UHPA_FREE(*payload, payloadlen);
 	return rc;
 }
 
