@@ -73,6 +73,8 @@ tests = [
     (2, './06-bridge-b2br-remapping.py'),
     (2, './06-bridge-br2b-remapping.py'),
     (3, './06-bridge-per-listener-settings.py'),
+    (2, './06-bridge-b2br-late-connection.py'),
+    (2, './06-bridge-b2br-late-connection-retain.py'),
 
     (1, './07-will-qos0.py'),
     (1, './07-will-null.py'),
@@ -93,6 +95,7 @@ tests = [
     (2, './08-tls-psk-pub.py'),
     (3, './08-tls-psk-bridge.py'),
 
+    (1, './09-acl-access-variants.py'),
     (1, './09-acl-empty-file.py'),
     (1, './09-plugin-auth-unpwd-success.py'),
     (1, './09-plugin-auth-unpwd-fail.py'),

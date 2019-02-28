@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2011-2018 Roger Light <roger@atchoo.org>
+Copyright (c) 2011-2019 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -641,9 +641,6 @@ int acl__find_acls(struct mosquitto_db *db, struct mosquitto *context)
 				}
 			}
 			acl_tail = acl_tail->next;
-		}
-		if(context->username && context->acl_list == NULL){
-			return MOSQ_ERR_INVAL;
 		}
 	}else{
 		context->acl_list = NULL;

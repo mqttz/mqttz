@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2010-2018 Roger Light <roger@atchoo.org>
+Copyright (c) 2010-2019 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -232,6 +232,7 @@ int message__remove(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_dir
 		while(cur){
 			if(cur->msg.mid == mid){
 				if(cur->msg.qos != qos){
+					pthread_mutex_unlock(&mosq->out_message_mutex);
 					return MOSQ_ERR_PROTOCOL;
 				}
 				if(prev){
@@ -291,6 +292,7 @@ int message__remove(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg_dir
 		while(cur){
 			if(cur->msg.mid == mid){
 				if(cur->msg.qos != qos){
+					pthread_mutex_unlock(&mosq->in_message_mutex);
 					return MOSQ_ERR_PROTOCOL;
 				}
 				if(prev){
@@ -386,6 +388,7 @@ int message__out_update(struct mosquitto *mosq, uint16_t mid, enum mosquitto_msg
 	while(message){
 		if(message->msg.mid == mid){
 			if(message->msg.qos != qos){
+				pthread_mutex_unlock(&mosq->out_message_mutex);
 				return MOSQ_ERR_PROTOCOL;
 			}
 			message->state = state;

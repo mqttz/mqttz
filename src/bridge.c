@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2018 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2019 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -115,6 +115,7 @@ int bridge__connect_step1(struct mosquitto_db *db, struct mosquitto *context)
 	char *notification_topic;
 	int notification_topic_len;
 	uint8_t notification_payload;
+	int i;
 
 	if(!context || !context->bridge) return MOSQ_ERR_INVAL;
 
@@ -139,6 +140,13 @@ int bridge__connect_step1(struct mosquitto_db *db, struct mosquitto *context)
 	 * anyway. This means any unwanted subs will be removed.
 	 */
 	sub__clean_session(db, context);
+
+	for(i=0; i<context->bridge->topic_count; i++){
+		if(context->bridge->topics[i].direction == bd_out || context->bridge->topics[i].direction == bd_both){
+			log__printf(NULL, MOSQ_LOG_DEBUG, "Bridge %s doing local SUBSCRIBE on topic %s", context->id, context->bridge->topics[i].local_topic);
+			if(sub__add(db, context, context->bridge->topics[i].local_topic, context->bridge->topics[i].qos, &db->subs)) return 1;
+		}
+	}
 
 	if(context->bridge->notifications){
 		if(context->bridge->notification_topic){
@@ -300,9 +308,6 @@ int bridge__connect(struct mosquitto_db *db, struct mosquitto *context)
 		if(context->bridge->topics[i].direction == bd_out || context->bridge->topics[i].direction == bd_both){
 			log__printf(NULL, MOSQ_LOG_DEBUG, "Bridge %s doing local SUBSCRIBE on topic %s", context->id, context->bridge->topics[i].local_topic);
 			if(sub__add(db, context, context->bridge->topics[i].local_topic, context->bridge->topics[i].qos, &db->subs)) return 1;
-			sub__retain_queue(db, context,
-					context->bridge->topics[i].local_topic,
-					context->bridge->topics[i].qos);
 		}
 	}
 

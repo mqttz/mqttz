@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2018 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2019 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -124,7 +124,9 @@ int config__get_dir_files(const char *include_dir, char ***files, int *file_coun
 
 	FindClose(fh);
 
-	qsort(l_files, l_file_count, sizeof(char *), scmp_p);
+	if(l_files){
+		qsort(l_files, l_file_count, sizeof(char *), scmp_p);
+	}
 	*files = l_files;
 	*file_count = l_file_count;
 
@@ -184,7 +186,9 @@ int config__get_dir_files(const char *include_dir, char ***files, int *file_coun
 	}
 	closedir(dh);
 
-	qsort(l_files, l_file_count, sizeof(char *), scmp_p);
+	if(l_files){
+		qsort(l_files, l_file_count, sizeof(char *), scmp_p);
+	}
 	*files = l_files;
 	*file_count = l_file_count;
 

@@ -1,3 +1,24 @@
+1.5.8 - 20190228
+================
+
+Broker:
+- Fix clients being disconnected when ACLs are in use. This only affects the
+  case where a client connects using a username, and the anonymous ACL list is
+  defined but specific user ACLs are not defined. Closes #1162.
+- Make error messages for missing config file clearer.
+- Fix some Coverity Scan reported errors that could occur when the broker was
+  already failing to start.
+- Fix broken mosquitto_passwd on FreeBSD. Closes #1032.
+- Fix delayed bridge local subscriptions causing missing messages.
+  Closes #1174.
+
+Library:
+- Use higher resolution timer for random initialisation of client id
+  generation. Closes #1177.
+- Fix some Coverity Scan reported errors that could occur when the library was
+  already quitting.
+
+
 1.5.7 - 20190213
 ================
 

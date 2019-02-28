@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2010-2018 Roger Light <roger@atchoo.org>
+Copyright (c) 2010-2019 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -175,7 +175,7 @@ static int persist__message_store_write(struct mosquitto_db *db, FILE *db_fptr)
 		}else{
 			tlen = 0;
 		}
-		length = sizeof(dbid_t) + 2+strlen(stored->source_id) +
+		length = sizeof(dbid_t) + sizeof(uint16_t) +
 				sizeof(uint16_t) + sizeof(uint16_t) +
 				2+tlen + sizeof(uint32_t) +
 				stored->payloadlen + sizeof(uint8_t) + sizeof(uint8_t)
@@ -808,8 +808,6 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 	}else{
 		mosquitto__free(load);
 		fclose(db_fptr);
-		mosquitto__free(topic);
-		UHPA_FREE(payload, payloadlen);
 		return rc;
 	}
 error:
@@ -817,8 +815,6 @@ error:
 	log__printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
 	fclose(db_fptr);
 	mosquitto__free(source.id);
-	mosquitto__free(topic);
-	UHPA_FREE(payload, payloadlen);
 	return 1;
 }
 

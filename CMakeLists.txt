@@ -11,7 +11,7 @@ project(mosquitto)
 cmake_minimum_required(VERSION 2.8)
 # Only for version 3 and up. cmake_policy(SET CMP0042 NEW)
 
-set (VERSION 1.5.7)
+set (VERSION 1.5.8)
 
 add_definitions (-DCMAKE -DVERSION=\"${VERSION}\")
 
@@ -55,13 +55,13 @@ if (WITH_TLS)
 	find_package(OpenSSL REQUIRED)
 	add_definitions("-DWITH_TLS")
 
-	if (${WITH_TLS_PSK} STREQUAL ON)
+	if (WITH_TLS_PSK)
 		add_definitions("-DWITH_TLS_PSK")
-	endif (${WITH_TLS_PSK} STREQUAL ON)
+	endif (WITH_TLS_PSK)
 
-	if (${WITH_EC} STREQUAL ON)
+	if (WITH_EC)
 		add_definitions("-DWITH_EC")
-	endif (${WITH_EC} STREQUAL ON)
+	endif (WITH_EC)
 else (WITH_TLS)
 	set (OPENSSL_INCLUDE_DIR "")
 endif (WITH_TLS)
