@@ -430,6 +430,10 @@ int main(int argc, char *argv[])
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || OPENSSL_API_COMPAT < 0x10100000L
 	OpenSSL_add_all_digests();
+#else
+	OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS \
+			| OPENSSL_INIT_ADD_ALL_DIGESTS \
+			| OPENSSL_INIT_LOAD_CONFIG, NULL);
 #endif
 
 	if(argc == 1){
