@@ -2101,11 +2101,11 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 #endif
 				}else if(!strcmp(token, "websockets_headers_size")){
 #ifdef WITH_WEBSOCKETS
-#if defined(LWS_LIBRARY_VERSION_NUMBER) && LWS_LIBRARY_VERSION_NUMBER>=1007000
+#  if defined(LWS_LIBRARY_VERSION_NUMBER) && LWS_LIBRARY_VERSION_NUMBER>=1007000
 					if(conf__parse_int(&token, "websockets_headers_size", &config->websockets_headers_size, saveptr)) return MOSQ_ERR_INVAL;
-#else
+#  else
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Websockets headers size require libwebsocket 1.7+");
-#endif
+#  endif
 #else
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Websockets support not available.");
 #endif
