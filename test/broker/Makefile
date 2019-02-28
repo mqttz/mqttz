@@ -94,6 +94,8 @@ endif
 	./06-bridge-b2br-remapping.py
 	./06-bridge-br2b-remapping.py
 	./06-bridge-per-listener-settings.py
+	./06-bridge-b2br-late-connection.py
+	./06-bridge-b2br-late-connection-retain.py
 
 07 :
 	./07-will-qos0.py

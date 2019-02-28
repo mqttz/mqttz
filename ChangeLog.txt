@@ -9,6 +9,8 @@ Broker:
 - Fix some Coverity Scan reported errors that could occur when the broker was
   already failing to start.
 - Fix broken mosquitto_passwd on FreeBSD. Closes #1032.
+- Fix delayed bridge local subscriptions causing missing messages.
+  Closes #1174.
 
 Library:
 - Use higher resolution timer for random initialisation of client id
