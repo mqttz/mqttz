@@ -17,6 +17,7 @@ Contributors:
 #include "config.h"
 
 #include <errno.h>
+#include <openssl/opensslv.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <openssl/buffer.h>

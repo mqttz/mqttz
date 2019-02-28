@@ -8,6 +8,7 @@ Broker:
 - Make error messages for missing config file clearer.
 - Fix some Coverity Scan reported errors that could occur when the broker was
   already failing to start.
+- Fix broken mosquitto_passwd on FreeBSD. Closes #1032.
 
 Library:
 - Use higher resolution timer for random initialisation of client id
