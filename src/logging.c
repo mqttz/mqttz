@@ -23,6 +23,10 @@ Contributors:
 #endif
 #include <time.h>
 
+#ifdef WITH_DLT
+#include <dlt/dlt.h>
+#endif
+
 #include "mosquitto_broker_internal.h"
 #include "memory_mosq.h"
 #include "util_mosq.h"
@@ -47,6 +51,10 @@ HANDLE syslog_h;
  */
 static int log_destinations = MQTT3_LOG_STDERR;
 static int log_priorities = MOSQ_LOG_ERR | MOSQ_LOG_WARNING | MOSQ_LOG_NOTICE | MOSQ_LOG_INFO;
+
+#ifdef WITH_DLT
+static DltContext dltContext;
+#endif
 
 int log__init(struct mosquitto__config *config)
 {
@@ -76,6 +84,10 @@ int log__init(struct mosquitto__config *config)
 		}
 		restore_privileges();
 	}
+#ifdef WITH_DLT
+        DLT_REGISTER_APP("MQTT","mosquitto log");
+        dlt_register_context(&dltContext, "MQTT", "mosquitto DLT context");
+#endif
 	return rc;
 }
 
@@ -95,9 +107,35 @@ int log__close(struct mosquitto__config *config)
 		}
 	}
 
+#ifdef WITH_DLT
+        dlt_unregister_context(&dltContext);
+        DLT_UNREGISTER_APP();
+#endif
 	/* FIXME - do something for all destinations! */
 	return MOSQ_ERR_SUCCESS;
 }
+
+#ifdef WITH_DLT
+DltLogLevelType get_dlt_level(int priority)
+{
+    switch (priority) {
+       case MOSQ_LOG_ERR:
+           return DLT_LOG_ERROR;
+       case MOSQ_LOG_WARNING:
+           return DLT_LOG_WARN;
+       case MOSQ_LOG_INFO:
+           return DLT_LOG_INFO;
+       case MOSQ_LOG_DEBUG:
+           return DLT_LOG_DEBUG;
+       case MOSQ_LOG_NOTICE:
+       case MOSQ_LOG_SUBSCRIBE:
+       case MOSQ_LOG_UNSUBSCRIBE:
+           return DLT_LOG_VERBOSE;
+       default:
+           return DLT_LOG_DEFAULT;
+       }
+}
+#endif
 
 int log__vprintf(int priority, const char *fmt, va_list va)
 {
@@ -245,6 +283,9 @@ int log__vprintf(int priority, const char *fmt, va_list va)
 				db__messages_easy_queue(&int_db, NULL, topic, 2, strlen(s), s, 0, 20, NULL);
 			}
 		}
+#ifdef WITH_DLT
+                DLT_LOG_STRING(dltContext, get_dlt_level(priority), s);
+#endif
 		mosquitto__free(s);
 	}
 
