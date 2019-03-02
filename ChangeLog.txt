@@ -16,6 +16,7 @@ Broker features:
   DH support
 - Add explicit support for TLS v1.3.
 - Drop support for TLS v1.0.
+- Add support for Automotive DLT logging.
 
 Client library features:
 - Add mosquitto_subscribe_multiple() for sending subscriptions to multiple
