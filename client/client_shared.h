@@ -80,6 +80,7 @@ struct mosq_config {
 	bool exit_after_sub; /* sub */
 	bool no_retain; /* sub */
 	bool retained_only; /* sub */
+	bool remove_retained; /* sub */
 	char **filter_outs; /* sub */
 	int filter_out_count; /* sub */
 	char **unsub_topics; /* sub */

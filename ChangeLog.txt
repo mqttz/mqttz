@@ -28,6 +28,8 @@ Client features:
 - Add -E to mosquitto_sub, which causes it to exit immediately after having
   its subscriptions acknowledged. Use with -c to create a durable client
   session without requiring a message to be received.
+- Add --remove-retained to mosquitto_sub, which can be used to clear retained
+  messages on a broker.
 - -V now accepts `5, `311`, `31`, as well as `mqttv5` etc.
 - Add TLS Engine support.
 - Add explicit support for TLS v1.3.

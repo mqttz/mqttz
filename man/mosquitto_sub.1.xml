@@ -43,6 +43,7 @@
 			<arg><option>-k</option> <replaceable>keepalive-time</replaceable></arg>
 			<arg><option>-N</option></arg>
 			<arg><option>-q</option> <replaceable>message-QoS</replaceable></arg>
+			<arg><option>--remove-retained</option></arg>
 			<group choice='opt'>
 				<arg choice='plain'><option>-R</option></arg>
 				<arg choice='plain'><option>--retained-only</option></arg>
@@ -469,6 +470,36 @@
 						subscribing to a wildcard topic there may be a large
 						number of retained messages. This argument suppresses
 						their display.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>--remove-retained</option></term>
+				<listitem>
+					<para>If this argument is given, the when mosquitto_sub
+						receives a message with the retained bit set, it will
+						send a message to the broker to clear that retained
+						message. This applies to all received messages except
+						those that are filtered out by the <option>-T</option>
+						option. This option still takes effect even if
+						<option>-R</option> is used.  See also the
+						<option>--retain-as-published</option> and
+						<option>--retained-only</option> options.</para>
+
+						<example title="remove-retained-example-1" label="1">
+						<para>Remove all retained messages on the server,
+							assuming we have access to do so, and then exit:</para>
+
+						<programlisting language="config">
+mosquitto_sub -t '#' --remove-retained --retained-only</programlisting>
+						</example>
+
+						<example title="remove-retained-example-2" label="2">
+						<para>Remove a whole tree, with the exception of a
+							single topic:</para>
+
+						<programlisting language="config">
+mosquitto_sub -t 'bbc/#' -T bbc/bbc1 --remove-retained</programlisting>
+						</example>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

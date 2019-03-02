@@ -803,6 +803,11 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 			i++;
 		}else if(!strcmp(argv[i], "--quiet")){
 			cfg->quiet = true;
+		}else if(!strcmp(argv[i], "--remove-retained")){
+			if(pub_or_sub == CLIENT_PUB){
+				goto unknown_option;
+			}
+			cfg->remove_retained = true;
 		}else if(!strcmp(argv[i], "-r") || !strcmp(argv[i], "--retain")){
 			if(pub_or_sub == CLIENT_SUB){
 				goto unknown_option;

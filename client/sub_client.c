@@ -39,6 +39,7 @@ static struct mosq_config cfg;
 bool process_messages = true;
 int msg_count = 0;
 struct mosquitto *mosq = NULL;
+int last_mid = 0;
 
 #ifndef WIN32
 void my_signal_handler(int signum)
@@ -53,6 +54,14 @@ void my_signal_handler(int signum)
 void print_message(struct mosq_config *cfg, const struct mosquitto_message *message);
 
 
+void my_publish_callback(struct mosquitto *mosq, void *obj, int mid, int reason_code, const mosquitto_property *properties)
+{
+	if(process_messages == false && (mid == last_mid || last_mid == 0)){
+		mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
+	}
+}
+
+
 void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message, const mosquitto_property *properties)
 {
 	int i;
@@ -60,9 +69,15 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 
 	if(process_messages == false) return;
 
+	if(cfg.remove_retained && message->retain){
+		mosquitto_publish(mosq, &last_mid, message->topic, 0, NULL, 1, true);
+	}
+
 	if(cfg.retained_only && !message->retain && process_messages){
 		process_messages = false;
-		mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
+		if(last_mid == 0){
+			mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
+		}
 		return;
 	}
 
@@ -80,7 +95,9 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 		msg_count++;
 		if(cfg.msg_count == msg_count){
 			process_messages = false;
-			mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
+			if(last_mid == 0){
+				mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
+			}
 		}
 	}
 }
@@ -136,7 +153,7 @@ void print_usage(void)
 	printf("mosquitto_sub version %s running on libmosquitto %d.%d.%d.\n\n", VERSION, major, minor, revision);
 	printf("Usage: mosquitto_sub {[-h host] [-p port] [-u username [-P password]] -t topic | -L URL [-t topic]}\n");
 	printf("                     [-c] [-k keepalive] [-q qos]\n");
-	printf("                     [-C msg_count] [-E] [-R] [--retained-only] [-T filter_out] [-U topic ...]\n");
+	printf("                     [-C msg_count] [-E] [-R] [--retained-only] [--remove-retained] [-T filter_out] [-U topic ...]\n");
 	printf("                     [-F format]\n");
 #ifndef WIN32
 	printf("                     [-W timeout_secs]\n");
@@ -199,6 +216,8 @@ void print_usage(void)
 	printf(" --quiet : don't print error messages.\n");
 	printf(" --retained-only : only handle messages with the retained flag set, and exit when the\n");
 	printf("                   first non-retained message is received.\n");
+	printf(" --remove-retained : send a message to the server to clear any received retained messages\n");
+	printf("                     Use -T to filter out messages you do not want to be cleared.\n");
 	printf(" --will-payload : payload for the client Will, which is sent by the broker in case of\n");
 	printf("                  unexpected disconnection. If not given and will-topic is set, a zero\n");
 	printf("                  length message will be sent.\n");
