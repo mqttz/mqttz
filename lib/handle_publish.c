@@ -128,7 +128,7 @@ int handle__publish(struct mosquitto *mosq)
 			mosquitto_property_free_all(&properties);
 			return MOSQ_ERR_SUCCESS;
 		case 1:
-			rc = send__puback(mosq, message->msg.mid);
+			rc = send__puback(mosq, message->msg.mid, 0);
 			pthread_mutex_lock(&mosq->callback_mutex);
 			if(mosq->on_message){
 				mosq->in_callback = true;
@@ -145,7 +145,7 @@ int handle__publish(struct mosquitto *mosq)
 			mosquitto_property_free_all(&properties);
 			return rc;
 		case 2:
-			rc = send__pubrec(mosq, message->msg.mid);
+			rc = send__pubrec(mosq, message->msg.mid, 0);
 			pthread_mutex_lock(&mosq->in_message_mutex);
 			message->state = mosq_ms_wait_for_pubrel;
 			message__queue(mosq, message, mosq_md_in);

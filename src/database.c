@@ -332,7 +332,7 @@ int db__message_delete(struct mosquitto_db *db, struct mosquitto *context, uint1
 			db__message_dequeue_first(context);
 		}else{
 			if(tail->qos == 2){
-				send__pubrec(context, tail->mid);
+				send__pubrec(context, tail->mid, 0);
 				tail->state = mosq_ms_wait_for_pubrel;
 				db__message_dequeue_first(context);
 			}
@@ -884,7 +884,7 @@ int db__message_release(struct mosquitto_db *db, struct mosquitto *context, uint
 			db__message_dequeue_first(context);
 		}else{
 			if(tail->qos == 2){
-				send__pubrec(context, tail->mid);
+				send__pubrec(context, tail->mid, 0);
 				tail->state = mosq_ms_wait_for_pubrel;
 				db__message_dequeue_first(context);
 			}
@@ -992,7 +992,7 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 				break;
 
 			case mosq_ms_send_pubrec:
-				rc = send__pubrec(context, mid);
+				rc = send__pubrec(context, mid, 0);
 				if(!rc){
 					tail->state = mosq_ms_wait_for_pubrel;
 				}else{
@@ -1051,7 +1051,7 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 			if(tail->qos == 2){
 				tail->state = mosq_ms_send_pubrec;
 				db__message_dequeue_first(context);
-				rc = send__pubrec(context, tail->mid);
+				rc = send__pubrec(context, tail->mid, 0);
 				if(!rc){
 					tail->state = mosq_ms_wait_for_pubrel;
 				}else{

@@ -463,6 +463,40 @@ static int acl__check_single(struct mosquitto__auth_plugin_config *auth_plugin, 
 }
 
 
+static int acl__check_dollar(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int access)
+{
+	int rc;
+	bool match = false;
+
+	if(topic[0] != '$') return MOSQ_ERR_SUCCESS;
+
+	if(!strncmp(topic, "$SYS", 4)){
+		if(access == MOSQ_ACL_WRITE){
+			/* Potentially allow write access for bridge status, otherwise explicitly deny. */
+			rc = mosquitto_topic_matches_sub("$SYS/broker/connection/+/state", topic, &match);
+			if(rc == MOSQ_ERR_SUCCESS && match == true){
+				return MOSQ_ERR_SUCCESS;
+			}else{
+				return MOSQ_ERR_ACL_DENIED;
+			}
+		}else{
+			return MOSQ_ERR_SUCCESS;
+		}
+	}else if(!strncmp(topic, "$share", 6)){
+		/* Only allow sub/unsub to shared subscriptions */
+		if(access == MOSQ_ACL_SUBSCRIBE){
+		//FIXME if(access == MOSQ_ACL_SUBSCRIBE || access == MOSQ_ACL_UNSUBSCRIBE){
+			return MOSQ_ERR_SUCCESS;
+		}else{
+			return MOSQ_ERR_ACL_DENIED;
+		}
+	}else{
+		/* This is an unknown $ topic, for the moment just defer to actual tests. */
+		return MOSQ_ERR_SUCCESS;
+	}
+}
+
+
 int mosquitto_acl_check(struct mosquitto_db *db, struct mosquitto *context, const char *topic, long payloadlen, void* payload, int qos, bool retain, int access)
 {
 	int rc;
@@ -473,6 +507,9 @@ int mosquitto_acl_check(struct mosquitto_db *db, struct mosquitto *context, cons
 	if(!context->id){
 		return MOSQ_ERR_ACL_DENIED;
 	}
+
+	rc = acl__check_dollar(db, context, topic, access);
+	if(rc) return rc;
 
 	rc = mosquitto_acl_check_default(db, context, topic, access);
 	if(rc != MOSQ_ERR_PLUGIN_DEFER){

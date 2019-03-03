@@ -28,6 +28,7 @@ tests = [
     (1, './02-subscribe-qos0.py'),
     (1, './02-subscribe-qos1.py'),
     (1, './02-subscribe-qos2.py'),
+    (1, './02-subscribe-dollar-v5.py'),
     (1, './02-subpub-qos0.py'),
     (1, './02-subpub-qos1.py'),
     (1, './02-subpub-qos2.py'),
@@ -74,6 +75,7 @@ tests = [
     #(1, './03-publish-qos1-queued-bytes.py'),
     (1, './03-publish-invalid-utf8.py'),
     (1, './03-publish-dollar.py'),
+    (1, './03-publish-dollar-v5.py'),
     (1, './03-publish-qos1-retain-disabled.py'),
 
     (1, './04-retain-qos0.py'),
