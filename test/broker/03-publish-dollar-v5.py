@@ -29,7 +29,7 @@ try:
     sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
     helper("$SYS/broker/uptime", mqtt5_rc.MQTT_RC_NOT_AUTHORIZED)
     helper("$SYS/broker/connection/me", mqtt5_rc.MQTT_RC_NOT_AUTHORIZED)
-    helper("$SYS/broker/connection/me/state", 0)
+    helper("$SYS/broker/connection/me/state", mqtt5_rc.MQTT_RC_NO_MATCHING_SUBSCRIBERS)
     helper("$share/share/topic", mqtt5_rc.MQTT_RC_NOT_AUTHORIZED)
 
     rc = 0

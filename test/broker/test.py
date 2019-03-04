@@ -74,6 +74,7 @@ tests = [
     (1, './03-publish-dollar-v5.py'),
     (1, './03-publish-dollar.py'),
     (1, './03-publish-invalid-utf8.py'),
+    (1, './03-publish-qos1-no-subscribers-v5.py'),
     (1, './03-publish-qos1-retain-disabled.py'),
     (1, './03-publish-qos1.py'),
     (1, './03-publish-qos2.py'),

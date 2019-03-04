@@ -65,7 +65,7 @@ int handle__pubackcomp(struct mosquitto *mosq, const char *type)
 	}
 
 #ifdef WITH_BROKER
-	log__printf(NULL, MOSQ_LOG_DEBUG, "Received %s from %s (Mid: %d)", type, mosq->id, mid);
+	log__printf(NULL, MOSQ_LOG_DEBUG, "Received %s from %s (Mid: %d, RC:%d)", type, mosq->id, mid, reason_code);
 
 	/* Immediately free, we don't do anything with Reason String or User Property at the moment */
 	mosquitto_property_free_all(&properties);
@@ -78,7 +78,7 @@ int handle__pubackcomp(struct mosquitto *mosq, const char *type)
 		return rc;
 	}
 #else
-	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received %s (Mid: %d)", mosq->id, type, mid);
+	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received %s (Mid: %d, RC:%d)", mosq->id, type, mid, reason_code);
 
 	rc = message__delete(mosq, mid, mosq_md_out, qos);
 	if(rc){

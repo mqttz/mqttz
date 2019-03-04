@@ -74,6 +74,9 @@ static int subs__process(struct mosquitto_db *db, struct mosquitto__subhier *hie
 
 	leaf = hier->subs;
 
+	if(topic[0] != '$'){
+		log__printf(NULL, MOSQ_LOG_INFO, "LEAF:%p", leaf);
+	}
 	if(retain && set_retain){
 #ifdef WITH_PERSISTENCE
 		if(strncmp(topic, "$SYS", 4)){
@@ -139,7 +142,11 @@ static int subs__process(struct mosquitto_db *db, struct mosquitto__subhier *hie
 		}
 		leaf = leaf->next;
 	}
-	return rc;
+	if(hier->subs){
+		return rc;
+	}else{
+		return MOSQ_ERR_NO_SUBSCRIBERS;
+	}
 }
 
 static struct sub__token *sub__topic_append(struct sub__token **tail, struct sub__token **topics, char *topic)
@@ -378,11 +385,13 @@ static int sub__remove_recurse(struct mosquitto_db *db, struct mosquitto *contex
 	return MOSQ_ERR_SUCCESS;
 }
 
-static void sub__search(struct mosquitto_db *db, struct mosquitto__subhier *subhier, struct sub__token *tokens, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored, bool set_retain)
+static int sub__search(struct mosquitto_db *db, struct mosquitto__subhier *subhier, struct sub__token *tokens, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored, bool set_retain)
 {
 	/* FIXME - need to take into account source_id if the client is a bridge */
 	struct mosquitto__subhier *branch, *branch_tmp;
 	bool sr;
+	int rc;
+	bool have_subscribers = false;
 
 	HASH_ITER(hh, subhier->children, branch, branch_tmp){
 		sr = set_retain;
@@ -396,17 +405,37 @@ static void sub__search(struct mosquitto_db *db, struct mosquitto__subhier *subh
 				/* Don't set a retained message where + is in the hierarchy. */
 				sr = false;
 			}
-			sub__search(db, branch, tokens->next, source_id, topic, qos, retain, stored, sr);
+			rc = sub__search(db, branch, tokens->next, source_id, topic, qos, retain, stored, sr);
+			if(rc == MOSQ_ERR_SUCCESS){
+				have_subscribers = true;
+			}else if(rc != MOSQ_ERR_NO_SUBSCRIBERS){
+				return rc;
+			}
 			if(!tokens->next){
-				subs__process(db, branch, source_id, topic, qos, retain, stored, sr);
+				rc = subs__process(db, branch, source_id, topic, qos, retain, stored, sr);
+				if(rc == MOSQ_ERR_SUCCESS){
+					have_subscribers = true;
+				}else if(rc != MOSQ_ERR_NO_SUBSCRIBERS){
+					return rc;
+				}
 			}
 		}else if(!strcmp(UHPA_ACCESS_TOPIC(branch), "#") && !branch->children){
 			/* The topic matches due to a # wildcard - process the
 			 * subscriptions but *don't* return. Although this branch has ended
 			 * there may still be other subscriptions to deal with.
 			 */
-			subs__process(db, branch, source_id, topic, qos, retain, stored, false);
+			rc = subs__process(db, branch, source_id, topic, qos, retain, stored, false);
+			if(rc == MOSQ_ERR_SUCCESS){
+				have_subscribers = true;
+			}else if(rc != MOSQ_ERR_NO_SUBSCRIBERS){
+				return rc;
+			}
 		}
+	}
+	if(have_subscribers){
+		return MOSQ_ERR_SUCCESS;
+	}else{
+		return MOSQ_ERR_NO_SUBSCRIBERS;
 	}
 }
 
@@ -527,7 +556,7 @@ int sub__messages_queue(struct mosquitto_db *db, const char *source_id, const ch
 			 */
 			sub__add_recurse(db, NULL, 0, 0, 0, subhier, tokens);
 		}
-		sub__search(db, subhier, tokens, source_id, topic, qos, retain, *stored, true);
+		rc = sub__search(db, subhier, tokens, source_id, topic, qos, retain, *stored, true);
 	}
 	sub__topic_tokens_free(tokens);
 

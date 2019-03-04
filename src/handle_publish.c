@@ -40,6 +40,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	uint8_t dup, qos, retain;
 	uint16_t mid = 0;
 	int rc = 0;
+	int rc2;
 	uint8_t header = context->in_packet.command;
 	int res = 0;
 	struct mosquitto_msg_store *stored = NULL;
@@ -304,11 +305,18 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 
 	switch(qos){
 		case 0:
-			if(sub__messages_queue(db, context->id, topic, qos, retain, &stored)) rc = 1;
+			rc2 = sub__messages_queue(db, context->id, topic, qos, retain, &stored);
+			if(rc2 > 0) rc = 1;
 			break;
 		case 1:
-			if(sub__messages_queue(db, context->id, topic, qos, retain, &stored)) rc = 1;
-			if(send__puback(context, mid, 0)) rc = 1;
+			rc2 = sub__messages_queue(db, context->id, topic, qos, retain, &stored);
+			if(rc2 == MOSQ_ERR_SUCCESS || context->protocol != mosq_p_mqtt5){
+				if(send__puback(context, mid, 0)) rc = 1;
+			}else if(rc2 == MOSQ_ERR_NO_SUBSCRIBERS){
+				if(send__puback(context, mid, MQTT_RC_NO_MATCHING_SUBSCRIBERS)) rc = 1;
+			}else{
+				rc = rc2;
+			}
 			break;
 		case 2:
 			if(!dup){

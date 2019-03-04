@@ -66,6 +66,7 @@ extern "C" {
 
 /* Error values */
 enum mosq_err_t {
+	MOSQ_ERR_NO_SUBSCRIBERS = -3,
 	MOSQ_ERR_SUB_EXISTS = -2,
 	MOSQ_ERR_CONN_PENDING = -1,
 	MOSQ_ERR_SUCCESS = 0,
