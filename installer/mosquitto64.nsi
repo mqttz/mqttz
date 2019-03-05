@@ -19,7 +19,7 @@ InstallDir "$PROGRAMFILES64\mosquitto"
 ; Installer pages
 !insertmacro MUI_PAGE_WELCOME
 
-;!insertmacro MUI_PAGE_COMPONENTS
+!insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
@@ -81,6 +81,10 @@ Section "Files" SecInstall
 	SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
 SectionEnd
 
+Section "Service" SecService
+	ExeWait '"$INSTDIR\mosquitto.exe" install'
+SectionEnd
+
 Section "Uninstall"
 	ExecWait '"$INSTDIR\mosquitto.exe" uninstall'
 	Delete "$INSTDIR\mosquitto.exe"
@@ -116,7 +120,10 @@ Section "Uninstall"
 SectionEnd
 
 LangString DESC_SecInstall ${LANG_ENGLISH} "The main installation."
+LangString DESC_SecService ${LANG_ENGLISH} "Install mosquitto as a Windows service?"
+
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
 	!insertmacro MUI_DESCRIPTION_TEXT ${SecInstall} $(DESC_SecInstall)
+	!insertmacro MUI_DESCRIPTION_TEXT ${SecService} $(DESC_SecService)
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
