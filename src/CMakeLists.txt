@@ -3,6 +3,7 @@ include_directories(${mosquitto_SOURCE_DIR} ${mosquitto_SOURCE_DIR}/src
 		${STDBOOL_H_PATH} ${STDINT_H_PATH})
 
 set (MOSQ_SRCS
+	../lib/alias_mosq.c ../lib/alias_mosq.h
 	conf.c
 	conf_includedir.c
 	context.c
@@ -53,6 +54,7 @@ set (MOSQ_SRCS
 	../lib/util_mosq.c ../lib/util_topic.c ../lib/util_mosq.h
 	../lib/utf8_mosq.c
 	websockets.c
+	will_delay.c
 	../lib/will_mosq.c ../lib/will_mosq.h)
 
 

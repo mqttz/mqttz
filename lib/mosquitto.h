@@ -952,7 +952,7 @@ libmosq_EXPORT int mosquitto_subscribe_v5(struct mosquitto *mosq, int *mid, cons
  *	MOSQ_ERR_OVERSIZE_PACKET - if the resulting packet would be larger than
  *	                           supported by the broker.
  */
-int mosquitto_subscribe_multiple(struct mosquitto *mosq, int *mid, int sub_count, char *const *const sub, int qos, int options, const mosquitto_property *properties);
+libmosq_EXPORT int mosquitto_subscribe_multiple(struct mosquitto *mosq, int *mid, int sub_count, char *const *const sub, int qos, int options, const mosquitto_property *properties);
 
 /*
  * Function: mosquitto_unsubscribe
@@ -1035,7 +1035,7 @@ libmosq_EXPORT int mosquitto_unsubscribe_v5(struct mosquitto *mosq, int *mid, co
  *	MOSQ_ERR_OVERSIZE_PACKET - if the resulting packet would be larger than
  *	                           supported by the broker.
  */
-int mosquitto_unsubscribe_multiple(struct mosquitto *mosq, int *mid, int sub_count, char *const *const sub, const mosquitto_property *properties);
+libmosq_EXPORT int mosquitto_unsubscribe_multiple(struct mosquitto *mosq, int *mid, int sub_count, char *const *const sub, const mosquitto_property *properties);
 
 
 /* ======================================================================

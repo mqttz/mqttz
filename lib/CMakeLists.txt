@@ -33,6 +33,7 @@ set(C_SRC
 	options.c
 	packet_datatypes.c
 	packet_mosq.c packet_mosq.h
+	property_mosq.c property_mosq.h
 	read_handle.c read_handle.h
 	send_connect.c
 	send_disconnect.c
