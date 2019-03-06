@@ -25,9 +25,6 @@ tests = [
     (1, './01-connect-uname-password-success.py'),
     (1, './01-connect-uname-pwd-no-flag.py'),
 
-	(1, './02-subpub-qos1-bad-pubcomp.py'),
-	(1, './02-subpub-qos1-bad-pubrec.py'),
-	(1, './02-subpub-qos2-bad-pubcomp.py'),
     (1, './02-subhier-crash.py'),
     (1, './02-subpub-qos0-retain-as-publish.py'),
     (1, './02-subpub-qos0-send-retain.py'),
@@ -36,6 +33,8 @@ tests = [
     (1, './02-subpub-qos0-topic-alias.py'),
     (1, './02-subpub-qos0-v5.py'),
     (1, './02-subpub-qos0.py'),
+    (1, './02-subpub-qos1-bad-pubcomp.py'),
+    (1, './02-subpub-qos1-bad-pubrec.py'),
     (1, './02-subpub-qos1-message-expiry-retain.py'),
     (1, './02-subpub-qos1-message-expiry-will.py'),
     (1, './02-subpub-qos1-message-expiry.py'),
@@ -44,6 +43,7 @@ tests = [
     (1, './02-subpub-qos1.py'),
     (1, './02-subpub-qos2-bad-puback-1.py'),
     (1, './02-subpub-qos2-bad-puback-2.py'),
+    (1, './02-subpub-qos2-bad-pubcomp.py'),
     (1, './02-subpub-qos2-pubrec-error.py'),
     (1, './02-subpub-qos2-receive-maximum-1.py'),
     (1, './02-subpub-qos2-receive-maximum-2.py'),
@@ -126,8 +126,8 @@ tests = [
     (2, './08-tls-psk-pub.py'),
     (3, './08-tls-psk-bridge.py'),
 
-	(1, './09-pwfile-parse-invalid.py'),
     (1, './09-acl-empty-file.py'),
+    (1, './09-auth-bad-method.py'),
     (1, './09-plugin-auth-acl-sub-denied.py'),
     (1, './09-plugin-auth-acl-sub.py'),
     (1, './09-plugin-auth-context-params.py'),
@@ -138,16 +138,13 @@ tests = [
     (1, './09-plugin-auth-unpwd-success.py'),
     (1, './09-plugin-auth-v2-unpwd-fail.py'),
     (1, './09-plugin-auth-v2-unpwd-success.py'),
+    (1, './09-pwfile-parse-invalid.py'),
 
     (2, './10-listener-mount-point.py'),
 
     (1, './11-persistent-subscription.py'),
 
-	(1, './12-prop-assigned-client-identifier.py'),
-	(1, './12-prop-server-keepalive.py'),
-	(1, './12-prop-session-expiry-invalid.py'),
-	(1, './12-prop-subpub-content-type.py'),
-	(1, './12-prop-subpub-payload-format.py'),
+    (1, './12-prop-assigned-client-identifier.py'),
     (1, './12-prop-maximum-packet-size-broker.py'),
     (1, './12-prop-maximum-packet-size-connect.py'),
     (1, './12-prop-maximum-packet-size-publish-qos1.py'),
@@ -155,6 +152,10 @@ tests = [
     (1, './12-prop-maximum-packet-size-publish.py'),
     (1, './12-prop-response-topic-correlation-data.py'),
     (1, './12-prop-response-topic.py'),
+    (1, './12-prop-server-keepalive.py'),
+    (1, './12-prop-session-expiry-invalid.py'),
+    (1, './12-prop-subpub-content-type.py'),
+    (1, './12-prop-subpub-payload-format.py'),
     ]
 
 ptest.run_tests(tests)

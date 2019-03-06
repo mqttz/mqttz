@@ -9,11 +9,11 @@ Numbering is as follows:
 02: Subscribe/unsubscribe tests
 03: Publish tests
 04: Retained message tests
-05: Clean session tests
+05: Session management tests
 06: Bridge tests
 07: Will tests
 08: TLS tests
-09: Auth plugin tests
+09: Auth tests
 10: Listener tests
 11: Persistence tests
 12: Property tests

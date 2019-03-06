@@ -157,6 +157,7 @@ endif
 
 09 :
 	./09-acl-empty-file.py
+	./09-auth-bad-method.py
 	./09-plugin-auth-acl-sub-denied.py
 	./09-plugin-auth-acl-sub.py
 	./09-plugin-auth-context-params.py

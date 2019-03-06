@@ -358,6 +358,14 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 	property__process_connect(context, properties);
 
+	if(mosquitto_property_read_string(properties, MQTT_PROP_AUTHENTICATION_METHOD, NULL, false)){
+		mosquitto_property_free_all(&properties);
+		/* Client has requested extended authentication, but we don't support it yet. */
+		send__connack(db, context, 0, MQTT_RC_BAD_AUTHENTICATION_METHOD, NULL);
+		rc = MOSQ_ERR_PROTOCOL;
+		goto handle_connect_error;
+	}
+
 	mosquitto_property_free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
 
 	if(packet__read_string(&context->in_packet, &client_id, &slen)){
