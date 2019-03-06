@@ -36,7 +36,6 @@ set (MOSQ_SRCS
 	../lib/property_mosq.c ../lib/property_mosq.h
 	read_handle.c
 	../lib/read_handle.h
-	subs.c
 	security.c security_default.c
 	../lib/send_mosq.c ../lib/send_mosq.h
 	send_connack.c
@@ -48,6 +47,8 @@ set (MOSQ_SRCS
 	../lib/send_subscribe.c
 	send_unsuback.c
 	../lib/send_unsubscribe.c
+	session_expiry.c
+	subs.c
 	sys_tree.c sys_tree.h
 	../lib/time_mosq.c
 	../lib/tls_mosq.c

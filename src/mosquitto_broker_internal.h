@@ -658,6 +658,14 @@ int mosquitto_unpwd_check_default(struct mosquitto_db *db, struct mosquitto *con
 int mosquitto_psk_key_get_default(struct mosquitto_db *db, struct mosquitto *context, const char *hint, const char *identity, char *key, int max_key_len);
 
 /* ============================================================
+ * Session expiry
+ * ============================================================ */
+int session_expiry__add(struct mosquitto *context);
+void session_expiry__remove(struct mosquitto *context);
+void session_expiry__check(struct mosquitto_db *db, time_t now);
+void session_expiry__send_all(struct mosquitto_db *db);
+
+/* ============================================================
  * Window service and signal related functions
  * ============================================================ */
 #if defined(WIN32) || defined(__CYGWIN__)

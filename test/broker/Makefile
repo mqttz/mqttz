@@ -112,6 +112,7 @@ endif
 
 05 :
 	./05-clean-session-qos1.py
+	./05-session-expiry-v5.py
 
 06 :
 	./06-bridge-b2br-disconnect-qos1.py

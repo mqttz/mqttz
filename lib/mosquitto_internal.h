@@ -139,6 +139,12 @@ struct mosquitto__alias{
 	uint16_t alias;
 };
 
+struct session_expiry_list {
+	struct mosquitto *context;
+	struct session_expiry_list *prev;
+	struct session_expiry_list *next;
+};
+
 struct mosquitto__packet{
 	uint8_t *payload;
 	struct mosquitto__packet *next;
@@ -233,6 +239,7 @@ struct mosquitto {
 #endif
 	bool clean_start;
 	uint32_t session_expiry_interval;
+	time_t session_expiry_time;
 #ifdef WITH_BROKER
 	bool removed_from_by_id; /* True if removed from by_id hash */
 	bool is_dropping;
@@ -314,6 +321,7 @@ struct mosquitto {
 	UT_hash_handle hh_id;
 	UT_hash_handle hh_sock;
 	struct mosquitto *for_free_next;
+	struct session_expiry_list *expiry_list_item;
 #endif
 #ifdef WITH_EPOLL
 	uint32_t events;

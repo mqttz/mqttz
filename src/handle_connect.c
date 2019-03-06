@@ -313,6 +313,13 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	clean_start = (connect_flags & 0x02) >> 1;
+	/* session_expiry_interval will be overriden if the properties are read later */
+	if(clean_start == false && protocol_version != PROTOCOL_VERSION_v5){
+		/* v3* has clean_start == false mean the session never expires */
+		context->session_expiry_interval = UINT32_MAX;
+	}else{
+		context->session_expiry_interval = 0;
+	}
 	will = connect_flags & 0x04;
 	will_qos = (connect_flags & 0x18) >> 3;
 	if(will_qos == 3){
@@ -630,15 +637,13 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			}
 		}
 
-		if(context->protocol == mosq_p_mqtt311 || context->protocol == mosq_p_mqtt5){
-			if(clean_start == 0){
-				connect_ack |= 0x01;
-			}
-		}
-
 		context->clean_start = clean_start;
 
-		if(context->clean_start == false && found_context->clean_start == false){
+		if(context->clean_start == false && found_context->session_expiry_interval > 0){
+			if(context->protocol == mosq_p_mqtt311 || context->protocol == mosq_p_mqtt5){
+				connect_ack |= 0x01;
+			}
+
 			if(found_context->inflight_msgs || found_context->queued_msgs){
 				context->inflight_msgs = found_context->inflight_msgs;
 				context->queued_msgs = found_context->queued_msgs;
@@ -665,7 +670,10 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			}
 		}
 
+		session_expiry__remove(found_context);
+
 		found_context->clean_start = true;
+		found_context->session_expiry_interval = 0;
 		found_context->state = mosq_cs_duplicate;
 		do_disconnect(db, found_context);
 	}

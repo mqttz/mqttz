@@ -472,7 +472,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 		now_time = time(NULL);
 		if(db->config->persistent_client_expiration > 0 && now_time > expiration_check_time){
 			HASH_ITER(hh_id, db->contexts_by_id, context, ctxt_tmp){
-				if(context->sock == INVALID_SOCKET && context->clean_start == 0){
+				if(context->sock == INVALID_SOCKET && context->session_expiry_interval > 0){
 					/* This is a persistent client, check to see if the
 					 * last time it connected was longer than
 					 * persistent_client_expiration seconds ago. If so,
@@ -486,7 +486,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 						}
 						log__printf(NULL, MOSQ_LOG_NOTICE, "Expiring persistent client %s due to timeout.", id);
 						G_CLIENTS_EXPIRED_INC();
-						context->clean_start = true;
+						context->session_expiry_interval = 0;
 						context->state = mosq_cs_expiring;
 						do_disconnect(db, context);
 					}
@@ -555,7 +555,9 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 			}
 		}
 #endif
-		will_delay__check(db, time(NULL));
+		now = time(NULL);
+		session_expiry__check(db, now);
+		will_delay__check(db, now);
 #ifdef WITH_PERSISTENCE
 		if(db->config->persistence && db->config->autosave_interval){
 			if(db->config->autosave_on_changes){
@@ -669,22 +671,6 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 		}
 #endif		
 		context__disconnect(db, context);
-#ifdef WITH_BRIDGE
-		if(context->clean_start && !context->bridge){
-#else
-		if(context->clean_start){
-#endif
-			if(context->will_delay_interval == 0){
-				/* This will be done later, after the will is published */
-				context__add_to_disused(db, context);
-				if(context->id){
-					context__remove_from_by_id(db, context);
-					mosquitto__free(context->id);
-					context->id = NULL;
-				}
-			}
-		}
-		context->state = mosq_cs_disconnected;
 	}
 }
 
