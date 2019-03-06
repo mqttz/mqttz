@@ -55,6 +55,9 @@ void my_disconnect_callback(struct mosquitto *mosq, void *obj, int rc, const mos
 void my_publish_callback(struct mosquitto *mosq, void *obj, int mid, int reason_code, const mosquitto_property *properties)
 {
 	last_mid_sent = mid;
+	if(reason_code > 127){
+		if(!cfg.quiet) fprintf(stderr, "Warning: Publish %d failed: %s.\n", mid, mosquitto_reason_string(reason_code));
+	}
 	if(cfg.pub_mode == MSGMODE_STDIN_LINE){
 		if(mid == last_mid){
 			mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
