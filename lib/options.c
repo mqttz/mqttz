@@ -304,3 +304,7 @@ void mosquitto_user_data_set(struct mosquitto *mosq, void *userdata)
 	}
 }
 
+void *mosquitto_userdata(struct mosquitto *mosq)
+{
+	return mosq->userdata;
+}
