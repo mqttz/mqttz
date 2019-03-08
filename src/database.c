@@ -153,7 +153,7 @@ static void subhier_clean(struct mosquitto_db *db, struct mosquitto__subhier **s
 			db__msg_store_deref(db, &peer->retained);
 		}
 		subhier_clean(db, &peer->children);
-		UHPA_FREE_TOPIC(peer);
+		mosquitto__free(peer->topic);
 
 		HASH_DELETE(hh, *subhier, peer);
 		mosquitto__free(peer);

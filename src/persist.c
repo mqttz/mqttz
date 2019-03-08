@@ -349,9 +349,9 @@ static int persist__subs_retain_write(struct mosquitto_db *db, FILE *db_fptr, st
 	thistopic = mosquitto__malloc(sizeof(char)*slen);
 	if(!thistopic) return MOSQ_ERR_NOMEM;
 	if(level > 1 || strlen(topic)){
-		snprintf(thistopic, slen, "%s/%s", topic, UHPA_ACCESS_TOPIC(node));
+		snprintf(thistopic, slen, "%s/%s", topic, node->topic);
 	}else{
-		snprintf(thistopic, slen, "%s", UHPA_ACCESS_TOPIC(node));
+		snprintf(thistopic, slen, "%s", node->topic);
 	}
 
 	sub = node->subs;
