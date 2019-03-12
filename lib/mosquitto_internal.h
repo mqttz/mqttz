@@ -110,6 +110,7 @@ enum mosquitto_client_state {
 	mosq_cs_connecting = 16,
 	mosq_cs_duplicate = 17, /* client that has been taken over by another with the same id */
 	mosq_cs_disconnect_with_will = 18,
+	mosq_cs_disused = 19, /* client that has been added to the disused list to be freed */
 };
 
 enum mosquitto__protocol {
