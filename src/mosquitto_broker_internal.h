@@ -255,6 +255,7 @@ struct mosquitto__config {
 	int log_facility;
 	int log_type;
 	bool log_timestamp;
+	char *log_timestamp_format;
 	char *log_file;
 	FILE *log_fptr;
 	uint16_t max_inflight_messages;

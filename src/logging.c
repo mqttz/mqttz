@@ -56,6 +56,43 @@ static int log_priorities = MOSQ_LOG_ERR | MOSQ_LOG_WARNING | MOSQ_LOG_NOTICE | 
 static DltContext dltContext;
 #endif
 
+static int get_time(struct tm **ti)
+{
+#ifdef WIN32
+	SYSTEMTIME st;
+#elif defined(__APPLE__)
+	struct timeval tv;
+#else
+	struct timespec ts;
+#endif
+	time_t s;
+
+#ifdef WIN32
+	s = time(NULL);
+
+	GetLocalTime(&st);
+	*ns = st.wMilliseconds*1000000L;
+#elif defined(__APPLE__)
+	gettimeofday(&tv, NULL);
+	s = tv.tv_sec;
+#else
+	if(clock_gettime(CLOCK_REALTIME, &ts) != 0){
+		fprintf(stderr, "Error obtaining system time.\n");
+		return 1;
+	}
+	s = ts.tv_sec;
+#endif
+
+	*ti = localtime(&s);
+	if(!(*ti)){
+		fprintf(stderr, "Error obtaining system time.\n");
+		return 1;
+	}
+
+	return 0;
+}
+
+
 int log__init(struct mosquitto__config *config)
 {
 	int rc = 0;
@@ -149,6 +186,7 @@ int log__vprintf(int priority, const char *fmt, va_list va)
 	int syslog_priority;
 	time_t now = time(NULL);
 	static time_t last_flush = 0;
+	char time_buf[50];
 
 	if((log_priorities & priority) && log_destinations != MQTT3_LOG_NONE){
 		switch(priority){
@@ -233,9 +271,20 @@ int log__vprintf(int priority, const char *fmt, va_list va)
 		vsnprintf(s, len, fmt, va);
 		s[len-1] = '\0'; /* Ensure string is null terminated. */
 
+		if(int_db.config && int_db.config->log_timestamp && int_db.config->log_timestamp_format){
+			struct tm *ti = NULL;
+			get_time(&ti);
+			if(strftime(time_buf, 50, int_db.config->log_timestamp_format, ti) == 0){
+				snprintf(time_buf, 50, "Time error");
+			}
+		}
 		if(log_destinations & MQTT3_LOG_STDOUT){
 			if(int_db.config && int_db.config->log_timestamp){
-				fprintf(stdout, "%d: %s\n", (int)now, s);
+				if(int_db.config->log_timestamp_format){
+					fprintf(stdout, "%s: %s\n", time_buf, s);
+				}else{
+					fprintf(stdout, "%d: %s\n", (int)now, s);
+				}
 			}else{
 				fprintf(stdout, "%s\n", s);
 			}
@@ -243,7 +292,11 @@ int log__vprintf(int priority, const char *fmt, va_list va)
 		}
 		if(log_destinations & MQTT3_LOG_STDERR){
 			if(int_db.config && int_db.config->log_timestamp){
-				fprintf(stderr, "%d: %s\n", (int)now, s);
+				if(int_db.config->log_timestamp_format){
+					fprintf(stderr, "%s: %s\n", time_buf, s);
+				}else{
+					fprintf(stderr, "%d: %s\n", (int)now, s);
+				}
 			}else{
 				fprintf(stderr, "%s\n", s);
 			}
@@ -251,7 +304,11 @@ int log__vprintf(int priority, const char *fmt, va_list va)
 		}
 		if(log_destinations & MQTT3_LOG_FILE && int_db.config->log_fptr){
 			if(int_db.config && int_db.config->log_timestamp){
-				fprintf(int_db.config->log_fptr, "%d: %s\n", (int)now, s);
+				if(int_db.config->log_timestamp_format){
+					fprintf(int_db.config->log_fptr, "%s: %s\n", time_buf, s);
+				}else{
+					fprintf(int_db.config->log_fptr, "%d: %s\n", (int)now, s);
+				}
 			}else{
 				fprintf(int_db.config->log_fptr, "%s\n", s);
 			}

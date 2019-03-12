@@ -213,6 +213,8 @@ static void config__init_reload(struct mosquitto_db *db, struct mosquitto__confi
 	}
 #endif
 	config->log_timestamp = true;
+	mosquitto__free(config->log_timestamp_format);
+	config->log_timestamp_format = NULL;
 	config->max_keepalive = 65535;
 	config->max_packet_size = 0;
 	config->max_inflight_messages = 20;
@@ -570,6 +572,9 @@ void config__copy(struct mosquitto__config *src, struct mosquitto__config *dest)
 	dest->log_facility = src->log_facility;
 	dest->log_type = src->log_type;
 	dest->log_timestamp = src->log_timestamp;
+
+	mosquitto__free(dest->log_timestamp_format);
+	dest->log_timestamp_format = src->log_timestamp_format;
 
 	mosquitto__free(dest->log_file);
 	dest->log_file = src->log_file;
@@ -1460,6 +1465,8 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 #endif
 				}else if(!strcmp(token, "log_timestamp")){
 					if(conf__parse_bool(&token, token, &config->log_timestamp, saveptr)) return MOSQ_ERR_INVAL;
+				}else if(!strcmp(token, "log_timestamp_format")){
+					if(conf__parse_string(&token, token, &config->log_timestamp_format, saveptr)) return MOSQ_ERR_INVAL;
 				}else if(!strcmp(token, "log_type")){
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
