@@ -391,6 +391,7 @@ int main(int argc, char *argv[])
 		context__send_will(&int_db, ctxt);
 	}
 	will_delay__send_all(&int_db);
+	session_expiry__remove_all(&int_db);
 
 #ifdef WITH_PERSISTENCE
 	if(config.persistence){

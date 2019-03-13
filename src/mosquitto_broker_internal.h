@@ -653,6 +653,7 @@ int mosquitto_psk_key_get_default(struct mosquitto_db *db, struct mosquitto *con
  * ============================================================ */
 int session_expiry__add(struct mosquitto *context);
 void session_expiry__remove(struct mosquitto *context);
+void session_expiry__remove_all(struct mosquitto_db *db);
 void session_expiry__check(struct mosquitto_db *db, time_t now);
 void session_expiry__send_all(struct mosquitto_db *db);
 
