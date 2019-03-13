@@ -131,80 +131,59 @@ int mosquitto_sub_topic_check2(const char *str, size_t len)
 
 int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result)
 {
-	int slen, tlen;
-
-	if(!result) return MOSQ_ERR_INVAL;
-	*result = false;
-
-	if(!sub || !topic){
-		return MOSQ_ERR_INVAL;
-	}
-
-	slen = strlen(sub);
-	tlen = strlen(topic);
-
-	return mosquitto_topic_matches_sub2(sub, slen, topic, tlen, result);
+	return mosquitto_topic_matches_sub2(sub, 0, topic, 0, result);
 }
 
 /* Does a topic match a subscription? */
 int mosquitto_topic_matches_sub2(const char *sub, size_t sublen, const char *topic, size_t topiclen, bool *result)
 {
-	size_t i;
-	size_t spos, tpos;
-	bool multilevel_wildcard = false;
+	size_t spos;
 
 	if(!result) return MOSQ_ERR_INVAL;
 	*result = false;
 
-	if(!sub || !topic){
+	if(!sub || !topic || sub[0] == 0 || topic[0] == 0){
 		return MOSQ_ERR_INVAL;
 	}
 
-	if(!sublen || !topiclen){
-		*result = false;
-		return MOSQ_ERR_INVAL;
-	}
+	if((sub[0] == '$' && topic[0] != '$')
+			|| (topic[0] == '$' && sub[0] != '$')){
 
-	if(sublen && topiclen){
-		if((sub[0] == '$' && topic[0] != '$')
-				|| (topic[0] == '$' && sub[0] != '$')){
-
-			return MOSQ_ERR_SUCCESS;
-		}
+		return MOSQ_ERR_SUCCESS;
 	}
 
 	spos = 0;
-	tpos = 0;
 
-	while(spos < sublen && tpos <= topiclen){
-		if(topic[tpos] == '+' || topic[tpos] == '#'){
+	while(sub[0] != 0){
+		if(topic[0] == '+' || topic[0] == '#'){
 			return MOSQ_ERR_INVAL;
 		}
-		if(tpos == topiclen || sub[spos] != topic[tpos]){ /* Check for wildcard matches */
-			if(sub[spos] == '+'){
+		if(sub[0] != topic[0] || topic[0] == 0){ /* Check for wildcard matches */
+			if(sub[0] == '+'){
 				/* Check for bad "+foo" or "a/+foo" subscription */
-				if(spos > 0 && sub[spos-1] != '/'){
+				if(spos > 0 && sub[-1] != '/'){
 					return MOSQ_ERR_INVAL;
 				}
 				/* Check for bad "foo+" or "foo+/a" subscription */
-				if(spos < sublen-1 && sub[spos+1] != '/'){
+				if(sub[1] != 0 && sub[1] != '/'){
 					return MOSQ_ERR_INVAL;
 				}
 				spos++;
-				while(tpos < topiclen && topic[tpos] != '/'){
-					tpos++;
+				sub++;
+				while(topic[0] != 0 && topic[0] != '/'){
+					topic++;
 				}
-				if(tpos == topiclen && spos == sublen){
+				if(topic[0] == 0 && sub[0] == 0){
 					*result = true;
 					return MOSQ_ERR_SUCCESS;
 				}
-			}else if(sub[spos] == '#'){
+			}else if(sub[0] == '#'){
 				/* Check for bad "foo#" subscription */
-				if(spos > 0 && sub[spos-1] != '/'){
+				if(spos > 0 && sub[-1] != '/'){
 					return MOSQ_ERR_INVAL;
 				}
 				/* Check for # not the final character of the sub, e.g. "#foo" */
-				if(spos+1 != sublen){
+				if(sub[1] != 0){
 					return MOSQ_ERR_INVAL;
 				}else{
 					*result = true;
@@ -212,23 +191,23 @@ int mosquitto_topic_matches_sub2(const char *sub, size_t sublen, const char *top
 				}
 			}else{
 				/* Check for e.g. foo/bar matching foo/+/# */
-				if(spos > 0
-						&& spos+2 == sublen
-						&& tpos == topiclen
-						&& sub[spos-1] == '+'
-						&& sub[spos] == '/'
-						&& sub[spos+1] == '#')
+				if(topic[0] == 0
+						&& spos > 0
+						&& sub[-1] == '+'
+						&& sub[0] == '/'
+						&& sub[1] == '#')
 				{
 					*result = true;
-					multilevel_wildcard = true;
 					return MOSQ_ERR_SUCCESS;
 				}
 
 				/* There is no match at this point, but is the sub invalid? */
-				for(i=spos; i<sublen; i++){
-					if(sub[i] == '#' && i+1 != sublen){
+				while(sub[0] != 0){
+					if(sub[0] == '#' && sub[1] != 0){
 						return MOSQ_ERR_INVAL;
 					}
+					spos++;
+					sub++;
 				}
 
 				/* Valid input, but no match */
@@ -236,32 +215,33 @@ int mosquitto_topic_matches_sub2(const char *sub, size_t sublen, const char *top
 			}
 		}else{
 			/* sub[spos] == topic[tpos] */
-			if(tpos == topiclen-1){
+			if(topic[1] == 0){
 				/* Check for e.g. foo matching foo/# */
-				if(spos == sublen-3
-						&& sub[spos+1] == '/'
-						&& sub[spos+2] == '#'){
+				if(sub[1] == '/'
+						&& sub[2] == '#'
+						&& sub[3] == 0){
 					*result = true;
-					multilevel_wildcard = true;
 					return MOSQ_ERR_SUCCESS;
 				}
 			}
 			spos++;
-			tpos++;
-			if(spos == sublen && tpos == topiclen){
+			sub++;
+			topic++;
+			if(sub[0] == 0 && topic[0] == 0){
 				*result = true;
 				return MOSQ_ERR_SUCCESS;
-			}else if(tpos == topiclen && spos == sublen-1 && sub[spos] == '+'){
-				if(spos > 0 && sub[spos-1] != '/'){
+			}else if(topic[0] == 0 && sub[0] == '+' && sub[1] == 0){
+				if(spos > 0 && sub[-1] != '/'){
 					return MOSQ_ERR_INVAL;
 				}
 				spos++;
+				sub++;
 				*result = true;
 				return MOSQ_ERR_SUCCESS;
 			}
 		}
 	}
-	if(multilevel_wildcard == false && (tpos < topiclen || spos < sublen)){
+	if((topic[0] != 0 || sub[0] != 0)){
 		*result = false;
 	}
 
