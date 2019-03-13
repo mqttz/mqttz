@@ -57,13 +57,13 @@ void sys_tree__init(struct mosquitto_db *db)
 
 static void sys_tree__update_clients(struct mosquitto_db *db, char *buf)
 {
-	static unsigned int client_count = -1;
+	static int client_count = -1;
 	static int clients_expired = -1;
-	static unsigned int client_max = 0;
+	static int client_max = 0;
 	static int disconnected_count = -1;
 	static int connected_count = -1;
 
-	unsigned int count_total, count_by_sock;
+	int count_total, count_by_sock;
 
 	count_total = HASH_CNT(hh_id, db->contexts_by_id);
 	count_by_sock = HASH_CNT(hh_sock, db->contexts_by_sock);

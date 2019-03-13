@@ -63,7 +63,7 @@ int mosquitto_pub_topic_check(const char *str)
 
 int mosquitto_pub_topic_check2(const char *str, size_t len)
 {
-	int i;
+	size_t i;
 
 	if(len > 65535) return MOSQ_ERR_INVAL;
 
@@ -109,7 +109,7 @@ int mosquitto_sub_topic_check(const char *str)
 int mosquitto_sub_topic_check2(const char *str, size_t len)
 {
 	char c = '\0';
-	int i;
+	size_t i;
 
 	if(len > 65535) return MOSQ_ERR_INVAL;
 
@@ -149,8 +149,8 @@ int mosquitto_topic_matches_sub(const char *sub, const char *topic, bool *result
 /* Does a topic match a subscription? */
 int mosquitto_topic_matches_sub2(const char *sub, size_t sublen, const char *topic, size_t topiclen, bool *result)
 {
-	int i;
-	int spos, tpos;
+	size_t i;
+	size_t spos, tpos;
 	bool multilevel_wildcard = false;
 
 	if(!result) return MOSQ_ERR_INVAL;

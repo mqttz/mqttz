@@ -169,7 +169,7 @@ int mosquitto__hex2bin(const char *hex, unsigned char *bin, int bin_max_len)
 	int len;
 	int leading_zero = 0;
 	int start = 0;
-	int i = 0;
+	size_t i = 0;
 
 	/* Count the number of leading zero */
 	for(i=0; i<strlen(hex); i=i+2) {

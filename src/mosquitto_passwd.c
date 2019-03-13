@@ -64,7 +64,7 @@ static unsigned char tmpfile_path[36];
 static FILE *mpw_tmpfile(void)
 {
 	int fd;
-	int i;
+	size_t i;
 
 	if(RAND_bytes(tmpfile_path, sizeof(tmpfile_path)) != 1){
 		return NULL;
@@ -356,7 +356,7 @@ int get_password(char *password, int len)
 int copy_contents(FILE *src, FILE *dest)
 {
 	char buf[MAX_BUFFER_LEN];
-	int len;
+	size_t len;
 
 	rewind(src);
 	rewind(dest);

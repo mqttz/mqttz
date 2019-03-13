@@ -153,7 +153,7 @@ int packet__queue(struct mosquitto *mosq, struct mosquitto__packet *packet)
 
 int packet__check_oversize(struct mosquitto *mosq, uint32_t remaining_length)
 {
-	int len;
+	uint32_t len;
 
 	if(mosq->maximum_packet_size == 0) return MOSQ_ERR_SUCCESS;
 

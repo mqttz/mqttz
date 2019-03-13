@@ -1179,11 +1179,11 @@ static int mosquitto__urldecode(char *str)
 static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 {
 	char *str;
-	int i;
+	size_t i;
 	char *username = NULL, *password = NULL, *host = NULL, *port = NULL;
 	char *username_or_host = NULL;
-	int start;
-	int len;
+	size_t start;
+	size_t len;
 	bool have_auth = false;
 	int port_int;
 

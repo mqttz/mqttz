@@ -840,7 +840,7 @@ static int psk__file_parse(struct mosquitto_db *db, struct mosquitto__unpwd **ps
 #ifdef WITH_TLS
 static int mosquitto__memcmp_const(const void *a, const void *b, size_t len)
 {
-	int i;
+	size_t i;
 	int rc = 0;
 
 	if(!a || !b) return 1;
