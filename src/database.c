@@ -910,7 +910,7 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 	const void *payload;
 	int msg_count = 0;
 	mosquitto_property *cmsg_props = NULL, *store_props = NULL;
-	time_t now;
+	time_t now = 0;
 	uint32_t expiry_interval = 0;
 
 	if(!context || context->sock == INVALID_SOCKET
@@ -922,11 +922,13 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 		return MOSQ_ERR_SUCCESS;
 	}
 
-	now = time(NULL);
 	tail = context->inflight_msgs;
 	while(tail){
 		msg_count++;
 		if(tail->store->message_expiry_time){
+			if(now == 0){
+				now = time(NULL);
+			}
 			if(now > tail->store->message_expiry_time){
 				/* Message is expired, must not send. */
 				db__message_remove(db, context, &tail, last);
