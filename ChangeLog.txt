@@ -1,3 +1,10 @@
+Broker:
+- Improve error reporting when creating listeners.
+
+Library:
+- Add missing `mosquitto_userdata()` function.
+
+
 1.5.8 - 2019xxxx
 ================
 
