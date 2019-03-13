@@ -64,6 +64,8 @@ extern int run;
 /* Signal handler for SIGHUP - flag a config reload. */
 void handle_sighup(int signal)
 {
+	UNUSED(signal);
+
 	flag_reload = true;
 }
 #endif
@@ -71,12 +73,16 @@ void handle_sighup(int signal)
 /* Signal handler for SIGINT and SIGTERM - just stop gracefully. */
 void handle_sigint(int signal)
 {
+	UNUSED(signal);
+
 	run = 0;
 }
 
 /* Signal handler for SIGUSR1 - backup the db. */
 void handle_sigusr1(int signal)
 {
+	UNUSED(signal);
+
 #ifdef WITH_PERSISTENCE
 	flag_db_backup = true;
 #endif
@@ -85,6 +91,8 @@ void handle_sigusr1(int signal)
 /* Signal handler for SIGUSR2 - print subscription / retained tree. */
 void handle_sigusr2(int signal)
 {
+	UNUSED(signal);
+
 	flag_tree_print = true;
 }
 

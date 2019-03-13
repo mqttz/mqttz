@@ -42,6 +42,8 @@ static void on_connect(struct mosquitto *mosq, void *obj, int rc)
 {
 	struct userdata__callback *userdata = obj;
 
+	UNUSED(rc);
+
 	mosquitto_subscribe(mosq, NULL, userdata->topic, userdata->qos);
 }
 

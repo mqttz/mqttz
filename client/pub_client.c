@@ -52,6 +52,10 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 {
 	int rc = MOSQ_ERR_SUCCESS;
 
+	UNUSED(obj);
+	UNUSED(flags);
+	UNUSED(properties);
+
 	if(!result){
 		switch(cfg.pub_mode){
 			case MSGMODE_CMD:
@@ -250,7 +254,7 @@ int main(int argc, char *argv[])
 	}
 
 
-	if(client_id_generate(&cfg, "mosqpub")){
+	if(client_id_generate(&cfg)){
 		goto cleanup;
 	}
 

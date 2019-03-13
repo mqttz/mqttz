@@ -101,7 +101,7 @@ static void temp__expire_websockets_clients(struct mosquitto_db *db)
 }
 #endif
 
-int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int listensock_count, int listener_max)
+int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int listensock_count)
 {
 #ifdef WITH_SYS_TREE
 	time_t start_time = mosquitto_time();
@@ -238,7 +238,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 							&& now > context->bridge->primary_retry){
 
 						if(context->bridge->primary_retry_sock == INVALID_SOCKET){
-							rc = net__try_connect(context, context->bridge->addresses[0].address,
+							rc = net__try_connect(context->bridge->addresses[0].address,
 									context->bridge->addresses[0].port,
 									&context->bridge->primary_retry_sock, NULL, false);
 

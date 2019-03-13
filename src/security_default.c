@@ -43,6 +43,8 @@ int mosquitto_security_init_default(struct mosquitto_db *db, bool reload)
 	char *pwf;
 	char *pskf;
 
+	UNUSED(reload);
+
 	/* Load username/password data if required. */
 	if(db->config->per_listener_settings){
 		for(i=0; i<db->config->listener_count; i++){
@@ -587,6 +589,8 @@ static int acl__cleanup(struct mosquitto_db *db, bool reload)
 	struct mosquitto *context, *ctxt_tmp;
 	int i;
 
+	UNUSED(reload);
+
 	if(!db) return MOSQ_ERR_INVAL;
 
 	/* As we're freeing ACLs, we must clear context->acl_list to ensure no
@@ -918,6 +922,8 @@ int mosquitto_unpwd_check_default(struct mosquitto_db *db, struct mosquitto *con
 static int unpwd__cleanup(struct mosquitto__unpwd **root, bool reload)
 {
 	struct mosquitto__unpwd *u, *tmp;
+
+	UNUSED(reload);
 
 	if(!root) return MOSQ_ERR_INVAL;
 

@@ -100,6 +100,11 @@ int mosquitto_connect_srv(struct mosquitto *mosq, const char *host, int keepaliv
 	return MOSQ_ERR_SUCCESS;
 
 #else
+	UNUSED(mosq);
+	UNUSED(host);
+	UNUSED(keepalive);
+	UNUSED(bind_address);
+
 	return MOSQ_ERR_NOT_SUPPORTED;
 #endif
 }

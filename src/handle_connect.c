@@ -44,7 +44,7 @@ static char nibble_to_hex(uint8_t value)
 	}
 }
 
-static char *client_id_gen(struct mosquitto_db *db, int *idlen, const char *auto_id_prefix, int auto_id_prefix_len)
+static char *client_id_gen(int *idlen, const char *auto_id_prefix, int auto_id_prefix_len)
 {
 	char *client_id;
 	uint8_t rnd[16];
@@ -394,9 +394,9 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 				goto handle_connect_error;
 			}else{
 				if(db->config->per_listener_settings){
-					client_id = client_id_gen(db, &slen, context->listener->security_options.auto_id_prefix, context->listener->security_options.auto_id_prefix_len);
+					client_id = client_id_gen(&slen, context->listener->security_options.auto_id_prefix, context->listener->security_options.auto_id_prefix_len);
 				}else{
-					client_id = client_id_gen(db, &slen, db->config->security_options.auto_id_prefix, db->config->security_options.auto_id_prefix_len);
+					client_id = client_id_gen(&slen, db->config->security_options.auto_id_prefix, db->config->security_options.auto_id_prefix_len);
 				}
 				if(!client_id){
 					rc = MOSQ_ERR_NOMEM;

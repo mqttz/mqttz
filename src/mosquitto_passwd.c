@@ -407,6 +407,9 @@ void handle_sigint(int signal)
 	ts.c_lflag |= ECHO | ICANON;
 	tcsetattr(0, TCSANOW, &ts);
 #endif
+
+	UNUSED(signal);
+
 	exit(0);
 }
 

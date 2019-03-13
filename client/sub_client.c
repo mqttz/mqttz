@@ -56,6 +56,10 @@ void print_message(struct mosq_config *cfg, const struct mosquitto_message *mess
 
 void my_publish_callback(struct mosquitto *mosq, void *obj, int mid, int reason_code, const mosquitto_property *properties)
 {
+	UNUSED(obj);
+	UNUSED(reason_code);
+	UNUSED(properties);
+
 	if(process_messages == false && (mid == last_mid || last_mid == 0)){
 		mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
 	}
@@ -66,6 +70,9 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 {
 	int i;
 	bool res;
+
+	UNUSED(obj);
+	UNUSED(properties);
 
 	if(process_messages == false) return;
 
@@ -106,6 +113,10 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 {
 	int i;
 
+	UNUSED(obj);
+	UNUSED(flags);
+	UNUSED(properties);
+
 	if(!result){
 		mosquitto_subscribe_multiple(mosq, NULL, cfg.topic_count, cfg.topics, cfg.qos, cfg.sub_opts, cfg.subscribe_props);
 
@@ -128,6 +139,8 @@ void my_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_c
 {
 	int i;
 
+	UNUSED(obj);
+
 	if(!cfg.quiet) printf("Subscribed (mid: %d): %d", mid, granted_qos[0]);
 	for(i=1; i<qos_count; i++){
 		if(!cfg.quiet) printf(", %d", granted_qos[i]);
@@ -141,6 +154,10 @@ void my_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_c
 
 void my_log_callback(struct mosquitto *mosq, void *obj, int level, const char *str)
 {
+	UNUSED(mosq);
+	UNUSED(obj);
+	UNUSED(level);
+
 	printf("%s\n", str);
 }
 
@@ -281,7 +298,7 @@ int main(int argc, char *argv[])
 		goto cleanup;
 	}
 
-	if(client_id_generate(&cfg, "mosqsub")){
+	if(client_id_generate(&cfg)){
 		goto cleanup;
 	}
 

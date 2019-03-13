@@ -251,6 +251,8 @@ int net__socket_accept(struct mosquitto_db *db, mosq_sock_t listensock)
 #ifdef WITH_TLS
 static int client_certificate_verify(int preverify_ok, X509_STORE_CTX *ctx)
 {
+	UNUSED(ctx);
+
 	/* Preverify should check expiry, revocation. */
 	return preverify_ok;
 }

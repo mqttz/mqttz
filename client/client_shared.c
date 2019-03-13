@@ -41,7 +41,7 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url);
 static int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, char *argv[]);
 
 
-static int check_format(struct mosq_config *cfg, const char *str)
+static int check_format(const char *str)
 {
 	int i;
 	int len;
@@ -575,7 +575,7 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 					fprintf(stderr, "Error: Out of memory.\n");
 					return 1;
 				}
-				if(check_format(cfg, cfg->format)){
+				if(check_format(cfg->format)){
 					return 1;
 				}
 			}
@@ -1062,7 +1062,7 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int client_id_generate(struct mosq_config *cfg, const char *id_base)
+int client_id_generate(struct mosq_config *cfg)
 {
 	if(cfg->id_prefix){
 		cfg->id = malloc(strlen(cfg->id_prefix)+10);

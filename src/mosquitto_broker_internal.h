@@ -498,7 +498,7 @@ struct libws_mqtt_data {
 /* ============================================================
  * Main functions
  * ============================================================ */
-int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int listensock_count, int listener_max);
+int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int listensock_count);
 struct mosquitto_db *mosquitto__get_db(void);
 
 /* ============================================================

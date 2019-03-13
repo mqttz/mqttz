@@ -49,11 +49,19 @@ static int buf_len = 1024;
 
 void my_disconnect_callback(struct mosquitto *mosq, void *obj, int rc, const mosquitto_property *properties)
 {
+	UNUSED(mosq);
+	UNUSED(obj);
+	UNUSED(rc);
+	UNUSED(properties);
+
 	connected = false;
 }
 
 void my_publish_callback(struct mosquitto *mosq, void *obj, int mid, int reason_code, const mosquitto_property *properties)
 {
+	UNUSED(obj);
+	UNUSED(properties);
+
 	last_mid_sent = mid;
 	if(reason_code > 127){
 		if(!cfg.quiet) fprintf(stderr, "Warning: Publish %d failed: %s.\n", mid, mosquitto_reason_string(reason_code));
@@ -71,6 +79,10 @@ void my_publish_callback(struct mosquitto *mosq, void *obj, int mid, int reason_
 
 void my_log_callback(struct mosquitto *mosq, void *obj, int level, const char *str)
 {
+	UNUSED(mosq);
+	UNUSED(obj);
+	UNUSED(level);
+
 	printf("%s\n", str);
 }
 

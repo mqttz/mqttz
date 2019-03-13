@@ -231,6 +231,8 @@ static unsigned int psk_client_callback(SSL *ssl, const char *hint,
 	struct mosquitto *mosq;
 	int len;
 
+	UNUSED(hint);
+
 	mosq = SSL_get_ex_data(ssl, tls_ex_index_mosq);
 	if(!mosq) return 0;
 
@@ -350,7 +352,7 @@ int net__try_connect_step2(struct mosquitto *mosq, uint16_t port, mosq_sock_t *s
 #endif
 
 
-int net__try_connect(struct mosquitto *mosq, const char *host, uint16_t port, mosq_sock_t *sock, const char *bind_address, bool blocking)
+int net__try_connect(const char *host, uint16_t port, mosq_sock_t *sock, const char *bind_address, bool blocking)
 {
 	struct addrinfo hints;
 	struct addrinfo *ainfo, *rp;
@@ -768,7 +770,7 @@ int net__socket_connect(struct mosquitto *mosq, const char *host, uint16_t port,
 
 	if(!mosq || !host || !port) return MOSQ_ERR_INVAL;
 
-	rc = net__try_connect(mosq, host, port, &sock, bind_address, blocking);
+	rc = net__try_connect(host, port, &sock, bind_address, blocking);
 	if(rc > 0) return rc;
 
 	mosq->sock = sock;

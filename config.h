@@ -58,4 +58,6 @@
 #  define _Float128 uint64_t
 #endif
 
+#define UNUSED(A) (void)(A)
+
 #endif

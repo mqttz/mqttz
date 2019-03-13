@@ -204,11 +204,9 @@ int main(int argc, char *argv[])
 	struct mosquitto__config config;
 	int i, j;
 	FILE *pid;
-	int listener_max;
 	int rc;
 #ifdef WIN32
 	SYSTEMTIME st;
-	_setmaxstdio(2048);
 #else
 	struct timeval tv;
 #endif
@@ -294,7 +292,6 @@ int main(int argc, char *argv[])
 	sys_tree__init(&int_db);
 #endif
 
-	listener_max = -1;
 	listensock_index = 0;
 	for(i=0; i<config.listener_count; i++){
 		if(config.listeners[i].protocol == mp_mqtt){
@@ -323,9 +320,6 @@ int main(int argc, char *argv[])
 					return 1;
 				}
 				listensock[listensock_index] = config.listeners[i].socks[j];
-				if(listensock[listensock_index] > listener_max){
-					listener_max = listensock[listensock_index];
-				}
 				listensock_index++;
 			}
 		}else if(config.listeners[i].protocol == mp_websockets){
@@ -370,7 +364,7 @@ int main(int argc, char *argv[])
 #endif
 
 	run = 1;
-	rc = mosquitto_main_loop(&int_db, listensock, listensock_count, listener_max);
+	rc = mosquitto_main_loop(&int_db, listensock, listensock_count);
 
 	log__printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s terminating", VERSION);
 	log__close(&config);

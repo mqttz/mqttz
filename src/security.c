@@ -42,7 +42,7 @@ void LIB_ERROR(void)
 }
 
 
-int security__load_v2(struct mosquitto_db *db, struct mosquitto__auth_plugin *plugin, struct mosquitto_auth_opt *auth_options, int auth_option_count, void *lib)
+int security__load_v2(struct mosquitto__auth_plugin *plugin, struct mosquitto_auth_opt *auth_options, int auth_option_count, void *lib)
 {
 	int rc;
 
@@ -116,7 +116,7 @@ int security__load_v2(struct mosquitto_db *db, struct mosquitto__auth_plugin *pl
 }
 
 
-int security__load_v3(struct mosquitto_db *db, struct mosquitto__auth_plugin *plugin, struct mosquitto_opt *auth_options, int auth_option_count, void *lib)
+int security__load_v3(struct mosquitto__auth_plugin *plugin, struct mosquitto_opt *auth_options, int auth_option_count, void *lib)
 {
 	int rc;
 
@@ -189,7 +189,7 @@ int security__load_v3(struct mosquitto_db *db, struct mosquitto__auth_plugin *pl
 }
 
 
-static int security__module_init_single(struct mosquitto_db *db, struct mosquitto__security_options *opts)
+static int security__module_init_single(struct mosquitto__security_options *opts)
 {
 	void *lib;
 	int (*plugin_version)(void) = NULL;
@@ -225,7 +225,6 @@ static int security__module_init_single(struct mosquitto_db *db, struct mosquitt
 			opts->auth_plugin_configs[i].plugin.version = version;
 			if(version == 3){
 				rc = security__load_v3(
-						db,
 						&opts->auth_plugin_configs[i].plugin,
 						opts->auth_plugin_configs[i].options,
 						opts->auth_plugin_configs[i].option_count,
@@ -236,7 +235,6 @@ static int security__module_init_single(struct mosquitto_db *db, struct mosquitt
 				}
 			}else if(version == 2){
 				rc = security__load_v2(
-						db,
 						&opts->auth_plugin_configs[i].plugin,
 						(struct mosquitto_auth_opt *)opts->auth_plugin_configs[i].options,
 						opts->auth_plugin_configs[i].option_count,
@@ -267,11 +265,11 @@ int mosquitto_security_module_init(struct mosquitto_db *db)
 
 	if(db->config->per_listener_settings){
 		for(i=0; i<db->config->listener_count; i++){
-			rc = security__module_init_single(db, &db->config->listeners[i].security_options);
+			rc = security__module_init_single(&db->config->listeners[i].security_options);
 			if(rc) return rc;
 		}
 	}else{
-		rc = security__module_init_single(db, &db->config->security_options);
+		rc = security__module_init_single(&db->config->security_options);
 	}
 	return rc;
 }
@@ -463,7 +461,7 @@ static int acl__check_single(struct mosquitto__auth_plugin_config *auth_plugin, 
 }
 
 
-static int acl__check_dollar(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int access)
+static int acl__check_dollar(const char *topic, int access)
 {
 	int rc;
 	bool match = false;
@@ -508,7 +506,7 @@ int mosquitto_acl_check(struct mosquitto_db *db, struct mosquitto *context, cons
 		return MOSQ_ERR_ACL_DENIED;
 	}
 
-	rc = acl__check_dollar(db, context, topic, access);
+	rc = acl__check_dollar(topic, access);
 	if(rc) return rc;
 
 	rc = mosquitto_acl_check_default(db, context, topic, access);
