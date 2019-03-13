@@ -171,6 +171,7 @@ void sys_tree__update(struct mosquitto_db *db, int interval, time_t start_time)
 	static unsigned long long pub_bytes_received = -1;
 	static unsigned long long pub_bytes_sent = -1;
 	static int subscription_count = -1;
+	static int shared_subscription_count = -1;
 	static int retained_count = -1;
 
 	static double msgs_received_load1 = 0;
@@ -301,6 +302,12 @@ void sys_tree__update(struct mosquitto_db *db, int interval, time_t start_time)
 			subscription_count = db->subscription_count;
 			snprintf(buf, BUFLEN, "%d", subscription_count);
 			db__messages_easy_queue(db, NULL, "$SYS/broker/subscriptions/count", SYS_TREE_QOS, strlen(buf), buf, 1, 60, NULL);
+		}
+
+		if(db->shared_subscription_count != shared_subscription_count){
+			shared_subscription_count = db->shared_subscription_count;
+			snprintf(buf, BUFLEN, "%d", shared_subscription_count);
+			db__messages_easy_queue(db, NULL, "$SYS/broker/shared_subscriptions/count", SYS_TREE_QOS, strlen(buf), buf, 1, 60, NULL);
 		}
 
 		if(db->retained_count != retained_count){

@@ -297,11 +297,25 @@ struct mosquitto__subleaf {
 	bool retain_as_published;
 };
 
+
+struct mosquitto__subshared_ref {
+	struct mosquitto__subhier *hier;
+	struct mosquitto__subshared *shared;
+};
+
+
+struct mosquitto__subshared {
+	UT_hash_handle hh;
+	char *name;
+	struct mosquitto__subleaf *subs;
+};
+
 struct mosquitto__subhier {
 	UT_hash_handle hh;
 	struct mosquitto__subhier *parent;
 	struct mosquitto__subhier *children;
 	struct mosquitto__subleaf *subs;
+	struct mosquitto__subshared *shared;
 	struct mosquitto_msg_store *retained;
 	char *topic;
 	uint16_t topic_len;
@@ -397,6 +411,7 @@ struct mosquitto_db{
 	bool verbose;
 #ifdef WITH_SYS_TREE
 	int subscription_count;
+	int shared_subscription_count;
 	int retained_count;
 #endif
 	int persistence_changes;

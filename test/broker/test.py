@@ -25,6 +25,7 @@ tests = [
     (1, './01-connect-uname-password-success.py'),
     (1, './01-connect-uname-pwd-no-flag.py'),
 
+    (1, './02-shared-qos0-v5.py'),
     (1, './02-subhier-crash.py'),
     (1, './02-subpub-qos0-retain-as-publish.py'),
     (1, './02-subpub-qos0-send-retain.py'),

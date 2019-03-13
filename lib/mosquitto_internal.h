@@ -259,7 +259,9 @@ struct mosquitto {
 	time_t disconnect_t;
 	struct mosquitto__packet *out_packet_last;
 	struct mosquitto__subhier **subs;
+	struct mosquitto__subshared_ref **shared_subs;
 	int sub_count;
+	int shared_sub_count;
 	int pollfd_index;
 #  ifdef WITH_WEBSOCKETS
 #    if defined(LWS_LIBRARY_VERSION_NUMBER)
