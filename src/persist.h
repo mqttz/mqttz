@@ -20,7 +20,7 @@ Contributors:
 #define MOSQ_DB_VERSION 4
 
 /* DB read/write */
-const unsigned char magic[15] = {0x00, 0xB5, 0x00, 'm','o','s','q','u','i','t','t','o',' ','d','b'};
+extern const unsigned char magic[15];
 #define DB_CHUNK_CFG 1
 #define DB_CHUNK_MSG_STORE 2
 #define DB_CHUNK_CLIENT_MSG 3
