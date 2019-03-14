@@ -62,7 +62,8 @@ test/lib/cpp/*.test
 
 test/unit/coverage.info
 test/unit/mosq_test
-test/unit/out
+test/unit/persist_read_test
+test/unit/out/
 
 www/cache/
 __pycache__

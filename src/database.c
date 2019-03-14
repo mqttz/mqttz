@@ -129,9 +129,7 @@ int db__open(struct mosquitto__config *config, struct mosquitto_db *db)
 	db->unpwd = NULL;
 
 #ifdef WITH_PERSISTENCE
-	if(config->persistence && config->persistence_filepath){
-		if(persist__restore(db)) return 1;
-	}
+	if(persist__restore(db)) return 1;
 #endif
 
 	return MOSQ_ERR_SUCCESS;

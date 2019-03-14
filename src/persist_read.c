@@ -438,7 +438,10 @@ int persist__restore(struct mosquitto_db *db)
 
 	assert(db);
 	assert(db->config);
-	assert(db->config->persistence_filepath);
+
+	if(!db->config->persistence || db->config->persistence_filepath == NULL){
+		return MOSQ_ERR_SUCCESS;
+	}
 
 	db->msg_store_load = NULL;
 
