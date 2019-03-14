@@ -103,6 +103,13 @@ static void setup_ui_method(void)
 	UI_method_set_closer(_ui_method, ui_close);
 }
 
+static void cleanup_ui_method(void)
+{
+	if(_ui_method){
+		UI_destroy_method(_ui_method);
+	}
+}
+
 UI_METHOD *net__get_ui_method(void)
 {
 	return _ui_method;
@@ -156,6 +163,7 @@ void net__cleanup(void)
 #  endif
 
 	CONF_modules_unload(1);
+	cleanup_ui_method();
 #endif
 
 #ifdef WITH_SRV
