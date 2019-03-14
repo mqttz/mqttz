@@ -60,13 +60,6 @@ int send__connack(struct mosquitto_db *db, struct mosquitto *context, int ack, i
 			}
 		}
 
-		/* FIXME - disable support until available */
-		rc = mosquitto_property_add_byte(&connack_props, MQTT_PROP_SHARED_SUB_AVAILABLE, 0);
-		if(rc){
-			mosquitto_property_free_all(&connack_props);
-			return rc;
-		}
-
 		proplen = property__get_length_all(connack_props);
 		varbytes = packet__varint_bytes(proplen);
 		remaining_length += proplen + varbytes;
