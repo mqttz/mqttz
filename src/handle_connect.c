@@ -300,6 +300,12 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			goto handle_connect_error;
 		}
 	}
+	if(protocol_version == PROTOCOL_VERSION_v5 && context->listener->max_topic_alias > 0){
+		if(mosquitto_property_add_int16(&connack_props, MQTT_PROP_TOPIC_ALIAS_MAXIMUM, context->listener->max_topic_alias)){
+			rc = MOSQ_ERR_NOMEM;
+			goto handle_connect_error;
+		}
+	}
 
 	if(packet__read_byte(&context->in_packet, &connect_flags)){
 		rc = 1;

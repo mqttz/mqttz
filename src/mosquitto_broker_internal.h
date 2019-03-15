@@ -212,6 +212,7 @@ struct mosquitto__listener {
 	int socket_domain;
 	bool use_username_as_clientid;
 	uint8_t maximum_qos;
+	uint16_t max_topic_alias;
 #ifdef WITH_TLS
 	char *cafile;
 	char *capath;

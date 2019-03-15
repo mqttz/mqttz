@@ -389,6 +389,10 @@ def gen_connect(client_id, clean_session=True, keepalive=60, username=None, pass
 
 def gen_connack(flags=0, rc=0, proto_ver=4, properties=""):
     if proto_ver == 5:
+        if properties is not None:
+            properties = mqtt5_props.gen_uint16_prop(mqtt5_props.PROP_TOPIC_ALIAS_MAXIMUM, 10) + properties
+        else:
+            properties = ""
         properties = mqtt5_props.prop_finalise(properties)
 
         packet = struct.pack('!BBBB', 32, 2+len(properties), flags, rc) + properties

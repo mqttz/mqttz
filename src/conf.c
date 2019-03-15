@@ -272,6 +272,7 @@ void config__init(struct mosquitto_db *db, struct mosquitto__config *config)
 	config->default_listener.protocol = mp_mqtt;
 	config->default_listener.security_options.allow_anonymous = -1;
 	config->default_listener.maximum_qos = 2;
+	config->default_listener.max_topic_alias = 10;
 }
 
 void config__cleanup(struct mosquitto__config *config)
@@ -507,6 +508,7 @@ int config__parse_args(struct mosquitto_db *db, struct mosquitto__config *config
 		config->listeners[config->listener_count-1].tls_engine = config->default_listener.tls_engine;
 		config->listeners[config->listener_count-1].tls_keyform = config->default_listener.tls_keyform;
 		config->listeners[config->listener_count-1].tls_engine_kpass_sha1 = config->default_listener.tls_engine_kpass_sha1;
+		config->listeners[config->listener_count-1].max_topic_alias = config->default_listener.max_topic_alias;
 		config->listeners[config->listener_count-1].cafile = config->default_listener.cafile;
 		config->listeners[config->listener_count-1].capath = config->default_listener.capath;
 		config->listeners[config->listener_count-1].certfile = config->default_listener.certfile;
@@ -1344,6 +1346,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 						cur_listener->protocol = mp_mqtt;
 						cur_listener->port = tmp_int;
 						cur_listener->maximum_qos = 2;
+						cur_listener->max_topic_alias = 10;
 						token = strtok_r(NULL, " ", &saveptr);
 						if (token != NULL && token[0] == '#'){
 							token = NULL;
@@ -2072,6 +2075,15 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 #else
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
+				}else if(!strcmp(token, "max_topic_alias")){
+					if(reload) continue; // Listeners not valid for reloading.
+					token = strtok_r(NULL, " ", &saveptr);
+					if(token){
+						cur_listener->max_topic_alias = atoi(token);
+						if(cur_listener->max_topic_alias < 0) cur_listener->max_topic_alias = -1;
+					}else{
+						log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty max_topic_alias value in configuration.");
+					}
 				}else if(!strcmp(token, "try_private")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME

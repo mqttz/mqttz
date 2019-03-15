@@ -51,7 +51,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	mosquitto_property *p, *p_prev;
 	mosquitto_property *msg_properties = NULL, *msg_properties_last;
 	uint32_t message_expiry_interval = 0;
-	uint16_t topic_alias = 0;
+	int topic_alias = -1;
 	uint8_t reason_code = 0;
 
 #ifdef WITH_BRIDGE
@@ -160,19 +160,20 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	}
 	mosquitto_property_free_all(&properties);
 
-	if(topic && topic_alias){
-		rc = alias__add(context, topic, topic_alias);
-		if(rc) return rc;
-	}else if(topic == NULL && topic_alias){
-		rc = alias__find(context, &topic, topic_alias);
-		if(rc){
-			if(context->protocol == mosq_p_mqtt5){
-				send__disconnect(context, MQTT_RC_TOPIC_ALIAS_INVALID, NULL);
-			}
-			return rc;
-		}
-	}else if(topic == NULL && topic_alias == 0){
+	if(topic_alias == 0 || topic_alias > context->listener->max_topic_alias){
+		send__disconnect(context, MQTT_RC_TOPIC_ALIAS_INVALID, NULL);
 		return MOSQ_ERR_PROTOCOL;
+	}else if(topic_alias > 0){
+		if(topic){
+			rc = alias__add(context, topic, topic_alias);
+			if(rc) return rc;
+		}else{
+			rc = alias__find(context, &topic, topic_alias);
+			if(rc){
+				send__disconnect(context, MQTT_RC_TOPIC_ALIAS_INVALID, NULL);
+				return rc;
+			}
+		}
 	}
 	if(mosquitto_validate_utf8(topic, slen) != MOSQ_ERR_SUCCESS){
 		log__printf(NULL, MOSQ_LOG_INFO, "Client %s sent topic with invalid UTF-8, disconnecting.", context->id);

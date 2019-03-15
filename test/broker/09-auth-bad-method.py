@@ -9,7 +9,7 @@ rc = 1
 keepalive = 10
 props = mqtt5_props.gen_string_prop(mqtt5_props.PROP_AUTHENTICATION_METHOD, "basic")
 connect_packet = mosq_test.gen_connect("connect-test", proto_ver=5, keepalive=keepalive, properties=props)
-connack_packet = mosq_test.gen_connack(rc=mqtt5_rc.MQTT_RC_BAD_AUTHENTICATION_METHOD, proto_ver=5)
+connack_packet = mosq_test.gen_connack(rc=mqtt5_rc.MQTT_RC_BAD_AUTHENTICATION_METHOD, proto_ver=5, properties=None)
 
 port = mosq_test.get_port()
 broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port)

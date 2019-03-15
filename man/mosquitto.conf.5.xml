@@ -953,6 +953,16 @@ log_timestamp_format %Y-%m-%dT%H:%M:%S
 					</listitem>
 				</varlistentry>
 				<varlistentry>
+					<term><option>max_topic_alias</option> <replaceable>number</replaceable></term>
+					<listitem>
+						<para>This option sets the maximum number topic aliases
+							that an MQTT v5 client is allowed to create. It
+							applies per listener. Defaults to 10. Set to 0 to
+							disallow topic aliases.</para>
+						<para>Not reloaded on reload signal.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
 					<term><option>mount_point</option> <replaceable>topic prefix</replaceable></term>
 					<listitem>
 						<para>This option is used with the listener option to
