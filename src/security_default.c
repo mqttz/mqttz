@@ -972,13 +972,13 @@ int mosquitto_security_apply_default(struct mosquitto_db *db)
 		}
 
 		if(!allow_anonymous && !context->username){
-			context->state = mosq_cs_disconnecting;
+			context__set_state(context, mosq_cs_disconnecting);
 			do_disconnect(db, context);
 			continue;
 		}
 		/* Check for connected clients that are no longer authorised */
 		if(mosquitto_unpwd_check(db, context, context->username, context->password) != MOSQ_ERR_SUCCESS){
-			context->state = mosq_cs_disconnecting;
+			context__set_state(context, mosq_cs_disconnecting);
 			do_disconnect(db, context);
 			continue;
 		}
@@ -988,7 +988,7 @@ int mosquitto_security_apply_default(struct mosquitto_db *db)
 				security_opts = &context->listener->security_options;
 			}else{
 				if(context->state != mosq_cs_connected){
-					context->state = mosq_cs_disconnecting;
+					context__set_state(context, mosq_cs_disconnecting);
 					do_disconnect(db, context);
 					continue;
 				}

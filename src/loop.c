@@ -487,7 +487,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 						log__printf(NULL, MOSQ_LOG_NOTICE, "Expiring persistent client %s due to timeout.", id);
 						G_CLIENTS_EXPIRED_INC();
 						context->session_expiry_interval = 0;
-						context->state = mosq_cs_expiring;
+						context__set_state(context, mosq_cs_expiring);
 						do_disconnect(db, context);
 					}
 				}
@@ -632,7 +632,7 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 #ifdef WITH_WEBSOCKETS
 	if(context->wsi){
 		if(context->state != mosq_cs_disconnecting){
-			context->state = mosq_cs_disconnect_ws;
+			context__set_state(context, mosq_cs_disconnect_ws);
 		}
 		if(context->wsi){
 			libwebsocket_callback_on_writable(context->ws_context, context->wsi);
@@ -745,7 +745,7 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 				len = sizeof(int);
 				if(!getsockopt(context->sock, SOL_SOCKET, SO_ERROR, (char *)&err, &len)){
 					if(err == 0){
-						context->state = mosq_cs_new;
+						context__set_state(context, mosq_cs_new);
 #ifdef WITH_ADNS
 						if(context->bridge){
 							bridge__connect_step3(db, context);

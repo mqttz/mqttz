@@ -123,7 +123,7 @@ int bridge__connect_step1(struct mosquitto_db *db, struct mosquitto *context)
 
 	if(!context || !context->bridge) return MOSQ_ERR_INVAL;
 
-	context->state = mosq_cs_new;
+	context__set_state(context, mosq_cs_new);
 	context->sock = INVALID_SOCKET;
 	context->last_msg_in = mosquitto_time();
 	context->next_msg_out = mosquitto_time() + context->bridge->keepalive;
@@ -243,7 +243,7 @@ int bridge__connect_step2(struct mosquitto_db *db, struct mosquitto *context)
 	HASH_ADD(hh_sock, db->contexts_by_sock, sock, sizeof(context->sock), context);
 
 	if(rc == MOSQ_ERR_CONN_PENDING){
-		context->state = mosq_cs_connect_pending;
+		context__set_state(context, mosq_cs_connect_pending);
 	}
 	return rc;
 }
@@ -302,7 +302,7 @@ int bridge__connect(struct mosquitto_db *db, struct mosquitto *context)
 
 	if(!context || !context->bridge) return MOSQ_ERR_INVAL;
 
-	context->state = mosq_cs_new;
+	context__set_state(context, mosq_cs_new);
 	context->sock = INVALID_SOCKET;
 	context->last_msg_in = mosquitto_time();
 	context->next_msg_out = mosquitto_time() + context->bridge->keepalive;
@@ -399,7 +399,7 @@ int bridge__connect(struct mosquitto_db *db, struct mosquitto *context)
 
 		return rc;
 	}else if(rc == MOSQ_ERR_CONN_PENDING){
-		context->state = mosq_cs_connect_pending;
+		context__set_state(context, mosq_cs_connect_pending);
 	}
 
 	HASH_ADD(hh_sock, db->contexts_by_sock, sock, sizeof(context->sock), context);

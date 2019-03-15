@@ -615,6 +615,7 @@ void context__add_to_disused(struct mosquitto_db *db, struct mosquitto *context)
 void context__free_disused(struct mosquitto_db *db);
 void context__send_will(struct mosquitto_db *db, struct mosquitto *context);
 void context__remove_from_by_id(struct mosquitto_db *db, struct mosquitto *context);
+void context__set_state(struct mosquitto *context, enum mosquitto_client_state state);
 
 /* ============================================================
  * Logging functions

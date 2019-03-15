@@ -682,7 +682,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 
 		found_context->clean_start = true;
 		found_context->session_expiry_interval = 0;
-		found_context->state = mosq_cs_duplicate;
+		context__set_state(found_context, mosq_cs_duplicate);
 		do_disconnect(db, found_context);
 	}
 
@@ -740,7 +740,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		db->persistence_changes++;
 	}
 #endif
-	context->state = mosq_cs_connected;
+	context__set_state(context, mosq_cs_connected);
 	rc = send__connack(db, context, connect_ack, CONNACK_ACCEPTED, connack_props);
 	mosquitto_property_free_all(&connack_props);
 	return rc;
@@ -805,9 +805,9 @@ int handle__disconnect(struct mosquitto_db *db, struct mosquitto *context)
 		}
 	}
 	if(reason_code == MQTT_RC_DISCONNECT_WITH_WILL_MSG){
-		context->state = mosq_cs_disconnect_with_will;
+		context__set_state(context, mosq_cs_disconnect_with_will);
 	}else{
-		context->state = mosq_cs_disconnecting;
+		context__set_state(context, mosq_cs_disconnecting);
 	}
 	do_disconnect(db, context);
 	return MOSQ_ERR_SUCCESS;

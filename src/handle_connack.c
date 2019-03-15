@@ -116,7 +116,7 @@ int handle__connack(struct mosquitto_db *db, struct mosquitto *context)
 					}
 				}
 			}
-			context->state = mosq_cs_connected;
+			context__set_state(context, mosq_cs_connected);
 			return MOSQ_ERR_SUCCESS;
 		case CONNACK_REFUSED_PROTOCOL_VERSION:
 			if(context->bridge){
