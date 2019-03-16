@@ -265,11 +265,6 @@ void context__disconnect(struct mosquitto_db *db, struct mosquitto *context)
 			if(context->will_delay_interval == 0){
 				/* This will be done later, after the will is published for delay>0. */
 				context__add_to_disused(db, context);
-				if(context->id){
-					context__remove_from_by_id(db, context);
-					mosquitto__free(context->id);
-					context->id = NULL;
-				}
 			}
 		}
 	}else{
@@ -283,6 +278,12 @@ void context__add_to_disused(struct mosquitto_db *db, struct mosquitto *context)
 	if(context->state == mosq_cs_disused) return;
 
 	context__set_state(context, mosq_cs_disused);
+
+	if(context->id){
+		context__remove_from_by_id(db, context);
+		mosquitto__free(context->id);
+		context->id = NULL;
+	}
 
 	if(db->ll_for_free){
 		context->for_free_next = db->ll_for_free;
