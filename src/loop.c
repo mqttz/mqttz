@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2018 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2019 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -746,7 +746,7 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 				if(!getsockopt(context->sock, SOL_SOCKET, SO_ERROR, (char *)&err, &len)){
 					if(err == 0){
 						context__set_state(context, mosq_cs_new);
-#ifdef WITH_ADNS
+#if defined(WITH_ADNS) && defined(WITH_BRIDGE)
 						if(context->bridge){
 							bridge__connect_step3(db, context);
 							continue;

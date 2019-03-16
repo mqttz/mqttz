@@ -349,6 +349,55 @@
 						file. This option will only be processed from the main
 						configuration file. The directory specified must not
 						contain the main configuration file.</para>
+					<para>The configuration files in
+						<option>include_dir</option> are loaded in case
+						sensitive alphabetical order, with the upper case of
+						each letter ordered before the lower case of the same
+						letter.</para>
+						<example title="Load Order for include_dir" label="Load Order for include_dir">
+							<para>Given the files
+								<replaceable>b.conf</replaceable>,
+								<replaceable>A.conf</replaceable>,
+								<replaceable>01.conf</replaceable>,
+								<replaceable>a.conf</replaceable>,
+								<replaceable>B.conf</replaceable>, and
+								<replaceable>00.conf</replaceable> inside
+								<option>include_dir</option>, the config files
+								would be loaded in this order:</para>
+						<programlisting language="config">
+00.conf
+01.conf
+A.conf
+a.conf
+B.conf
+b.conf
+</programlisting></example>
+					<para>If this option is used multiple times, then each
+						<option>include_dir</option> option is processed
+						completely in the order that they are written in the
+						main configuration file.</para>
+						<example title="Load Order for Multiple include_dir" label="Load Order for Multiple include_dir">
+							<para>Assuming a directory
+								<replaceable>one.d</replaceable> containing
+								files <replaceable>B.conf</replaceable> and
+								<replaceable>C.conf</replaceable>, and a second
+								directory <replaceable>two.d</replaceable>
+								containing files
+								<replaceable>A.conf</replaceable> and
+								<replaceable>D.conf</replaceable>, and a
+								config:</para>
+						<programlisting language="config">
+include_dir one.d
+include_dir two.d
+</programlisting><para>Then the config files would be loaded in this order:</para>
+						<programlisting language="config">
+# files from one.d
+B.conf
+C.conf
+# files from two.d
+A.conf
+D.conf
+</programlisting></example>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

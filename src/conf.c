@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2018 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2019 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -402,7 +402,6 @@ int config__parse_args(struct mosquitto_db *db, struct mosquitto__config *config
 				db->config_file = argv[i+1];
 
 				if(config__read(db, config, false)){
-					log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open configuration file.");
 					return MOSQ_ERR_INVAL;
 				}
 			}else{
@@ -640,7 +639,9 @@ int config__read(struct mosquitto_db *db, struct mosquitto__config *config, bool
 		rc = config__read_file(config, reload, db->config_file, &cr, 0, &lineno);
 	}
 	if(rc){
-		log__printf(NULL, MOSQ_LOG_ERR, "Error found at %s:%d.", db->config_file, lineno);
+		if(lineno > 0){
+			log__printf(NULL, MOSQ_LOG_ERR, "Error found at %s:%d.", db->config_file, lineno);
+		}
 		return rc;
 	}
 
@@ -717,11 +718,11 @@ int config__read(struct mosquitto_db *db, struct mosquitto__config *config, bool
 		}
 #ifdef FINAL_WITH_TLS_PSK
 		if(config->bridges[i].tls_psk && !config->bridges[i].tls_psk_identity){
-			log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration: missing bridge_identity.\n");
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration: missing bridge_identity.");
 			return MOSQ_ERR_INVAL;
 		}
 		if(config->bridges[i].tls_psk_identity && !config->bridges[i].tls_psk){
-			log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration: missing bridge_psk.\n");
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration: missing bridge_psk.");
 			return MOSQ_ERR_INVAL;
 		}
 #endif
@@ -749,12 +750,12 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 	char *tmp_char;
 	struct mosquitto__bridge *cur_bridge = NULL;
 	struct mosquitto__bridge_topic *cur_topic;
+	int len;
 #endif
 	struct mosquitto__auth_plugin_config *cur_auth_plugin_config = NULL;
 
 	time_t expiration_mult;
 	char *key;
-	int len;
 	struct mosquitto__listener *cur_listener = &config->default_listener;
 	int i;
 	int lineno_ext;
@@ -1260,7 +1261,9 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 
 							rc = config__read_file(config, reload, files[i], cr, level+1, &lineno_ext);
 							if(rc){
-								log__printf(NULL, MOSQ_LOG_ERR, "Error found at %s:%d.", files[i], lineno_ext);
+								if(lineno_ext > 0){
+									log__printf(NULL, MOSQ_LOG_ERR, "Error found at %s:%d.", files[i], lineno_ext);
+								}
 								/* Free happens below */
 								break;
 							}
@@ -2140,7 +2143,7 @@ int config__read_file(struct mosquitto__config *config, bool reload, const char 
 
 	fptr = mosquitto__fopen(file, "rt", false);
 	if(!fptr){
-		log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open config file %s\n", file);
+		log__printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open config file %s.", file);
 		return 1;
 	}
 

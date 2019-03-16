@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2018 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2019 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -116,10 +116,10 @@ int bridge__new(struct mosquitto_db *db, struct mosquitto__bridge *bridge)
 int bridge__connect_step1(struct mosquitto_db *db, struct mosquitto *context)
 {
 	int rc;
-	int i;
 	char *notification_topic;
 	int notification_topic_len;
 	uint8_t notification_payload;
+	int i;
 
 	if(!context || !context->bridge) return MOSQ_ERR_INVAL;
 
@@ -337,9 +337,6 @@ int bridge__connect(struct mosquitto_db *db, struct mosquitto *context)
 
 				return 1;
 			}
-			sub__retain_queue(db, context,
-					context->bridge->topics[i].local_topic,
-					context->bridge->topics[i].qos, 0);
 		}
 	}
 

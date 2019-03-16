@@ -118,6 +118,8 @@ endif
 06 :
 	./06-bridge-b2br-disconnect-qos1.py
 	./06-bridge-b2br-disconnect-qos2.py
+	./06-bridge-b2br-late-connection-retain.py
+	./06-bridge-b2br-late-connection.py
 	./06-bridge-b2br-remapping.py
 	./06-bridge-br2b-disconnect-qos1.py
 	./06-bridge-br2b-disconnect-qos2.py
@@ -157,6 +159,7 @@ endif
 endif
 
 09 :
+	./09-acl-access-variants.py
 	./09-acl-empty-file.py
 	./09-auth-bad-method.py
 	./09-plugin-auth-acl-sub-denied.py

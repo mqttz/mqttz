@@ -42,7 +42,28 @@ Client fixes:
   QoS>0. This has been fixed.
 
 
-1.5.7 - 201902xx
+1.5.8 - 20190228
+================
+
+Broker:
+- Fix clients being disconnected when ACLs are in use. This only affects the
+  case where a client connects using a username, and the anonymous ACL list is
+  defined but specific user ACLs are not defined. Closes #1162.
+- Make error messages for missing config file clearer.
+- Fix some Coverity Scan reported errors that could occur when the broker was
+  already failing to start.
+- Fix broken mosquitto_passwd on FreeBSD. Closes #1032.
+- Fix delayed bridge local subscriptions causing missing messages.
+  Closes #1174.
+
+Library:
+- Use higher resolution timer for random initialisation of client id
+  generation. Closes #1177.
+- Fix some Coverity Scan reported errors that could occur when the library was
+  already quitting.
+
+
+1.5.7 - 20190213
 ================
 
 Broker:
@@ -51,6 +72,9 @@ Broker:
   other security options. Closes #1149.
 - Fix include_dir not sorting config files before loading. This was partially
   fixed in 1.5 previously.
+- Improve documentation around the `include_dir` option. Closes #1154.
+- Fix case where old unreferenced msg_store messages were being saved to the
+  persistence file, bloating its size unnecessarily. Closes #389.
 
 Library:
 - Fix `mosquitto_topic_matches_sub()` not returning MOSQ_ERR_INVAL for
@@ -59,6 +83,7 @@ Library:
 
 Build:
 - Don't require C99 compiler.
+- Add rewritten build test script and remove some build warnings.
 
 
 1.5.6 - 20190206

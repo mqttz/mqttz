@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2018 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2019 Roger Light <roger@atchoo.org>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -229,6 +229,21 @@ void db__msg_store_deref(struct mosquitto_db *db, struct mosquitto_msg_store **s
 	if((*store)->ref_count == 0){
 		db__msg_store_remove(db, *store);
 		*store = NULL;
+	}
+}
+
+
+void db__msg_store_compact(struct mosquitto_db *db)
+{
+	struct mosquitto_msg_store *store, *next;
+
+	store = db->msg_store;
+	while(store){
+		next = store->next;
+		if(store->ref_count < 1){
+			db__msg_store_remove(db, store);
+		}
+		store = next;
 	}
 }
 
@@ -1069,10 +1084,5 @@ void db__limits_set(unsigned long inflight_bytes, int queued, unsigned long queu
 	max_inflight_bytes = inflight_bytes;
 	max_queued = queued;
 	max_queued_bytes = queued_bytes;
-}
-
-void db__vacuum(void)
-{
-	/* FIXME - reimplement? */
 }
 
