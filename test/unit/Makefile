@@ -29,6 +29,7 @@ PERSIST_READ_TEST_OBJS = \
 PERSIST_READ_OBJS = \
 		memory_mosq.o \
 		persist_read.o \
+		persist_read_v234.o \
 		util_mosq.o
 
 all : test
@@ -46,6 +47,9 @@ packet_datatypes.o : ../../lib/packet_datatypes.c
 	$(CROSS_COMPILE)$(CC) $(CFLAGS) -c -o $@ $^
 
 persist_read.o : ../../src/persist_read.c
+	$(CROSS_COMPILE)$(CC) $(CFLAGS) -DWITH_BROKER -DWITH_PERSISTENCE -c -o $@ $^
+
+persist_read_v234.o : ../../src/persist_read_v234.c
 	$(CROSS_COMPILE)$(CC) $(CFLAGS) -DWITH_BROKER -DWITH_PERSISTENCE -c -o $@ $^
 
 property_mosq.o : ../../lib/property_mosq.c

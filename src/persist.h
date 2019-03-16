@@ -32,4 +32,91 @@ extern const unsigned char magic[15];
 #define read_e(f, b, c) if(fread(b, 1, c, f) != c){ goto error; }
 #define write_e(f, b, c) if(fwrite(b, 1, c, f) != c){ goto error; }
 
+/* COMPATIBILITY NOTES
+ *
+ * The P_* structs (persist structs) contain all of the data for a particular
+ * data chunk. They are loaded in multiple parts, so can be rearranged without
+ * updating the db format version.
+ *
+ * The PF_* structs (persist fixed structs) contain the fixed size data for a
+ * particular data chunk. They are written to disk as is, so they must not be
+ * rearranged without updating the db format version. When adding new members,
+ * always use explicit sized datatypes ("uint32_t", not "long"), and check
+ * whether what is being added can go in an existing hole in the struct.
+ */
+
+struct PF_client{
+	uint64_t disconnect_t;
+	uint16_t last_mid;
+	uint16_t id_len;
+};
+struct P_client{
+	struct PF_client F;
+	char *client_id;
+};
+
+
+struct PF_client_msg{
+	dbid_t store_id;
+	uint16_t mid;
+	uint16_t id_len;
+	uint8_t qos;
+	uint8_t state;
+	uint8_t retain;
+	uint8_t direction;
+	uint8_t dup;
+};
+struct P_client_msg{
+	struct PF_client_msg F;
+	char *client_id;
+};
+
+
+struct PF_msg_store{
+	dbid_t store_id;
+	uint32_t payloadlen;
+	uint16_t mid;
+	uint16_t source_mid;
+	uint16_t source_id_len;
+	uint16_t topic_len;
+	uint16_t source_port;
+	uint8_t qos;
+	uint8_t retain;
+};
+struct P_msg_store{
+	struct PF_msg_store F;
+	mosquitto__payload_uhpa payload;
+	struct mosquitto source;
+	char *topic;
+};
+
+
+struct PF_sub{
+	uint16_t id_len;
+	uint16_t topic_len;
+	uint8_t qos;
+};
+struct P_sub{
+	struct PF_sub F;
+	char *client_id;
+	char *topic;
+};
+
+
+struct PF_retain{
+	dbid_t store_id;
+};
+struct P_retain{
+	struct PF_retain F;
+};
+
+
+int persist__read_string(FILE *db_fptr, char **str);
+
+int persist__client_chunk_read_v234(FILE *db_fptr, struct P_client *chunk, int db_version);
+int persist__client_msg_chunk_read_v234(FILE *db_fptr, struct P_client_msg *chunk);
+int persist__msg_store_chunk_read_v234(FILE *db_fptr, struct P_msg_store *chunk, int db_version);
+int persist__retain_chunk_read_v234(FILE *db_fptr, struct P_retain *chunk);
+int persist__sub_chunk_read_v234(FILE *db_fptr, struct P_sub *chunk);
+
 #endif
