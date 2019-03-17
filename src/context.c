@@ -277,6 +277,7 @@ void context__add_to_disused(struct mosquitto_db *db, struct mosquitto *context)
 {
 	if(context->state == mosq_cs_disused) return;
 
+	log__printf(NULL, MOSQ_LOG_DEBUG, "ADD %p", context);
 	context__set_state(context, mosq_cs_disused);
 
 	if(context->id){
@@ -295,14 +296,30 @@ void context__add_to_disused(struct mosquitto_db *db, struct mosquitto *context)
 
 void context__free_disused(struct mosquitto_db *db)
 {
-	struct mosquitto *context, *next;
+	struct mosquitto *context, *next, *last = NULL;
 	assert(db);
 
 	context = db->ll_for_free;
 	while(context){
-		next = context->for_free_next;
-		context__cleanup(db, context, true);
-		context = next;
+#ifdef WITH_WEBSOCKETS
+		if(context->wsi){
+			/* Don't delete yet, lws hasn't finished with it */
+			if(last){
+				last->for_free_next = context;
+			}else{
+				db->ll_for_free = context;
+			}
+			next = context->for_free_next;
+			context->for_free_next = NULL;
+			last = context;
+			context = next;
+		}else
+#endif
+		{
+			next = context->for_free_next;
+			context__cleanup(db, context, true);
+			context = next;
+		}
 	}
 	db->ll_for_free = NULL;
 }
