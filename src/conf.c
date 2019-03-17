@@ -1490,12 +1490,14 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 							cr->log_type |= MOSQ_LOG_SUBSCRIBE;
 						}else if(!strcmp(token, "unsubscribe")){
 							cr->log_type |= MOSQ_LOG_UNSUBSCRIBE;
+						}else if(!strcmp(token, "internal")){
+							cr->log_type |= MOSQ_LOG_INTERNAL;
 #ifdef WITH_WEBSOCKETS
 						}else if(!strcmp(token, "websockets")){
 							cr->log_type |= MOSQ_LOG_WEBSOCKETS;
 #endif
 						}else if(!strcmp(token, "all")){
-							cr->log_type = INT_MAX;
+							cr->log_type = MOSQ_LOG_ALL;
 						}else{
 							log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid log_type value (%s).", token);
 							return MOSQ_ERR_INVAL;
