@@ -296,7 +296,10 @@ void context__add_to_disused(struct mosquitto_db *db, struct mosquitto *context)
 
 void context__free_disused(struct mosquitto_db *db)
 {
-	struct mosquitto *context, *next, *last = NULL;
+	struct mosquitto *context, *next;
+#ifdef WITH_WEBSOCKETS
+	struct mosquitto *last = NULL;
+#endif
 	assert(db);
 
 	context = db->ll_for_free;
