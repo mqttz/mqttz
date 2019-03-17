@@ -623,6 +623,7 @@ void context__set_state(struct mosquitto *context, enum mosquitto_client_state s
 int log__init(struct mosquitto__config *config);
 int log__close(struct mosquitto__config *config);
 int log__printf(struct mosquitto *mosq, int level, const char *fmt, ...) __attribute__((format(printf, 3, 4)));
+void log__internal(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 
 /* ============================================================
  * Bridge functions

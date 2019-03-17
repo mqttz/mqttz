@@ -365,6 +365,15 @@ int log__printf(struct mosquitto *mosq, int priority, const char *fmt, ...)
 	return rc;
 }
 
+void log__internal(const char *fmt, ...)
+{
+	va_list va;
+
+	va_start(va, fmt);
+	log__vprintf(MOSQ_LOG_INTERNAL, fmt, va);
+	va_end(va);
+}
+
 int mosquitto_log_vprintf(int level, const char *fmt, va_list va)
 {
 	return log__vprintf(level, fmt, va);
