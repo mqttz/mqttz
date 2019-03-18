@@ -236,6 +236,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				if(db->config->connection_messages == true){
 					log__printf(NULL, MOSQ_LOG_NOTICE, "Client connection from %s denied: max_connections exceeded.", mosq->address);
 				}
+				mosquitto__free(mosq->address);
 				mosquitto__free(mosq);
 				u->mosq = NULL;
 				return -1;
