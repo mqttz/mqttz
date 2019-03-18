@@ -367,7 +367,6 @@ int main(int argc, char *argv[])
 	rc = mosquitto_main_loop(&int_db, listensock, listensock_count);
 
 	log__printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s terminating", VERSION);
-	log__close(&config);
 
 #ifdef WITH_WEBSOCKETS
 	for(i=0; i<int_db.config->listener_count; i++){
@@ -436,6 +435,7 @@ int main(int argc, char *argv[])
 		remove(config.pid_file);
 	}
 
+	log__close(&config);
 	config__cleanup(int_db.config);
 	net__broker_cleanup();
 
