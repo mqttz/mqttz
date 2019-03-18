@@ -72,7 +72,7 @@ void session_expiry__remove_all(struct mosquitto_db *db)
 		session_expiry__remove(context);
 		context->session_expiry_interval = 0;
 		context->will_delay_interval = 0;
-		context__send_will(db, context);
+		context__disconnect(db, context);
 	}
 	
 }
