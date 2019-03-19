@@ -105,9 +105,9 @@ static int persist__message_store_save(struct mosquitto_db *db, FILE *db_fptr)
 			 * misleading information when reloaded. They should still be saved
 			 * because a disconnected durable client may have them in their
 			 * queue. */
-			chunk.F.retain = (uint8_t)stored->retain;
-		}else{
 			chunk.F.retain = 0;
+		}else{
+			chunk.F.retain = (uint8_t)stored->retain;
 		}
 
 		chunk.F.store_id = stored->db_id;
@@ -141,6 +141,7 @@ static int persist__message_store_save(struct mosquitto_db *db, FILE *db_fptr)
 			chunk.F.source_port = 0;
 		}
 		chunk.F.qos = stored->qos;
+		chunk.payload = stored->payload;
 
 		rc = persist__message_store_chunk_write_v4(db_fptr, &chunk);
 		if(rc){
