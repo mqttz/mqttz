@@ -30,8 +30,9 @@ set (MOSQ_SRCS
 	../lib/net_mosq.c ../lib/net_mosq.h
 	../lib/packet_datatypes.c
 	../lib/packet_mosq.c ../lib/packet_mosq.h
-	persist_read_v234.c
-	persist_read.c persist_write.c persist.h
+	persist_read_v234.c persist_read.c
+	persist_write_v4.c persist_write.c
+	persist.h
 	plugin.c
 	property_broker.c
 	../lib/property_mosq.c ../lib/property_mosq.h

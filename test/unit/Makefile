@@ -42,6 +42,7 @@ PERSIST_WRITE_OBJS = \
 		persist_read.o \
 		persist_read_v234.o \
 		persist_write.o \
+		persist_write_v4.o \
 		subs.o \
 		util_mosq.o
 
@@ -74,6 +75,9 @@ persist_read_v234.o : ../../src/persist_read_v234.c
 	$(CROSS_COMPILE)$(CC) $(CFLAGS) -DWITH_BROKER -DWITH_PERSISTENCE -c -o $@ $^
 
 persist_write.o : ../../src/persist_write.c
+	$(CROSS_COMPILE)$(CC) $(CFLAGS) -DWITH_BROKER -DWITH_PERSISTENCE -c -o $@ $^
+
+persist_write_v4.o : ../../src/persist_write_v4.c
 	$(CROSS_COMPILE)$(CC) $(CFLAGS) -DWITH_BROKER -DWITH_PERSISTENCE -c -o $@ $^
 
 property_mosq.o : ../../lib/property_mosq.c

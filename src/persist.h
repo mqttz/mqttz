@@ -78,6 +78,7 @@ struct PF_msg_store{
 	uint16_t mid;
 	uint16_t source_mid;
 	uint16_t source_id_len;
+	uint16_t source_username_len;
 	uint16_t topic_len;
 	uint16_t source_port;
 	uint8_t qos;
@@ -118,5 +119,11 @@ int persist__client_msg_chunk_read_v234(FILE *db_fptr, struct P_client_msg *chun
 int persist__msg_store_chunk_read_v234(FILE *db_fptr, struct P_msg_store *chunk, int db_version);
 int persist__retain_chunk_read_v234(FILE *db_fptr, struct P_retain *chunk);
 int persist__sub_chunk_read_v234(FILE *db_fptr, struct P_sub *chunk);
+
+int persist__client_chunk_write_v4(FILE *db_fptr, const struct P_client *chunk);
+int persist__client_msg_chunk_write_v4(FILE *db_fptr, const struct P_client_msg *chunk);
+int persist__message_store_chunk_write_v4(FILE *db_fptr, const struct P_msg_store *chunk);
+int persist__retain_chunk_write_v4(FILE *db_fptr, const struct P_retain *chunk);
+int persist__sub_chunk_write_v4(FILE *db_fptr, const struct P_sub *chunk);
 
 #endif
