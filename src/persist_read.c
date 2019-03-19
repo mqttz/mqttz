@@ -305,6 +305,13 @@ static int persist__sub_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 	return rc;
 }
 
+
+int persist__chunk_header_read(FILE *db_fptr, int *chunk, int *length)
+{
+	return persist__chunk_header_read_v234(db_fptr, chunk, length);
+}
+
+
 int persist__restore(struct mosquitto_db *db)
 {
 	FILE *fptr;
@@ -312,8 +319,8 @@ int persist__restore(struct mosquitto_db *db)
 	int rc = 0;
 	uint32_t crc;
 	dbid_t i64temp;
-	uint32_t i32temp, length;
-	uint16_t i16temp, chunk;
+	uint32_t i32temp;
+	int chunk, length;
 	uint8_t i8temp;
 	ssize_t rlen;
 	char *err;
@@ -358,10 +365,7 @@ int persist__restore(struct mosquitto_db *db)
 			}
 		}
 
-		while(rlen = fread(&i16temp, sizeof(uint16_t), 1, fptr), rlen == 1){
-			chunk = ntohs(i16temp);
-			read_e(fptr, &i32temp, sizeof(uint32_t));
-			length = ntohl(i32temp);
+		while(persist__chunk_header_read(fptr, &chunk, &length) == MOSQ_ERR_SUCCESS){
 			switch(chunk){
 				case DB_CHUNK_CFG:
 					read_e(fptr, &i8temp, sizeof(uint8_t)); // shutdown

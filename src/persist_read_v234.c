@@ -36,6 +36,25 @@ Contributors:
 #include "util_mosq.h"
 
 
+int persist__chunk_header_read_v234(FILE *db_fptr, int *chunk, int *length)
+{
+	size_t rlen;
+	uint16_t i16temp;
+	uint32_t i32temp;
+
+	rlen = fread(&i16temp, sizeof(uint16_t), 1, db_fptr);
+	if(rlen != 1) return 1;
+	
+	rlen = fread(&i32temp, sizeof(uint32_t), 1, db_fptr);
+	if(rlen != 1) return 1;
+	
+	*chunk = ntohs(i16temp);
+	*length = ntohl(i32temp);
+
+	return MOSQ_ERR_SUCCESS;
+}
+
+
 int persist__client_chunk_read_v234(FILE *db_fptr, struct P_client *chunk, int db_version)
 {
 	uint16_t i16temp;

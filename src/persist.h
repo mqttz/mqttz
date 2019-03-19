@@ -114,6 +114,7 @@ struct P_retain{
 
 int persist__read_string(FILE *db_fptr, char **str);
 
+int persist__chunk_header_read_v234(FILE *db_fptr, int *chunk, int *length);
 int persist__client_chunk_read_v234(FILE *db_fptr, struct P_client *chunk, int db_version);
 int persist__client_msg_chunk_read_v234(FILE *db_fptr, struct P_client_msg *chunk);
 int persist__msg_store_chunk_read_v234(FILE *db_fptr, struct P_msg_store *chunk, int db_version);
