@@ -107,6 +107,25 @@ static void TEST_v3_config_ok(void)
 }
 
 
+static void TEST_v4_config_ok(void)
+{
+	struct mosquitto_db db;
+	struct mosquitto__config config;
+	int rc;
+
+	memset(&db, 0, sizeof(struct mosquitto_db));
+	memset(&config, 0, sizeof(struct mosquitto__config));
+	db.config = &config;
+
+	config.persistence = true;
+	config.persistence_filepath = "files/persist_read/v4-cfg.test-db";
+
+	rc = persist__restore(&db);
+	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
+	CU_ASSERT_EQUAL(db.last_db_id, 0x7856341200000000);
+}
+
+
 static void TEST_v3_config_truncated(void)
 {
 	struct mosquitto_db db;
@@ -402,6 +421,7 @@ int init_persist_read_tests(void)
 			|| !CU_add_test(test_suite, "v3 client message", TEST_v3_client_message)
 			|| !CU_add_test(test_suite, "v3 retain", TEST_v3_retain)
 			|| !CU_add_test(test_suite, "v3 sub", TEST_v3_sub)
+			|| !CU_add_test(test_suite, "v4 config ok", TEST_v4_config_ok)
 			|| !CU_add_test(test_suite, "v4 message store", TEST_v4_message_store)
 			){
 
@@ -414,6 +434,7 @@ int init_persist_read_tests(void)
 
 int main(int argc, char *argv[])
 {
+	int fails;
 
     if(CU_initialize_registry() != CUE_SUCCESS){
         printf("Error initializing CUnit registry.\n");
@@ -430,7 +451,8 @@ int main(int argc, char *argv[])
 
     CU_basic_set_mode(CU_BRM_VERBOSE);
     CU_basic_run_tests();
+	fails = CU_get_number_of_failures();
     CU_cleanup_registry();
 
-    return 0;
+    return (int)fails;
 }

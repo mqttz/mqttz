@@ -15,6 +15,7 @@ int init_util_topic_tests(void);
 
 int main(int argc, char *argv[])
 {
+	unsigned int fails;
 
     if(CU_initialize_registry() != CUE_SUCCESS){
         printf("Error initializing CUnit registry.\n");
@@ -38,8 +39,9 @@ int main(int argc, char *argv[])
 
     CU_basic_set_mode(CU_BRM_VERBOSE);
     CU_basic_run_tests();
+	fails = CU_get_number_of_failures();
     CU_cleanup_registry();
 
-    return 0;
+    return (int)fails;
 }
 

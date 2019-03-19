@@ -32,13 +32,34 @@ PERSIST_READ_OBJS = \
 		persist_read_v234.o \
 		util_mosq.o
 
+PERSIST_WRITE_TEST_OBJS = \
+		persist_write_test.o \
+		persist_write_stubs.o
+
+PERSIST_WRITE_OBJS = \
+		database.o \
+		memory_mosq.o \
+		persist_read.o \
+		persist_read_v234.o \
+		persist_write.o \
+		subs.o \
+		util_mosq.o
+
 all : test
+
 
 mosq_test : ${TEST_OBJS} ${LIB_OBJS}
 	$(CROSS_COMPILE)$(CC) -o $@ $^ ${TEST_LDFLAGS}
 
 persist_read_test : ${PERSIST_READ_TEST_OBJS} ${PERSIST_READ_OBJS}
 	$(CROSS_COMPILE)$(CC) -o $@ $^ ${TEST_LDFLAGS}
+
+persist_write_test : ${PERSIST_WRITE_TEST_OBJS} ${PERSIST_WRITE_OBJS}
+	$(CROSS_COMPILE)$(CC) -o $@ $^ ${TEST_LDFLAGS}
+
+
+database.o : ../../src/database.c
+	$(CROSS_COMPILE)$(CC) $(CFLAGS) -DWITH_BROKER -DWITH_PERSISTENCE -c -o $@ $^
 
 memory_mosq.o : ../../lib/memory_mosq.c
 	$(CROSS_COMPILE)$(CC) $(CFLAGS) -c -o $@ $^
@@ -52,8 +73,14 @@ persist_read.o : ../../src/persist_read.c
 persist_read_v234.o : ../../src/persist_read_v234.c
 	$(CROSS_COMPILE)$(CC) $(CFLAGS) -DWITH_BROKER -DWITH_PERSISTENCE -c -o $@ $^
 
+persist_write.o : ../../src/persist_write.c
+	$(CROSS_COMPILE)$(CC) $(CFLAGS) -DWITH_BROKER -DWITH_PERSISTENCE -c -o $@ $^
+
 property_mosq.o : ../../lib/property_mosq.c
 	$(CROSS_COMPILE)$(CC) $(CFLAGS) -c -o $@ $^
+
+subs.o : ../../src/subs.c
+	$(CROSS_COMPILE)$(CC) $(CFLAGS) -DWITH_BROKER -DWITH_PERSISTENCE -c -o $@ $^
 
 util_mosq.o : ../../lib/util_mosq.c
 	$(CROSS_COMPILE)$(CC) $(CFLAGS) -c -o $@ $^
@@ -67,13 +94,14 @@ utf8_mosq.o : ../../lib/utf8_mosq.c
 test-lib : mosq_test
 	./mosq_test
 
-test-broker : persist_read_test
+test-broker : persist_read_test persist_write_test
 	./persist_read_test
+	./persist_write_test
 
 test : test-broker test-lib
 
 clean : 
-	-rm -rf mosq_test persist_read_test
+	-rm -rf mosq_test persist_read_test persist_write_test
 	-rm -rf *.o *.gcda *.gcno coverage.info out/
 
 coverage :

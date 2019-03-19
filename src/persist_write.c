@@ -375,6 +375,8 @@ int persist__backup(struct mosquitto_db *db, bool shutdown)
 	int len;
 
 	if(!db || !db->config || !db->config->persistence_filepath) return MOSQ_ERR_INVAL;
+	if(db->config->persistence == false) return MOSQ_ERR_SUCCESS;
+
 	log__printf(NULL, MOSQ_LOG_INFO, "Saving in-memory database to %s.", db->config->persistence_filepath);
 
 	len = strlen(db->config->persistence_filepath)+5;
@@ -408,6 +410,7 @@ int persist__backup(struct mosquitto_db *db, bool shutdown)
 	*/
 	rc = unlink(outfile);
 	if (rc != 0) {
+		rc = 0;
 		if (errno != ENOENT) {
 			log__printf(NULL, MOSQ_LOG_INFO, "Error saving in-memory database, unable to remove %s.", outfile);
 			goto error;
