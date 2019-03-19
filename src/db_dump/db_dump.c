@@ -35,6 +35,7 @@ Contributors:
 #define _mosquitto_free(A) free((A))
 #include <uthash.h>
 
+const unsigned char magic[15] = {0x00, 0xB5, 0x00, 'm','o','s','q','u','i','t','t','o',' ','d','b'};
 
 struct client_chunk
 {
@@ -198,7 +199,7 @@ print_db_msg(struct db_msg *msg, int length)
 }
 
 
-static int persist__read_string(FILE *db_fptr, char **str)
+int persist__read_string(FILE *db_fptr, char **str)
 {
 	uint16_t i16temp;
 	uint16_t slen;
