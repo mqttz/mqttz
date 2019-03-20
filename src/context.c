@@ -43,7 +43,6 @@ struct mosquitto *context__init(struct mosquitto_db *db, mosq_sock_t sock)
 	context->next_msg_out = mosquitto_time() + 60;
 	context->keepalive = 60; /* Default to 60s */
 	context->clean_start = true;
-	context->disconnect_t = 0;
 	context->id = NULL;
 	context->last_mid = 0;
 	context->will = NULL;
@@ -251,7 +250,6 @@ void context__send_will(struct mosquitto_db *db, struct mosquitto *ctxt)
 
 void context__disconnect(struct mosquitto_db *db, struct mosquitto *context)
 {
-	context->disconnect_t = time(NULL);
 	net__socket_close(db, context);
 
 	if(context->session_expiry_interval == 0){
@@ -268,7 +266,7 @@ void context__disconnect(struct mosquitto_db *db, struct mosquitto *context)
 			}
 		}
 	}else{
-		session_expiry__add(context);
+		session_expiry__add(db, context);
 	}
 	context__set_state(context, mosq_cs_disconnected);
 }
@@ -277,7 +275,6 @@ void context__add_to_disused(struct mosquitto_db *db, struct mosquitto *context)
 {
 	if(context->state == mosq_cs_disused) return;
 
-	log__printf(NULL, MOSQ_LOG_DEBUG, "ADD %p", context);
 	context__set_state(context, mosq_cs_disused);
 
 	if(context->id){

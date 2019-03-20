@@ -472,13 +472,13 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 		now_time = time(NULL);
 		if(db->config->persistent_client_expiration > 0 && now_time > expiration_check_time){
 			HASH_ITER(hh_id, db->contexts_by_id, context, ctxt_tmp){
-				if(context->sock == INVALID_SOCKET && context->session_expiry_interval > 0){
+				if(context->sock == INVALID_SOCKET && context->session_expiry_interval > 0 && context->session_expiry_interval != UINT32_MAX){
 					/* This is a persistent client, check to see if the
 					 * last time it connected was longer than
 					 * persistent_client_expiration seconds ago. If so,
 					 * expire it and clean up.
 					 */
-					if(now_time > context->disconnect_t+db->config->persistent_client_expiration){
+					if(now_time > context->session_expiry_time){
 						if(context->id){
 							id = context->id;
 						}else{

@@ -6,7 +6,7 @@ include ../../config.mk
 all :
 
 clean :
-	-rm -f *.vglog
+	-rm -f *.vglog *.db
 	$(MAKE) -C c clean
 
 test-compile :

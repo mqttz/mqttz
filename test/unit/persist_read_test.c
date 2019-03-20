@@ -239,7 +239,6 @@ static void TEST_v3_client(void)
 	if(context){
 		CU_ASSERT_PTR_NULL(context->inflight_msgs);
 		CU_ASSERT_EQUAL(context->last_mid, 0x5287);
-		CU_ASSERT_EQUAL(context->disconnect_t, 0x23);
 	}
 }
 
@@ -393,6 +392,239 @@ static void TEST_v4_message_store(void)
 	}
 }
 
+static void TEST_v5_config_ok(void)
+{
+	struct mosquitto_db db;
+	struct mosquitto__config config;
+	int rc;
+
+	memset(&db, 0, sizeof(struct mosquitto_db));
+	memset(&config, 0, sizeof(struct mosquitto__config));
+	db.config = &config;
+
+	config.persistence = true;
+	config.persistence_filepath = "files/persist_read/v5-cfg.test-db";
+
+	rc = persist__restore(&db);
+	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
+	CU_ASSERT_EQUAL(db.last_db_id, 0x7856341200000000);
+}
+
+
+static void TEST_v5_config_truncated(void)
+{
+	struct mosquitto_db db;
+	struct mosquitto__config config;
+	int rc;
+
+	memset(&db, 0, sizeof(struct mosquitto_db));
+	memset(&config, 0, sizeof(struct mosquitto__config));
+	db.config = &config;
+
+	config.persistence = true;
+	config.persistence_filepath = "files/persist_read/v5-cfg-truncated.test-db";
+
+	rc = persist__restore(&db);
+	CU_ASSERT_EQUAL(rc, 1);
+	CU_ASSERT_EQUAL(db.last_db_id, 0);
+}
+
+
+static void TEST_v5_bad_chunk(void)
+{
+	struct mosquitto_db db;
+	struct mosquitto__config config;
+	int rc;
+
+	memset(&db, 0, sizeof(struct mosquitto_db));
+	memset(&config, 0, sizeof(struct mosquitto__config));
+	db.config = &config;
+
+	config.persistence = true;
+	config.persistence_filepath = "files/persist_read/v5-bad-chunk.test-db";
+
+	rc = persist__restore(&db);
+	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
+	CU_ASSERT_EQUAL(db.last_db_id, 0x17);
+}
+
+
+static void TEST_v5_message_store(void)
+{
+	struct mosquitto_db db;
+	struct mosquitto__config config;
+	int rc;
+
+	memset(&db, 0, sizeof(struct mosquitto_db));
+	memset(&config, 0, sizeof(struct mosquitto__config));
+	db.config = &config;
+
+	config.persistence = true;
+	config.persistence_filepath = "files/persist_read/v5-message-store.test-db";
+
+	rc = persist__restore(&db);
+	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
+	CU_ASSERT_EQUAL(db.msg_store_count, 1);
+	CU_ASSERT_EQUAL(db.msg_store_bytes, 7);
+	CU_ASSERT_PTR_NOT_NULL(db.msg_store);
+	if(db.msg_store){
+		CU_ASSERT_EQUAL(db.msg_store->db_id, 1);
+		CU_ASSERT_STRING_EQUAL(db.msg_store->source_id, "source_id");
+		CU_ASSERT_EQUAL(db.msg_store->source_mid, 2);
+		CU_ASSERT_EQUAL(db.msg_store->mid, 0);
+		CU_ASSERT_EQUAL(db.msg_store->qos, 2);
+		CU_ASSERT_EQUAL(db.msg_store->retain, 1);
+		CU_ASSERT_STRING_EQUAL(db.msg_store->topic, "topic");
+		CU_ASSERT_EQUAL(db.msg_store->payloadlen, 7);
+		if(db.msg_store->payloadlen == 7){
+			CU_ASSERT_NSTRING_EQUAL(UHPA_ACCESS_PAYLOAD(db.msg_store), "payload", 7);
+		}
+	}
+}
+
+static void TEST_v5_client(void)
+{
+	struct mosquitto_db db;
+	struct mosquitto__config config;
+	struct mosquitto *context;
+	int rc;
+
+	memset(&db, 0, sizeof(struct mosquitto_db));
+	memset(&config, 0, sizeof(struct mosquitto__config));
+	db.config = &config;
+
+	config.persistence = true;
+	config.persistence_filepath = "files/persist_read/v5-client.test-db";
+
+	rc = persist__restore(&db);
+	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
+
+	CU_ASSERT_PTR_NOT_NULL(db.contexts_by_id);
+	HASH_FIND(hh_id, db.contexts_by_id, "client-id", strlen("client-id"), context);
+	CU_ASSERT_PTR_NOT_NULL(context);
+	if(context){
+		CU_ASSERT_PTR_NULL(context->inflight_msgs);
+		CU_ASSERT_EQUAL(context->last_mid, 0x5287);
+	}
+}
+
+static void TEST_v5_client_message(void)
+{
+	struct mosquitto_db db;
+	struct mosquitto__config config;
+	struct mosquitto *context;
+	int rc;
+
+	memset(&db, 0, sizeof(struct mosquitto_db));
+	memset(&config, 0, sizeof(struct mosquitto__config));
+	db.config = &config;
+
+	config.persistence = true;
+	config.persistence_filepath = "files/persist_read/v5-client-message.test-db";
+
+	rc = persist__restore(&db);
+	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
+
+	CU_ASSERT_PTR_NOT_NULL(db.contexts_by_id);
+	HASH_FIND(hh_id, db.contexts_by_id, "client-id", strlen("client-id"), context);
+	CU_ASSERT_PTR_NOT_NULL(context);
+	if(context){
+		CU_ASSERT_PTR_NOT_NULL(context->inflight_msgs);
+		if(context->inflight_msgs){
+			CU_ASSERT_PTR_NULL(context->inflight_msgs->next);
+			CU_ASSERT_PTR_NOT_NULL(context->inflight_msgs->store);
+			if(context->inflight_msgs->store){
+				CU_ASSERT_EQUAL(context->inflight_msgs->store->ref_count, 1);
+				CU_ASSERT_STRING_EQUAL(context->inflight_msgs->store->source_id, "source_id");
+				CU_ASSERT_EQUAL(context->inflight_msgs->store->source_mid, 2);
+				CU_ASSERT_EQUAL(context->inflight_msgs->store->mid, 0);
+				CU_ASSERT_EQUAL(context->inflight_msgs->store->qos, 2);
+				CU_ASSERT_EQUAL(context->inflight_msgs->store->retain, 1);
+				CU_ASSERT_STRING_EQUAL(context->inflight_msgs->store->topic, "topic");
+				CU_ASSERT_EQUAL(context->inflight_msgs->store->payloadlen, 7);
+				if(context->inflight_msgs->store->payloadlen == 7){
+					CU_ASSERT_NSTRING_EQUAL(UHPA_ACCESS_PAYLOAD(context->inflight_msgs->store), "payload", 7);
+				}
+			}
+			CU_ASSERT_EQUAL(context->inflight_msgs->mid, 0x73);
+			CU_ASSERT_EQUAL(context->inflight_msgs->qos, 1);
+			CU_ASSERT_EQUAL(context->inflight_msgs->retain, 0);
+			CU_ASSERT_EQUAL(context->inflight_msgs->direction, mosq_md_out);
+			CU_ASSERT_EQUAL(context->inflight_msgs->state, mosq_ms_wait_for_puback);
+			CU_ASSERT_EQUAL(context->inflight_msgs->dup, 0);
+		}
+	}
+}
+
+static void TEST_v5_retain(void)
+{
+	struct mosquitto_db db;
+	struct mosquitto__config config;
+	int rc;
+
+	last_retained = 0;
+
+	memset(&db, 0, sizeof(struct mosquitto_db));
+	memset(&config, 0, sizeof(struct mosquitto__config));
+	db.config = &config;
+
+	config.persistence = true;
+	config.persistence_filepath = "files/persist_read/v5-retain.test-db";
+
+	rc = persist__restore(&db);
+	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
+	CU_ASSERT_EQUAL(db.msg_store_count, 1);
+	CU_ASSERT_EQUAL(db.msg_store_bytes, 7);
+	CU_ASSERT_PTR_NOT_NULL(db.msg_store);
+	if(db.msg_store){
+		CU_ASSERT_EQUAL(db.msg_store->db_id, 0x54);
+		CU_ASSERT_STRING_EQUAL(db.msg_store->source_id, "source_id");
+		CU_ASSERT_EQUAL(db.msg_store->source_mid, 2);
+		CU_ASSERT_EQUAL(db.msg_store->mid, 0);
+		CU_ASSERT_EQUAL(db.msg_store->qos, 2);
+		CU_ASSERT_EQUAL(db.msg_store->retain, 1);
+		CU_ASSERT_STRING_EQUAL(db.msg_store->topic, "topic");
+		CU_ASSERT_EQUAL(db.msg_store->payloadlen, 7);
+		if(db.msg_store->payloadlen == 7){
+			CU_ASSERT_NSTRING_EQUAL(UHPA_ACCESS_PAYLOAD(db.msg_store), "payload", 7);
+		}
+	}
+	CU_ASSERT_EQUAL(last_retained, 0x54);
+}
+
+static void TEST_v5_sub(void)
+{
+	struct mosquitto_db db;
+	struct mosquitto__config config;
+	struct mosquitto *context;
+	int rc;
+
+	last_sub = NULL;
+	last_qos = -1;
+
+	memset(&db, 0, sizeof(struct mosquitto_db));
+	memset(&config, 0, sizeof(struct mosquitto__config));
+	db.config = &config;
+
+	config.persistence = true;
+	config.persistence_filepath = "files/persist_read/v5-sub.test-db";
+
+	rc = persist__restore(&db);
+	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
+
+	CU_ASSERT_PTR_NOT_NULL(db.contexts_by_id);
+	HASH_FIND(hh_id, db.contexts_by_id, "client-id", strlen("client-id"), context);
+	CU_ASSERT_PTR_NOT_NULL(context);
+	if(context){
+		CU_ASSERT_PTR_NOT_NULL(last_sub);
+		if(last_sub){
+			CU_ASSERT_STRING_EQUAL(last_sub, "subscription")
+			free(last_sub);
+		}
+		CU_ASSERT_EQUAL(last_qos, 1);
+	}
+}
+
 /* ========================================================================
  * TEST SUITE SETUP
  * ======================================================================== */
@@ -423,6 +655,14 @@ int init_persist_read_tests(void)
 			|| !CU_add_test(test_suite, "v3 sub", TEST_v3_sub)
 			|| !CU_add_test(test_suite, "v4 config ok", TEST_v4_config_ok)
 			|| !CU_add_test(test_suite, "v4 message store", TEST_v4_message_store)
+			|| !CU_add_test(test_suite, "v5 config ok", TEST_v5_config_ok)
+			|| !CU_add_test(test_suite, "v5 config bad truncated", TEST_v5_config_truncated)
+			|| !CU_add_test(test_suite, "v5 bad chunk", TEST_v5_bad_chunk)
+			|| !CU_add_test(test_suite, "v5 message store", TEST_v5_message_store)
+			|| !CU_add_test(test_suite, "v5 client", TEST_v5_client)
+			|| !CU_add_test(test_suite, "v5 client message", TEST_v5_client_message)
+			|| !CU_add_test(test_suite, "v5 retain", TEST_v5_retain)
+			|| !CU_add_test(test_suite, "v5 sub", TEST_v5_sub)
 			){
 
 		printf("Error adding persist CUnit tests.\n");

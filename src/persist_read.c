@@ -40,11 +40,12 @@ static uint32_t db_version;
 const unsigned char magic[15] = {0x00, 0xB5, 0x00, 'm','o','s','q','u','i','t','t','o',' ','d','b'};
 
 static int persist__restore_sub(struct mosquitto_db *db, const char *client_id, const char *sub, int qos);
-int persist__read_string(FILE *db_fptr, char **str);
 
 static struct mosquitto *persist__find_or_add_context(struct mosquitto_db *db, const char *client_id, uint16_t last_mid)
 {
 	struct mosquitto *context;
+
+	if(!client_id) return NULL;
 
 	context = NULL;
 	HASH_FIND(hh_id, db->contexts_by_id, client_id, strlen(client_id), context);
@@ -68,33 +69,40 @@ static struct mosquitto *persist__find_or_add_context(struct mosquitto_db *db, c
 }
 
 
+int persist__read_string_len(FILE *db_fptr, char **str, uint16_t len)
+{
+	char *s = NULL;
+
+	if(len){
+		s = mosquitto__malloc(len+1);
+		if(!s){
+			fclose(db_fptr);
+			log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+			return MOSQ_ERR_NOMEM;
+		}
+		if(fread(s, 1, len, db_fptr) != len){
+			mosquitto__free(s);
+			return MOSQ_ERR_NOMEM;
+		}
+		s[len] = '\0';
+	}
+
+	*str = s;
+	return MOSQ_ERR_SUCCESS;
+}
+
+
 int persist__read_string(FILE *db_fptr, char **str)
 {
 	uint16_t i16temp;
 	uint16_t slen;
-	char *s = NULL;
 
 	if(fread(&i16temp, 1, sizeof(uint16_t), db_fptr) != sizeof(uint16_t)){
 		return MOSQ_ERR_INVAL;
 	}
 
 	slen = ntohs(i16temp);
-	if(slen){
-		s = mosquitto__malloc(slen+1);
-		if(!s){
-			fclose(db_fptr);
-			log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-			return MOSQ_ERR_NOMEM;
-		}
-		if(fread(s, 1, slen, db_fptr) != slen){
-			mosquitto__free(s);
-			return MOSQ_ERR_NOMEM;
-		}
-		s[slen] = '\0';
-	}
-
-	*str = s;
-	return MOSQ_ERR_SUCCESS;
+	return persist__read_string_len(db_fptr, str, slen);
 }
 
 
@@ -163,7 +171,11 @@ static int persist__client_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 
 	memset(&chunk, 0, sizeof(struct P_client));
 
-	rc = persist__client_chunk_read_v234(db_fptr, &chunk, db_version);
+	if(db_version == 5){
+		rc = persist__chunk_client_read_v5(db_fptr, &chunk);
+	}else{
+		rc = persist__chunk_client_read_v234(db_fptr, &chunk, db_version);
+	}
 	if(rc){
 		fclose(db_fptr);
 		return rc;
@@ -171,7 +183,9 @@ static int persist__client_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 
 	context = persist__find_or_add_context(db, chunk.client_id, chunk.F.last_mid);
 	if(context){
-		context->disconnect_t = chunk.F.disconnect_t;
+		context->session_expiry_time = chunk.F.session_expiry_time;
+		context->session_expiry_interval = chunk.F.session_expiry_interval;
+		/* FIXME - we should expire clients here if they have exceeded their time */
 	}else{
 		rc = 1;
 	}
@@ -189,14 +203,18 @@ static int persist__client_msg_chunk_restore(struct mosquitto_db *db, FILE *db_f
 
 	memset(&chunk, 0, sizeof(struct P_client_msg));
 
-	rc = persist__client_msg_chunk_read_v234(db_fptr, &chunk);
+	if(db_version == 5){
+		rc = persist__chunk_client_msg_read_v5(db_fptr, &chunk);
+	}else{
+		rc = persist__chunk_client_msg_read_v234(db_fptr, &chunk);
+	}
 	if(rc){
 		fclose(db_fptr);
 		return rc;
 	}
 
 	rc = persist__client_msg_restore(db, chunk.client_id, chunk.F.mid, chunk.F.qos,
-			chunk.F.retain, chunk.F.direction, chunk.F.state, chunk.F.dup, chunk.F.store_id);
+			(chunk.F.retain_dup&0xF0)>>4, chunk.F.direction, chunk.F.state, (chunk.F.retain_dup&0x0F), chunk.F.store_id);
 	mosquitto__free(chunk.client_id);
 
 	return rc;
@@ -213,7 +231,11 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 
 	memset(&chunk, 0, sizeof(struct P_msg_store));
 
-	rc = persist__msg_store_chunk_read_v234(db_fptr, &chunk, db_version);
+	if(db_version == 5){
+		rc = persist__chunk_msg_store_read_v5(db_fptr, &chunk);
+	}else{
+		rc = persist__chunk_msg_store_read_v234(db_fptr, &chunk, db_version);
+	}
 	if(rc){
 		fclose(db_fptr);
 		return rc;
@@ -268,7 +290,11 @@ static int persist__retain_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 
 	memset(&chunk, 0, sizeof(struct P_retain));
 
-	rc = persist__retain_chunk_read_v234(db_fptr, &chunk);
+	if(db_version == 5){
+		rc = persist__chunk_retain_read_v5(db_fptr, &chunk);
+	}else{
+		rc = persist__chunk_retain_read_v234(db_fptr, &chunk);
+	}
 	if(rc){
 		fclose(db_fptr);
 		return rc;
@@ -291,7 +317,11 @@ static int persist__sub_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 
 	memset(&chunk, 0, sizeof(struct P_sub));
 
-	rc = persist__sub_chunk_read_v234(db_fptr, &chunk);
+	if(db_version == 5){
+		rc = persist__chunk_sub_read_v5(db_fptr, &chunk);
+	}else{
+		rc = persist__chunk_sub_read_v234(db_fptr, &chunk);
+	}
 	if(rc){
 		fclose(db_fptr);
 		return rc;
@@ -308,7 +338,11 @@ static int persist__sub_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 
 int persist__chunk_header_read(FILE *db_fptr, int *chunk, int *length)
 {
-	return persist__chunk_header_read_v234(db_fptr, chunk, length);
+	if(db_version == 5){
+		return persist__chunk_header_read_v5(db_fptr, chunk, length);
+	}else{
+		return persist__chunk_header_read_v234(db_fptr, chunk, length);
+	}
 }
 
 
@@ -318,13 +352,12 @@ int persist__restore(struct mosquitto_db *db)
 	char header[15];
 	int rc = 0;
 	uint32_t crc;
-	dbid_t i64temp;
 	uint32_t i32temp;
 	int chunk, length;
-	uint8_t i8temp;
 	ssize_t rlen;
 	char *err;
 	struct mosquitto_msg_store_load *load, *load_tmp;
+	struct PF_cfg cfg_chunk;
 
 	assert(db);
 	assert(db->config);
@@ -354,7 +387,8 @@ int persist__restore(struct mosquitto_db *db)
 		 * Is your DB change still compatible with previous versions?
 		 */
 		if(db_version > MOSQ_DB_VERSION && db_version != 0){
-			if(db_version == 3){
+			if(db_version == 4){
+			}else if(db_version == 3){
 				/* Addition of source_username and source_port to msg_store chunk in v4, v1.5.6 */
 			}else if(db_version == 2){
 				/* Addition of disconnect_t to client chunk in v3. */
@@ -368,16 +402,22 @@ int persist__restore(struct mosquitto_db *db)
 		while(persist__chunk_header_read(fptr, &chunk, &length) == MOSQ_ERR_SUCCESS){
 			switch(chunk){
 				case DB_CHUNK_CFG:
-					read_e(fptr, &i8temp, sizeof(uint8_t)); // shutdown
-					read_e(fptr, &i8temp, sizeof(uint8_t)); // sizeof(dbid_t)
-					if(i8temp != sizeof(dbid_t)){
+					if(db_version == 5){
+						if(persist__chunk_cfg_read_v5(fptr, &cfg_chunk)){
+							return 1;
+						}
+					}else{
+						if(persist__chunk_cfg_read_v234(fptr, &cfg_chunk)){
+							return 1;
+						}
+					}
+					if(cfg_chunk.dbid_size != sizeof(dbid_t)){
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Incompatible database configuration (dbid size is %d bytes, expected %lu)",
-								i8temp, (unsigned long)sizeof(dbid_t));
+								cfg_chunk.dbid_size, (unsigned long)sizeof(dbid_t));
 						fclose(fptr);
 						return 1;
 					}
-					read_e(fptr, &i64temp, sizeof(dbid_t));
-					db->last_db_id = i64temp;
+					db->last_db_id = cfg_chunk.last_db_id;
 					break;
 
 				case DB_CHUNK_MSG_STORE:

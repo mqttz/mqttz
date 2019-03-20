@@ -55,10 +55,24 @@ int persist__chunk_header_read_v234(FILE *db_fptr, int *chunk, int *length)
 }
 
 
-int persist__client_chunk_read_v234(FILE *db_fptr, struct P_client *chunk, int db_version)
+int persist__chunk_cfg_read_v234(FILE *db_fptr, struct PF_cfg *chunk)
+{
+	read_e(db_fptr, &chunk->shutdown, sizeof(uint8_t)); // shutdown
+	read_e(db_fptr, &chunk->dbid_size, sizeof(uint8_t)); // sizeof(dbid_t)
+	read_e(db_fptr, &chunk->last_db_id, sizeof(dbid_t));
+
+	return MOSQ_ERR_SUCCESS;
+error:
+	log__printf(NULL, MOSQ_LOG_ERR, "Error: %s.", strerror(errno));
+	return 1;
+}
+
+
+int persist__chunk_client_read_v234(FILE *db_fptr, struct P_client *chunk, int db_version)
 {
 	uint16_t i16temp;
 	int rc;
+	time_t temp;
 
 	rc = persist__read_string(db_fptr, &chunk->client_id);
 	if(rc){
@@ -67,11 +81,8 @@ int persist__client_chunk_read_v234(FILE *db_fptr, struct P_client *chunk, int d
 
 	read_e(db_fptr, &i16temp, sizeof(uint16_t));
 	chunk->F.last_mid = ntohs(i16temp);
-
-	if(db_version == 2){
-		chunk->F.disconnect_t = time(NULL);
-	}else{
-		read_e(db_fptr, &chunk->F.disconnect_t, sizeof(time_t));
+	if(db_version != 2){
+		read_e(db_fptr, &temp, sizeof(time_t));
 	}
 
 	return MOSQ_ERR_SUCCESS;
@@ -82,11 +93,12 @@ error:
 }
 
 
-int persist__client_msg_chunk_read_v234(FILE *db_fptr, struct P_client_msg *chunk)
+int persist__chunk_client_msg_read_v234(FILE *db_fptr, struct P_client_msg *chunk)
 {
 	uint16_t i16temp;
 	int rc;
 	char *err;
+	uint8_t retain, dup;
 
 	rc = persist__read_string(db_fptr, &chunk->client_id);
 	if(rc){
@@ -99,10 +111,12 @@ int persist__client_msg_chunk_read_v234(FILE *db_fptr, struct P_client_msg *chun
 	chunk->F.mid = ntohs(i16temp);
 
 	read_e(db_fptr, &chunk->F.qos, sizeof(uint8_t));
-	read_e(db_fptr, &chunk->F.retain, sizeof(uint8_t));
+	read_e(db_fptr, &retain, sizeof(uint8_t));
 	read_e(db_fptr, &chunk->F.direction, sizeof(uint8_t));
 	read_e(db_fptr, &chunk->F.state, sizeof(uint8_t));
-	read_e(db_fptr, &chunk->F.dup, sizeof(uint8_t));
+	read_e(db_fptr, &dup, sizeof(uint8_t));
+
+	chunk->F.retain_dup = (retain&0x0F)<<4 | (dup&0x0F);
 
 	return MOSQ_ERR_SUCCESS;
 error:
@@ -113,7 +127,7 @@ error:
 }
 
 
-int persist__msg_store_chunk_read_v234(FILE *db_fptr, struct P_msg_store *chunk, int db_version)
+int persist__chunk_msg_store_read_v234(FILE *db_fptr, struct P_msg_store *chunk, int db_version)
 {
 	uint32_t i32temp;
 	uint16_t i16temp;
@@ -176,7 +190,7 @@ error:
 }
 
 
-int persist__retain_chunk_read_v234(FILE *db_fptr, struct P_retain *chunk)
+int persist__chunk_retain_read_v234(FILE *db_fptr, struct P_retain *chunk)
 {
 	dbid_t i64temp;
 	char *err;
@@ -192,7 +206,7 @@ int persist__retain_chunk_read_v234(FILE *db_fptr, struct P_retain *chunk)
 }
 
 
-int persist__sub_chunk_read_v234(FILE *db_fptr, struct P_sub *chunk)
+int persist__chunk_sub_read_v234(FILE *db_fptr, struct P_sub *chunk)
 {
 	int rc;
 	char *err;

@@ -38,8 +38,9 @@ OBJS=	mosquitto.o \
 		property_mosq.o \
 		persist_read.o \
 		persist_read_v234.o \
+		persist_read_v5.o \
 		persist_write.o \
-		persist_write_v4.o \
+		persist_write_v5.o \
 		plugin.o \
 		read_handle.o \
 		security.o \
@@ -148,10 +149,13 @@ persist_read.o : persist_read.c persist.h mosquitto_broker_internal.h
 persist_read_v234.o : persist_read_v234.c persist.h mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
+persist_read_v5.o : persist_read_v5.c persist.h mosquitto_broker_internal.h
+	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
+
 persist_write.o : persist_write.c persist.h mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
-persist_write_v4.o : persist_write_v4.c persist.h mosquitto_broker_internal.h
+persist_write_v5.o : persist_write_v5.c persist.h mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
 packet_datatypes.o : ../lib/packet_datatypes.c ../lib/packet_mosq.h

@@ -34,7 +34,7 @@ static int session_expiry__cmp(struct session_expiry_list *i1, struct session_ex
 }
 
 
-int session_expiry__add(struct mosquitto *context)
+int session_expiry__add(struct mosquitto_db *db, struct mosquitto *context)
 {
 	struct session_expiry_list *item;
 
@@ -42,7 +42,14 @@ int session_expiry__add(struct mosquitto *context)
 	if(!item) return MOSQ_ERR_NOMEM;
 
 	item->context = context;
-	item->context->session_expiry_time = time(NULL) + item->context->session_expiry_interval;
+	item->context->session_expiry_time = time(NULL);
+	if(db->config->persistent_client_expiration == 0 || 
+			db->config->persistent_client_expiration < item->context->session_expiry_interval){
+
+		item->context->session_expiry_time += item->context->session_expiry_interval;
+	}else{
+		item->context->session_expiry_time += db->config->persistent_client_expiration;
+	}
 	context->expiry_list_item = item;
 
 	DL_INSERT_INORDER(expiry_list, item, session_expiry__cmp);

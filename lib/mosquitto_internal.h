@@ -256,7 +256,6 @@ struct mosquitto {
 	int msg_count12;
 	struct mosquitto__acl_user *acl_list;
 	struct mosquitto__listener *listener;
-	time_t disconnect_t;
 	struct mosquitto__packet *out_packet_last;
 	struct mosquitto__subhier **subs;
 	struct mosquitto__subshared_ref **shared_subs;
