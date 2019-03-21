@@ -160,6 +160,7 @@ int persist__chunk_sub_write_v5(FILE *db_fptr, struct P_sub *chunk)
 	int id_len = chunk->F.id_len;
 	int topic_len = chunk->F.topic_len;
 
+	chunk->F.identifier = htonl(chunk->F.identifier);
 	chunk->F.id_len = htons(chunk->F.id_len);
 	chunk->F.topic_len = htons(chunk->F.topic_len);
 

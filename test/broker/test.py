@@ -147,6 +147,8 @@ tests = [
     (2, './10-listener-mount-point.py'),
 
     (1, './11-persistent-subscription.py'),
+    (1, './11-persistent-subscription-v5.py'),
+    (1, './11-persistent-subscription-no-local.py'),
 
     (1, './12-prop-assigned-client-identifier.py'),
     (1, './12-prop-maximum-packet-size-broker.py'),

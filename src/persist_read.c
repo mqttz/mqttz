@@ -39,7 +39,7 @@ static uint32_t db_version;
 
 const unsigned char magic[15] = {0x00, 0xB5, 0x00, 'm','o','s','q','u','i','t','t','o',' ','d','b'};
 
-static int persist__restore_sub(struct mosquitto_db *db, const char *client_id, const char *sub, int qos);
+static int persist__restore_sub(struct mosquitto_db *db, const char *client_id, const char *sub, int qos, uint32_t identifier, int options);
 
 static struct mosquitto *persist__find_or_add_context(struct mosquitto_db *db, const char *client_id, uint16_t last_mid)
 {
@@ -113,7 +113,7 @@ static int persist__client_msg_restore(struct mosquitto_db *db, const char *clie
 	struct mosquitto_msg_store_load *load;
 	struct mosquitto *context;
 
-	cmsg = mosquitto__malloc(sizeof(struct mosquitto_client_msg));
+	cmsg = mosquitto__calloc(1, sizeof(struct mosquitto_client_msg));
 	if(!cmsg){
 		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
@@ -249,7 +249,7 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 			}
 		}
 	}
-	load = mosquitto__malloc(sizeof(struct mosquitto_msg_store_load));
+	load = mosquitto__calloc(1, sizeof(struct mosquitto_msg_store_load));
 	if(!load){
 		fclose(db_fptr);
 		mosquitto__free(chunk.source.id);
@@ -327,7 +327,7 @@ static int persist__sub_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 		return rc;
 	}
 
-	rc = persist__restore_sub(db, chunk.client_id, chunk.topic, chunk.F.qos);
+	rc = persist__restore_sub(db, chunk.client_id, chunk.topic, chunk.F.qos, chunk.F.identifier, chunk.F.options);
 
 	mosquitto__free(chunk.client_id);
 	mosquitto__free(chunk.topic);
@@ -466,7 +466,7 @@ error:
 	return 1;
 }
 
-static int persist__restore_sub(struct mosquitto_db *db, const char *client_id, const char *sub, int qos)
+static int persist__restore_sub(struct mosquitto_db *db, const char *client_id, const char *sub, int qos, uint32_t identifier, int options)
 {
 	struct mosquitto *context;
 
@@ -476,8 +476,7 @@ static int persist__restore_sub(struct mosquitto_db *db, const char *client_id, 
 
 	context = persist__find_or_add_context(db, client_id, 0);
 	if(!context) return 1;
-	/* FIXME - identifer, options need saving */
-	return sub__add(db, context, sub, qos, 0, 0, &db->subs);
+	return sub__add(db, context, sub, qos, identifier, options, &db->subs);
 }
 
 #endif

@@ -170,6 +170,7 @@ int persist__chunk_sub_read_v5(FILE *db_fptr, struct P_sub *chunk)
 	int rc;
 
 	read_e(db_fptr, &chunk->F, sizeof(struct PF_sub));
+	chunk->F.identifier = ntohl(chunk->F.identifier);
 	chunk->F.id_len = ntohs(chunk->F.id_len);
 	chunk->F.topic_len = ntohs(chunk->F.topic_len);
 

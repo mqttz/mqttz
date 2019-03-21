@@ -12,6 +12,7 @@
 extern uint64_t last_retained;
 extern char *last_sub;
 extern int last_qos;
+extern uint32_t last_identifier;
 
 struct mosquitto *context__init(struct mosquitto_db *db, mosq_sock_t sock)
 {
@@ -119,6 +120,7 @@ int sub__add(struct mosquitto_db *db, struct mosquitto *context, const char *sub
 {
 	last_sub = strdup(sub);
 	last_qos = qos;
+	last_identifier = identifier;
 
 	return MOSQ_ERR_SUCCESS;
 }

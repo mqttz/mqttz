@@ -17,21 +17,23 @@ write_config(conf_file, port)
 rc = 1
 mid = 530
 keepalive = 60
-connect_packet = mosq_test.gen_connect(
-    "persistent-subscription-test", keepalive=keepalive, clean_session=False,
-)
-connack_packet = mosq_test.gen_connack(rc=0)
-connack_packet2 = mosq_test.gen_connack(rc=0, flags=1)  # session present
 
-subscribe_packet = mosq_test.gen_subscribe(mid, "subpub/qos1", 1)
-suback_packet = mosq_test.gen_suback(mid, 1)
+props = mqtt5_props.gen_uint32_prop(mqtt5_props.PROP_SESSION_EXPIRY_INTERVAL, 100)
+connect_packet = mosq_test.gen_connect(
+    "persistent-subscription-test", keepalive=keepalive, clean_session=False, proto_ver=5, properties=props
+)
+connack_packet = mosq_test.gen_connack(rc=0, proto_ver=5)
+connack_packet2 = mosq_test.gen_connack(rc=0, flags=1, proto_ver=5)  # session present
+
+subscribe_packet = mosq_test.gen_subscribe(mid, "subpub/qos1", 1, proto_ver=5)
+suback_packet = mosq_test.gen_suback(mid, 1, proto_ver=5)
 
 mid = 300
-publish_packet = mosq_test.gen_publish("subpub/qos1", qos=1, mid=mid, payload="message")
-puback_packet = mosq_test.gen_puback(mid)
+publish_packet = mosq_test.gen_publish("subpub/qos1", qos=1, mid=mid, payload="message", proto_ver=5)
+puback_packet = mosq_test.gen_puback(mid, proto_ver=5)
 
 mid = 1
-publish_packet2 = mosq_test.gen_publish("subpub/qos1", qos=1, mid=mid, payload="message")
+publish_packet2 = mosq_test.gen_publish("subpub/qos1", qos=1, mid=mid, payload="message", proto_ver=5)
 
 if os.path.exists('mosquitto-%d.db' % (port)):
     os.unlink('mosquitto-%d.db' % (port))

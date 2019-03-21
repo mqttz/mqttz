@@ -15,6 +15,7 @@
 uint64_t last_retained;
 char *last_sub = NULL;
 int last_qos;
+uint32_t last_identifier;
 
 static void TEST_persistence_disabled(void)
 {
@@ -622,6 +623,7 @@ static void TEST_v5_sub(void)
 			free(last_sub);
 		}
 		CU_ASSERT_EQUAL(last_qos, 1);
+		CU_ASSERT_EQUAL(last_identifier, 0x7623);
 	}
 }
 

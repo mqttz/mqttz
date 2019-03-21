@@ -104,9 +104,11 @@ struct P_msg_store{
 
 
 struct PF_sub{
+	uint32_t identifier;
 	uint16_t id_len;
 	uint16_t topic_len;
 	uint8_t qos;
+	uint8_t options;
 };
 struct P_sub{
 	struct PF_sub F;

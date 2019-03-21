@@ -213,9 +213,11 @@ static int persist__subs_retain_save(struct mosquitto_db *db, FILE *db_fptr, str
 	sub = node->subs;
 	while(sub){
 		if(sub->context->clean_start == false && sub->context->id){
+			sub_chunk.F.identifier = sub->identifier;
 			sub_chunk.F.id_len = strlen(sub->context->id);
 			sub_chunk.F.topic_len = strlen(thistopic);
 			sub_chunk.F.qos = (uint8_t)sub->qos;
+			sub_chunk.F.options = sub->no_local<<2 | sub->retain_as_published<<3;
 			sub_chunk.client_id = sub->context->id;
 			sub_chunk.topic = thistopic;
 
