@@ -144,6 +144,7 @@ static int persist__message_store_save(struct mosquitto_db *db, FILE *db_fptr)
 		}
 		chunk.F.qos = stored->qos;
 		chunk.payload = stored->payload;
+		chunk.properties = stored->properties;
 
 		rc = persist__chunk_message_store_write_v5(db_fptr, &chunk);
 		if(rc){

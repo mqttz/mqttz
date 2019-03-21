@@ -31,7 +31,9 @@ Contributors:
 
 #include "mosquitto_broker_internal.h"
 #include "memory_mosq.h"
+#include "mqtt_protocol.h"
 #include "persist.h"
+#include "property_mosq.h"
 #include "time_mosq.h"
 #include "util_mosq.h"
 
@@ -96,9 +98,11 @@ error:
 }
 
 
-int persist__chunk_msg_store_read_v5(FILE *db_fptr, struct P_msg_store *chunk)
+int persist__chunk_msg_store_read_v5(FILE *db_fptr, struct P_msg_store *chunk, uint32_t length)
 {
 	int rc = 0;
+	mosquitto_property *properties = NULL;
+	struct mosquitto__packet prop_packet;
 
 	read_e(db_fptr, &chunk->F, sizeof(struct PF_msg_store));
 	chunk->F.payloadlen = ntohl(chunk->F.payloadlen);
@@ -107,6 +111,8 @@ int persist__chunk_msg_store_read_v5(FILE *db_fptr, struct P_msg_store *chunk)
 	chunk->F.source_username_len = ntohs(chunk->F.source_username_len);
 	chunk->F.topic_len = ntohs(chunk->F.topic_len);
 	chunk->F.source_port = ntohs(chunk->F.source_port);
+
+	length -= (sizeof(struct PF_msg_store) + chunk->F.payloadlen + chunk->F.source_id_len + chunk->F.source_username_len + chunk->F.topic_len);
 
 	if(chunk->F.source_id_len){
 		rc = persist__read_string_len(db_fptr, &chunk->source.id, chunk->F.source_id_len);
@@ -145,12 +151,35 @@ int persist__chunk_msg_store_read_v5(FILE *db_fptr, struct P_msg_store *chunk)
 		read_e(db_fptr, UHPA_ACCESS(chunk->payload, chunk->F.payloadlen), chunk->F.payloadlen);
 	}
 
+	if(length > 0){
+		memset(&prop_packet, 0, sizeof(struct mosquitto__packet));
+		prop_packet.remaining_length = length;
+		prop_packet.payload = mosquitto__malloc(length);
+		if(!prop_packet.payload){
+			mosquitto__free(chunk->source.id);
+			mosquitto__free(chunk->source.username);
+			mosquitto__free(chunk->topic);
+			return 1;
+		}
+		read_e(db_fptr, prop_packet.payload, length);
+		rc = property__read_all(CMD_PUBLISH, &prop_packet, &properties);
+		mosquitto__free(prop_packet.payload);
+		if(rc){
+			mosquitto__free(chunk->source.id);
+			mosquitto__free(chunk->source.username);
+			mosquitto__free(chunk->topic);
+			return rc;
+		}
+	}
+	chunk->properties = properties;
+
 	return MOSQ_ERR_SUCCESS;
 error:
 	log__printf(NULL, MOSQ_LOG_ERR, "Error: %s.", strerror(errno));
 	mosquitto__free(chunk->source.id);
 	mosquitto__free(chunk->source.username);
 	mosquitto__free(chunk->topic);
+	mosquitto__free(prop_packet.payload);
 	return 1;
 }
 

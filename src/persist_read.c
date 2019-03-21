@@ -221,7 +221,7 @@ static int persist__client_msg_chunk_restore(struct mosquitto_db *db, FILE *db_f
 }
 
 
-static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
+static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fptr, uint32_t length)
 {
 	struct P_msg_store chunk;
 	struct mosquitto_msg_store *stored = NULL;
@@ -232,7 +232,7 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 	memset(&chunk, 0, sizeof(struct P_msg_store));
 
 	if(db_version == 5){
-		rc = persist__chunk_msg_store_read_v5(db_fptr, &chunk);
+		rc = persist__chunk_msg_store_read_v5(db_fptr, &chunk, length);
 	}else{
 		rc = persist__chunk_msg_store_read_v234(db_fptr, &chunk, db_version);
 	}
@@ -262,7 +262,7 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 
 	rc = db__message_store(db, &chunk.source, chunk.F.source_mid,
 			chunk.topic, chunk.F.qos, chunk.F.payloadlen,
-			&chunk.payload, chunk.F.retain, &stored, 0, NULL, chunk.F.store_id);
+			&chunk.payload, chunk.F.retain, &stored, 0, chunk.properties, chunk.F.store_id);
 
 	mosquitto__free(chunk.source.id);
 	mosquitto__free(chunk.source.username);
@@ -421,7 +421,7 @@ int persist__restore(struct mosquitto_db *db)
 					break;
 
 				case DB_CHUNK_MSG_STORE:
-					if(persist__msg_store_chunk_restore(db, fptr)) return 1;
+					if(persist__msg_store_chunk_restore(db, fptr, length)) return 1;
 					break;
 
 				case DB_CHUNK_CLIENT_MSG:

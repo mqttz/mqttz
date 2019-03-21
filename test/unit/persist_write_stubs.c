@@ -38,15 +38,6 @@ int send__pingreq(struct mosquitto *mosq)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto_property_add_varint(mosquitto_property **proplist, int identifier, uint32_t value)
-{
-	return MOSQ_ERR_SUCCESS;
-}
-
-void mosquitto_property_free_all(mosquitto_property **properties)
-{
-}
-
 int mosquitto_acl_check(struct mosquitto_db *db, struct mosquitto *context, const char *topic, long payloadlen, void* payload, int qos, bool retain, int access)
 {
 	return MOSQ_ERR_SUCCESS;

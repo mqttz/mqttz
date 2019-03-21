@@ -32,6 +32,8 @@ Contributors:
 #include "mosquitto_broker_internal.h"
 #include "memory_mosq.h"
 #include "persist.h"
+#include "packet_mosq.h"
+#include "property_mosq.h"
 #include "time_mosq.h"
 #include "util_mosq.h"
 
@@ -104,6 +106,15 @@ int persist__chunk_message_store_write_v5(FILE *db_fptr, struct P_msg_store *chu
 	int source_id_len = chunk->F.source_id_len;
 	int source_username_len = chunk->F.source_username_len;
 	int topic_len = chunk->F.topic_len;
+	uint32_t proplen = 0;
+	struct mosquitto__packet prop_packet;
+	int rc;
+
+	memset(&prop_packet, 0, sizeof(struct mosquitto__packet));
+	if(chunk->properties){
+		proplen = property__get_length_all(chunk->properties);
+		proplen += packet__varint_bytes(proplen);
+	}
 
 	chunk->F.payloadlen = htonl(chunk->F.payloadlen);
 	chunk->F.source_mid = htons(chunk->F.source_mid);
@@ -115,7 +126,7 @@ int persist__chunk_message_store_write_v5(FILE *db_fptr, struct P_msg_store *chu
 	header.chunk = htonl(DB_CHUNK_MSG_STORE);
 	header.length = htonl(sizeof(struct PF_msg_store) +
 			topic_len + payloadlen +
-			source_id_len + source_username_len);
+			source_id_len + source_username_len + proplen);
 
 	write_e(db_fptr, &header, sizeof(struct PF_header));
 	write_e(db_fptr, &chunk->F, sizeof(struct PF_msg_store));
@@ -129,10 +140,26 @@ int persist__chunk_message_store_write_v5(FILE *db_fptr, struct P_msg_store *chu
 	if(payloadlen){
 		write_e(db_fptr, UHPA_ACCESS(chunk->payload, payloadlen), (unsigned int)payloadlen);
 	}
+	if(chunk->properties){
+		if(proplen > 0){
+			prop_packet.remaining_length = proplen;
+			prop_packet.packet_length = proplen;
+			prop_packet.payload = mosquitto__malloc(proplen);
+			if(!prop_packet.payload){
+				return MOSQ_ERR_NOMEM;
+			}
+			rc = property__write_all(&prop_packet, chunk->properties, true);
+			if(rc) return rc;
+
+			write_e(db_fptr, prop_packet.payload, proplen);
+			mosquitto__free(prop_packet.payload);
+		}
+	}
 
 	return MOSQ_ERR_SUCCESS;
 error:
 	log__printf(NULL, MOSQ_LOG_ERR, "Error: %s.", strerror(errno));
+	mosquitto__free(prop_packet.payload);
 	return 1;
 }
 

@@ -28,9 +28,12 @@ PERSIST_READ_TEST_OBJS = \
 
 PERSIST_READ_OBJS = \
 		memory_mosq.o \
+		packet_datatypes.o \
 		persist_read.o \
 		persist_read_v234.o \
 		persist_read_v5.o \
+		property_mosq.o \
+		utf8_mosq.o \
 		util_mosq.o
 
 PERSIST_WRITE_TEST_OBJS = \
@@ -40,12 +43,15 @@ PERSIST_WRITE_TEST_OBJS = \
 PERSIST_WRITE_OBJS = \
 		database.o \
 		memory_mosq.o \
+		packet_datatypes.o \
 		persist_read.o \
 		persist_read_v234.o \
 		persist_read_v5.o \
 		persist_write.o \
 		persist_write_v5.o \
+		property_mosq.o \
 		subs.o \
+		utf8_mosq.o \
 		util_mosq.o
 
 all : test

@@ -238,7 +238,7 @@ static void TEST_v5_sub(void)
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
 
 	CU_ASSERT_EQUAL(0, file_diff("files/persist_read/v5-sub.test-db", "v5-sub.db"));
-	//unlink("v5-sub.db");
+	unlink("v5-sub.db");
 }
 
 
