@@ -80,17 +80,41 @@ error:
 int persist__chunk_client_msg_write_v5(FILE *db_fptr, struct P_client_msg *chunk)
 {
 	struct PF_header header;
+	struct mosquitto__packet prop_packet;
 	int id_len = chunk->F.id_len;
+	uint32_t proplen = 0;
+	int rc;
+
+	memset(&prop_packet, 0, sizeof(struct mosquitto__packet));
+	if(chunk->properties){
+		proplen = property__get_length_all(chunk->properties);
+		proplen += packet__varint_bytes(proplen);
+	}
 
 	chunk->F.mid = htons(chunk->F.mid);
 	chunk->F.id_len = htons(chunk->F.id_len);
 
 	header.chunk = htonl(DB_CHUNK_CLIENT_MSG);
-	header.length = htonl(sizeof(struct PF_client_msg)+id_len);
+	header.length = htonl(sizeof(struct PF_client_msg) + id_len + proplen);
 
 	write_e(db_fptr, &header, sizeof(struct PF_header));
 	write_e(db_fptr, &chunk->F, sizeof(struct PF_client_msg));
 	write_e(db_fptr, chunk->client_id, id_len);
+	if(chunk->properties){
+		if(proplen > 0){
+			prop_packet.remaining_length = proplen;
+			prop_packet.packet_length = proplen;
+			prop_packet.payload = mosquitto__malloc(proplen);
+			if(!prop_packet.payload){
+				return MOSQ_ERR_NOMEM;
+			}
+			rc = property__write_all(&prop_packet, chunk->properties, true);
+			if(rc) return rc;
+
+			write_e(db_fptr, prop_packet.payload, proplen);
+			mosquitto__free(prop_packet.payload);
+		}
+	}
 
 	return MOSQ_ERR_SUCCESS;
 error:

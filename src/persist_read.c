@@ -106,7 +106,7 @@ int persist__read_string(FILE *db_fptr, char **str)
 }
 
 
-static int persist__client_msg_restore(struct mosquitto_db *db, const char *client_id, uint16_t mid, uint8_t qos, uint8_t retain, uint8_t direction, uint8_t state, uint8_t dup, uint64_t store_id)
+static int persist__client_msg_restore(struct mosquitto_db *db, struct P_client_msg *chunk)
 {
 	struct mosquitto_client_msg *cmsg;
 	struct mosquitto_client_msg **msgs, **last_msg;
@@ -121,15 +121,16 @@ static int persist__client_msg_restore(struct mosquitto_db *db, const char *clie
 
 	cmsg->next = NULL;
 	cmsg->store = NULL;
-	cmsg->mid = mid;
-	cmsg->qos = qos;
-	cmsg->retain = retain;
+	cmsg->mid = chunk->F.mid;
+	cmsg->qos = chunk->F.qos;
+	cmsg->retain = (chunk->F.retain_dup&0xF0)>>4;
 	cmsg->timestamp = 0;
-	cmsg->direction = direction;
-	cmsg->state = state;
-	cmsg->dup = dup;
+	cmsg->direction = chunk->F.direction;
+	cmsg->state = chunk->F.state;
+	cmsg->dup = chunk->F.retain_dup&0x0F;
+	cmsg->properties = chunk->properties;
 
-	HASH_FIND(hh, db->msg_store_load, &store_id, sizeof(dbid_t), load);
+	HASH_FIND(hh, db->msg_store_load, &chunk->F.store_id, sizeof(dbid_t), load);
 	if(!load){
 		mosquitto__free(cmsg);
 		log__printf(NULL, MOSQ_LOG_ERR, "Error restoring persistent database, message store corrupt.");
@@ -138,14 +139,14 @@ static int persist__client_msg_restore(struct mosquitto_db *db, const char *clie
 	cmsg->store = load->store;
 	cmsg->store->ref_count++;
 
-	context = persist__find_or_add_context(db, client_id, 0);
+	context = persist__find_or_add_context(db, chunk->client_id, 0);
 	if(!context){
 		mosquitto__free(cmsg);
 		log__printf(NULL, MOSQ_LOG_ERR, "Error restoring persistent database, message store corrupt.");
 		return 1;
 	}
 
-	if (state == mosq_ms_queued){
+	if(chunk->F.state == mosq_ms_queued){
 		msgs = &(context->queued_msgs);
 		last_msg = &(context->last_queued_msg);
 	}else{
@@ -196,7 +197,7 @@ static int persist__client_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
 }
 
 
-static int persist__client_msg_chunk_restore(struct mosquitto_db *db, FILE *db_fptr)
+static int persist__client_msg_chunk_restore(struct mosquitto_db *db, FILE *db_fptr, uint32_t length)
 {
 	struct P_client_msg chunk;
 	int rc;
@@ -204,7 +205,7 @@ static int persist__client_msg_chunk_restore(struct mosquitto_db *db, FILE *db_f
 	memset(&chunk, 0, sizeof(struct P_client_msg));
 
 	if(db_version == 5){
-		rc = persist__chunk_client_msg_read_v5(db_fptr, &chunk);
+		rc = persist__chunk_client_msg_read_v5(db_fptr, &chunk, length);
 	}else{
 		rc = persist__chunk_client_msg_read_v234(db_fptr, &chunk);
 	}
@@ -213,8 +214,7 @@ static int persist__client_msg_chunk_restore(struct mosquitto_db *db, FILE *db_f
 		return rc;
 	}
 
-	rc = persist__client_msg_restore(db, chunk.client_id, chunk.F.mid, chunk.F.qos,
-			(chunk.F.retain_dup&0xF0)>>4, chunk.F.direction, chunk.F.state, (chunk.F.retain_dup&0x0F), chunk.F.store_id);
+	rc = persist__client_msg_restore(db, &chunk);
 	mosquitto__free(chunk.client_id);
 
 	return rc;
@@ -425,7 +425,7 @@ int persist__restore(struct mosquitto_db *db)
 					break;
 
 				case DB_CHUNK_CLIENT_MSG:
-					if(persist__client_msg_chunk_restore(db, fptr)) return 1;
+					if(persist__client_msg_chunk_restore(db, fptr, length)) return 1;
 					break;
 
 				case DB_CHUNK_RETAIN:

@@ -211,6 +211,35 @@ static void TEST_v5_client_message(void)
 }
 
 
+static void TEST_v5_client_message_props(void)
+{
+	struct mosquitto_db db;
+	struct mosquitto__config config;
+	struct mosquitto__listener listener;
+	int rc;
+
+	memset(&db, 0, sizeof(struct mosquitto_db));
+	memset(&config, 0, sizeof(struct mosquitto__config));
+	memset(&listener, 0, sizeof(struct mosquitto__listener));
+	db.config = &config;
+	listener.port = 1883;
+	config.listeners = &listener;
+	config.listener_count = 1;
+
+	config.persistence = true;
+	config.persistence_filepath = "files/persist_read/v5-client-message-props.test-db";
+	rc = persist__restore(&db);
+	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
+
+	config.persistence_filepath = "v5-client-message-props.db";
+	rc = persist__backup(&db, true);
+	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
+
+	CU_ASSERT_EQUAL(0, file_diff("files/persist_read/v5-client-message-props.test-db", "v5-client-message-props.db"));
+	unlink("v5-client-message-props.db");
+}
+
+
 static void TEST_v5_sub(void)
 {
 	struct mosquitto_db db;
@@ -300,6 +329,7 @@ int main(int argc, char *argv[])
 			|| !CU_add_test(test_suite, "v5 message store (message has no refs)", TEST_v5_message_store_no_ref)
 			|| !CU_add_test(test_suite, "v5 client", TEST_v5_client)
 			|| !CU_add_test(test_suite, "v5 client message", TEST_v5_client_message)
+			|| !CU_add_test(test_suite, "v5 client message+props", TEST_v5_client_message_props)
 			|| !CU_add_test(test_suite, "v5 sub", TEST_v5_sub)
 			//|| !CU_add_test(test_suite, "v5 full", TEST_v5_full)
 			){

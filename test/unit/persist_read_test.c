@@ -287,6 +287,7 @@ static void TEST_v3_client_message(void)
 			CU_ASSERT_EQUAL(context->inflight_msgs->direction, mosq_md_out);
 			CU_ASSERT_EQUAL(context->inflight_msgs->state, mosq_ms_wait_for_puback);
 			CU_ASSERT_EQUAL(context->inflight_msgs->dup, 0);
+			CU_ASSERT_PTR_NULL(context->inflight_msgs->properties);
 		}
 	}
 }
@@ -553,6 +554,58 @@ static void TEST_v5_client_message(void)
 			CU_ASSERT_EQUAL(context->inflight_msgs->direction, mosq_md_out);
 			CU_ASSERT_EQUAL(context->inflight_msgs->state, mosq_ms_wait_for_puback);
 			CU_ASSERT_EQUAL(context->inflight_msgs->dup, 0);
+			CU_ASSERT_PTR_NULL(context->inflight_msgs->properties);
+		}
+	}
+}
+
+static void TEST_v5_client_message_props(void)
+{
+	struct mosquitto_db db;
+	struct mosquitto__config config;
+	struct mosquitto *context;
+	int rc;
+
+	memset(&db, 0, sizeof(struct mosquitto_db));
+	memset(&config, 0, sizeof(struct mosquitto__config));
+	db.config = &config;
+
+	config.persistence = true;
+	config.persistence_filepath = "files/persist_read/v5-client-message-props.test-db";
+
+	rc = persist__restore(&db);
+	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
+
+	CU_ASSERT_PTR_NOT_NULL(db.contexts_by_id);
+	HASH_FIND(hh_id, db.contexts_by_id, "client-id", strlen("client-id"), context);
+	CU_ASSERT_PTR_NOT_NULL(context);
+	if(context){
+		CU_ASSERT_PTR_NOT_NULL(context->inflight_msgs);
+		if(context->inflight_msgs){
+			CU_ASSERT_PTR_NULL(context->inflight_msgs->next);
+			CU_ASSERT_PTR_NOT_NULL(context->inflight_msgs->store);
+			if(context->inflight_msgs->store){
+				CU_ASSERT_EQUAL(context->inflight_msgs->store->ref_count, 1);
+				CU_ASSERT_STRING_EQUAL(context->inflight_msgs->store->source_id, "source_id");
+				CU_ASSERT_EQUAL(context->inflight_msgs->store->source_mid, 2);
+				CU_ASSERT_EQUAL(context->inflight_msgs->store->mid, 0);
+				CU_ASSERT_EQUAL(context->inflight_msgs->store->qos, 2);
+				CU_ASSERT_EQUAL(context->inflight_msgs->store->retain, 1);
+				CU_ASSERT_STRING_EQUAL(context->inflight_msgs->store->topic, "topic");
+				CU_ASSERT_EQUAL(context->inflight_msgs->store->payloadlen, 7);
+				if(context->inflight_msgs->store->payloadlen == 7){
+					CU_ASSERT_NSTRING_EQUAL(UHPA_ACCESS_PAYLOAD(context->inflight_msgs->store), "payload", 7);
+				}
+			}
+			CU_ASSERT_EQUAL(context->inflight_msgs->mid, 0x73);
+			CU_ASSERT_EQUAL(context->inflight_msgs->qos, 1);
+			CU_ASSERT_EQUAL(context->inflight_msgs->retain, 0);
+			CU_ASSERT_EQUAL(context->inflight_msgs->direction, mosq_md_out);
+			CU_ASSERT_EQUAL(context->inflight_msgs->state, mosq_ms_wait_for_puback);
+			CU_ASSERT_EQUAL(context->inflight_msgs->dup, 0);
+			CU_ASSERT_PTR_NOT_NULL(context->inflight_msgs->properties);
+			if(context->inflight_msgs->properties){
+			}
 		}
 	}
 }
@@ -663,6 +716,7 @@ int init_persist_read_tests(void)
 			|| !CU_add_test(test_suite, "v5 message store", TEST_v5_message_store)
 			|| !CU_add_test(test_suite, "v5 client", TEST_v5_client)
 			|| !CU_add_test(test_suite, "v5 client message", TEST_v5_client_message)
+			|| !CU_add_test(test_suite, "v5 client message+props", TEST_v5_client_message_props)
 			|| !CU_add_test(test_suite, "v5 retain", TEST_v5_retain)
 			|| !CU_add_test(test_suite, "v5 sub", TEST_v5_sub)
 			){
