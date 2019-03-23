@@ -453,32 +453,31 @@ static int sub__add_normal(struct mosquitto_db *db, struct mosquitto *context, i
 }
 
 
-static int sub__add_recurse(struct mosquitto_db *db, struct mosquitto *context, int qos, uint32_t identifier, int options, struct mosquitto__subhier *subhier, struct sub__token *tokens, char *sharename)
-	/* FIXME - this function has the potential to leak subhier, audit calling functions. */
+static int sub__add_context(struct mosquitto_db *db, struct mosquitto *context, int qos, uint32_t identifier, int options, struct mosquitto__subhier *subhier, struct sub__token *tokens, char *sharename)
 {
 	struct mosquitto__subhier *branch;
 
-	if(!tokens){
-		if(context && context->id){
-			if(sharename){
-				return sub__add_shared(db, context, qos, identifier, options, subhier, tokens, sharename);
-			}else{
-				return sub__add_normal(db, context, qos, identifier, options, subhier, tokens);
-			}
-		}else{
-			return MOSQ_ERR_SUCCESS;
+	/* Find leaf node */
+	while(tokens){
+		HASH_FIND(hh, subhier->children, tokens->topic, tokens->topic_len, branch);
+		if(!branch){
+			/* Not found */
+			branch = sub__add_hier_entry(subhier, &subhier->children, tokens->topic, tokens->topic_len);
+			if(!branch) return MOSQ_ERR_NOMEM;
 		}
+		subhier = branch;
+		tokens = tokens ->next;
 	}
 
-	HASH_FIND(hh, subhier->children, tokens->topic, tokens->topic_len, branch);
-	if(branch){
-		return sub__add_recurse(db, context, qos, identifier, options, branch, tokens->next, sharename);
+	/* Add add our context */
+	if(context && context->id){
+		if(sharename){
+			return sub__add_shared(db, context, qos, identifier, options, subhier, tokens, sharename);
+		}else{
+			return sub__add_normal(db, context, qos, identifier, options, subhier, tokens);
+		}
 	}else{
-		/* Not found */
-		branch = sub__add_hier_entry(subhier, &subhier->children, tokens->topic, tokens->topic_len);
-		if(!branch) return MOSQ_ERR_NOMEM;
-
-		return sub__add_recurse(db, context, qos, identifier, options, branch, tokens->next, sharename);
+		return MOSQ_ERR_SUCCESS;
 	}
 }
 
@@ -740,7 +739,7 @@ int sub__add(struct mosquitto_db *db, struct mosquitto *context, const char *sub
 		}
 
 	}
-	rc = sub__add_recurse(db, context, qos, identifier, options, subhier, tokens, sharename);
+	rc = sub__add_context(db, context, qos, identifier, options, subhier, tokens, sharename);
 
 	sub__topic_tokens_free(tokens);
 
@@ -814,7 +813,7 @@ int sub__messages_queue(struct mosquitto_db *db, const char *source_id, const ch
 			/* We have a message that needs to be retained, so ensure that the subscription
 			 * tree for its topic exists.
 			 */
-			sub__add_recurse(db, NULL, 0, 0, 0, subhier, tokens, NULL);
+			sub__add_context(db, NULL, 0, 0, 0, subhier, tokens, NULL);
 		}
 		rc = sub__search(db, subhier, tokens, source_id, topic, qos, retain, *stored, true);
 	}
