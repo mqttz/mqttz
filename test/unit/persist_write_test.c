@@ -158,6 +158,35 @@ static void TEST_v5_message_store_no_ref(void)
 }
 
 
+static void TEST_v5_message_store_props(void)
+{
+	struct mosquitto_db db;
+	struct mosquitto__config config;
+	struct mosquitto__listener listener;
+	int rc;
+
+	memset(&db, 0, sizeof(struct mosquitto_db));
+	memset(&config, 0, sizeof(struct mosquitto__config));
+	memset(&listener, 0, sizeof(struct mosquitto__listener));
+	db.config = &config;
+	listener.port = 1883;
+	config.listeners = &listener;
+	config.listener_count = 1;
+
+	config.persistence = true;
+	config.persistence_filepath = "files/persist_read/v5-message-store-props.test-db";
+	rc = persist__restore(&db);
+	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
+
+	config.persistence_filepath = "v5-message-store-props.db";
+	rc = persist__backup(&db, true);
+	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
+
+	CU_ASSERT_EQUAL(0, file_diff("files/persist_read/v5-message-store-props.test-db", "v5-message-store-props.db"));
+	unlink("v5-message-store-props.db");
+}
+
+
 static void TEST_v5_client(void)
 {
 	struct mosquitto_db db;
@@ -230,6 +259,10 @@ static void TEST_v5_client_message_props(void)
 	config.persistence_filepath = "files/persist_read/v5-client-message-props.test-db";
 	rc = persist__restore(&db);
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
+	CU_ASSERT_PTR_NOT_NULL(db.msg_store->source_listener);
+	if(db.msg_store->source_listener){
+		CU_ASSERT_EQUAL(db.msg_store->source_listener->port, 1883);
+	}
 
 	config.persistence_filepath = "v5-client-message-props.db";
 	rc = persist__backup(&db, true);
@@ -327,6 +360,7 @@ int main(int argc, char *argv[])
 			|| !CU_add_test(test_suite, "Empty file", TEST_empty_file)
 			|| !CU_add_test(test_suite, "v5 config ok", TEST_v5_config_ok)
 			|| !CU_add_test(test_suite, "v5 message store (message has no refs)", TEST_v5_message_store_no_ref)
+			|| !CU_add_test(test_suite, "v5 message store + props", TEST_v5_message_store_props)
 			|| !CU_add_test(test_suite, "v5 client", TEST_v5_client)
 			|| !CU_add_test(test_suite, "v5 client message", TEST_v5_client_message)
 			|| !CU_add_test(test_suite, "v5 client message+props", TEST_v5_client_message_props)

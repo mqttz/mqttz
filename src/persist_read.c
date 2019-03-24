@@ -264,6 +264,9 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 			chunk.topic, chunk.F.qos, chunk.F.payloadlen,
 			&chunk.payload, chunk.F.retain, &stored, 0, chunk.properties, chunk.F.store_id);
 
+	if(stored){
+		stored->source_listener = chunk.source.listener;
+	}
 	mosquitto__free(chunk.source.id);
 	mosquitto__free(chunk.source.username);
 	chunk.source.id = NULL;

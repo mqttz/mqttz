@@ -11,6 +11,7 @@
 
 #include "mosquitto_broker_internal.h"
 #include "persist.h"
+#include "property_mosq.h"
 
 uint64_t last_retained;
 char *last_sub = NULL;
@@ -481,6 +482,53 @@ static void TEST_v5_message_store(void)
 		if(db.msg_store->payloadlen == 7){
 			CU_ASSERT_NSTRING_EQUAL(UHPA_ACCESS_PAYLOAD(db.msg_store), "payload", 7);
 		}
+		CU_ASSERT_PTR_NULL(db.msg_store->properties);
+	}
+}
+
+
+static void TEST_v5_message_store_props(void)
+{
+	struct mosquitto_db db;
+	struct mosquitto__config config;
+	struct mosquitto__listener listener;
+	int rc;
+
+	memset(&db, 0, sizeof(struct mosquitto_db));
+	memset(&config, 0, sizeof(struct mosquitto__config));
+	memset(&listener, 0, sizeof(struct mosquitto__listener));
+	db.config = &config;
+
+	listener.port = 1883;
+	config.listeners = &listener;
+	config.listener_count = 1;
+
+	config.persistence = true;
+	config.persistence_filepath = "files/persist_read/v5-message-store-props.test-db";
+
+	rc = persist__restore(&db);
+	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
+	CU_ASSERT_EQUAL(db.msg_store_count, 1);
+	CU_ASSERT_EQUAL(db.msg_store_bytes, 7);
+	CU_ASSERT_PTR_NOT_NULL(db.msg_store);
+	if(db.msg_store){
+		CU_ASSERT_EQUAL(db.msg_store->db_id, 1);
+		CU_ASSERT_STRING_EQUAL(db.msg_store->source_id, "source_id");
+		CU_ASSERT_EQUAL(db.msg_store->source_mid, 2);
+		CU_ASSERT_EQUAL(db.msg_store->mid, 0);
+		CU_ASSERT_EQUAL(db.msg_store->qos, 2);
+		CU_ASSERT_EQUAL(db.msg_store->retain, 1);
+		CU_ASSERT_STRING_EQUAL(db.msg_store->topic, "topic");
+		CU_ASSERT_EQUAL(db.msg_store->payloadlen, 7);
+		if(db.msg_store->payloadlen == 7){
+			CU_ASSERT_NSTRING_EQUAL(UHPA_ACCESS_PAYLOAD(db.msg_store), "payload", 7);
+		}
+		CU_ASSERT_PTR_NOT_NULL(db.msg_store->properties);
+		if(db.msg_store->properties){
+			CU_ASSERT_EQUAL(db.msg_store->properties->identifier, 1);
+			CU_ASSERT_EQUAL(db.msg_store->properties->value.i8, 1);
+		}
+		CU_ASSERT_PTR_NOT_NULL(db.msg_store->source_listener);
 	}
 }
 
@@ -605,6 +653,8 @@ static void TEST_v5_client_message_props(void)
 			CU_ASSERT_EQUAL(context->inflight_msgs->dup, 0);
 			CU_ASSERT_PTR_NOT_NULL(context->inflight_msgs->properties);
 			if(context->inflight_msgs->properties){
+				CU_ASSERT_EQUAL(context->inflight_msgs->properties->identifier, 1);
+				CU_ASSERT_EQUAL(context->inflight_msgs->properties->value.i8, 1);
 			}
 		}
 	}
@@ -714,6 +764,7 @@ int init_persist_read_tests(void)
 			|| !CU_add_test(test_suite, "v5 config bad truncated", TEST_v5_config_truncated)
 			|| !CU_add_test(test_suite, "v5 bad chunk", TEST_v5_bad_chunk)
 			|| !CU_add_test(test_suite, "v5 message store", TEST_v5_message_store)
+			|| !CU_add_test(test_suite, "v5 message store+props", TEST_v5_message_store_props)
 			|| !CU_add_test(test_suite, "v5 client", TEST_v5_client)
 			|| !CU_add_test(test_suite, "v5 client message", TEST_v5_client_message)
 			|| !CU_add_test(test_suite, "v5 client message+props", TEST_v5_client_message_props)
