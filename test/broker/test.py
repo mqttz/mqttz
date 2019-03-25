@@ -150,6 +150,7 @@ tests = [
     (1, './11-persistent-subscription-v5.py'),
     (1, './11-persistent-subscription-no-local.py'),
     (1, './11-pub-props.py'),
+    (1, './11-subscription-id.py'),
 
     (1, './12-prop-assigned-client-identifier.py'),
     (1, './12-prop-maximum-packet-size-broker.py'),

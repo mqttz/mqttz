@@ -182,6 +182,7 @@ endif
 	./11-persistent-subscription-v5.py
 	./11-persistent-subscription-no-local.py
 	./11-pub-props.py
+	./11-subscription-id.py
 
 12 :
 	./12-prop-assigned-client-identifier.py

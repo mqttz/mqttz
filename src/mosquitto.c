@@ -384,13 +384,13 @@ int main(int argc, char *argv[])
 		context__send_will(&int_db, ctxt);
 	}
 	will_delay__send_all(&int_db);
-	session_expiry__remove_all(&int_db);
 
 #ifdef WITH_PERSISTENCE
 	if(config.persistence){
 		persist__backup(&int_db, true);
 	}
 #endif
+	session_expiry__remove_all(&int_db);
 
 	HASH_ITER(hh_id, int_db.contexts_by_id, ctxt, ctxt_tmp){
 #ifdef WITH_WEBSOCKETS
