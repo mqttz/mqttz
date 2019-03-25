@@ -115,6 +115,7 @@ static int persist__message_store_save(struct mosquitto_db *db, FILE *db_fptr)
 		}
 
 		chunk.F.store_id = stored->db_id;
+		chunk.F.expiry_time = stored->message_expiry_time;
 		chunk.F.payloadlen = stored->payloadlen;
 		chunk.F.source_mid = stored->source_mid;
 		if(stored->source_id){

@@ -259,9 +259,13 @@ static void TEST_v5_client_message_props(void)
 	config.persistence_filepath = "files/persist_read/v5-client-message-props.test-db";
 	rc = persist__restore(&db);
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
-	CU_ASSERT_PTR_NOT_NULL(db.msg_store->source_listener);
-	if(db.msg_store->source_listener){
-		CU_ASSERT_EQUAL(db.msg_store->source_listener->port, 1883);
+
+	CU_ASSERT_PTR_NOT_NULL(db.msg_store);
+	if(db.msg_store){
+		CU_ASSERT_PTR_NOT_NULL(db.msg_store->source_listener);
+		if(db.msg_store->source_listener){
+			CU_ASSERT_EQUAL(db.msg_store->source_listener->port, 1883);
+		}
 	}
 
 	config.persistence_filepath = "v5-client-message-props.db";

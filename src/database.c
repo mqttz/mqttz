@@ -938,6 +938,7 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 	tail = context->inflight_msgs;
 	while(tail){
 		msg_count++;
+		expiry_interval = 0;
 		if(tail->store->message_expiry_time){
 			if(now == 0){
 				now = time(NULL);

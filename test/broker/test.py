@@ -146,6 +146,7 @@ tests = [
 
     (2, './10-listener-mount-point.py'),
 
+    (1, './11-message-expiry.py'),
     (1, './11-persistent-subscription.py'),
     (1, './11-persistent-subscription-v5.py'),
     (1, './11-persistent-subscription-no-local.py'),

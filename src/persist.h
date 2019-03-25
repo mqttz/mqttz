@@ -87,6 +87,7 @@ struct P_client_msg{
 
 struct PF_msg_store{
 	dbid_t store_id;
+	uint64_t expiry_time;
 	uint32_t payloadlen;
 	uint16_t source_mid;
 	uint16_t source_id_len;

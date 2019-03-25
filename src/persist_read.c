@@ -226,6 +226,7 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 	struct P_msg_store chunk;
 	struct mosquitto_msg_store *stored = NULL;
 	struct mosquitto_msg_store_load *load;
+	uint32_t message_expiry_interval;
 	int rc = 0;
 	int i;
 
@@ -260,9 +261,15 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 		return MOSQ_ERR_NOMEM;
 	}
 
+	if(chunk.F.expiry_time > 0){
+		message_expiry_interval = chunk.F.expiry_time - time(NULL);
+	}else{
+		message_expiry_interval = 0;
+	}
+
 	rc = db__message_store(db, &chunk.source, chunk.F.source_mid,
 			chunk.topic, chunk.F.qos, chunk.F.payloadlen,
-			&chunk.payload, chunk.F.retain, &stored, 0, chunk.properties, chunk.F.store_id);
+			&chunk.payload, chunk.F.retain, &stored, message_expiry_interval, chunk.properties, chunk.F.store_id);
 
 	if(stored){
 		stored->source_listener = chunk.source.listener;
