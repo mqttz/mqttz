@@ -135,6 +135,9 @@ int persist__chunk_msg_store_read_v5(FILE *db_fptr, struct P_msg_store *chunk, u
 
 	read_e(db_fptr, &chunk->F, sizeof(struct PF_msg_store));
 	chunk->F.payloadlen = ntohl(chunk->F.payloadlen);
+	if(chunk->F.payloadlen > MQTT_MAX_PAYLOAD){
+		return MOSQ_ERR_INVAL;
+	}
 	chunk->F.source_mid = ntohs(chunk->F.source_mid);
 	chunk->F.source_id_len = ntohs(chunk->F.source_id_len);
 	chunk->F.source_username_len = ntohs(chunk->F.source_username_len);
@@ -166,7 +169,7 @@ int persist__chunk_msg_store_read_v5(FILE *db_fptr, struct P_msg_store *chunk, u
 		return rc;
 	}
 
-	if(chunk->F.payloadlen){
+	if(chunk->F.payloadlen > 0){
 		if(UHPA_ALLOC(chunk->payload, chunk->F.payloadlen) == 0){
 			mosquitto__free(chunk->source.id);
 			mosquitto__free(chunk->source.username);
