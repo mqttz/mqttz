@@ -58,7 +58,7 @@ struct PF_cfg{
 };
 
 struct PF_client{
-	uint64_t session_expiry_time;
+	int64_t session_expiry_time;
 	uint32_t session_expiry_interval;
 	uint16_t last_mid;
 	uint16_t id_len;
@@ -87,7 +87,7 @@ struct P_client_msg{
 
 struct PF_msg_store{
 	dbid_t store_id;
-	uint64_t expiry_time;
+	int64_t expiry_time;
 	uint32_t payloadlen;
 	uint16_t source_mid;
 	uint16_t source_id_len;
