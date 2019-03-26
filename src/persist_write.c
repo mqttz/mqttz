@@ -94,12 +94,12 @@ static int persist__message_store_save(struct mosquitto_db *db, FILE *db_fptr)
 
 	stored = db->msg_store;
 	while(stored){
-		if(stored->ref_count < 1){
+		if(stored->ref_count < 1 || stored->topic == NULL){
 			stored = stored->next;
 			continue;
 		}
 
-		if(stored->topic && !strncmp(stored->topic, "$SYS", 4)){
+		if(!strncmp(stored->topic, "$SYS", 4)){
 			if(stored->ref_count <= 1 && stored->dest_id_count == 0){
 				/* $SYS messages that are only retained shouldn't be persisted. */
 				stored = stored->next;
@@ -132,13 +132,10 @@ static int persist__message_store_save(struct mosquitto_db *db, FILE *db_fptr)
 			chunk.F.source_username_len = 0;
 			chunk.source.username = NULL;
 		}
-		if(stored->topic){
-			chunk.F.topic_len = strlen(stored->topic);
-			chunk.topic = stored->topic;
-		}else{
-			chunk.F.topic_len = 0;
-			chunk.topic = NULL;
-		}
+
+		chunk.F.topic_len = strlen(stored->topic);
+		chunk.topic = stored->topic;
+
 		if(stored->source_listener){
 			chunk.F.source_port = stored->source_listener->port;
 		}else{

@@ -210,7 +210,10 @@ static void TEST_v3_message_store(void)
 		CU_ASSERT_EQUAL(db.msg_store->mid, 0);
 		CU_ASSERT_EQUAL(db.msg_store->qos, 2);
 		CU_ASSERT_EQUAL(db.msg_store->retain, 1);
-		CU_ASSERT_STRING_EQUAL(db.msg_store->topic, "topic");
+		CU_ASSERT_PTR_NOT_NULL(db.msg_store->topic);
+		if(db.msg_store->topic){
+			CU_ASSERT_STRING_EQUAL(db.msg_store->topic, "topic");
+		}
 		CU_ASSERT_EQUAL(db.msg_store->payloadlen, 7);
 		if(db.msg_store->payloadlen == 7){
 			CU_ASSERT_NSTRING_EQUAL(UHPA_ACCESS_PAYLOAD(db.msg_store), "payload", 7);
@@ -276,7 +279,10 @@ static void TEST_v3_client_message(void)
 				CU_ASSERT_EQUAL(context->inflight_msgs->store->mid, 0);
 				CU_ASSERT_EQUAL(context->inflight_msgs->store->qos, 2);
 				CU_ASSERT_EQUAL(context->inflight_msgs->store->retain, 1);
-				CU_ASSERT_STRING_EQUAL(context->inflight_msgs->store->topic, "topic");
+				CU_ASSERT_PTR_NOT_NULL(context->inflight_msgs->store->topic);
+				if(context->inflight_msgs->store->topic){
+					CU_ASSERT_STRING_EQUAL(context->inflight_msgs->store->topic, "topic");
+				}
 				CU_ASSERT_EQUAL(context->inflight_msgs->store->payloadlen, 7);
 				if(context->inflight_msgs->store->payloadlen == 7){
 					CU_ASSERT_NSTRING_EQUAL(UHPA_ACCESS_PAYLOAD(context->inflight_msgs->store), "payload", 7);
@@ -320,7 +326,10 @@ static void TEST_v3_retain(void)
 		CU_ASSERT_EQUAL(db.msg_store->mid, 0);
 		CU_ASSERT_EQUAL(db.msg_store->qos, 2);
 		CU_ASSERT_EQUAL(db.msg_store->retain, 1);
-		CU_ASSERT_STRING_EQUAL(db.msg_store->topic, "topic");
+		CU_ASSERT_PTR_NOT_NULL(db.msg_store->topic);
+		if(db.msg_store->topic){
+			CU_ASSERT_STRING_EQUAL(db.msg_store->topic, "topic");
+		}
 		CU_ASSERT_EQUAL(db.msg_store->payloadlen, 7);
 		if(db.msg_store->payloadlen == 7){
 			CU_ASSERT_NSTRING_EQUAL(UHPA_ACCESS_PAYLOAD(db.msg_store), "payload", 7);
@@ -387,7 +396,10 @@ static void TEST_v4_message_store(void)
 		CU_ASSERT_EQUAL(db.msg_store->mid, 0);
 		CU_ASSERT_EQUAL(db.msg_store->qos, 1);
 		CU_ASSERT_EQUAL(db.msg_store->retain, 0);
-		CU_ASSERT_STRING_EQUAL(db.msg_store->topic, "topic");
+		CU_ASSERT_PTR_NOT_NULL(db.msg_store->topic);
+		if(db.msg_store->topic){
+			CU_ASSERT_STRING_EQUAL(db.msg_store->topic, "topic");
+		}
 		CU_ASSERT_EQUAL(db.msg_store->payloadlen, 7);
 		if(db.msg_store->payloadlen == 7){
 			CU_ASSERT_NSTRING_EQUAL(UHPA_ACCESS_PAYLOAD(db.msg_store), "payload", 7);
