@@ -18,6 +18,7 @@ Broker features:
 - Drop support for TLS v1.0.
 - Add support for Automotive DLT logging.
 - Disallow writing to $ topics where appropriate.
+- Fix mosquitto_passwd crashing on corrupt password file. Closes #1207.
 
 Client library features:
 - Add mosquitto_subscribe_multiple() for sending subscriptions to multiple

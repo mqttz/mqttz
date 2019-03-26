@@ -204,10 +204,17 @@ int delete_pwuser(FILE *fptr, FILE *ftmp, const char *username)
 	char buf[MAX_BUFFER_LEN];
 	char lbuf[MAX_BUFFER_LEN], *token;
 	bool found = false;
+	int line = 0;
 
 	while(!feof(fptr) && fgets(buf, MAX_BUFFER_LEN, fptr)){
+		line++;
 		memcpy(lbuf, buf, MAX_BUFFER_LEN);
 		token = strtok(lbuf, ":");
+		if(!token){
+			fprintf(stderr, "Error: Corrupt password file at line %d.\n", line);
+			return 1;
+		}
+
 		if(strcmp(username, token)){
 			fprintf(ftmp, "%s", buf);
 		}else{
@@ -253,10 +260,17 @@ int update_pwuser(FILE *fptr, FILE *ftmp, const char *username, const char *pass
 	char lbuf[MAX_BUFFER_LEN], *token;
 	bool found = false;
 	int rc = 1;
+	int line = 0;
 
 	while(!feof(fptr) && fgets(buf, MAX_BUFFER_LEN, fptr)){
+		line++;
 		memcpy(lbuf, buf, MAX_BUFFER_LEN);
 		token = strtok(lbuf, ":");
+		if(!token){
+			fprintf(stderr, "Error: Corrupt password file at line %d.\n", line);
+			return 1;
+		}
+
 		if(strcmp(username, token)){
 			fprintf(ftmp, "%s", buf);
 		}else{
