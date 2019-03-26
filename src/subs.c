@@ -112,7 +112,7 @@ static int subs__send(struct mosquitto_db *db, struct mosquitto__subleaf *leaf, 
 }
 
 
-static int subs__shared_process(struct mosquitto_db *db, struct mosquitto__subhier *hier, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored, bool set_retain)
+static int subs__shared_process(struct mosquitto_db *db, struct mosquitto__subhier *hier, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored)
 {
 	int rc = 0, rc2;
 	struct mosquitto__subshared *shared, *shared_tmp;
@@ -162,7 +162,7 @@ static int subs__process(struct mosquitto_db *db, struct mosquitto__subhier *hie
 		}
 	}
 
-	rc2 = subs__shared_process(db, hier, source_id, topic, qos, retain, stored, set_retain);
+	rc2 = subs__shared_process(db, hier, topic, qos, retain, stored);
 
 	leaf = hier->subs;
 	while(source_id && leaf){
@@ -335,14 +335,14 @@ static void sub__remove_shared_leaf(struct mosquitto__subhier *subhier, struct m
 }
 
 
-static int sub__add_shared(struct mosquitto_db *db, struct mosquitto *context, int qos, uint32_t identifier, int options, struct mosquitto__subhier *subhier, struct sub__token *tokens, char *sharename)
+static int sub__add_shared(struct mosquitto_db *db, struct mosquitto *context, int qos, uint32_t identifier, int options, struct mosquitto__subhier *subhier, char *sharename)
 {
 	struct mosquitto__subleaf *newleaf;
 	struct mosquitto__subshared *shared = NULL;
 	struct mosquitto__subshared_ref **shared_subs;
 	struct mosquitto__subshared_ref *shared_ref;
 	int i;
-	int slen;
+	unsigned int slen;
 	int rc;
 
 	slen = strlen(sharename);
@@ -411,7 +411,7 @@ static int sub__add_shared(struct mosquitto_db *db, struct mosquitto *context, i
 }
 
 
-static int sub__add_normal(struct mosquitto_db *db, struct mosquitto *context, int qos, uint32_t identifier, int options, struct mosquitto__subhier *subhier, struct sub__token *tokens)
+static int sub__add_normal(struct mosquitto_db *db, struct mosquitto *context, int qos, uint32_t identifier, int options, struct mosquitto__subhier *subhier)
 {
 	struct mosquitto__subleaf *newleaf;
 	struct mosquitto__subhier **subs;
@@ -472,9 +472,9 @@ static int sub__add_context(struct mosquitto_db *db, struct mosquitto *context, 
 	/* Add add our context */
 	if(context && context->id){
 		if(sharename){
-			return sub__add_shared(db, context, qos, identifier, options, subhier, tokens, sharename);
+			return sub__add_shared(db, context, qos, identifier, options, subhier, sharename);
 		}else{
-			return sub__add_normal(db, context, qos, identifier, options, subhier, tokens);
+			return sub__add_normal(db, context, qos, identifier, options, subhier);
 		}
 	}else{
 		return MOSQ_ERR_SUCCESS;

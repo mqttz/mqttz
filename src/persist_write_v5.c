@@ -56,7 +56,7 @@ error:
 int persist__chunk_client_write_v5(FILE *db_fptr, struct P_client *chunk)
 {
 	struct PF_header header;
-	int id_len = chunk->F.id_len;
+	uint16_t id_len = chunk->F.id_len;
 
 	chunk->F.session_expiry_interval = htonl(chunk->F.session_expiry_interval);
 	chunk->F.last_mid = htons(chunk->F.last_mid);
@@ -81,7 +81,7 @@ int persist__chunk_client_msg_write_v5(FILE *db_fptr, struct P_client_msg *chunk
 {
 	struct PF_header header;
 	struct mosquitto__packet prop_packet;
-	int id_len = chunk->F.id_len;
+	uint16_t id_len = chunk->F.id_len;
 	uint32_t proplen = 0;
 	int rc;
 
@@ -126,10 +126,10 @@ error:
 int persist__chunk_message_store_write_v5(FILE *db_fptr, struct P_msg_store *chunk)
 {
 	struct PF_header header;
-	int payloadlen = chunk->F.payloadlen;
-	int source_id_len = chunk->F.source_id_len;
-	int source_username_len = chunk->F.source_username_len;
-	int topic_len = chunk->F.topic_len;
+	uint32_t payloadlen = chunk->F.payloadlen;
+	uint16_t source_id_len = chunk->F.source_id_len;
+	uint16_t source_username_len = chunk->F.source_username_len;
+	uint16_t topic_len = chunk->F.topic_len;
 	uint32_t proplen = 0;
 	struct mosquitto__packet prop_packet;
 	int rc;
@@ -208,8 +208,8 @@ error:
 int persist__chunk_sub_write_v5(FILE *db_fptr, struct P_sub *chunk)
 {
 	struct PF_header header;
-	int id_len = chunk->F.id_len;
-	int topic_len = chunk->F.topic_len;
+	uint16_t id_len = chunk->F.id_len;
+	uint16_t topic_len = chunk->F.topic_len;
 
 	chunk->F.identifier = htonl(chunk->F.identifier);
 	chunk->F.id_len = htons(chunk->F.id_len);
