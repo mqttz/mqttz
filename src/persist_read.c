@@ -264,7 +264,7 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 
 	if(chunk.F.expiry_time > 0){
 		message_expiry_interval64 = chunk.F.expiry_time - time(NULL);
-		if(message_expiry_interval64 < 0 || message_expiry_interval > UINT32_MAX){
+		if(message_expiry_interval64 < 0 || message_expiry_interval64 > UINT32_MAX){
 			message_expiry_interval = 0;
 		}else{
 			message_expiry_interval = (uint32_t)message_expiry_interval64;
