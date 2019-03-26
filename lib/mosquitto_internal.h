@@ -220,6 +220,7 @@ struct mosquitto {
 	int tls_cert_reqs;
 	bool tls_insecure;
 	bool ssl_ctx_defaults;
+	bool tls_ocsp_required;
 	char *tls_engine;
 	char *tls_engine_kpass_sha1;
 	enum mosquitto__keyform tls_keyform;

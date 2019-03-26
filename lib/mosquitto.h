@@ -96,6 +96,7 @@ enum mosq_err_t {
 	MOSQ_ERR_TLS_HANDSHAKE = 23,
 	MOSQ_ERR_QOS_NOT_SUPPORTED = 24,
 	MOSQ_ERR_OVERSIZE_PACKET = 25,
+	MOSQ_ERR_OCSP = 26,
 };
 
 /* Error values */
@@ -1723,6 +1724,26 @@ libmosq_EXPORT int mosquitto_tls_opts_set(struct mosquitto *mosq, int cert_reqs,
  *	<mosquitto_tls_set>
  */
 libmosq_EXPORT int mosquitto_tls_psk_set(struct mosquitto *mosq, const char *psk, const char *identity, const char *ciphers);
+
+/*
+ * Function: mosquitto_tls_ocsp_set
+ *
+ * Set advanced SSL/TLS options. Must be called before <mosquitto_connect>.
+ *
+ * Parameters:
+ *  mosq -        a valid mosquitto instance.
+ *  ocsp_reqs -   whether OCSP checking is required:
+ *                0 - no checking required
+ *                1 - checking required
+ *
+ * Returns:
+ *	MOSQ_ERR_SUCCESS - on success.
+ * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *
+ * See Also:
+ *	<mosquitto_tls_set>
+ */
+libmosq_EXPORT int mosquitto_tls_ocsp_set(struct mosquitto *mosq, int ocsp_reqs);
 
 
 /* ======================================================================

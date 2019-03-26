@@ -1792,6 +1792,13 @@ topic clients/total in 0 test/mosquitto/org $SYS/broker/
 							connection to succeed.</para>
 					</listitem>
 				</varlistentry>
+				<varlistentry>
+					<term><option>bridge_require_ocsp</option> [ true | false ]</term>
+					<listitem>
+						<para>When set to true, the bridge requires OCSP on the TLS
+							connection it opens as client.</para>
+					</listitem>
+				</varlistentry>
 			</variablelist>
 		</refsect2>
 	</refsect1>

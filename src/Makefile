@@ -32,6 +32,7 @@ OBJS=	mosquitto.o \
 		memory_mosq.o \
 		net.o \
 		net_mosq.o \
+		net_mosq_ocsp.o \
 		packet_datatypes.o \
 		packet_mosq.o \
 		property_broker.o \
@@ -138,6 +139,9 @@ memory_mosq.o : ../lib/memory_mosq.c ../lib/memory_mosq.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
 net.o : net.c mosquitto_broker_internal.h
+	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
+
+net_mosq_ocsp.o : ../lib/net_mosq_ocsp.c ../lib/net_mosq.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
 net_mosq.o : ../lib/net_mosq.c ../lib/net_mosq.h

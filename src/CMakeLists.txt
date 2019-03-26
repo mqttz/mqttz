@@ -27,7 +27,7 @@ set (MOSQ_SRCS
 	mosquitto.c
 	mosquitto_broker.h mosquitto_broker_internal.h
 	net.c
-	../lib/net_mosq.c ../lib/net_mosq.h
+	../lib/net_mosq_ocsp.c ../lib/net_mosq.c ../lib/net_mosq.h
 	../lib/packet_datatypes.c
 	../lib/packet_mosq.c ../lib/packet_mosq.h
 	persist_read_v234.c persist_read_v5.c persist_read.c

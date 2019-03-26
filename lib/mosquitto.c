@@ -180,6 +180,7 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_st
 	mosq->tls_cert_reqs = SSL_VERIFY_PEER;
 	mosq->tls_insecure = false;
 	mosq->want_write = false;
+	mosq->tls_ocsp_required = false;
 #endif
 #ifdef WITH_THREADING
 	pthread_mutex_init(&mosq->callback_mutex, NULL);

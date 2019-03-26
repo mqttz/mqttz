@@ -476,6 +476,23 @@ int net__socket_connect_tls(struct mosquitto *mosq)
 	int ret, err;
 
 	ERR_clear_error();
+	long res;
+	if (mosq->tls_ocsp_required) {
+		// Note: OCSP is available in all currently supported OpenSSL versions.
+		if ((res=SSL_set_tlsext_status_type(mosq->ssl, TLSEXT_STATUSTYPE_ocsp)) != 1) {
+			log__printf(mosq, MOSQ_LOG_ERR, "Could not activate OCSP (error: %ld)", res);
+			return MOSQ_ERR_OCSP;
+		}
+		if ((res=SSL_CTX_set_tlsext_status_cb(mosq->ssl_ctx, mosquitto__verify_ocsp_status_cb)) != 1) {
+			log__printf(mosq, MOSQ_LOG_ERR, "Could not activate OCSP (error: %ld)", res);
+			return MOSQ_ERR_OCSP;
+		}
+		if ((res=SSL_CTX_set_tlsext_status_arg(mosq->ssl_ctx, mosq)) != 1) {
+			log__printf(mosq, MOSQ_LOG_ERR, "Could not activate OCSP (error: %ld)", res);
+			return MOSQ_ERR_OCSP;
+		}
+	}
+
 	ret = SSL_connect(mosq->ssl);
 	if(ret != 1) {
 		err = SSL_get_error(mosq->ssl, ret);

@@ -378,4 +378,8 @@ int mosquittopp::tls_psk_set(const char *psk, const char *identity, const char *
 	return mosquitto_tls_psk_set(m_mosq, psk, identity, ciphers);
 }
 
+int mosquittopp::tls_ocsp_set(int ocsp_reqs)
+{
+	return mosquitto_tls_ocsp_set(m_mosq, ocsp_reqs);
+}
 }
