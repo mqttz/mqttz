@@ -131,6 +131,8 @@ int persist__chunk_msg_store_read_v5(FILE *db_fptr, struct P_msg_store *chunk, u
 	mosquitto_property *properties = NULL;
 	struct mosquitto__packet prop_packet;
 
+	memset(&prop_packet, 0, sizeof(struct mosquitto__packet));
+
 	read_e(db_fptr, &chunk->F, sizeof(struct PF_msg_store));
 	chunk->F.payloadlen = ntohl(chunk->F.payloadlen);
 	chunk->F.source_mid = ntohs(chunk->F.source_mid);
@@ -179,7 +181,6 @@ int persist__chunk_msg_store_read_v5(FILE *db_fptr, struct P_msg_store *chunk, u
 	}
 
 	if(length > 0){
-		memset(&prop_packet, 0, sizeof(struct mosquitto__packet));
 		prop_packet.remaining_length = length;
 		prop_packet.payload = mosquitto__malloc(length);
 		if(!prop_packet.payload){

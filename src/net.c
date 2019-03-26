@@ -666,6 +666,7 @@ int net__socket_get_address(mosq_sock_t sock, char *buf, int len)
 	struct sockaddr_storage addr;
 	socklen_t addrlen;
 
+	memset(&addr, 0, sizeof(struct sockaddr_storage));
 	addrlen = sizeof(addr);
 	if(!getpeername(sock, (struct sockaddr *)&addr, &addrlen)){
 		if(addr.ss_family == AF_INET){

@@ -110,7 +110,6 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 	time_t last_backup = mosquitto_time();
 #endif
 	time_t now = 0;
-	time_t now_time;
 	int time_count;
 	int fdcount;
 	struct mosquitto *context, *ctxt_tmp;
@@ -215,8 +214,6 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 			pollfd_index++;
 		}
 #endif
-
-		now_time = time(NULL);
 
 		time_count = 0;
 		HASH_ITER(hh_sock, db->contexts_by_sock, context, ctxt_tmp){
@@ -469,8 +466,8 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 			}
 		}
 #endif
-		now_time = time(NULL);
-		if(db->config->persistent_client_expiration > 0 && now_time > expiration_check_time){
+		now = time(NULL);
+		if(db->config->persistent_client_expiration > 0 && now > expiration_check_time){
 			HASH_ITER(hh_id, db->contexts_by_id, context, ctxt_tmp){
 				if(context->sock == INVALID_SOCKET && context->session_expiry_interval > 0 && context->session_expiry_interval != UINT32_MAX){
 					/* This is a persistent client, check to see if the
@@ -478,7 +475,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 					 * persistent_client_expiration seconds ago. If so,
 					 * expire it and clean up.
 					 */
-					if(now_time > context->session_expiry_time){
+					if(now > context->session_expiry_time){
 						if(context->id){
 							id = context->id;
 						}else{

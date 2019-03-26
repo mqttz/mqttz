@@ -444,7 +444,6 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 				}else if(rc == MOSQ_ERR_PROTOCOL){
 					if(context->protocol == mosq_p_mqtt31){
 						/* Password flag given, but no password. Ignore. */
-						password_flag = 0;
 					}else{
 						rc = MOSQ_ERR_PROTOCOL;
 						goto handle_connect_error;
@@ -480,7 +479,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 #ifdef WITH_TLS
-	if(context->listener && context->listener->ssl_ctx && (context->listener->use_identity_as_username || context->listener->use_subject_as_username)){
+	if(context->listener->ssl_ctx && (context->listener->use_identity_as_username || context->listener->use_subject_as_username)){
 		/* Don't need the username or password if provided */
 		mosquitto__free(username);
 		username = NULL;
@@ -615,7 +614,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 #endif
 
-	if(context->listener && context->listener->use_username_as_clientid){
+	if(context->listener->use_username_as_clientid){
 		if(context->username){
 			mosquitto__free(client_id);
 			client_id = mosquitto__strdup(context->username);

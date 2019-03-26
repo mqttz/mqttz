@@ -271,15 +271,13 @@ static int persist__msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fp
 			chunk.topic, chunk.F.qos, chunk.F.payloadlen,
 			&chunk.payload, chunk.F.retain, &stored, message_expiry_interval, chunk.properties, chunk.F.store_id);
 
-	if(stored){
-		stored->source_listener = chunk.source.listener;
-	}
 	mosquitto__free(chunk.source.id);
 	mosquitto__free(chunk.source.username);
 	chunk.source.id = NULL;
 	chunk.source.username = NULL;
 
 	if(rc == MOSQ_ERR_SUCCESS){
+		stored->source_listener = chunk.source.listener;
 		load->db_id = stored->db_id;
 		load->store = stored;
 

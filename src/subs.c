@@ -162,7 +162,7 @@ static int subs__process(struct mosquitto_db *db, struct mosquitto__subhier *hie
 		}
 	}
 
-	rc2 = subs__shared_process(db, hier, topic, qos, retain, stored);
+	rc = subs__shared_process(db, hier, topic, qos, retain, stored);
 
 	leaf = hier->subs;
 	while(source_id && leaf){
@@ -307,9 +307,8 @@ static int sub__add_leaf(struct mosquitto *context, int qos, uint32_t identifier
 		}
 		leaf = leaf->next;
 	}
-	leaf = mosquitto__malloc(sizeof(struct mosquitto__subleaf));
+	leaf = mosquitto__calloc(1, sizeof(struct mosquitto__subleaf));
 	if(!leaf) return MOSQ_ERR_NOMEM;
-	leaf->next = NULL;
 	leaf->context = context;
 	leaf->qos = qos;
 	leaf->identifier = identifier;
@@ -413,7 +412,7 @@ static int sub__add_shared(struct mosquitto_db *db, struct mosquitto *context, i
 
 static int sub__add_normal(struct mosquitto_db *db, struct mosquitto *context, int qos, uint32_t identifier, int options, struct mosquitto__subhier *subhier)
 {
-	struct mosquitto__subleaf *newleaf;
+	struct mosquitto__subleaf *newleaf = NULL;
 	struct mosquitto__subhier **subs;
 	int i;
 	int rc;
@@ -668,7 +667,7 @@ struct mosquitto__subhier *sub__add_hier_entry(struct mosquitto__subhier *parent
 
 	assert(sibling);
 
-	child = mosquitto__malloc(sizeof(struct mosquitto__subhier));
+	child = mosquitto__calloc(1, sizeof(struct mosquitto__subhier));
 	if(!child){
 		log__printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return NULL;
@@ -684,10 +683,6 @@ struct mosquitto__subhier *sub__add_hier_entry(struct mosquitto__subhier *parent
 	}else{
 		strncpy(child->topic, topic, child->topic_len+1);
 	}
-	child->subs = NULL;
-	child->shared = NULL;
-	child->children = NULL;
-	child->retained = NULL;
 
 	HASH_ADD_KEYPTR(hh, *sibling, child->topic, child->topic_len, child);
 

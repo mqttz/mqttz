@@ -527,7 +527,10 @@ int main(int argc, char *argv[])
 
 	if(create_new){
 		rc = get_password(password, 1024);
-		if(rc) return rc;
+		if(rc){
+			free(password_file);
+			return rc;
+		}
 		fptr = fopen(password_file, "wt");
 		if(!fptr){
 			fprintf(stderr, "Error: Unable to open file %s for writing. %s.\n", password_file, strerror(errno));

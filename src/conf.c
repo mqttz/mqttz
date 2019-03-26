@@ -758,7 +758,7 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 	char *key;
 	struct mosquitto__listener *cur_listener = &config->default_listener;
 	int i;
-	int lineno_ext;
+	int lineno_ext = 0;
 
 	*lineno = 0;
 
