@@ -1780,6 +1780,13 @@ topic clients/total in 0 test/mosquitto/org $SYS/broker/
 					</listitem>
 				</varlistentry>
 				<varlistentry>
+					<term><option>bridge_require_ocsp</option> [ true | false ]</term>
+					<listitem>
+						<para>When set to true, the bridge requires OCSP on the TLS
+							connection it opens as client.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
 					<term><option>bridge_tls_version</option> <replaceable>version</replaceable></term>
 					<listitem>
 						<para>Configure the version of the TLS protocol to be
@@ -1790,13 +1797,6 @@ topic clients/total in 0 test/mosquitto/org $SYS/broker/
 							<replaceable>tlsv1.2</replaceable>. The remote
 							broker must support the same version of TLS for the
 							connection to succeed.</para>
-					</listitem>
-				</varlistentry>
-				<varlistentry>
-					<term><option>bridge_require_ocsp</option> [ true | false ]</term>
-					<listitem>
-						<para>When set to true, the bridge requires OCSP on the TLS
-							connection it opens as client.</para>
 					</listitem>
 				</varlistentry>
 			</variablelist>

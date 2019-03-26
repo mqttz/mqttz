@@ -19,6 +19,7 @@ Broker features:
 - Add support for Automotive DLT logging.
 - Disallow writing to $ topics where appropriate.
 - Fix mosquitto_passwd crashing on corrupt password file. Closes #1207.
+- Add support for OCSP stapling.
 
 Client library features:
 - Add mosquitto_subscribe_multiple() for sending subscriptions to multiple
@@ -26,6 +27,7 @@ Client library features:
 - Add TLS Engine support.
 - Add explicit support for TLS v1.3.
 - Drop support for TLS v1.0.
+- Add support for OCSP stapling to bridges.
 
 Client features:
 - Add -E to mosquitto_sub, which causes it to exit immediately after having

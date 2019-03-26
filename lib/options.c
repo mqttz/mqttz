@@ -195,24 +195,6 @@ int mosquitto_tls_set(struct mosquitto *mosq, const char *cafile, const char *ca
 }
 
 
-int mosquitto_tls_ocsp_set(struct mosquitto *mosq, int ocsp_reqs)
-{
-#ifdef WITH_TLS
-    if (ocsp_reqs==0) {
-        mosq->tls_ocsp_required = false;
-        return  MOSQ_ERR_SUCCESS;
-    }
-
-    if (ocsp_reqs==1) {
-        mosq->tls_ocsp_required = true;
-        return  MOSQ_ERR_SUCCESS;
-    }
-#endif
-
-    return MOSQ_ERR_INVAL;
-}
-
-
 int mosquitto_tls_opts_set(struct mosquitto *mosq, int cert_reqs, const char *tls_version, const char *ciphers)
 {
 #ifdef WITH_TLS
@@ -428,6 +410,14 @@ int mosquitto_int_option(struct mosquitto *mosq, enum mosq_opt_t option, int val
 #else
 			return MOSQ_ERR_NOT_SUPPORTED;
 #endif
+
+		case MOSQ_OPT_TLS_OCSP_REQUIRED:
+#ifdef WITH_TLS
+			mosq->tls_ocsp_required = (bool)value;
+#else
+			return MOSQ_ERR_NOT_SUPPORTED;
+#endif
+			break;
 
 		default:
 			return MOSQ_ERR_INVAL;

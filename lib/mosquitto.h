@@ -109,6 +109,7 @@ enum mosq_opt_t {
 	MOSQ_OPT_TLS_KEYFORM = 6,
 	MOSQ_OPT_TLS_ENGINE = 7,
 	MOSQ_OPT_TLS_ENGINE_KPASS_SHA1 = 8,
+	MOSQ_OPT_TLS_OCSP_REQUIRED = 9,
 };
 
 
@@ -1452,8 +1453,12 @@ libmosq_EXPORT int mosquitto_opts_set(struct mosquitto *mosq, enum mosq_opt_t op
  *	          use <mosquitto_tls_set> to configure the cafile/capath as a
  *	          minimum.
  *	          This option is only available for openssl 1.1.0 and higher.
+ *	MOSQ_OPT_TLS_OCSP_REQUIRED
+ *	          Set whether OCSP checking on TLS connections is required. Set to
+ *	          1 to enable checking, or 0 (the default) for no checking.
  */
 libmosq_EXPORT int mosquitto_int_option(struct mosquitto *mosq, enum mosq_opt_t option, int value);
+
 
 /*
  * Function: mosquitto_void_option
@@ -1724,26 +1729,6 @@ libmosq_EXPORT int mosquitto_tls_opts_set(struct mosquitto *mosq, int cert_reqs,
  *	<mosquitto_tls_set>
  */
 libmosq_EXPORT int mosquitto_tls_psk_set(struct mosquitto *mosq, const char *psk, const char *identity, const char *ciphers);
-
-/*
- * Function: mosquitto_tls_ocsp_set
- *
- * Set advanced SSL/TLS options. Must be called before <mosquitto_connect>.
- *
- * Parameters:
- *  mosq -        a valid mosquitto instance.
- *  ocsp_reqs -   whether OCSP checking is required:
- *                0 - no checking required
- *                1 - checking required
- *
- * Returns:
- *	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- *
- * See Also:
- *	<mosquitto_tls_set>
- */
-libmosq_EXPORT int mosquitto_tls_ocsp_set(struct mosquitto *mosq, int ocsp_reqs);
 
 
 /* ======================================================================
