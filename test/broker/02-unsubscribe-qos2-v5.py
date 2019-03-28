@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether a SUBSCRIBE to a topic with QoS 2 results in the correct SUBACK packet.
 # MQTT 5

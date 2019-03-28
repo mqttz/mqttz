@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether sending a non zero session expiry interval in DISCONNECT after
 # having sent a zero session expiry interval is treated correctly in MQTT v5.

@@ -315,7 +315,7 @@ def to_string(packet):
         # Reserved
         return "0xF0"
 
-def gen_connect(client_id, clean_session=True, keepalive=60, username=None, password=None, will_topic=None, will_qos=0, will_retain=False, will_payload="", proto_ver=4, connect_reserved=False, properties="", will_properties=""):
+def gen_connect(client_id, clean_session=True, keepalive=60, username=None, password=None, will_topic=None, will_qos=0, will_retain=False, will_payload=b"", proto_ver=4, connect_reserved=False, properties=b"", will_properties=b""):
     if (proto_ver&0x7F) == 3 or proto_ver == 0:
         remaining_length = 12
     elif (proto_ver&0x7F) == 4 or proto_ver == 5:
@@ -324,6 +324,7 @@ def gen_connect(client_id, clean_session=True, keepalive=60, username=None, pass
         raise ValueError
 
     if client_id != None:
+        client_id = client_id.encode("utf-8")
         remaining_length = remaining_length + 2+len(client_id)
     else:
         remaining_length = remaining_length + 2
@@ -337,12 +338,13 @@ def gen_connect(client_id, clean_session=True, keepalive=60, username=None, pass
         connect_flags = connect_flags | 0x02
 
     if proto_ver == 5:
-        if properties == "":
+        if properties == b"":
             properties += mqtt5_props.gen_uint16_prop(mqtt5_props.PROP_RECEIVE_MAXIMUM, 20)
         properties = mqtt5_props.prop_finalise(properties)
         remaining_length += len(properties)
 
     if will_topic != None:
+        will_topic = will_topic.encode("utf-8")
         remaining_length = remaining_length + 2+len(will_topic) + 2+len(will_payload)
         connect_flags = connect_flags | 0x04 | ((will_qos&0x03) << 3)
         if will_retain:
@@ -352,24 +354,26 @@ def gen_connect(client_id, clean_session=True, keepalive=60, username=None, pass
             remaining_length += len(will_properties)
 
     if username != None:
+        username = username.encode("utf-8")
         remaining_length = remaining_length + 2+len(username)
         connect_flags = connect_flags | 0x80
         if password != None:
+            password = password.encode("utf-8")
             connect_flags = connect_flags | 0x40
             remaining_length = remaining_length + 2+len(password)
 
     rl = pack_remaining_length(remaining_length)
     packet = struct.pack("!B"+str(len(rl))+"s", 0x10, rl)
     if (proto_ver&0x7F) == 3 or proto_ver == 0:
-        packet = packet + struct.pack("!H6sBBH", len("MQIsdp"), "MQIsdp", proto_ver, connect_flags, keepalive)
+        packet = packet + struct.pack("!H6sBBH", len(b"MQIsdp"), b"MQIsdp", proto_ver, connect_flags, keepalive)
     elif (proto_ver&0x7F) == 4 or proto_ver == 5:
-        packet = packet + struct.pack("!H4sBBH", len("MQTT"), "MQTT", proto_ver, connect_flags, keepalive)
+        packet = packet + struct.pack("!H4sBBH", len(b"MQTT"), b"MQTT", proto_ver, connect_flags, keepalive)
 
     if proto_ver == 5:
         packet += properties
 
     if client_id != None:
-        packet = packet + struct.pack("!H"+str(len(client_id))+"s", len(client_id), client_id)
+        packet = packet + struct.pack("!H"+str(len(client_id))+"s", len(client_id), bytes(client_id))
     else:
         packet = packet + struct.pack("!H", 0)
 
@@ -387,12 +391,12 @@ def gen_connect(client_id, clean_session=True, keepalive=60, username=None, pass
             packet = packet + struct.pack("!H"+str(len(password))+"s", len(password), password)
     return packet
 
-def gen_connack(flags=0, rc=0, proto_ver=4, properties=""):
+def gen_connack(flags=0, rc=0, proto_ver=4, properties=b""):
     if proto_ver == 5:
         if properties is not None:
             properties = mqtt5_props.gen_uint16_prop(mqtt5_props.PROP_TOPIC_ALIAS_MAXIMUM, 10) + properties
         else:
-            properties = ""
+            properties = b""
         properties = mqtt5_props.prop_finalise(properties)
 
         packet = struct.pack('!BBBB', 32, 2+len(properties), flags, rc) + properties
@@ -401,7 +405,8 @@ def gen_connack(flags=0, rc=0, proto_ver=4, properties=""):
 
     return packet
 
-def gen_publish(topic, qos, payload=None, retain=False, dup=False, mid=0, proto_ver=4, properties=""):
+def gen_publish(topic, qos, payload=None, retain=False, dup=False, mid=0, proto_ver=4, properties=b""):
+    topic = topic.encode("utf-8")
     rl = 2+len(topic)
     pack_format = "H"+str(len(topic))+"s"
     if qos > 0:
@@ -415,10 +420,11 @@ def gen_publish(topic, qos, payload=None, retain=False, dup=False, mid=0, proto_
         pack_format = pack_format + "%ds"%(len(properties))
 
     if payload != None:
+        payload = payload.encode("utf-8")
         rl = rl + len(payload)
         pack_format = pack_format + str(len(payload))+"s"
     else:
-        payload = ""
+        payload = b""
         pack_format = pack_format + "0s"
 
     rlpacked = pack_remaining_length(rl)
@@ -471,9 +477,10 @@ def gen_pubrel(mid, dup=False, proto_ver=4, reason_code=-1, properties=None):
 def gen_pubcomp(mid, proto_ver=4, reason_code=-1, properties=None):
     return _gen_command_with_mid(112, mid, proto_ver, reason_code, properties)
 
-def gen_subscribe(mid, topic, qos, proto_ver=4, properties=""):
+def gen_subscribe(mid, topic, qos, proto_ver=4, properties=b""):
+    topic = topic.encode("utf-8")
     if proto_ver == 5:
-        if properties == "":
+        if properties == b"":
             pack_format = "!BBHBH"+str(len(topic))+"sB"
             return struct.pack(pack_format, 130, 2+1+2+len(topic)+1, mid, 0, len(topic), topic, qos)
         else:
@@ -491,6 +498,7 @@ def gen_suback(mid, qos, proto_ver=4):
         return struct.pack('!BBHB', 144, 2+1, mid, qos)
 
 def gen_unsubscribe(mid, topic, proto_ver=4):
+    topic = topic.encode("utf-8")
     if proto_ver == 5:
         pack_format = "!BBHBH"+str(len(topic))+"s"
         return struct.pack(pack_format, 162, 2+2+len(topic)+1, mid, 0, len(topic), topic)
@@ -499,9 +507,10 @@ def gen_unsubscribe(mid, topic, proto_ver=4):
         return struct.pack(pack_format, 162, 2+2+len(topic), mid, len(topic), topic)
 
 def gen_unsubscribe_multiple(mid, topics, proto_ver=4):
-    packet = ""
+    packet = b""
     remaining_length = 0
     for t in topics:
+        t = t.encode("utf-8")
         remaining_length += 2+len(t)
         packet += struct.pack("!H"+str(len(t))+"s", len(t), t)
 
@@ -549,7 +558,7 @@ def gen_disconnect(reason_code=-1, proto_ver=4, properties=None):
         return struct.pack('!BB', 224, 0)
 
 def pack_remaining_length(remaining_length):
-    s = ""
+    s = b""
     while True:
         byte = remaining_length % 128
         remaining_length = remaining_length // 128

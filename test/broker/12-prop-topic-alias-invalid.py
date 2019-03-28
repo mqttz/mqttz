@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether the broker handles a topic alias of >max_topic_alias correctly.
 # MQTTv5

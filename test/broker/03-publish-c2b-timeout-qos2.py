@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether a PUBLISH to a topic with QoS 2 results in the correct packet
 # flow. This test introduces delays into the flow in order to force the broker

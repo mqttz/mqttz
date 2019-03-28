@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Does the broker respect receive maximum==2?
 # MQTT v5

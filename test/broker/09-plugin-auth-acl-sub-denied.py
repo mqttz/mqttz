@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test topic subscription. All SUBSCRIBE requests are denied. Check this
 # produces the correct response, and check the client isn't disconnected (ref:

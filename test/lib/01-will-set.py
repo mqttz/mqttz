@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether a client produces a correct connect with a will.
 # Will QoS=1, will retain=1.
@@ -13,7 +13,7 @@ port = mosq_test.get_lib_port()
 
 rc = 1
 keepalive = 60
-connect_packet = mosq_test.gen_connect("01-will-set", keepalive=keepalive, will_topic="topic/on/unexpected/disconnect", will_qos=1, will_retain=True, will_payload="will message")
+connect_packet = mosq_test.gen_connect("01-will-set", keepalive=keepalive, will_topic="topic/on/unexpected/disconnect", will_qos=1, will_retain=True, will_payload=b"will message")
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

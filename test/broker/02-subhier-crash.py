@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test related to https://github.com/eclipse/mosquitto/issues/505
 

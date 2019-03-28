@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Check whether a v5 client handles a v5 PUBACK with all combinations
 # of with/without reason code and properties.

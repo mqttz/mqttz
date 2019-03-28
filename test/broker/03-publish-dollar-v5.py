@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether a PUBLISH to $ topics QoS 1 results in the expected PUBACK packet.
 

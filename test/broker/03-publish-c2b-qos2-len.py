@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Check whether the broker handles a v5 PUBREL with all combinations
 # of with/without reason code and properties.

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether a PUBREC with reason code >= 0x80 is handled correctly
 

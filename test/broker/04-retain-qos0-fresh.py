@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether a retained PUBLISH to a topic with QoS 0 is sent with
 # retain=false to an already subscribed client.

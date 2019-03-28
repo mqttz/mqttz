@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test what the broker does if receiving a PUBREC in response to a QoS 1 PUBLISH.
 

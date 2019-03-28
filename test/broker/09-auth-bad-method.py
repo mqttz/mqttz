@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether sending an Authentication Method produces the correct response
 # when no auth methods are defined.

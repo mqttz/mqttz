@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Check whether the broker disconnects a client nicely when they send a too large packet.
 

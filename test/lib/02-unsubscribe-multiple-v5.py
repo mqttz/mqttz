@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether a v5 client sends a correct UNSUBSCRIBE packet with multiple
 # topics, and handles the UNSUBACK.

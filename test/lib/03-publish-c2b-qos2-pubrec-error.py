@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether a client responds correctly when sending multiple PUBLISH with
 # QoS 2, with the broker rejecting the first PUBLISH by setting the reason code

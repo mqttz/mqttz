@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether a v5 UNSUBSCRIBE to multiple topics with QoS 2 results in the
 # correct UNSUBACK packet, when one subscription exists and the other does not.

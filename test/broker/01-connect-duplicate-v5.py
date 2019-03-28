@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether a duplicate CONNECT is rejected. MQTT v5
 

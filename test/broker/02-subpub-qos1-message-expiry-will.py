@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether the broker reduces the message expiry interval when republishing a will.
 # MQTT v5
@@ -24,7 +24,7 @@ suback_packet = mosq_test.gen_suback(mid, 1, proto_ver=5)
 
 
 props = mqtt5_props.gen_uint32_prop(mqtt5_props.PROP_MESSAGE_EXPIRY_INTERVAL, 10)
-helper_connect = mosq_test.gen_connect("helper", proto_ver=5, will_topic="subpub/qos1", will_qos=1, will_payload="message", will_properties=props, keepalive=2)
+helper_connect = mosq_test.gen_connect("helper", proto_ver=5, will_topic="subpub/qos1", will_qos=1, will_payload=b"message", will_properties=props, keepalive=2)
 helper_connack = mosq_test.gen_connack(rc=0, proto_ver=5)
 
 #mid=2

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether maximum packet size is honoured on a PUBLISH to a client
 # MQTTv5

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether a client with a will delay handles correctly on the client reconnecting
 # First connection is durable, second is clean session, and without a will, so the will should not be received.
@@ -16,7 +16,7 @@ def do_test():
     connack1_packet = mosq_test.gen_connack(rc=0, proto_ver=5)
 
     props = mqtt5_props.gen_uint32_prop(mqtt5_props.PROP_WILL_DELAY_INTERVAL, 3)
-    connect2a_packet = mosq_test.gen_connect("will-helper", keepalive=keepalive, proto_ver=5, will_topic="will/test", will_payload="will delay", will_properties=props, clean_session=False)
+    connect2a_packet = mosq_test.gen_connect("will-helper", keepalive=keepalive, proto_ver=5, will_topic="will/test", will_payload=b"will delay", will_properties=props, clean_session=False)
     connack2a_packet = mosq_test.gen_connack(rc=0, proto_ver=5)
 
     connect2b_packet = mosq_test.gen_connect("will-helper", keepalive=keepalive, proto_ver=5, clean_session=True)

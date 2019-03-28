@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether a connection is denied if it provides just a username when it
 # needs a username and password.

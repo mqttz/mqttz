@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # client 1 subscribes to normal-topic
 # client 2 susbscribes to response-topic

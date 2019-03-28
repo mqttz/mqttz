@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether a connection fail when using a auth_plugin that defer authentication.
 

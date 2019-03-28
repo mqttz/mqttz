@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether a client subscribed to a topic with retain-as-published set works as expected.
 # MQTT v5

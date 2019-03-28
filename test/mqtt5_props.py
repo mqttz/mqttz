@@ -41,10 +41,13 @@ def gen_uint32_prop(identifier, word):
     return prop
 
 def gen_string_prop(identifier, s):
+    s = s.encode("utf-8")
     prop = struct.pack('!BH%ds'%(len(s)), identifier, len(s), s)
     return prop
 
 def gen_string_pair_prop(identifier, s1, s2):
+    s1 = s1.encode("utf-8")
+    s2 = s2.encode("utf-8")
     prop = struct.pack('!BH%dsH%ds'%(len(s1), len(s2)), identifier, len(s1), s1, len(s2), s2)
     return prop
 
@@ -53,7 +56,7 @@ def gen_varint_prop(identifier, val):
     return struct.pack("!B"+str(len(v))+"s", identifier, v)
 
 def pack_varint(varint):
-    s = ""
+    s = b""
     while True:
         byte = varint % 128
         varint = varint // 128

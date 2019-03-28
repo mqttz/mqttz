@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether a CONNECT with a zero length client id results in the correct CONNACK packet.
 

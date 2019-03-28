@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether a UNSUBSCRIBE with no topic results in a disconnect. MQTT-3.10.3-2
 
@@ -21,7 +21,7 @@ broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port)
 
 try:
     sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
-    mosq_test.do_send_receive(sock, unsubscribe_packet, "", "disconnect")
+    mosq_test.do_send_receive(sock, unsubscribe_packet, b"", "disconnect")
 
     rc = 0
 

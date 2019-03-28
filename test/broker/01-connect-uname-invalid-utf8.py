@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether a username with invalid UTF-8 fails.
 
@@ -17,7 +17,7 @@ broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port)
 try:
     time.sleep(0.5)
 
-    sock = mosq_test.do_client_connect(connect_packet, "", port=port)
+    sock = mosq_test.do_client_connect(connect_packet, b"", port=port)
     # Exception occurs if connack packet returned
     rc = 0
     sock.close()

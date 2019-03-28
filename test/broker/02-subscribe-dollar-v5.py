@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether a SUBSCRIBE to $SYS or $share succeeds
 

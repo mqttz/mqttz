@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Connect a client with a will, then disconnect without DISCONNECT.
 
@@ -6,7 +6,7 @@ from mosq_test_helper import *
 
 rc = 1
 keepalive = 60
-connect_packet = mosq_test.gen_connect("test-helper", keepalive=keepalive, will_topic="will/qos0/test", will_payload="will-message")
+connect_packet = mosq_test.gen_connect("test-helper", keepalive=keepalive, will_topic="will/qos0/test", will_payload=b"will-message")
 connack_packet = mosq_test.gen_connack(rc=0)
 
 port = mosq_test.get_port()

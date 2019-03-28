@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether a client sends a pingreq after the keepalive time
 # Client sets a keepalive of 60 seconds, but receives a server keepalive to set

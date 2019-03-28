@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether a client subscribed to a topic receives its own message sent to that topic.
 # And whether the no-local option is persisted.

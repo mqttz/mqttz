@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether a valid CONNECT results in the correct CONNACK packet for MQTT v5.
 

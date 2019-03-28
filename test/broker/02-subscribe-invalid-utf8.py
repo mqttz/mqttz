@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether a SUBSCRIBE to a topic with an invalid UTF-8 topic fails
 
@@ -24,7 +24,7 @@ try:
     time.sleep(0.5)
 
     sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
-    mosq_test.do_send_receive(sock, subscribe_packet, "", "suback")
+    mosq_test.do_send_receive(sock, subscribe_packet, b"", "suback")
 
     rc = 0
 

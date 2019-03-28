@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether a connection is disconnected if it sets the will flag but does
 # not provide a will payload.
@@ -19,7 +19,7 @@ port = mosq_test.get_port()
 broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port)
 
 try:
-    sock = mosq_test.do_client_connect(connect_packet, "", port=port)
+    sock = mosq_test.do_client_connect(connect_packet, b"", port=port)
     sock.close()
     rc = 0
 finally:

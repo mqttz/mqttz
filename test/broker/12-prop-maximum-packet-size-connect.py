@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether setting maximum packet size to smaller than a CONNACK packet
 # results in the CONNECT being rejected.
@@ -16,7 +16,7 @@ port = mosq_test.get_port()
 broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port)
 
 try:
-    sock = mosq_test.do_client_connect(connect_packet, "", port=port)
+    sock = mosq_test.do_client_connect(connect_packet, b"", port=port)
     # Exception occurs if connack packet returned
     rc = 0
 finally:

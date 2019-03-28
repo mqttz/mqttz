@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether a UNSUBSCRIBE to a topic with QoS 0 results in the correct UNSUBACK packet.
 # This doesn't assume a subscription exists.

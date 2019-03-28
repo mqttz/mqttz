@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # MQTT v5. Test whether session expiry interval works correctly.
 

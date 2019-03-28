@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether the broker reduces the message expiry interval when republishing
 # a retained message, and eventually removes it.

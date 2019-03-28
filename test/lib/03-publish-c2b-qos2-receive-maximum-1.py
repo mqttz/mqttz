@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether a client responds correctly to multiple PUBLISH with QoS 2, with
 # receive maximum set to 1.

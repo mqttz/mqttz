@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test for CVE-2018-12546, with the broker being stopped to write the persistence file.
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Does a bridge queue up retained messages correctly if the remote broker starts up late?
 

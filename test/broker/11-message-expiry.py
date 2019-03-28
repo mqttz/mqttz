@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether the broker reduces the message expiry interval when republishing.
 # MQTT v5, with a broker restart and persistence.

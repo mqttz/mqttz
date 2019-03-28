@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # loop through the different v5 DISCONNECT reason_code/properties options.
 

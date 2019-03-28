@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test topic subscription. All topic are allowed but not using wildcard in subscribe.
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether a connection is successful with correct username and password
 # when using a simple auth_plugin.

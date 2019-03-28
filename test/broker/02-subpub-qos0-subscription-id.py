@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Does setting and updating subscription identifiers work as expected?
 # MQTT v5

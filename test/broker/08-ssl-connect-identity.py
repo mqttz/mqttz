@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Client connects with a certificate to a server that has use_identity_as_username=true. Shouldn't be rejected.
 

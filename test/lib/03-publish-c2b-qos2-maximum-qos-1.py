@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether a client correctly handles sending a message with QoS > maximum QoS.
 

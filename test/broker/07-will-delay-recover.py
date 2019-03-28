@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether a client with a will delay recovers on the client reconnecting
 # MQTT 5
@@ -16,7 +16,7 @@ def do_test(clean_session):
 
     connect_props = mqtt5_props.gen_uint32_prop(mqtt5_props.PROP_SESSION_EXPIRY_INTERVAL, 30)
     props = mqtt5_props.gen_uint32_prop(mqtt5_props.PROP_WILL_DELAY_INTERVAL, 3)
-    connect2_packet = mosq_test.gen_connect("will-helper", keepalive=keepalive, proto_ver=5, will_topic="will/test", will_payload="will delay", will_properties=props, clean_session=clean_session, properties=connect_props)
+    connect2_packet = mosq_test.gen_connect("will-helper", keepalive=keepalive, proto_ver=5, will_topic="will/test", will_payload=b"will delay", will_properties=props, clean_session=clean_session, properties=connect_props)
     connack2a_packet = mosq_test.gen_connack(rc=0, proto_ver=5)
     if clean_session == True:
         connack2b_packet = mosq_test.gen_connack(rc=0, proto_ver=5)

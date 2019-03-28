@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Does a bridge resend a QoS=1 message correctly after a disconnect?
 

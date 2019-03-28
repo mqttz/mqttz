@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether a client subscribed to a topic does not receive its own message
 # sent to that topic if no local is set.

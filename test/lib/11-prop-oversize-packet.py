@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether a client publishing an oversize packet correctly.
 # The client should try to publish a message that is too big, then the one below which is ok.

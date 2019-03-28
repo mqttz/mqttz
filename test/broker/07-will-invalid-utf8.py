@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Test whether a will topic with invalid UTF-8 fails
 
@@ -17,7 +17,7 @@ port = mosq_test.get_port()
 broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port)
 
 try:
-    sock = mosq_test.do_client_connect(connect_packet, "", timeout=30, port=port)
+    sock = mosq_test.do_client_connect(connect_packet, b"", timeout=30, port=port)
     rc = 0
     sock.close()
 finally:
