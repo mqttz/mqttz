@@ -515,6 +515,12 @@
 			</member>
 			<member>
 				<citerefentry>
+					<refentrytitle><link xlink:href="mosquitto_rr-1.html">mosquitto_rr</link></refentrytitle>
+					<manvolnum>1</manvolnum>
+				</citerefentry>
+			</member>
+			<member>
+				<citerefentry>
 					<refentrytitle><link xlink:href="mosquitto_sub-1.html">mosquitto_sub</link></refentrytitle>
 					<manvolnum>1</manvolnum>
 				</citerefentry>

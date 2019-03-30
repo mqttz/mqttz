@@ -832,7 +832,7 @@ mosquitto_sub -t 'bbc/#' -T bbc/bbc1 --remove-retained</programlisting>
 		<refsect2>
 			<title>Connect</title>
 			<itemizedlist>
-				<listitem><para><option>authentication-data</option> (binary data - note treated as a string in mosquitto_pub)</para></listitem>
+				<listitem><para><option>authentication-data</option> (binary data - note treated as a string in mosquitto_sub)</para></listitem>
 				<listitem><para><option>authentication-method</option> (UTF-8 string pair)</para></listitem>
 				<listitem><para><option>maximum-packet-size</option> (32-bit unsigned integer)</para></listitem>
 				<listitem><para><option>receive-maximum</option> (16-bit unsigned integer)</para></listitem>
@@ -870,7 +870,7 @@ mosquitto_sub -t 'bbc/#' -T bbc/bbc1 --remove-retained</programlisting>
 			<title>Will properties</title>
 			<itemizedlist>
 				<listitem><para><option>content-type</option> (UTF-8 string)</para></listitem>
-				<listitem><para><option>correlation-data</option> (binary data - note treated as a string in mosquitto_pub)</para></listitem>
+				<listitem><para><option>correlation-data</option> (binary data - note treated as a string in mosquitto_sub)</para></listitem>
 				<listitem><para><option>message-expiry-interval</option> (32-bit unsigned integer)</para></listitem>
 				<listitem><para><option>payload-format-indicator</option> (8-bit unsigned integer)</para></listitem>
 				<listitem><para><option>response-topic</option> (UTF-8 string)</para></listitem>
@@ -948,6 +948,12 @@ mosquitto_sub -t 'bbc/#' -T bbc/bbc1 --remove-retained</programlisting>
 			<member>
 				<citerefentry>
 					<refentrytitle><link xlink:href="mosquitto_pub-1.html">mosquitto_pub</link></refentrytitle>
+					<manvolnum>1</manvolnum>
+				</citerefentry>
+			</member>
+			<member>
+				<citerefentry>
+					<refentrytitle><link xlink:href="mosquitto_rr-1.html">mosquitto_rr</link></refentrytitle>
 					<manvolnum>1</manvolnum>
 				</citerefentry>
 			</member>

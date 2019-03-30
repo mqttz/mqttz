@@ -29,6 +29,8 @@ Contributors:
 
 #define CLIENT_PUB 1
 #define CLIENT_SUB 2
+#define CLIENT_RR 3
+#define CLIENT_RESPONSE_TOPIC 4
 
 struct mosq_config {
 	char *id;
@@ -39,11 +41,11 @@ struct mosq_config {
 	int port;
 	int qos;
 	bool retain;
-	int pub_mode; /* pub */
-	char *file_input; /* pub */
-	char *message; /* pub */
-	long msglen; /* pub */
-	char *topic; /* pub */
+	int pub_mode; /* pub, rr */
+	char *file_input; /* pub, rr */
+	char *message; /* pub, rr */
+	long msglen; /* pub, rr */
+	char *topic; /* pub, rr */
 	char *bind_address;
 #ifdef WITH_SRV
 	bool use_srv;
@@ -104,6 +106,7 @@ struct mosq_config {
 	mosquitto_property *disconnect_props;
 	mosquitto_property *will_props;
 	bool have_topic_alias; /* pub */
+	char *response_topic; /* rr */
 };
 
 int client_config_load(struct mosq_config *config, int pub_or_sub, int argc, char *argv[]);

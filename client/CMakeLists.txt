@@ -11,15 +11,19 @@ endif (WITH_SRV)
 
 add_executable(mosquitto_pub pub_client.c pub_shared.c ${shared_src})
 add_executable(mosquitto_sub sub_client.c sub_client_output.c ${shared_src})
+add_executable(mosquitto_pub rr_client.c pub_shared.c ${shared_src})
 
 
 target_link_libraries(mosquitto_pub libmosquitto)
 target_link_libraries(mosquitto_sub libmosquitto)
+target_link_libraries(mosquitto_rr libmosquitto)
 
 if (QNX)
     target_link_libraries(mosquitto_pub socket)
     target_link_libraries(mosquitto_sub socket)
+    target_link_libraries(mosquitto_rr socket)
 endif()
 
 install(TARGETS mosquitto_pub RUNTIME DESTINATION "${BINDIR}" LIBRARY DESTINATION "${LIBDIR}")
 install(TARGETS mosquitto_sub RUNTIME DESTINATION "${BINDIR}" LIBRARY DESTINATION "${LIBDIR}")
+install(TARGETS mosquitto_rr RUNTIME DESTINATION "${BINDIR}" LIBRARY DESTINATION "${LIBDIR}")

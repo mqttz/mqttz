@@ -1,22 +1,22 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <?xml-stylesheet type="text/xsl" href="manpage.xsl"?>
 
-<refentry xml:id="mosquitto_pub" xmlns:xlink="http://www.w3.org/1999/xlink">
+<refentry xml:id="mosquitto_rr" xmlns:xlink="http://www.w3.org/1999/xlink">
 	<refmeta>
-		<refentrytitle>mosquitto_pub</refentrytitle>
+		<refentrytitle>mosquitto_rr</refentrytitle>
 		<manvolnum>1</manvolnum>
 		<refmiscinfo class="source">Mosquitto Project</refmiscinfo>
 		<refmiscinfo class="manual">Commands</refmiscinfo>
 	</refmeta>
 
 	<refnamediv>
-		<refname>mosquitto_pub</refname>
-		<refpurpose>an MQTT version 5/3.1.1/3.1 client for publishing simple messages</refpurpose>
+		<refname>mosquitto_rr</refname>
+		<refpurpose>an MQTT version 5/3.1.1 client for subscribing to topics</refpurpose>
 	</refnamediv>
 
 	<refsynopsisdiv>
 		<cmdsynopsis>
-			<command>mosquitto_pub</command>
+			<command>mosquitto_rr</command>
 			<group choice='req'>
 				<arg choice='plain'>
 					<arg><option>-h</option> <replaceable>hostname</replaceable></arg>
@@ -27,7 +27,17 @@
 					</arg>
 					<arg choice='plain' rep='repeat'><option>-t</option> <replaceable>message-topic</replaceable></arg>
 				</arg>
-				<arg choice='plain'><option>-L</option> <replaceable>URL</replaceable></arg>
+				<arg choice='plain'>
+					<arg choice='plain'><option>-L</option> <replaceable>URL</replaceable></arg>
+					<arg choice='opt' rep='repeat'><option>-t</option> <replaceable>message-topic</replaceable></arg>
+				</arg>
+				<arg><option>-e</option> <replaceable>response-topic</replaceable></arg>
+			</group>
+			<group choice='req'>
+				<arg choice='plain'><option>-f</option> <replaceable>file</replaceable></arg>
+				<arg choice='plain'><option>-m</option> <replaceable>message</replaceable></arg>
+				<arg choice='plain'><option>-n</option></arg>
+				<arg choice='plain'><option>-s</option></arg>
 			</group>
 			<arg><option>-A</option> <replaceable>bind-address</replaceable></arg>
 			<arg><option>-c</option></arg>
@@ -36,17 +46,15 @@
 			<arg><option>-i</option> <replaceable>client-id</replaceable></arg>
 			<arg><option>-I</option> <replaceable>client-id-prefix</replaceable></arg>
 			<arg><option>-k</option> <replaceable>keepalive-time</replaceable></arg>
+			<arg><option>-N</option></arg>
 			<arg><option>-q</option> <replaceable>message-QoS</replaceable></arg>
-			<arg><option>--quiet</option></arg>
-			<arg><option>-r</option></arg>
+			<arg><option>-R</option></arg>
 			<arg><option>-S</option></arg>
-			<group choice='req'>
-				<arg choice='plain'><option>-f</option> <replaceable>file</replaceable></arg>
-				<arg choice='plain'><option>-l</option></arg>
-				<arg choice='plain'><option>-m</option> <replaceable>message</replaceable></arg>
-				<arg choice='plain'><option>-n</option></arg>
-				<arg choice='plain'><option>-s</option></arg>
-			</group>
+			<arg><option>-v</option></arg>
+			<arg><option>-V</option> <replaceable>protocol-version</replaceable></arg>
+			<arg><option>-W</option> <replaceable>message-processing-timeout</replaceable></arg>
+			<arg><option>--proxy</option> <replaceable>socks-url</replaceable></arg>
+			<arg><option>--quiet</option></arg>
 			<arg>
 				<option>--will-topic</option> <replaceable>topic</replaceable>
 				<arg><option>--will-payload</option> <replaceable>payload</replaceable></arg>
@@ -61,29 +69,18 @@
 					</group>
 					<arg><option>--cert</option> <replaceable>file</replaceable></arg>
 					<arg><option>--key</option> <replaceable>file</replaceable></arg>
-					<arg><option>--ciphers</option> <replaceable>ciphers</replaceable></arg>
 					<arg><option>--tls-version</option> <replaceable>version</replaceable></arg>
-					<arg><option>--tls-engine</option> <replaceable>engine</replaceable></arg>
-					<arg><option>--keyform</option>
-					<group choice='req'>
-						<arg choice='plain'><replaceable>pem</replaceable></arg>
-						<arg choice='plain'><replaceable>engine</replaceable></arg>
-					</group></arg>
-					<arg><option>--tls-engine-kpass-sha1</option> <replaceable>kpass-sha1</replaceable></arg>
 					<arg><option>--insecure</option></arg>
 				</arg>
 				<arg>
 					<arg choice='plain'><option>--psk</option> <replaceable>hex-key</replaceable></arg>
 					<arg choice='plain'><option>--psk-identity</option> <replaceable>identity</replaceable></arg>
-					<arg><option>--ciphers</option> <replaceable>ciphers</replaceable></arg>
 					<arg><option>--tls-version</option> <replaceable>version</replaceable></arg>
 				</arg>
 			</group>
-			<arg><option>--proxy</option> <replaceable>socks-url</replaceable></arg>
-			<arg><option>-V</option> <replaceable>protocol-version</replaceable></arg>
 		</cmdsynopsis>
 		<cmdsynopsis>
-			<command>mosquitto_pub</command>
+			<command>mosquitto_rr</command>
 			<group choice='plain'>
 				<arg><option>--help</option></arg>
 			</group>
@@ -92,14 +89,16 @@
 
 	<refsect1>
 		<title>Description</title>
-		<para><command>mosquitto_pub</command> is a simple MQTT version 5/3.1.1
-			client that will publish a single message on a topic and
-			exit.</para>
+		<para><command>mosquitto_rr</command> is an MQTT version 5/3.1.1
+			client that can be used to publish a request message and wait for a
+			response. When using MQTT v5, which is the default,
+			<command>mosquitto_rr</command> will use the Request-Response
+			feature.</para>
 	</refsect1>
 
 	<refsect1>
 		<title>Encrypted Connections</title>
-		<para><command>mosquitto_pub</command> supports TLS encrypted
+		<para><command>mosquitto_rr</command> supports TLS encrypted
 			connections. It is strongly recommended that you use an encrypted
 			connection for anything more than the most basic setup.</para>
 		<para>To enable TLS connections when using x509 certificates, one of
@@ -114,14 +113,14 @@
 		<title>Options</title>
 		<para>The options below may be given on the command line, but may also
 			be placed in a config file located at
-			<option>$XDG_CONFIG_HOME/mosquitto_pub</option> or
-			<option>$HOME/.config/mosquitto_sub</option> with one pair of
+			<option>$XDG_CONFIG_HOME/mosquitto_rr</option> or
+			<option>$HOME/.config/mosquitto_rr</option> with one pair of
 			<option>-option <replaceable>value</replaceable></option>
 			per line. The values in the config file will be used as defaults
 			and can be overridden by using the command line. The exceptions to
-			this are the message type options, of which only one can be
-			specified. Note also that currently some options cannot be negated,
-			e.g. <option>-S</option>. Config file lines that have a
+			this is <option>-t</option>, which if given in the config file will
+			not be overridden. Note also that currently some options cannot be
+			negated, e.g. <option>-S</option>. Config file lines that have a
 			<option>#</option> as the first character are treated as comments
 			and not processed any further.</para>
 		<variablelist>
@@ -204,11 +203,10 @@
 					<para><option>-D command identifier value</option></para>
 					<para><option>-D command identifier name value</option></para>
 					<para><option>command</option> is the MQTT command/packet
-						identifier and can be one of CONNECT, PUBLISH, PUBREL,
-						DISCONNECT, AUTH, or WILL. The properties available for
-						each command are listed in the
-						<link linkend='properties'>Properties</link>
-						section.</para>
+						identifier and can be one of CONNECT, PUBACK, PUBREC,
+						PUBCOMP, SUBSCRIBE, UNSUBSCRIBE, DISCONNECT, AUTH, or
+						WILL. The properties available for each command are
+						listed in the Properties section.</para>
 
 					<para><option>identifier</option> is the name of the
 						property to add. This is as described in the
@@ -233,7 +231,20 @@
 				<term><option>-f</option></term>
 				<term><option>--file</option></term>
 				<listitem>
-					<para>Send the contents of a file as the message.</para>
+					<para>Send the contents of a file as the request message.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-F</option></term>
+				<listitem>
+					<para>Specify output printing format. This option allows
+						you to choose what information from each message is
+						printed to the screen. See the <link
+							linkend='outputformat'>Output Format</link> section
+						below for full details.</para>
+					<para>This option overrides the <option>-v</option> option,
+						but does not override the <option>-N</option>
+						option.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -254,7 +265,7 @@
 				<term><option>--id</option></term>
 				<listitem>
 					<para>The id to use for this client. If not given, defaults
-					to mosquitto_pub_ appended with the process id of the
+					to mosquitto_rr_ appended with the process id of the
 					client. Cannot be used at the same time as the
 					<option>--id-prefix</option> argument.</para>
 				</listitem>
@@ -304,18 +315,6 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>--keyform</option></term>
-				<listitem>
-					<para>Specifies the type of private key in use when making
-						TLS connections.. This can be "pem" or "engine". This
-						parameter is useful when a TPM module is being used and
-						the private key has been created with it. Defaults to
-						"pem", which means normal private key files are
-						used.</para>
-					<para>See also <option>--tls-engine</option>.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
 				<term><option>-L</option></term>
 				<term><option>--url</option></term>
 				<listitem>
@@ -328,24 +327,27 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>-l</option></term>
-				<term><option>--stdin-line</option></term>
-				<listitem>
-					<para>Send messages read from stdin, splitting separate lines into separate messages. Note that blank lines won't be sent.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
 				<term><option>-m</option></term>
 				<term><option>--message</option></term>
 				<listitem>
-					<para>Send a single message from the command line.</para>
+					<para>Send a single request message from the command line.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-N</option></term>
+				<listitem>
+					<para>Do not append an end of line character to the payload
+						when printing. This allows streaming of payload data
+						from multiple messages directly to another application
+						unmodified. Only really makes sense when not using
+						<option>-v</option>.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
 				<term><option>-n</option></term>
 				<term><option>--null-message</option></term>
 				<listitem>
-					<para>Send a null (zero length) message.</para>
+					<para>Send a null (zero length) request message.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -411,7 +413,12 @@
 				<term><option>-q</option></term>
 				<term><option>--qos</option></term>
 				<listitem>
-					<para>Specify the quality of service to use for the message, from 0, 1 and 2. Defaults to 0.</para>
+					<para>Specify the quality of service desired for the
+					incoming messages, from 0, 1 and 2. Defaults to 0. See
+					<citerefentry><refentrytitle>mqtt</refentrytitle><manvolnum>7</manvolnum></citerefentry>
+					for more information on QoS.</para>
+					<para>The QoS is identical for all topics subscribed to in
+					a single instance of mosquitto_rr.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -424,17 +431,15 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
-				<term><option>-r</option></term>
-				<term><option>--retain</option></term>
+				<term><option>-R</option></term>
 				<listitem>
-					<para>If retain is given, the message will be retained as a "last known good" value on the broker. See <citerefentry><refentrytitle>mqtt</refentrytitle><manvolnum>7</manvolnum></citerefentry> for more information.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>-s</option></term>
-				<term><option>--stdin-file</option></term>
-				<listitem>
-					<para>Send a message read from stdin, sending the entire content as a single message.</para>
+					<para>If this argument is given, messages that are received
+						that have the retain bit set will not be printed.
+						Messages with retain set are "stale", in that it is not
+						known when they were originally published. When
+						subscribing to a wildcard topic there may be a large
+						number of retained messages. This argument suppresses
+						their display.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -449,30 +454,21 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>-s</option></term>
+				<term><option>--stdin-file</option></term>
+				<listitem>
+					<para>Send a request message read from stdin, sending the entire content as a single message.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>-t</option></term>
 				<term><option>--topic</option></term>
 				<listitem>
-					<para>The MQTT topic on which to publish the message. See <citerefentry><refentrytitle>mqtt</refentrytitle><manvolnum>7</manvolnum></citerefentry> for more information on MQTT topics.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>--tls-engine</option></term>
-				<listitem>
-					<para>A valid openssl engine id. These can be listed with
-						openssl engine command.</para>
-					<para>See also <option>--keyform</option>.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>--tls-engine-kpass-sha1</option></term>
-				<listitem>
-					<para>SHA1 of the private key password when using an TLS
-						engine.  Some TLS engines such as the TPM engine may
-						require the use of a password in order to be accessed.
-						This option allows a hex encoded SHA1 hash of the
-						password to the engine directly, instead of the user
-						being prompted for the password.</para>
-					<para>See also <option>--tls-engine</option>.</para>
+					<para>The MQTT topic to subscribe to, where responses will
+						be waited for. See
+					<citerefentry><refentrytitle>mqtt</refentrytitle><manvolnum>7</manvolnum></citerefentry>
+					for more information on MQTT topics.</para>
+					<para>This option may be repeated to subscribe to multiple topics.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -480,10 +476,12 @@
 				<listitem>
 					<para>Choose which TLS protocol version to use when
 						communicating with the broker. Valid options are
-						<option>tlsv1.3</option>, <option>tlsv1.2</option> and
-						<option>tlsv1.1</option>. The default value is
-						<option>tlsv1.2</option>. Must match the protocol
-						version used by the broker.</para>
+						<option>tlsv1.2</option>, <option>tlsv1.1</option> and
+						<option>tlsv1</option>. The default value is
+						<option>tlsv1.2</option>. If the installed version of
+						openssl is too old, only <option>tlsv1</option> will be
+						available. Must match the protocol version used by the
+						broker.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -491,8 +489,18 @@
 				<term><option>--username</option></term>
 				<listitem>
 					<para>Provide a username to be used for authenticating with
-						the broker.  See also the <option>--pw</option>
+						the broker. See also the <option>--pw</option>
 						argument.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-v</option></term>
+				<term><option>--verbose</option></term>
+				<listitem>
+					<para>Print received messages verbosely. With this
+					argument, messages will be printed as "topic payload". When
+					this argument is not given, the messages are printed as
+					"payload".</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -501,11 +509,19 @@
 				<listitem>
 					<para>Specify which version of the MQTT protocol should be
 						used when connecting to the rmeote broker. Can be
-						<option>5</option>, <option>311</option>,
-						<option>31</option>, or the more verbose
-						<option>mqttv5</option>, <option>mqttv311</option>, or
+						<option>mqttv5</option>, <option>mqttv311</option> or
 						<option>mqttv31</option>.
-						Defaults to <option>311</option>.</para>
+						Defaults to <option>mqttv311</option>.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-W</option></term>
+				<listitem>
+					<para>Provide a timeout as an integer number of seconds.
+						mosquitto_rr will stop processing messages and
+						disconnect after this number of seconds has
+						passed. The timeout starts just after the client has
+						connected to the broker.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -541,31 +557,134 @@
 		</variablelist>
 	</refsect1>
 
+	<refsect1 id='outputformat'>
+		<title>Output format</title>
+		<para>There are three ways of formatting the output from mosquitto_rr.
+			In all cases a new-line character is appended for each message
+			received unless the <option>-N</option> argument is passed to
+			mosquitto_rr.</para>
+		<para>Payload-only is the default output format and will
+			print the payload exactly as it is received.</para>
+		<para>Verbose mode is activated with <option>-v</option> and prints the
+			message topic and the payload, separated by a space.</para>
+		<para>The final option is formatted output, which allows the user to
+			define a custom output format.  The behaviour is controlled with
+			the <option>-F format-string</option> option. The format string is
+			a free text string where interpreted sequences are replaced by
+			different parameters. The available interpreted sequences are
+			described below.</para>
+		<para>Three characters are used to start an interpreted sequence:
+			<option>%</option>, <option>@</option> and <option>\</option>.
+			Sequences starting with <option>%</option> are either parameters
+			related to the MQTT message being printed, or are helper sequences
+			to avoid the need to type long date format strings for example.
+			Sequences starting with <option>@</option> are passed to the
+			<citerefentry><refentrytitle>strftime</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+			function (with the @ replaced with a % - note that only the
+			character immediately after the @ is passed to strftime). This
+			allows the construction of a wide variety of time based outputs.
+			The output options for strftime vary from platform to platform, so
+			please check what is available for your platform. mosquitto_rr
+			does provide one extension to strftime which is
+			<option>@N</option>, which can be used to obtain the number of
+			nanoseconds passed in the current second. The resolution of this
+			option varies depending on the platform. The final sequence
+			character is <option>\</option>, which is used to input some
+			characters that would otherwise be difficult to enter.</para>
+
+		<refsect2>
+			<title>MQTT related parameters</title>
+			<itemizedlist mark="circle">
+				<listitem><para><option>%%</option> a literal %.</para></listitem>
+				<listitem><para><option>%l</option> the length of the payload in bytes.</para></listitem>
+				<listitem><para><option>%m</option> the message id (only relevant for messages with QoS>0).</para></listitem>
+				<listitem><para><option>%p</option> the payload raw bytes (may produce non-printable characters depending on the payload).</para></listitem>
+				<listitem><para><option>%q</option> the message QoS.</para></listitem>
+				<listitem><para><option>%r</option> the retained flag for the message.</para></listitem>
+				<listitem><para><option>%t</option> the message topic.</para></listitem>
+				<listitem><para><option>%x</option> the payload with each byte as a hexadecimal number (lower case).</para></listitem>
+				<listitem><para><option>%X</option> the payload with each byte as a hexadecimal number (upper case).</para></listitem>
+			</itemizedlist>
+		</refsect2>
+
+		<refsect2>
+			<title>Helpers</title>
+			<itemizedlist mark="circle">
+				<listitem><para><option>%I</option> ISO-8601 format date and time, e.g. 2016-08-10T09:47:38+0100</para></listitem>
+				<listitem><para><option>%j</option> JSON output of message
+						parameters and timestamp, with a quoted and escaped
+						payload. For example
+						<code>{"tst":1470825369,"topic":"greeting","qos":0,"retain":0,"payload":"hello
+							world"}</code></para></listitem>
+				<listitem><para><option>%J</option> JSON output of message
+						parameters and timestamp, with a non-quoted and
+						non-escaped payload - this means the payload must
+						itself be valid JSON. For example:
+						<code>{"tst":1470825369,"topic":"foo","qos":0,"retain":0,"payload":{"temperature":27.0,"humidity":57}}</code>.</para></listitem>
+				<listitem><para><option>%I</option> ISO-8601 format date and time, e.g. 2016-08-10T09:47:38+0100</para></listitem>
+				<listitem><para><option>%U</option> Unix timestamp with nanoseconds, e.g. 1470818943.786368637</para></listitem>
+			</itemizedlist>
+		</refsect2>
+
+		<refsect2>
+			<title>Time related parameters</title>
+			<itemizedlist mark="circle">
+				<listitem><para><option>@@</option> a literal @.</para></listitem>
+				<listitem><para><option>@X</option> pass the character represented
+						by <option>X</option> to the strftime function as
+						<option>%X</option>. The options supported are platform
+						dependent.</para></listitem>
+				<listitem><para><option>@N</option> the number of nanoseconds that
+						have passed in the current second, with varying timing
+						resolution depending on platform.</para></listitem>
+			</itemizedlist>
+		</refsect2>
+
+		<refsect2>
+			<title>Escape characters</title>
+			<itemizedlist mark="circle">
+				<listitem><para><option>\\</option> a literal \.</para></listitem>
+				<listitem><para><option>\0</option> a null character. Can be used
+						to separate different parameters that may contain spaces
+						(e.g. topic, payload) so that processing with tools such as
+						<citerefentry><refentrytitle>xargs</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+						is easier.</para></listitem>
+				<listitem><para><option>\a</option> alert/bell.</para></listitem>
+				<listitem><para><option>\e</option> the escape sequence, which can
+						be used with ANSI colour codes to provide coloured output
+						for example.</para></listitem>
+				<listitem><para><option>\n</option> end of line.</para></listitem>
+				<listitem><para><option>\r</option> carriage return.</para></listitem>
+				<listitem><para><option>\t</option> horizontal tab.</para></listitem>
+				<listitem><para><option>\v</option> vertical tab.</para></listitem>
+			</itemizedlist>
+		</refsect2>
+	</refsect1>
+
 	<refsect1>
 		<title>Wills</title>
-		<para>mosquitto_sub can register a message with the broker that will be
+		<para>mosquitto_rr can register a message with the broker that will be
 		sent out if it disconnects unexpectedly. See
 		<citerefentry><refentrytitle>mqtt</refentrytitle><manvolnum>7</manvolnum></citerefentry>
 		for more information.</para>
 		<para>The minimum requirement for this is to use <option>--will-topic</option> to
 		specify which topic the will should be sent out on. This will result in
 		a non-retained, zero length message with QoS 0.</para>
-		<para>Use the <option>--will-retain</option>,
-		<option>--will-payload</option> and <option>--will-qos</option>
-		arguments to modify the other will parameters.</para>
+		<para>Use the <option>--will-retain</option>, <option>--will-payload</option> and <option>--will-qos</option> arguments to
+		modify the other will parameters.</para>
 	</refsect1>
 
 	<refsect1 id='properties'>
 		<title>Properties</title>
 		<para>The <option>-D</option> / <option>--property</option> option
-			allows adding properties to different stages of the mosquitto_pub
+			allows adding properties to different stages of the mosquitto_rr
 			run. The properties supported for each command are as
 			follows:</para>
 
 		<refsect2>
 			<title>Connect</title>
 			<itemizedlist>
-				<listitem><para><option>authentication-data</option> (binary data - note treated as a string in mosquitto_pub)</para></listitem>
+				<listitem><para><option>authentication-data</option> (binary data - note treated as a string in mosquitto_rr)</para></listitem>
 				<listitem><para><option>authentication-method</option> (UTF-8 string pair)</para></listitem>
 				<listitem><para><option>maximum-packet-size</option> (32-bit unsigned integer)</para></listitem>
 				<listitem><para><option>receive-maximum</option> (16-bit unsigned integer)</para></listitem>
@@ -581,11 +700,25 @@
 			<title>Publish</title>
 			<itemizedlist>
 				<listitem><para><option>content-type</option> (UTF-8 string)</para></listitem>
-				<listitem><para><option>correlation-data</option> (binary data - note treated as a string in mosquitto_pub)</para></listitem>
+				<listitem><para><option>correlation-data</option> (binary data - note treated as a string in mosquitto_rr)</para></listitem>
 				<listitem><para><option>message-expiry-interval</option> (32-bit unsigned integer)</para></listitem>
 				<listitem><para><option>payload-format-indicator</option> (8-bit unsigned integer)</para></listitem>
 				<listitem><para><option>response-topic</option> (UTF-8 string)</para></listitem>
 				<listitem><para><option>topic-alias</option> (16-bit unsigned integer)</para></listitem>
+				<listitem><para><option>user-property</option> (UTF-8 string pair)</para></listitem>
+			</itemizedlist>
+		</refsect2>
+
+		<refsect2>
+			<title>Subscribe</title>
+			<itemizedlist>
+				<listitem><para><option>user-property</option> (UTF-8 string pair)</para></listitem>
+			</itemizedlist>
+		</refsect2>
+
+		<refsect2>
+			<title>Unsubscribe</title>
+			<itemizedlist>
 				<listitem><para><option>user-property</option> (UTF-8 string pair)</para></listitem>
 			</itemizedlist>
 		</refsect2>
@@ -613,39 +746,11 @@
 	</refsect1>
 
 	<refsect1>
-		<title>Examples</title>
-		<para>Publish temperature information to localhost with QoS 1:</para>
-		<itemizedlist mark="circle">
-			<listitem><para>mosquitto_pub <literal>-t</literal> sensors/temperature <literal>-m</literal> 32 <literal>-q</literal> 1</para></listitem>
-		</itemizedlist>
-		<para>Publish timestamp and temperature information to a remote host on a non-standard port and QoS 0:</para>
-		<itemizedlist mark="circle">
-			<listitem><para>mosquitto_pub <literal>-h</literal> 192.168.1.1
-			<literal>-p</literal> 1885 <literal>-t</literal>
-			sensors/temperature <literal>-m</literal> "1266193804
-			32"</para></listitem>
-		</itemizedlist>
-		<para>Publish light switch status. Message is set to retained because there may be a long period of time between light switch events:</para>
-		<itemizedlist mark="circle">
-			<listitem><para>mosquitto_pub <literal>-r</literal> <literal>-t</literal> switches/kitchen_lights/status <literal>-m</literal> "on"</para></listitem>
-		</itemizedlist>
-		<para>Send the contents of a file in two ways:</para>
-		<itemizedlist mark="circle">
-			<listitem><para>mosquitto_pub <literal>-t</literal> my/topic <literal>-f</literal> ./data</para></listitem>
-			<listitem><para>mosquitto_pub <literal>-t</literal> my/topic <literal>-s</literal> &lt; ./data</para></listitem>
-		</itemizedlist>
-		<para>Send parsed electricity usage data from a Current Cost meter, reading from stdin with one line/reading as one message:</para>
-		<itemizedlist mark="circle">
-			<listitem><para>read_cc128.pl | mosquitto_pub <literal>-t</literal> sensors/cc128 <literal>-l</literal></para></listitem>
-		</itemizedlist>
-	</refsect1>
-
-	<refsect1>
 		<title>Files</title>
 		<variablelist>
 			<varlistentry>
-				<term><filename>$XDG_CONFIG_HOME/mosquitto_pub</filename></term>
-				<term><filename>$HOME/.config/mosquitto_pub</filename></term>
+				<term><filename>$XDG_CONFIG_HOME/mosquitto_rr</filename></term>
+				<term><filename>$HOME/.config/mosquitto_rr</filename></term>
 				<listitem>
 					<para>Configuration file for default options.</para>
 				</listitem>
@@ -670,7 +775,7 @@
 			</member>
 			<member>
 				<citerefentry>
-					<refentrytitle><link xlink:href="mosquitto_rr-1.html">mosquitto_rr</link></refentrytitle>
+					<refentrytitle><link xlink:href="mosquitto_pub-1.html">mosquitto_pub</link></refentrytitle>
 					<manvolnum>1</manvolnum>
 				</citerefentry>
 			</member>

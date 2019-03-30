@@ -16,6 +16,7 @@ cpp/*.test
 build/
 
 client/mosquitto_pub
+client/mosquitto_rr
 client/mosquitto_sub
 
 cov-int/
@@ -36,6 +37,7 @@ man/mosquitto.conf.5
 man/libmosquitto.3
 man/mosquitto_passwd.1
 man/mosquitto_pub.1
+man/mosquitto_rr.1
 man/mosquitto_sub.1
 man/mqtt.7
 

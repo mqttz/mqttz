@@ -29,6 +29,7 @@ Contributors:
 #define snprintf sprintf_s
 #endif
 
+#include <mqtt_protocol.h>
 #include <mosquitto.h>
 #include "client_shared.h"
 #include "pub_shared.h"
@@ -36,6 +37,23 @@ Contributors:
 /* Global variables for use in callbacks. See sub_client.c for an example of
  * using a struct to hold variables for use in callbacks. */
 static bool first_publish = true;
+static int last_mid = -1;
+static int last_mid_sent = -1;
+static char *line_buf = NULL;
+static int line_buf_len = 1024;
+static bool connected = true;
+static bool disconnect_sent = false;
+
+
+void my_disconnect_callback(struct mosquitto *mosq, void *obj, int rc, const mosquitto_property *properties)
+{
+	UNUSED(mosq);
+	UNUSED(obj);
+	UNUSED(rc);
+	UNUSED(properties);
+
+	connected = false;
+}
 
 int my_publish(struct mosquitto *mosq, int *mid, const char *topic, int payloadlen, void *payload, int qos, bool retain)
 {
@@ -104,6 +122,124 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 			}
 		}
 	}
+}
+
+
+void my_publish_callback(struct mosquitto *mosq, void *obj, int mid, int reason_code, const mosquitto_property *properties)
+{
+	UNUSED(obj);
+	UNUSED(properties);
+
+	last_mid_sent = mid;
+	if(reason_code > 127){
+		if(!cfg.quiet) fprintf(stderr, "Warning: Publish %d failed: %s.\n", mid, mosquitto_reason_string(reason_code));
+	}
+	if(cfg.pub_mode == MSGMODE_STDIN_LINE){
+		if(mid == last_mid){
+			mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
+			disconnect_sent = true;
+		}
+	}else if(disconnect_sent == false){
+		mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
+		disconnect_sent = true;
+	}
+}
+
+
+int pub_shared_init(void)
+{
+	line_buf = malloc(line_buf_len);
+	if(!line_buf){
+		fprintf(stderr, "Error: Out of memory.\n");
+		return 1;
+	}
+	return 0;
+}
+
+
+int pub_shared_loop(struct mosquitto *mosq)
+{
+	int read_len;
+	int pos;
+	int rc, rc2;
+	char *buf2;
+	int buf_len_actual;
+	int mode;
+
+	mode = cfg.pub_mode;
+
+	if(mode == MSGMODE_STDIN_LINE){
+		mosquitto_loop_start(mosq);
+	}
+
+	do{
+		if(mode == MSGMODE_STDIN_LINE){
+			if(status == STATUS_CONNACK_RECVD){
+				pos = 0;
+				read_len = line_buf_len;
+				while(connected && fgets(&line_buf[pos], read_len, stdin)){
+					buf_len_actual = strlen(line_buf);
+					if(line_buf[buf_len_actual-1] == '\n'){
+						line_buf[buf_len_actual-1] = '\0';
+						rc2 = my_publish(mosq, &mid_sent, cfg.topic, buf_len_actual-1, line_buf, cfg.qos, cfg.retain);
+						if(rc2){
+							if(!cfg.quiet) fprintf(stderr, "Error: Publish returned %d, disconnecting.\n", rc2);
+							mosquitto_disconnect_v5(mosq, MQTT_RC_DISCONNECT_WITH_WILL_MSG, cfg.disconnect_props);
+						}
+						break;
+					}else{
+						line_buf_len += 1024;
+						pos += 1023;
+						read_len = 1024;
+						buf2 = realloc(line_buf, line_buf_len);
+						if(!buf2){
+							fprintf(stderr, "Error: Out of memory.\n");
+							return MOSQ_ERR_NOMEM;
+						}
+						line_buf = buf2;
+					}
+				}
+				if(feof(stdin)){
+					if(mid_sent == -1){
+						/* Empty file */
+						mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
+						disconnect_sent = true;
+						status = STATUS_DISCONNECTING;
+					}else{
+						last_mid = mid_sent;
+						status = STATUS_WAITING;
+					}
+				}
+			}else if(status == STATUS_WAITING){
+				if(last_mid_sent == last_mid && disconnect_sent == false){
+					mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
+					disconnect_sent = true;
+				}
+#ifdef WIN32
+				Sleep(100);
+#else
+				struct timespec ts;
+				ts.tv_sec = 0;
+				ts.tv_nsec = 100000000;
+				nanosleep(&ts, NULL);
+#endif
+			}
+			rc = MOSQ_ERR_SUCCESS;
+		}else{
+			rc = mosquitto_loop(mosq, -1, 1);
+		}
+	}while(rc == MOSQ_ERR_SUCCESS && connected);
+
+	if(mode == MSGMODE_STDIN_LINE){
+		mosquitto_loop_stop(mosq, false);
+	}
+	return 0;
+}
+
+
+void pub_shared_cleanup(void)
+{
+	free(line_buf);
 }
 
 

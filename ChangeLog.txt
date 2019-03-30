@@ -30,6 +30,8 @@ Client library features:
 - Add support for OCSP stapling to bridges.
 
 Client features:
+- Add mosquitto_rr client, which can be used for "request-response" messaging,
+  by sending a request message and awaiting a response.
 - Add -E to mosquitto_sub, which causes it to exit immediately after having
   its subscriptions acknowledged. Use with -c to create a durable client
   session without requiring a message to be received.

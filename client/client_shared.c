@@ -121,7 +121,7 @@ static int check_format(const char *str)
 }
 
 
-void init_config(struct mosq_config *cfg)
+void init_config(struct mosq_config *cfg, int pub_or_sub)
 {
 	memset(cfg, 0, sizeof(*cfg));
 	cfg->port = -1;
@@ -129,7 +129,12 @@ void init_config(struct mosq_config *cfg)
 	cfg->keepalive = 60;
 	cfg->clean_session = true;
 	cfg->eol = true;
-	cfg->protocol_version = MQTT_PROTOCOL_V311;
+	if(pub_or_sub == CLIENT_RR){
+		cfg->protocol_version = MQTT_PROTOCOL_V5;
+		cfg->msg_count = 1;
+	}else{
+		cfg->protocol_version = MQTT_PROTOCOL_V311;
+	}
 }
 
 void client_config_cleanup(struct mosq_config *cfg)
@@ -147,6 +152,7 @@ void client_config_cleanup(struct mosq_config *cfg)
 	free(cfg->will_topic);
 	free(cfg->will_payload);
 	free(cfg->format);
+	free(cfg->response_topic);
 #ifdef WITH_TLS
 	free(cfg->cafile);
 	free(cfg->capath);
@@ -210,7 +216,7 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 #endif
 	args[0] = NULL;
 
-	init_config(cfg);
+	init_config(cfg, pub_or_sub);
 
 	/* Default config file */
 #ifndef WIN32
@@ -224,8 +230,10 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 		}
 		if(pub_or_sub == CLIENT_PUB){
 			snprintf(loc, len, "%s/mosquitto_pub", env);
-		}else{
+		}else if(pub_or_sub == CLIENT_SUB){
 			snprintf(loc, len, "%s/mosquitto_sub", env);
+		}else{
+			snprintf(loc, len, "%s/mosquitto_rr", env);
 		}
 		loc[len-1] = '\0';
 	}else{
@@ -239,8 +247,10 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 			}
 			if(pub_or_sub == CLIENT_PUB){
 				snprintf(loc, len, "%s/.config/mosquitto_pub", env);
-			}else{
+			}else if(pub_or_sub == CLIENT_SUB){
 				snprintf(loc, len, "%s/.config/mosquitto_sub", env);
+			}else{
+				snprintf(loc, len, "%s/.config/mosquitto_rr", env);
 			}
 			loc[len-1] = '\0';
 		}else{
@@ -259,8 +269,10 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 		}
 		if(pub_or_sub == CLIENT_PUB){
 			snprintf(loc, len, "%s\\mosquitto_pub.conf", env);
-		}else{
+		}else if(pub_or_sub == CLIENT_SUB){
 			snprintf(loc, len, "%s\\mosquitto_sub.conf", env);
+		}else{
+			snprintf(loc, len, "%s\\mosquitto_rr.conf", env);
 		}
 		loc[len-1] = '\0';
 	}else{
@@ -394,19 +406,25 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 	return MOSQ_ERR_SUCCESS;
 }
 
-int cfg_add_topic(struct mosq_config *cfg, int pub_or_sub, char *topic, const char *arg)
+int cfg_add_topic(struct mosq_config *cfg, int type, char *topic, const char *arg)
 {
 	if(mosquitto_validate_utf8(topic, strlen(topic))){
 		fprintf(stderr, "Error: Malformed UTF-8 in %s argument.\n\n", arg);
 		return 1;
 	}
-	if(pub_or_sub == CLIENT_PUB){
+	if(type == CLIENT_PUB || type == CLIENT_RR){
 		if(mosquitto_pub_topic_check(topic) == MOSQ_ERR_INVAL){
 			fprintf(stderr, "Error: Invalid publish topic '%s', does it contain '+' or '#'?\n", topic);
 			return 1;
 		}
 		cfg->topic = strdup(topic);
-	} else {
+	}else if(type == CLIENT_RESPONSE_TOPIC){
+		if(mosquitto_pub_topic_check(topic) == MOSQ_ERR_INVAL){
+			fprintf(stderr, "Error: Invalid response topic '%s', does it contain '+' or '#'?\n", topic);
+			return 1;
+		}
+		cfg->response_topic = strdup(topic);
+	}else{
 		if(mosquitto_sub_topic_check(topic) == MOSQ_ERR_INVAL){
 			fprintf(stderr, "Error: Invalid subscription topic '%s', are all '+' and '#' wildcards correct?\n", topic);
 			return 1;
@@ -471,7 +489,7 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 			i++;
 #endif
 		}else if(!strcmp(argv[i], "-C")){
-			if(pub_or_sub == CLIENT_PUB){
+			if(pub_or_sub != CLIENT_SUB){
 				goto unknown_option;
 			}else{
 				if(i==argc-1){
@@ -496,8 +514,21 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				return 1;
 			}
 			cfg->protocol_version = MQTT_PROTOCOL_V5;
+		}else if(!strcmp(argv[i], "-e")){
+			if(pub_or_sub != CLIENT_RR){
+				goto unknown_option;
+			}
+			if(i==argc-1){
+				fprintf(stderr, "Error: -e argument given but no response topic specified.\n\n");
+				return 1;
+			}else{
+				if(cfg_add_topic(cfg, CLIENT_RESPONSE_TOPIC, argv[i+1], "-e")){
+					return 1;
+				}
+			}
+			i++;
 		}else if(!strcmp(argv[i], "-E")){
-			if(pub_or_sub == CLIENT_PUB){
+			if(pub_or_sub != CLIENT_SUB){
 				goto unknown_option;
 			}
 			cfg->exit_after_sub = true;
@@ -652,7 +683,7 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 			}
 			i++;
 		}else if(!strcmp(argv[i], "-l") || !strcmp(argv[i], "--stdin-line")){
-			if(pub_or_sub == CLIENT_SUB){
+			if(pub_or_sub != CLIENT_PUB){
 				goto unknown_option;
 			}
 			if(cfg->pub_mode != MSGMODE_NONE){
@@ -765,7 +796,7 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 		}else if(!strcmp(argv[i], "--quiet")){
 			cfg->quiet = true;
 		}else if(!strcmp(argv[i], "-r") || !strcmp(argv[i], "--retain")){
-			if(pub_or_sub == CLIENT_SUB){
+			if(pub_or_sub != CLIENT_PUB){
 				goto unknown_option;
 			}
 			cfg->retain = 1;
@@ -774,8 +805,9 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				goto unknown_option;
 			}
 			cfg->no_retain = true;
+			cfg->sub_opts |= MQTT_SUB_OPT_SEND_RETAIN_NEVER;
 		}else if(!strcmp(argv[i], "--remove-retained")){
-			if(pub_or_sub == CLIENT_PUB){
+			if(pub_or_sub != CLIENT_SUB){
 				goto unknown_option;
 			}
 			cfg->remove_retained = true;
@@ -785,7 +817,7 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 			}
 			cfg->sub_opts |= MQTT_SUB_OPT_RETAIN_AS_PUBLISHED;
 		}else if(!strcmp(argv[i], "--retained-only")){
-			if(pub_or_sub == CLIENT_PUB){
+			if(pub_or_sub != CLIENT_SUB){
 				goto unknown_option;
 			}
 			cfg->retained_only = true;
@@ -813,7 +845,7 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				i++;
 			}
 		}else if(!strcmp(argv[i], "-T") || !strcmp(argv[i], "--filter-out")){
-			if(pub_or_sub == CLIENT_PUB){
+			if(pub_or_sub != CLIENT_SUB){
 				goto unknown_option;
 			}
 			if(i==argc-1){
@@ -864,7 +896,7 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 			i++;
 #endif
 		}else if(!strcmp(argv[i], "-U") || !strcmp(argv[i], "--unsubscribe")){
-			if(pub_or_sub == CLIENT_PUB){
+			if(pub_or_sub != CLIENT_SUB){
 				goto unknown_option;
 			}
 			if(i==argc-1){
