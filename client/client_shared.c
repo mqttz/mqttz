@@ -428,19 +428,7 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 	int i;
 
 	for(i=1; i<argc; i++){
-		if(!strcmp(argv[i], "-p") || !strcmp(argv[i], "--port")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: -p argument given but no port specified.\n\n");
-				return 1;
-			}else{
-				cfg->port = atoi(argv[i+1]);
-				if(cfg->port<1 || cfg->port>65535){
-					fprintf(stderr, "Error: Invalid port given: %d\n", cfg->port);
-					return 1;
-				}
-			}
-			i++;
-		}else if(!strcmp(argv[i], "-A")){
+		if(!strcmp(argv[i], "-A")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: -A argument given but no address specified.\n\n");
 				return 1;
@@ -481,22 +469,6 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				cfg->ciphers = strdup(argv[i+1]);
 			}
 			i++;
-		}else if(!strcmp(argv[i], "--tls-engine")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: --tls-engine argument given but no engine_id specified.\n\n");
-				return 1;
-			}else{
-				cfg->tls_engine = strdup(argv[i+1]);
-			}
-			i++;
-		}else if(!strcmp(argv[i], "--tls-engine-kpass-sha1")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: --tls-engine-kpass-sha1 argument given but no kpass sha1 specified.\n\n");
-				return 1;
-			}else{
-				cfg->tls_engine_kpass_sha1 = strdup(argv[i+1]);
-			}
-			i++;
 #endif
 		}else if(!strcmp(argv[i], "-C")){
 			if(pub_or_sub == CLIENT_PUB){
@@ -514,22 +486,8 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				}
 				i++;
 			}
-		}else if(!strcmp(argv[i], "-W")){
-			if(pub_or_sub == CLIENT_PUB){
-				goto unknown_option;
-			}else{
-				if(i==argc-1){
-					fprintf(stderr, "Error: -W argument given but no timeout specified.\n\n");
-					return 1;
-				}else{
-					cfg->timeout = atoi(argv[i+1]);
-					if(cfg->timeout < 1){
-						fprintf(stderr, "Error: Invalid timeout \"%d\".\n\n", cfg->msg_count);
-						return 1;
-					}
-				}
-				i++;
-			}
+		}else if(!strcmp(argv[i], "-c") || !strcmp(argv[i], "--disable-clean-session")){
+			cfg->clean_session = false;
 		}else if(!strcmp(argv[i], "-d") || !strcmp(argv[i], "--debug")){
 			cfg->debug = true;
 		}else if(!strcmp(argv[i], "-D") || !strcmp(argv[i], "--property")){
@@ -538,6 +496,11 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				return 1;
 			}
 			cfg->protocol_version = MQTT_PROTOCOL_V5;
+		}else if(!strcmp(argv[i], "-E")){
+			if(pub_or_sub == CLIENT_PUB){
+				goto unknown_option;
+			}
+			cfg->exit_after_sub = true;
 		}else if(!strcmp(argv[i], "-f") || !strcmp(argv[i], "--file")){
 			if(pub_or_sub == CLIENT_SUB){
 				goto unknown_option;
@@ -557,11 +520,6 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				}
 			}
 			i++;
-		}else if(!strcmp(argv[i], "-E")){
-			if(pub_or_sub == CLIENT_PUB){
-				goto unknown_option;
-			}
-			cfg->exit_after_sub = true;
 		}else if(!strcmp(argv[i], "-F")){
 			if(pub_or_sub == CLIENT_PUB){
 				goto unknown_option;
@@ -737,28 +695,31 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 			}else{
 				cfg->pub_mode = MSGMODE_NULL;
 			}
-		}else if(!strcmp(argv[i], "--retain-as-published")){
+		}else if(!strcmp(argv[i], "-N")){
 			if(pub_or_sub == CLIENT_PUB){
 				goto unknown_option;
 			}
-			cfg->sub_opts |= MQTT_SUB_OPT_RETAIN_AS_PUBLISHED;
-		}else if(!strcmp(argv[i], "-V") || !strcmp(argv[i], "--protocol-version")){
+			cfg->eol = false;
+		}else if(!strcmp(argv[i], "-p") || !strcmp(argv[i], "--port")){
 			if(i==argc-1){
-				fprintf(stderr, "Error: --protocol-version argument given but no version specified.\n\n");
+				fprintf(stderr, "Error: -p argument given but no port specified.\n\n");
 				return 1;
 			}else{
-				if(!strcmp(argv[i+1], "mqttv31") || !strcmp(argv[i+1], "31")){
-					cfg->protocol_version = MQTT_PROTOCOL_V31;
-				}else if(!strcmp(argv[i+1], "mqttv311") || !strcmp(argv[i+1], "311")){
-					cfg->protocol_version = MQTT_PROTOCOL_V311;
-				}else if(!strcmp(argv[i+1], "mqttv5") || !strcmp(argv[i+1], "5")){
-					cfg->protocol_version = MQTT_PROTOCOL_V5;
-				}else{
-					fprintf(stderr, "Error: Invalid protocol version argument given.\n\n");
+				cfg->port = atoi(argv[i+1]);
+				if(cfg->port<1 || cfg->port>65535){
+					fprintf(stderr, "Error: Invalid port given: %d\n", cfg->port);
 					return 1;
 				}
-				i++;
 			}
+			i++;
+		}else if(!strcmp(argv[i], "-P") || !strcmp(argv[i], "--pw")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: -P argument given but no password specified.\n\n");
+				return 1;
+			}else{
+				cfg->password = strdup(argv[i+1]);
+			}
+			i++;
 #ifdef WITH_SOCKS
 		}else if(!strcmp(argv[i], "--proxy")){
 			if(i==argc-1){
@@ -803,16 +764,26 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 			i++;
 		}else if(!strcmp(argv[i], "--quiet")){
 			cfg->quiet = true;
-		}else if(!strcmp(argv[i], "--remove-retained")){
-			if(pub_or_sub == CLIENT_PUB){
-				goto unknown_option;
-			}
-			cfg->remove_retained = true;
 		}else if(!strcmp(argv[i], "-r") || !strcmp(argv[i], "--retain")){
 			if(pub_or_sub == CLIENT_SUB){
 				goto unknown_option;
 			}
 			cfg->retain = 1;
+		}else if(!strcmp(argv[i], "-R")){
+			if(pub_or_sub == CLIENT_PUB){
+				goto unknown_option;
+			}
+			cfg->no_retain = true;
+		}else if(!strcmp(argv[i], "--remove-retained")){
+			if(pub_or_sub == CLIENT_PUB){
+				goto unknown_option;
+			}
+			cfg->remove_retained = true;
+		}else if(!strcmp(argv[i], "--retain-as-published")){
+			if(pub_or_sub == CLIENT_PUB){
+				goto unknown_option;
+			}
+			cfg->sub_opts |= MQTT_SUB_OPT_RETAIN_AS_PUBLISHED;
 		}else if(!strcmp(argv[i], "--retained-only")){
 			if(pub_or_sub == CLIENT_PUB){
 				goto unknown_option;
@@ -866,6 +837,32 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				cfg->filter_outs[cfg->filter_out_count-1] = strdup(argv[i+1]);
 			}
 			i++;
+#ifdef WITH_TLS
+		}else if(!strcmp(argv[i], "--tls-engine")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --tls-engine argument given but no engine_id specified.\n\n");
+				return 1;
+			}else{
+				cfg->tls_engine = strdup(argv[i+1]);
+			}
+			i++;
+		}else if(!strcmp(argv[i], "--tls-engine-kpass-sha1")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --tls-engine-kpass-sha1 argument given but no kpass sha1 specified.\n\n");
+				return 1;
+			}else{
+				cfg->tls_engine_kpass_sha1 = strdup(argv[i+1]);
+			}
+			i++;
+		}else if(!strcmp(argv[i], "--tls-version")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --tls-version argument given but no version specified.\n\n");
+				return 1;
+			}else{
+				cfg->tls_version = strdup(argv[i+1]);
+			}
+			i++;
+#endif
 		}else if(!strcmp(argv[i], "-U") || !strcmp(argv[i], "--unsubscribe")){
 			if(pub_or_sub == CLIENT_PUB){
 				goto unknown_option;
@@ -891,16 +888,6 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				cfg->unsub_topics[cfg->unsub_topic_count-1] = strdup(argv[i+1]);
 			}
 			i++;
-#ifdef WITH_TLS
-		}else if(!strcmp(argv[i], "--tls-version")){
-			if(i==argc-1){
-				fprintf(stderr, "Error: --tls-version argument given but no version specified.\n\n");
-				return 1;
-			}else{
-				cfg->tls_version = strdup(argv[i+1]);
-			}
-			i++;
-#endif
 		}else if(!strcmp(argv[i], "-u") || !strcmp(argv[i], "--username")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: -u argument given but no username specified.\n\n");
@@ -909,14 +896,44 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				cfg->username = strdup(argv[i+1]);
 			}
 			i++;
-		}else if(!strcmp(argv[i], "-P") || !strcmp(argv[i], "--pw")){
+		}else if(!strcmp(argv[i], "-V") || !strcmp(argv[i], "--protocol-version")){
 			if(i==argc-1){
-				fprintf(stderr, "Error: -P argument given but no password specified.\n\n");
+				fprintf(stderr, "Error: --protocol-version argument given but no version specified.\n\n");
 				return 1;
 			}else{
-				cfg->password = strdup(argv[i+1]);
+				if(!strcmp(argv[i+1], "mqttv31") || !strcmp(argv[i+1], "31")){
+					cfg->protocol_version = MQTT_PROTOCOL_V31;
+				}else if(!strcmp(argv[i+1], "mqttv311") || !strcmp(argv[i+1], "311")){
+					cfg->protocol_version = MQTT_PROTOCOL_V311;
+				}else if(!strcmp(argv[i+1], "mqttv5") || !strcmp(argv[i+1], "5")){
+					cfg->protocol_version = MQTT_PROTOCOL_V5;
+				}else{
+					fprintf(stderr, "Error: Invalid protocol version argument given.\n\n");
+					return 1;
+				}
+				i++;
 			}
-			i++;
+		}else if(!strcmp(argv[i], "-v") || !strcmp(argv[i], "--verbose")){
+			if(pub_or_sub == CLIENT_PUB){
+				goto unknown_option;
+			}
+			cfg->verbose = 1;
+		}else if(!strcmp(argv[i], "-W")){
+			if(pub_or_sub == CLIENT_PUB){
+				goto unknown_option;
+			}else{
+				if(i==argc-1){
+					fprintf(stderr, "Error: -W argument given but no timeout specified.\n\n");
+					return 1;
+				}else{
+					cfg->timeout = atoi(argv[i+1]);
+					if(cfg->timeout < 1){
+						fprintf(stderr, "Error: Invalid timeout \"%d\".\n\n", cfg->msg_count);
+						return 1;
+					}
+				}
+				i++;
+			}
 		}else if(!strcmp(argv[i], "--will-payload")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: --will-payload argument given but no will payload specified.\n\n");
@@ -956,23 +973,6 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				cfg->will_topic = strdup(argv[i+1]);
 			}
 			i++;
-		}else if(!strcmp(argv[i], "-c") || !strcmp(argv[i], "--disable-clean-session")){
-			cfg->clean_session = false;
-		}else if(!strcmp(argv[i], "-N")){
-			if(pub_or_sub == CLIENT_PUB){
-				goto unknown_option;
-			}
-			cfg->eol = false;
-		}else if(!strcmp(argv[i], "-R")){
-			if(pub_or_sub == CLIENT_PUB){
-				goto unknown_option;
-			}
-			cfg->no_retain = true;
-		}else if(!strcmp(argv[i], "-v") || !strcmp(argv[i], "--verbose")){
-			if(pub_or_sub == CLIENT_PUB){
-				goto unknown_option;
-			}
-			cfg->verbose = 1;
 		}else{
 			goto unknown_option;
 		}
