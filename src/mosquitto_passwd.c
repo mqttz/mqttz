@@ -130,7 +130,7 @@ void print_usage(void)
 	printf(" -c : create a new password file. This will overwrite existing files.\n");
 	printf(" -D : delete the username rather than adding/updating its password.\n");
 	printf(" -U : update a plain text password file to use hashed passwords.\n");
-	printf("\nSee http://mosquitto.org/ for more information.\n\n");
+	printf("\nSee https://mosquitto.org/ for more information.\n\n");
 }
 
 int output_new_password(FILE *fptr, const char *username, const char *password)

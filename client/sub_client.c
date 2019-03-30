@@ -268,7 +268,7 @@ void print_usage(void)
 	printf("           socks5h://[username[:password]@]hostname[:port]\n");
 	printf("           Only \"none\" and \"username\" authentication is supported.\n");
 #endif
-	printf("\nSee http://mosquitto.org/ for more information.\n\n");
+	printf("\nSee https://mosquitto.org/ for more information.\n\n");
 }
 
 int main(int argc, char *argv[])
