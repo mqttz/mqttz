@@ -34,6 +34,7 @@ test : test-compile 01 02 03 04 05 06 07 08 09 10 11 12
 	./01-connect-uname-invalid-utf8.py
 	./01-connect-uname-no-flag.py
 	./01-connect-uname-no-password-denied.py
+	./01-connect-uname-password-denied-no-will.py
 	./01-connect-uname-password-denied.py
 	./01-connect-uname-pwd-no-flag.py
 ifeq ($(WITH_TLS),yes)

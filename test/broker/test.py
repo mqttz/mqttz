@@ -21,6 +21,7 @@ tests = [
     (1, './01-connect-uname-invalid-utf8.py'),
     (1, './01-connect-uname-no-flag.py'),
     (1, './01-connect-uname-no-password-denied.py'),
+    (1, './01-connect-uname-password-denied-no-will.py'),
     (1, './01-connect-uname-password-denied.py'),
     (1, './01-connect-uname-password-success.py'),
     (1, './01-connect-uname-pwd-no-flag.py'),
