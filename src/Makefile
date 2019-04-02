@@ -18,6 +18,7 @@ OBJS=	mosquitto.o \
 		handle_auth.o \
 		handle_connack.o \
 		handle_connect.o \
+		handle_disconnect.o \
 		handle_ping.o \
 		handle_pubackcomp.o \
 		handle_publish.o \
@@ -100,6 +101,9 @@ handle_connack.o : handle_connack.c mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
 handle_connect.o : handle_connect.c mosquitto_broker_internal.h
+	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
+
+handle_disconnect.o : handle_disconnect.c mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
 handle_ping.o : ../lib/handle_ping.c ../lib/read_handle.h

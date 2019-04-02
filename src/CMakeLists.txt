@@ -11,6 +11,7 @@ set (MOSQ_SRCS
 	handle_auth.c
 	handle_connack.c
 	handle_connect.c
+	handle_disconnect.c
 	../lib/handle_ping.c
 	../lib/handle_pubackcomp.c
 	handle_publish.c
