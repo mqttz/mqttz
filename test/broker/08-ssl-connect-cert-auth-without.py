@@ -39,14 +39,13 @@ except ssl.SSLError as err:
 except socket.error as err:
     if err.errno == errno.ECONNRESET:
         rc = 0
-
-os.remove(conf_file)
-time.sleep(0.5)
-broker.terminate()
-broker.wait()
-(stdo, stde) = broker.communicate()
-if rc:
-    print(stde)
+finally:
+    os.remove(conf_file)
+    broker.terminate()
+    broker.wait()
+    (stdo, stde) = broker.communicate()
+    if rc:
+        print(stde)
 
 exit(rc)
 
