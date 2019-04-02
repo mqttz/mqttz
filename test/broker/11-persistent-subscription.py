@@ -63,7 +63,7 @@ finally:
     broker.wait()
     (stdo, stde) = broker.communicate()
     if rc:
-        print(stde1 + stde)
+        print(stde.decode('utf-8'))
     if os.path.exists('mosquitto-%d.db' % (port)):
         os.unlink('mosquitto-%d.db' % (port))
 

@@ -47,7 +47,7 @@ try:
     sock.close()
 finally:
     if rc:
-        print(stde)
+        print(stde.decode('utf-8'))
 
 exit(rc)
 

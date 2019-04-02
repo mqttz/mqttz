@@ -44,8 +44,8 @@ def pattern_test(sub_topic, pub_topic):
         broker.wait()
         (stdo, stde) = broker.communicate()
         if rc:
-            print(stde)
-            print(stdo)
+            print(stde.decode('utf-8'))
+            print(stdo.decode('utf-8'))
             sys.exit(rc)
 
     return rc

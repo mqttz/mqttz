@@ -49,7 +49,7 @@ def len_test(test, pubrec_packet, pubcomp_packet):
         broker.wait()
         (stdo, stde) = broker.communicate()
         if rc:
-            print(stde)
+            print(stde.decode('utf-8'))
 
     if rc != 0:
         print(test)

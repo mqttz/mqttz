@@ -44,7 +44,7 @@ def do_test(clean_session):
         broker.wait()
         (stdo, stde) = broker.communicate()
         if rc:
-            print(stde)
+            print(stde.decode('utf-8'))
             exit(rc)
 
 do_test(clean_session=True)

@@ -34,7 +34,7 @@ def do_test(proto_ver):
         broker.wait()
         (stdo, stde) = broker.communicate()
         if rc:
-            print(stde)
+            print(stde.decode('utf-8'))
             exit(rc)
 
 do_test(4)

@@ -64,7 +64,7 @@ def single_test(port, per_listener, username, topic, expect_deny):
         broker.wait()
         (stdo, stde) = broker.communicate()
         if rc:
-            print(stde)
+            print(stde.decode('utf-8'))
             exit(rc)
 
 def acl_test(port, per_listener, global_en, user_en, pattern_en):

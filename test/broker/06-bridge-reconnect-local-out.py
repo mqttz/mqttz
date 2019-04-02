@@ -77,15 +77,15 @@ finally:
     broker.wait()
     (stdo, stde) = broker.communicate()
     if rc:
-        print(stde)
+        print(stde.decode('utf-8'))
     local_broker.terminate()
     local_broker.wait()
     if rc:
         (stdo, stde) = local_broker.communicate()
-        print(stde)
+        print(stde.decode('utf-8'))
         if pub:
             (stdo, stde) = pub.communicate()
-            print(stdo)
+            print(stdo.decode('utf-8'))
 
     try:
         os.remove('mosquitto-%d.db' % (port1))

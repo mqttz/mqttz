@@ -100,7 +100,7 @@ def do_test(per_listener, username):
         os.remove(persistence_file)
         (stdo, stde) = broker.communicate()
         if rc:
-            print(stde)
+            print(stde.decode('utf-8'))
             exit(rc)
 
 

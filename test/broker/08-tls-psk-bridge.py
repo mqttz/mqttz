@@ -83,12 +83,12 @@ finally:
     bridge.wait()
     (stdo, stde) = broker.communicate()
     if rc:
-        print(stde)
+        print(stde.decode('utf-8'))
         (stdo, stde) = bridge.communicate()
-        print(stde)
+        print(stde.decode('utf-8'))
         if pub:
             (stdo, stde) = pub.communicate()
-            print(stdo)
+            print(stdo.decode('utf-8'))
 
 exit(rc)
 

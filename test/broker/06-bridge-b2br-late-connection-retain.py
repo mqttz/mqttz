@@ -91,7 +91,7 @@ finally:
     (stdo, stde) = broker.communicate()
     os.remove(persistence_file)
     if rc:
-        print(stde)
+        print(stde.decode('utf-8'))
     ssock.close()
 
 exit(rc)
