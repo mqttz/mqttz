@@ -248,9 +248,7 @@ struct mosquitto {
 	bool is_bridge;
 	struct mosquitto__bridge *bridge;
 	struct mosquitto_client_msg *inflight_msgs;
-	struct mosquitto_client_msg *last_inflight_msg;
 	struct mosquitto_client_msg *queued_msgs;
-	struct mosquitto_client_msg *last_queued_msg;
 	unsigned long msg_bytes;
 	unsigned long msg_bytes12;
 	int msg_count;

@@ -72,10 +72,6 @@ struct mosquitto *context__init(struct mosquitto_db *db, mosq_sock_t sock)
 		}
 	}
 	context->bridge = NULL;
-	context->inflight_msgs = NULL;
-	context->last_inflight_msg = NULL;
-	context->queued_msgs = NULL;
-	context->last_queued_msg = NULL;
 	context->receive_maximum = db->config->max_inflight_messages;
 	context->send_maximum = db->config->max_inflight_messages;
 	context->maximum_qos = 2;

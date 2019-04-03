@@ -131,6 +131,7 @@ tests = [
     (3, './08-tls-psk-bridge.py'),
 
     (1, './09-acl-access-variants.py'),
+    (1, './09-acl-change.py'),
     (1, './09-acl-empty-file.py'),
     (1, './09-auth-bad-method.py'),
     (1, './09-extended-auth-unsupported.py'),

@@ -28,6 +28,7 @@ Contributors:
 #include <string.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <utlist.h>
 
 #include "mosquitto_broker_internal.h"
 #include "memory_mosq.h"
@@ -109,7 +110,6 @@ int persist__read_string(FILE *db_fptr, char **str)
 static int persist__client_msg_restore(struct mosquitto_db *db, struct P_client_msg *chunk)
 {
 	struct mosquitto_client_msg *cmsg;
-	struct mosquitto_client_msg **msgs, **last_msg;
 	struct mosquitto_msg_store_load *load;
 	struct mosquitto *context;
 
@@ -147,18 +147,10 @@ static int persist__client_msg_restore(struct mosquitto_db *db, struct P_client_
 	}
 
 	if(chunk->F.state == mosq_ms_queued){
-		msgs = &(context->queued_msgs);
-		last_msg = &(context->last_queued_msg);
+		DL_APPEND(context->queued_msgs, cmsg);
 	}else{
-		msgs = &(context->inflight_msgs);
-		last_msg = &(context->last_inflight_msg);
+		DL_APPEND(context->inflight_msgs, cmsg);
 	}
-	if(*msgs){
-		(*last_msg)->next = cmsg;
-	}else{
-		*msgs = cmsg;
-	}
-	*last_msg = cmsg;
 
 	return MOSQ_ERR_SUCCESS;
 }

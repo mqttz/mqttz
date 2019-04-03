@@ -161,6 +161,7 @@ endif
 
 09 :
 	./09-acl-access-variants.py
+	./09-acl-change.py
 	./09-acl-empty-file.py
 	./09-auth-bad-method.py
 	./09-extended-auth-unsupported.py

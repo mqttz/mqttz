@@ -18,6 +18,7 @@ Contributors:
 
 #include <stdio.h>
 #include <string.h>
+#include <utlist.h>
 
 #include "mosquitto_broker_internal.h"
 #include "mqtt_protocol.h"
@@ -79,35 +80,21 @@ static char *client_id_gen(int *idlen, const char *auto_id_prefix, int auto_id_p
 
 /* Remove any queued messages that are no longer allowed through ACL,
  * assuming a possible change of username. */
-void connection_check_acl(struct mosquitto_db *db, struct mosquitto *context, struct mosquitto_client_msg **msgs)
+void connection_check_acl(struct mosquitto_db *db, struct mosquitto *context, struct mosquitto_client_msg **head)
 {
-	struct mosquitto_client_msg *msg_tail, *msg_prev;
+	struct mosquitto_client_msg *msg_tail, *tmp;
 
-	msg_tail = *msgs;
-	msg_prev = NULL;
-	while(msg_tail){
+	DL_FOREACH_SAFE((*head), msg_tail, tmp){
 		if(msg_tail->direction == mosq_md_out){
 			if(mosquitto_acl_check(db, context, msg_tail->store->topic,
 								   msg_tail->store->payloadlen, UHPA_ACCESS(msg_tail->store->payload, msg_tail->store->payloadlen),
 								   msg_tail->store->qos, msg_tail->store->retain, MOSQ_ACL_READ) != MOSQ_ERR_SUCCESS){
+
+				DL_DELETE((*head), msg_tail);
 				db__msg_store_deref(db, &msg_tail->store);
-				if(msg_prev){
-					msg_prev->next = msg_tail->next;
-					mosquitto__free(msg_tail);
-					msg_tail = msg_prev->next;
-				}else{
-					*msgs = (*msgs)->next;
-					mosquitto__free(msg_tail);
-					msg_tail = (*msgs);
-				}
-				// XXX: why it does not update last_msg if msg_tail was the last message ?
-			}else{
-				msg_prev = msg_tail;
-				msg_tail = msg_tail->next;
+				mosquitto_property_free_all(&msg_tail->properties);
+				mosquitto__free(msg_tail);
 			}
-		}else{
-			msg_prev = msg_tail;
-			msg_tail = msg_tail->next;
 		}
 	}
 }

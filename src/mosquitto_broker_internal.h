@@ -350,6 +350,7 @@ struct mosquitto_msg_store{
 };
 
 struct mosquitto_client_msg{
+	struct mosquitto_client_msg *prev;
 	struct mosquitto_client_msg *next;
 	struct mosquitto_msg_store *store;
 	mosquitto_property *properties;
