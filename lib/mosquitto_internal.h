@@ -272,6 +272,7 @@ struct mosquitto {
 #    endif
 #  endif
 	bool ws_want_write;
+	bool assigned_id;
 #else
 #  ifdef WITH_SOCKS
 	char *socks5_host;

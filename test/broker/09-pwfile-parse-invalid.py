@@ -35,7 +35,7 @@ def do_test(port, connack_rc, username, password):
         sock.close()
     finally:
         if rc:
-            exit(rc)
+            raise AssertionError
 
 
 def username_password_tests(port):
@@ -161,3 +161,5 @@ try:
 finally:
     os.remove(conf_file)
     os.remove(pw_file)
+
+sys.exit(0)

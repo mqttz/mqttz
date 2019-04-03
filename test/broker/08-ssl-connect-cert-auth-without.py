@@ -3,6 +3,7 @@
 # Test whether a client can connect without an SSL certificate if one is required.
 
 from mosq_test_helper import *
+import errno
 
 if sys.version < '2.7':
     print("WARNING: SSL not supported on Python 2.6")
