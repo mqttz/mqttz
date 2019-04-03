@@ -128,9 +128,11 @@ static void string_read_helper(
 	rc = packet__read_string(&packet, (char **)&value, &length);
 	CU_ASSERT_EQUAL(rc, rc_expected);
 	if(value_expected){
-		CU_ASSERT_NSTRING_EQUAL(value, value_expected, length_expected);
+		if(value){
+			CU_ASSERT_NSTRING_EQUAL(value, value_expected, length_expected);
+		}
 	}else{
-		CU_ASSERT_EQUAL(value, NULL);
+		CU_ASSERT_PTR_NULL(value);
 	}
 	CU_ASSERT_EQUAL(length, length_expected);
 	free(value);

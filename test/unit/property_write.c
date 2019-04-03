@@ -27,6 +27,9 @@ static void byte_prop_write_helper(
 	packet.packet_length = packet.remaining_length+10;
 	packet.payload = calloc(packet.remaining_length+10, 1);
 
+	CU_ASSERT_PTR_NOT_NULL(packet.payload);
+	if(!packet.payload) return;
+
 	property__write_all(&packet, &property, true);
 	packet.pos = 0;
 
@@ -67,6 +70,9 @@ static void int32_prop_write_helper(
 	packet.remaining_length = property__get_length_all(&property)+1;
 	packet.packet_length = packet.remaining_length+10;
 	packet.payload = calloc(packet.remaining_length+10, 1);
+
+	CU_ASSERT_PTR_NOT_NULL(packet.payload);
+	if(!packet.payload) return;
 
 	property__write_all(&packet, &property, true);
 	packet.pos = 0;
@@ -109,6 +115,9 @@ static void int16_prop_write_helper(
 	packet.packet_length = packet.remaining_length+10;
 	packet.payload = calloc(packet.remaining_length+10, 1);
 
+	CU_ASSERT_PTR_NOT_NULL(packet.payload);
+	if(!packet.payload) return;
+
 	property__write_all(&packet, &property, true);
 	packet.pos = 0;
 
@@ -143,12 +152,18 @@ static void string_prop_write_helper(
 
 	property.identifier = identifier;
 	property.value.s.v = strdup(value_expected);
+	CU_ASSERT_PTR_NOT_NULL(property.value.s.v);
+	if(!property.value.s.v) return;
+
 	property.value.s.len = strlen(value_expected);
 
 	memset(&packet, 0, sizeof(struct mosquitto__packet));
 	packet.remaining_length = property__get_length_all(&property)+1;
 	packet.packet_length = packet.remaining_length+10;
 	packet.payload = calloc(packet.remaining_length+10, 1);
+
+	CU_ASSERT_PTR_NOT_NULL(packet.payload);
+	if(!packet.payload) return;
 
 	property__write_all(&packet, &property, true);
 	packet.pos = 0;
@@ -188,6 +203,9 @@ static void binary_prop_write_helper(
 
 	property.identifier = identifier;
 	property.value.bin.v = malloc(len_expected);
+	CU_ASSERT_PTR_NOT_NULL(property.value.bin.v);
+	if(!property.value.bin.v) return;
+
 	memcpy(property.value.bin.v, value_expected, len_expected);
 	property.value.bin.len = len_expected;
 
@@ -195,6 +213,9 @@ static void binary_prop_write_helper(
 	packet.remaining_length = property__get_length_all(&property)+1;
 	packet.packet_length = packet.remaining_length+10;
 	packet.payload = calloc(packet.remaining_length+10, 1);
+
+	CU_ASSERT_PTR_NOT_NULL(packet.payload);
+	if(!packet.payload) return;
 
 	property__write_all(&packet, &property, true);
 	packet.pos = 0;
@@ -233,14 +254,23 @@ static void string_pair_prop_write_helper(
 
 	property.identifier = identifier;
 	property.value.s.v = strdup(value_expected);
+	CU_ASSERT_PTR_NOT_NULL(property.value.s.v);
+	if(!property.value.s.v) return;
 	property.value.s.len = strlen(value_expected);
+
 	property.name.v = strdup(name_expected);
+	CU_ASSERT_PTR_NOT_NULL(property.name.v);
+	if(!property.name.v) return;
+
 	property.name.len = strlen(name_expected);
 
 	memset(&packet, 0, sizeof(struct mosquitto__packet));
 	packet.remaining_length = property__get_length_all(&property)+1;
 	packet.packet_length = packet.remaining_length+10;
 	packet.payload = calloc(packet.remaining_length+10, 1);
+
+	CU_ASSERT_PTR_NOT_NULL(packet.payload);
+	if(!packet.payload) return;
 
 	property__write_all(&packet, &property, true);
 	packet.pos = 0;
@@ -289,6 +319,9 @@ static void varint_prop_write_helper(
 	packet.remaining_length = property__get_length_all(&property)+1;
 	packet.packet_length = packet.remaining_length+10;
 	packet.payload = calloc(packet.remaining_length+10, 1);
+
+	CU_ASSERT_PTR_NOT_NULL(packet.payload);
+	if(!packet.payload) return;
 
 	property__write_all(&packet, &property, true);
 	packet.pos = 0;

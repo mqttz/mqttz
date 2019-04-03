@@ -359,13 +359,15 @@ static void packet_helper_reason_string_user_property(int command)
 		CU_ASSERT_EQUAL(p->value.s.len, strlen("reason"));
 
 		p = p->next;
-		CU_ASSERT_PTR_NULL(p->next);
+		if(p){
+			CU_ASSERT_PTR_NULL(p->next);
 
-		CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_USER_PROPERTY);
-		CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
-		CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
-		CU_ASSERT_STRING_EQUAL(p->name.v, "name");
-		CU_ASSERT_EQUAL(p->name.len, strlen("name"));
+			CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_USER_PROPERTY);
+			CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
+			CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
+			CU_ASSERT_STRING_EQUAL(p->name.v, "name");
+			CU_ASSERT_EQUAL(p->name.len, strlen("name"));
+		}
 
 		mosquitto_property_free_all(&properties);
 	}
@@ -1220,58 +1222,83 @@ static void TEST_packet_connect(void)
 	rc = property__read_all(CMD_CONNECT, &packet, &properties);
 
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
-	CU_ASSERT_PTR_NOT_NULL(properties->next);
 	p = properties;
+	CU_ASSERT_PTR_NOT_NULL(properties);
+	if(p){
+		CU_ASSERT_PTR_NOT_NULL(p->next);
+		CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_SESSION_EXPIRY_INTERVAL);
+		CU_ASSERT_EQUAL(p->value.i32, 0x12450000);
 
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_SESSION_EXPIRY_INTERVAL);
-	CU_ASSERT_EQUAL(p->value.i32, 0x12450000);
+		p = p->next;
+		CU_ASSERT_PTR_NOT_NULL(p);
+		if(p){
+			CU_ASSERT_PTR_NOT_NULL(p->next);
+			CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_RECEIVE_MAXIMUM);
+			CU_ASSERT_EQUAL(p->value.i16, 0x0005);
 
-	p = p->next;
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_RECEIVE_MAXIMUM);
-	CU_ASSERT_EQUAL(p->value.i16, 0x0005);
+			p = p->next;
+			CU_ASSERT_PTR_NOT_NULL(p);
+			if(p){
+				CU_ASSERT_PTR_NOT_NULL(p->next);
+				CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_MAXIMUM_PACKET_SIZE);
+				CU_ASSERT_EQUAL(p->value.i32, 0x12450000);
 
-	p = p->next;
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_MAXIMUM_PACKET_SIZE);
-	CU_ASSERT_EQUAL(p->value.i32, 0x12450000);
+				p = p->next;
+				CU_ASSERT_PTR_NOT_NULL(p);
+				if(p){
+					CU_ASSERT_PTR_NOT_NULL(p->next);
+					CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_TOPIC_ALIAS_MAXIMUM);
+					CU_ASSERT_EQUAL(p->value.i16, 0x0002);
 
-	p = p->next;
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_TOPIC_ALIAS_MAXIMUM);
-	CU_ASSERT_EQUAL(p->value.i16, 0x0002);
+					p = p->next;
+					CU_ASSERT_PTR_NOT_NULL(p);
+					if(p){
+						CU_ASSERT_PTR_NOT_NULL(p->next);
+						CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_REQUEST_PROBLEM_INFORMATION);
+						CU_ASSERT_EQUAL(p->value.i8, 1);
 
-	p = p->next;
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_REQUEST_PROBLEM_INFORMATION);
-	CU_ASSERT_EQUAL(p->value.i8, 1);
+						p = p->next;
+						CU_ASSERT_PTR_NOT_NULL(p);
+						if(p){
+							CU_ASSERT_PTR_NOT_NULL(p->next);
+							CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_REQUEST_RESPONSE_INFORMATION);
+							CU_ASSERT_EQUAL(p->value.i8, 1);
 
-	p = p->next;
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_REQUEST_RESPONSE_INFORMATION);
-	CU_ASSERT_EQUAL(p->value.i8, 1);
+							p = p->next;
+							CU_ASSERT_PTR_NOT_NULL(p);
+							if(p){
+								CU_ASSERT_PTR_NOT_NULL(p->next);
+								CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_USER_PROPERTY);
+								CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
+								CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
+								CU_ASSERT_STRING_EQUAL(p->name.v, "name");
+								CU_ASSERT_EQUAL(p->name.len, strlen("name"));
 
-	p = p->next;
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_USER_PROPERTY);
-	CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
-	CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
-	CU_ASSERT_STRING_EQUAL(p->name.v, "name");
-	CU_ASSERT_EQUAL(p->name.len, strlen("name"));
+								p = p->next;
+								CU_ASSERT_PTR_NOT_NULL(p);
+								if(p){
+									CU_ASSERT_PTR_NOT_NULL(p->next);
+									CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_AUTHENTICATION_METHOD);
+									CU_ASSERT_STRING_EQUAL(p->value.s.v, "none");
+									CU_ASSERT_EQUAL(p->value.s.len, strlen("none"));
 
-	p = p->next;
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_AUTHENTICATION_METHOD);
-	CU_ASSERT_STRING_EQUAL(p->value.s.v, "none");
-	CU_ASSERT_EQUAL(p->value.s.len, strlen("none"));
-
-	p = p->next;
-	CU_ASSERT_PTR_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_AUTHENTICATION_DATA);
-	CU_ASSERT_EQUAL(p->value.bin.v[0], 1);
-	CU_ASSERT_EQUAL(p->value.bin.v[1], 2);
-	CU_ASSERT_EQUAL(p->value.s.len, 2);
+									p = p->next;
+									CU_ASSERT_PTR_NOT_NULL(p);
+									if(p){
+										CU_ASSERT_PTR_NULL(p->next);
+										CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_AUTHENTICATION_DATA);
+										CU_ASSERT_EQUAL(p->value.bin.v[0], 1);
+										CU_ASSERT_EQUAL(p->value.bin.v[1], 2);
+										CU_ASSERT_EQUAL(p->value.s.len, 2);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 
 	mosquitto_property_free_all(&properties);
 }
@@ -1309,102 +1336,152 @@ static void TEST_packet_connack(void)
 	rc = property__read_all(CMD_CONNACK, &packet, &properties);
 
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
-	CU_ASSERT_PTR_NOT_NULL(properties->next);
+	CU_ASSERT_PTR_NOT_NULL(properties);
 	p = properties;
 
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_SESSION_EXPIRY_INTERVAL);
-	CU_ASSERT_EQUAL(p->value.i32, 0x12450000);
+	CU_ASSERT_PTR_NOT_NULL(p);
+	if(p){
+		CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_SESSION_EXPIRY_INTERVAL);
+		CU_ASSERT_EQUAL(p->value.i32, 0x12450000);
 
-	p = p->next;
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_RECEIVE_MAXIMUM);
-	CU_ASSERT_EQUAL(p->value.i16, 0x0005);
+		p = p->next;
+		CU_ASSERT_PTR_NOT_NULL(p);
+		if(p){
+			CU_ASSERT_PTR_NOT_NULL(p->next);
+			CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_RECEIVE_MAXIMUM);
+			CU_ASSERT_EQUAL(p->value.i16, 0x0005);
 
-	p = p->next;
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_MAXIMUM_QOS);
-	CU_ASSERT_EQUAL(p->value.i8, 1);
+			p = p->next;
+			CU_ASSERT_PTR_NOT_NULL(p);
+			if(p){
+				CU_ASSERT_PTR_NOT_NULL(p->next);
+				CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_MAXIMUM_QOS);
+				CU_ASSERT_EQUAL(p->value.i8, 1);
 
-	p = p->next;
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_RETAIN_AVAILABLE);
-	CU_ASSERT_EQUAL(p->value.i8, 0);
+				p = p->next;
+				CU_ASSERT_PTR_NOT_NULL(p);
+				if(p){
+					CU_ASSERT_PTR_NOT_NULL(p->next);
+					CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_RETAIN_AVAILABLE);
+					CU_ASSERT_EQUAL(p->value.i8, 0);
 
-	p = p->next;
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_MAXIMUM_PACKET_SIZE);
-	CU_ASSERT_EQUAL(p->value.i32, 0x12450000);
+					p = p->next;
+					CU_ASSERT_PTR_NOT_NULL(p);
+					if(p){
+						CU_ASSERT_PTR_NOT_NULL(p->next);
+						CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_MAXIMUM_PACKET_SIZE);
+						CU_ASSERT_EQUAL(p->value.i32, 0x12450000);
 
-	p = p->next;
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_ASSIGNED_CLIENT_IDENTIFIER);
-	CU_ASSERT_STRING_EQUAL(p->value.s.v, "ab");
-	CU_ASSERT_EQUAL(p->value.s.len, strlen("ab"));
+						p = p->next;
+						CU_ASSERT_PTR_NOT_NULL(p);
+						if(p){
+							CU_ASSERT_PTR_NOT_NULL(p->next);
+							CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_ASSIGNED_CLIENT_IDENTIFIER);
+							CU_ASSERT_STRING_EQUAL(p->value.s.v, "ab");
+							CU_ASSERT_EQUAL(p->value.s.len, strlen("ab"));
 
-	p = p->next;
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_TOPIC_ALIAS_MAXIMUM);
-	CU_ASSERT_EQUAL(p->value.i16, 0x0002);
+							p = p->next;
+							CU_ASSERT_PTR_NOT_NULL(p);
+							if(p){
+								CU_ASSERT_PTR_NOT_NULL(p->next);
+								CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_TOPIC_ALIAS_MAXIMUM);
+								CU_ASSERT_EQUAL(p->value.i16, 0x0002);
 
-	p = p->next;
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_REASON_STRING);
-	CU_ASSERT_STRING_EQUAL(p->value.s.v, "reason");
-	CU_ASSERT_EQUAL(p->value.s.len, strlen("reason"));
+								p = p->next;
+								CU_ASSERT_PTR_NOT_NULL(p);
+								if(p){
+									CU_ASSERT_PTR_NOT_NULL(p->next);
+									CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_REASON_STRING);
+									CU_ASSERT_STRING_EQUAL(p->value.s.v, "reason");
+									CU_ASSERT_EQUAL(p->value.s.len, strlen("reason"));
 
-	p = p->next;
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_USER_PROPERTY);
-	CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
-	CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
-	CU_ASSERT_STRING_EQUAL(p->name.v, "name");
-	CU_ASSERT_EQUAL(p->name.len, strlen("name"));
+									p = p->next;
+									CU_ASSERT_PTR_NOT_NULL(p);
+									if(p){
+										CU_ASSERT_PTR_NOT_NULL(p->next);
+										CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_USER_PROPERTY);
+										CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
+										CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
+										CU_ASSERT_STRING_EQUAL(p->name.v, "name");
+										CU_ASSERT_EQUAL(p->name.len, strlen("name"));
 
-	p = p->next;
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_WILDCARD_SUB_AVAILABLE);
-	CU_ASSERT_EQUAL(p->value.i8, 0);
+										p = p->next;
+										CU_ASSERT_PTR_NOT_NULL(p);
+										if(p){
+											CU_ASSERT_PTR_NOT_NULL(p->next);
+											CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_WILDCARD_SUB_AVAILABLE);
+											CU_ASSERT_EQUAL(p->value.i8, 0);
 
-	p = p->next;
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_SUBSCRIPTION_ID_AVAILABLE);
-	CU_ASSERT_EQUAL(p->value.i8, 0);
+											p = p->next;
+											CU_ASSERT_PTR_NOT_NULL(p);
+											if(p){
+												CU_ASSERT_PTR_NOT_NULL(p->next);
+												CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_SUBSCRIPTION_ID_AVAILABLE);
+												CU_ASSERT_EQUAL(p->value.i8, 0);
 
-	p = p->next;
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_SHARED_SUB_AVAILABLE);
-	CU_ASSERT_EQUAL(p->value.i8, 0);
+												p = p->next;
+												CU_ASSERT_PTR_NOT_NULL(p);
+												if(p){
+													CU_ASSERT_PTR_NOT_NULL(p->next);
+													CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_SHARED_SUB_AVAILABLE);
+													CU_ASSERT_EQUAL(p->value.i8, 0);
 
-	p = p->next;
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_SERVER_KEEP_ALIVE);
-	CU_ASSERT_EQUAL(p->value.i16, 0x00FF);
+													p = p->next;
+													CU_ASSERT_PTR_NOT_NULL(p);
+													if(p){
+														CU_ASSERT_PTR_NOT_NULL(p->next);
+														CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_SERVER_KEEP_ALIVE);
+														CU_ASSERT_EQUAL(p->value.i16, 0x00FF);
 
-	p = p->next;
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_RESPONSE_INFORMATION);
-	CU_ASSERT_STRING_EQUAL(p->value.s.v, "rsp");
-	CU_ASSERT_EQUAL(p->value.s.len, strlen("rsp"));
+														p = p->next;
+														CU_ASSERT_PTR_NOT_NULL(p);
+														if(p){
+															CU_ASSERT_PTR_NOT_NULL(p->next);
+															CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_RESPONSE_INFORMATION);
+															CU_ASSERT_STRING_EQUAL(p->value.s.v, "rsp");
+															CU_ASSERT_EQUAL(p->value.s.len, strlen("rsp"));
 
-	p = p->next;
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_SERVER_REFERENCE);
-	CU_ASSERT_STRING_EQUAL(p->value.s.v, "serv");
-	CU_ASSERT_EQUAL(p->value.s.len, strlen("serv"));
+															p = p->next;
+															CU_ASSERT_PTR_NOT_NULL(p);
+															if(p){
+																CU_ASSERT_PTR_NOT_NULL(p->next);
+																CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_SERVER_REFERENCE);
+																CU_ASSERT_STRING_EQUAL(p->value.s.v, "serv");
+																CU_ASSERT_EQUAL(p->value.s.len, strlen("serv"));
 
-	p = p->next;
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_AUTHENTICATION_METHOD);
-	CU_ASSERT_STRING_EQUAL(p->value.s.v, "none");
-	CU_ASSERT_EQUAL(p->value.s.len, strlen("none"));
+																p = p->next;
+																CU_ASSERT_PTR_NOT_NULL(p);
+																if(p){
+																	CU_ASSERT_PTR_NOT_NULL(p->next);
+																	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_AUTHENTICATION_METHOD);
+																	CU_ASSERT_STRING_EQUAL(p->value.s.v, "none");
+																	CU_ASSERT_EQUAL(p->value.s.len, strlen("none"));
 
-	p = p->next;
-	CU_ASSERT_PTR_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_AUTHENTICATION_DATA);
-	CU_ASSERT_EQUAL(p->value.bin.v[0], 1);
-	CU_ASSERT_EQUAL(p->value.bin.v[1], 2);
-	CU_ASSERT_EQUAL(p->value.s.len, 2);
+																	p = p->next;
+																	CU_ASSERT_PTR_NOT_NULL(p);
+																	if(p){
+																		CU_ASSERT_PTR_NULL(p->next);
+																		CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_AUTHENTICATION_DATA);
+																		CU_ASSERT_EQUAL(p->value.bin.v[0], 1);
+																		CU_ASSERT_EQUAL(p->value.bin.v[1], 2);
+																		CU_ASSERT_EQUAL(p->value.s.len, 2);
+																	}
+																}
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 
 	mosquitto_property_free_all(&properties);
 }
@@ -1433,54 +1510,77 @@ static void TEST_packet_publish(void)
 	rc = property__read_all(CMD_PUBLISH, &packet, &properties);
 
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
-	CU_ASSERT_PTR_NOT_NULL(properties->next);
 	p = properties;
 
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_PAYLOAD_FORMAT_INDICATOR);
-	CU_ASSERT_EQUAL(p->value.i8, 1);
+	CU_ASSERT_PTR_NOT_NULL(p);
+	if(p){
+		CU_ASSERT_PTR_NOT_NULL(p->next);
+		CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_PAYLOAD_FORMAT_INDICATOR);
+		CU_ASSERT_EQUAL(p->value.i8, 1);
 
-	p = p->next;
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_MESSAGE_EXPIRY_INTERVAL);
-	CU_ASSERT_EQUAL(p->value.i32, 0x12450000);
+		p = p->next;
+		CU_ASSERT_PTR_NOT_NULL(p);
+		if(p){
+			CU_ASSERT_PTR_NOT_NULL(p->next);
+			CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_MESSAGE_EXPIRY_INTERVAL);
+			CU_ASSERT_EQUAL(p->value.i32, 0x12450000);
 
-	p = p->next;
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_TOPIC_ALIAS);
-	CU_ASSERT_EQUAL(p->value.i16, 0x0002);
+			p = p->next;
+			CU_ASSERT_PTR_NOT_NULL(p);
+			if(p){
+				CU_ASSERT_PTR_NOT_NULL(p->next);
+				CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_TOPIC_ALIAS);
+				CU_ASSERT_EQUAL(p->value.i16, 0x0002);
 
-	p = p->next;
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_RESPONSE_TOPIC);
-	CU_ASSERT_STRING_EQUAL(p->value.s.v, "respon");
-	CU_ASSERT_EQUAL(p->value.s.len, strlen("respon"));
+				p = p->next;
+				CU_ASSERT_PTR_NOT_NULL(p);
+				if(p){
+					CU_ASSERT_PTR_NOT_NULL(p->next);
+					CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_RESPONSE_TOPIC);
+					CU_ASSERT_STRING_EQUAL(p->value.s.v, "respon");
+					CU_ASSERT_EQUAL(p->value.s.len, strlen("respon"));
 
-	p = p->next;
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_CORRELATION_DATA);
-	CU_ASSERT_EQUAL(p->value.bin.v[0], 1);
-	CU_ASSERT_EQUAL(p->value.bin.v[1], 2);
-	CU_ASSERT_EQUAL(p->value.bin.len, 2);
+					p = p->next;
+					CU_ASSERT_PTR_NOT_NULL(p);
+					if(p){
+						CU_ASSERT_PTR_NOT_NULL(p->next);
+						CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_CORRELATION_DATA);
+						CU_ASSERT_EQUAL(p->value.bin.v[0], 1);
+						CU_ASSERT_EQUAL(p->value.bin.v[1], 2);
+						CU_ASSERT_EQUAL(p->value.bin.len, 2);
 
-	p = p->next;
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_USER_PROPERTY);
-	CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
-	CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
-	CU_ASSERT_STRING_EQUAL(p->name.v, "name");
-	CU_ASSERT_EQUAL(p->name.len, strlen("name"));
+						p = p->next;
+						CU_ASSERT_PTR_NOT_NULL(p);
+						if(p){
+							CU_ASSERT_PTR_NOT_NULL(p->next);
+							CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_USER_PROPERTY);
+							CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
+							CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
+							CU_ASSERT_STRING_EQUAL(p->name.v, "name");
+							CU_ASSERT_EQUAL(p->name.len, strlen("name"));
 
-	p = p->next;
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_SUBSCRIPTION_IDENTIFIER);
-	CU_ASSERT_EQUAL(p->value.varint, 0x00000004);
+							p = p->next;
+							CU_ASSERT_PTR_NOT_NULL(p);
+							if(p){
+								CU_ASSERT_PTR_NOT_NULL(p->next);
+								CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_SUBSCRIPTION_IDENTIFIER);
+								CU_ASSERT_EQUAL(p->value.varint, 0x00000004);
 
-	p = p->next;
-	CU_ASSERT_PTR_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_CONTENT_TYPE);
-	CU_ASSERT_STRING_EQUAL(p->value.s.v, "empty");
-	CU_ASSERT_EQUAL(p->value.s.len, strlen("empty"));
+								p = p->next;
+								CU_ASSERT_PTR_NOT_NULL(p);
+								if(p){
+									CU_ASSERT_PTR_NULL(p->next);
+									CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_CONTENT_TYPE);
+									CU_ASSERT_STRING_EQUAL(p->value.s.v, "empty");
+									CU_ASSERT_EQUAL(p->value.s.len, strlen("empty"));
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 
 	mosquitto_property_free_all(&properties);
 }
@@ -1523,20 +1623,25 @@ static void TEST_packet_subscribe(void)
 	rc = property__read_all(CMD_SUBSCRIBE, &packet, &properties);
 
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
-	CU_ASSERT_PTR_NOT_NULL(properties->next);
 	p = properties;
 
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_USER_PROPERTY);
-	CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
-	CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
-	CU_ASSERT_STRING_EQUAL(p->name.v, "name");
-	CU_ASSERT_EQUAL(p->name.len, strlen("name"));
+	CU_ASSERT_PTR_NOT_NULL(p);
+	if(p){
+		CU_ASSERT_PTR_NOT_NULL(p->next);
+		CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_USER_PROPERTY);
+		CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
+		CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
+		CU_ASSERT_STRING_EQUAL(p->name.v, "name");
+		CU_ASSERT_EQUAL(p->name.len, strlen("name"));
 
-	p = p->next;
-	CU_ASSERT_PTR_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_SUBSCRIPTION_IDENTIFIER);
-	CU_ASSERT_EQUAL(p->value.varint, 0x00000004);
+		p = p->next;
+		CU_ASSERT_PTR_NOT_NULL(p);
+		if(p){
+			CU_ASSERT_PTR_NULL(p->next);
+			CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_SUBSCRIPTION_IDENTIFIER);
+			CU_ASSERT_EQUAL(p->value.varint, 0x00000004);
+		}
+	}
 
 	mosquitto_property_free_all(&properties);
 }
@@ -1565,12 +1670,15 @@ static void TEST_packet_unsubscribe(void)
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
 	p = properties;
 
-	CU_ASSERT_PTR_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_USER_PROPERTY);
-	CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
-	CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
-	CU_ASSERT_STRING_EQUAL(p->name.v, "name");
-	CU_ASSERT_EQUAL(p->name.len, strlen("name"));
+	CU_ASSERT_PTR_NOT_NULL(p);
+	if(p){
+		CU_ASSERT_PTR_NULL(p->next);
+		CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_USER_PROPERTY);
+		CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
+		CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
+		CU_ASSERT_STRING_EQUAL(p->name.v, "name");
+		CU_ASSERT_EQUAL(p->name.len, strlen("name"));
+	}
 
 	mosquitto_property_free_all(&properties);
 }
@@ -1599,26 +1707,34 @@ static void TEST_packet_disconnect(void)
 	rc = property__read_all(CMD_DISCONNECT, &packet, &properties);
 
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
-	CU_ASSERT_PTR_NOT_NULL(properties->next);
 	p = properties;
 
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_SESSION_EXPIRY_INTERVAL);
-	CU_ASSERT_EQUAL(p->value.i32, 0x12450000);
+	CU_ASSERT_PTR_NOT_NULL(p);
+	if(p){
+		CU_ASSERT_PTR_NOT_NULL(p->next);
+		CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_SESSION_EXPIRY_INTERVAL);
+		CU_ASSERT_EQUAL(p->value.i32, 0x12450000);
 
-	p = p->next;
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_REASON_STRING);
-	CU_ASSERT_STRING_EQUAL(p->value.s.v, "reason");
-	CU_ASSERT_EQUAL(p->value.s.len, strlen("reason"));
+		p = p->next;
+		CU_ASSERT_PTR_NOT_NULL(p);
+		if(p){
+			CU_ASSERT_PTR_NOT_NULL(p->next);
+			CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_REASON_STRING);
+			CU_ASSERT_STRING_EQUAL(p->value.s.v, "reason");
+			CU_ASSERT_EQUAL(p->value.s.len, strlen("reason"));
 
-	p = p->next;
-	CU_ASSERT_PTR_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_USER_PROPERTY);
-	CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
-	CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
-	CU_ASSERT_STRING_EQUAL(p->name.v, "name");
-	CU_ASSERT_EQUAL(p->name.len, strlen("name"));
+			p = p->next;
+			CU_ASSERT_PTR_NOT_NULL(p);
+			if(p){
+				CU_ASSERT_PTR_NULL(p->next);
+				CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_USER_PROPERTY);
+				CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
+				CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
+				CU_ASSERT_STRING_EQUAL(p->name.v, "name");
+				CU_ASSERT_EQUAL(p->name.len, strlen("name"));
+			}
+		}
+	}
 
 	mosquitto_property_free_all(&properties);
 }
@@ -1643,34 +1759,45 @@ static void TEST_packet_auth(void)
 	rc = property__read_all(CMD_AUTH, &packet, &properties);
 
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
-	CU_ASSERT_PTR_NOT_NULL(properties->next);
 	p = properties;
 
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_AUTHENTICATION_METHOD);
-	CU_ASSERT_STRING_EQUAL(p->value.s.v, "none");
-	CU_ASSERT_EQUAL(p->value.s.len, strlen("none"));
+	CU_ASSERT_PTR_NOT_NULL(p);
+	if(p){
+		CU_ASSERT_PTR_NOT_NULL(p->next);
+		CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_AUTHENTICATION_METHOD);
+		CU_ASSERT_STRING_EQUAL(p->value.s.v, "none");
+		CU_ASSERT_EQUAL(p->value.s.len, strlen("none"));
 
-	p = p->next;
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_AUTHENTICATION_DATA);
-	CU_ASSERT_EQUAL(p->value.bin.v[0], 1);
-	CU_ASSERT_EQUAL(p->value.bin.v[1], 2);
-	CU_ASSERT_EQUAL(p->value.s.len, 2);
+		p = p->next;
+		CU_ASSERT_PTR_NOT_NULL(p);
+		if(p){
+			CU_ASSERT_PTR_NOT_NULL(p->next);
+			CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_AUTHENTICATION_DATA);
+			CU_ASSERT_EQUAL(p->value.bin.v[0], 1);
+			CU_ASSERT_EQUAL(p->value.bin.v[1], 2);
+			CU_ASSERT_EQUAL(p->value.s.len, 2);
 
-	p = p->next;
-	CU_ASSERT_PTR_NOT_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_REASON_STRING);
-	CU_ASSERT_STRING_EQUAL(p->value.s.v, "reason");
-	CU_ASSERT_EQUAL(p->value.s.len, strlen("reason"));
+			p = p->next;
+			CU_ASSERT_PTR_NOT_NULL(p);
+			if(p){
+				CU_ASSERT_PTR_NOT_NULL(p->next);
+				CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_REASON_STRING);
+				CU_ASSERT_STRING_EQUAL(p->value.s.v, "reason");
+				CU_ASSERT_EQUAL(p->value.s.len, strlen("reason"));
 
-	p = p->next;
-	CU_ASSERT_PTR_NULL(p->next);
-	CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_USER_PROPERTY);
-	CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
-	CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
-	CU_ASSERT_STRING_EQUAL(p->name.v, "name");
-	CU_ASSERT_EQUAL(p->name.len, strlen("name"));
+				p = p->next;
+				CU_ASSERT_PTR_NOT_NULL(p);
+				if(p){
+					CU_ASSERT_PTR_NULL(p->next);
+					CU_ASSERT_EQUAL(p->identifier, MQTT_PROP_USER_PROPERTY);
+					CU_ASSERT_STRING_EQUAL(p->value.s.v, "value");
+					CU_ASSERT_EQUAL(p->value.s.len, strlen("value"));
+					CU_ASSERT_STRING_EQUAL(p->name.v, "name");
+					CU_ASSERT_EQUAL(p->name.len, strlen("name"));
+				}
+			}
+		}
+	}
 
 	mosquitto_property_free_all(&properties);
 }
