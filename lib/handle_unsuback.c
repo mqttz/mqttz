@@ -44,6 +44,11 @@ int handle__unsuback(struct mosquitto *mosq)
 	mosquitto_property *properties = NULL;
 
 	assert(mosq);
+
+	if(mosq->state != mosq_cs_connected){
+		return MOSQ_ERR_PROTOCOL;
+	}
+
 #ifdef WITH_BROKER
 	log__printf(NULL, MOSQ_LOG_DEBUG, "Received UNSUBACK from %s", mosq->id);
 #else

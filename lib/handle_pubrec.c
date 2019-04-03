@@ -43,6 +43,11 @@ int handle__pubrec(struct mosquitto_db *db, struct mosquitto *mosq)
 	mosquitto_property *properties = NULL;
 
 	assert(mosq);
+
+	if(mosq->state != mosq_cs_connected){
+		return MOSQ_ERR_PROTOCOL;
+	}
+
 	rc = packet__read_uint16(&mosq->in_packet, &mid);
 	if(rc) return rc;
 	if(mid == 0) return MOSQ_ERR_PROTOCOL;

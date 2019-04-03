@@ -42,6 +42,10 @@ int handle__publish(struct mosquitto *mosq)
 
 	assert(mosq);
 
+	if(mosq->state != mosq_cs_connected){
+		return MOSQ_ERR_PROTOCOL;
+	}
+
 	message = mosquitto__calloc(1, sizeof(struct mosquitto_message_all));
 	if(!message) return MOSQ_ERR_NOMEM;
 

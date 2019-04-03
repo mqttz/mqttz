@@ -38,6 +38,10 @@ int handle__unsubscribe(struct mosquitto_db *db, struct mosquitto *context)
 	mosquitto_property *properties = NULL;
 
 	if(!context) return MOSQ_ERR_INVAL;
+
+	if(context->state != mosq_cs_connected){
+		return MOSQ_ERR_PROTOCOL;
+	}
 	log__printf(NULL, MOSQ_LOG_DEBUG, "Received UNSUBSCRIBE from %s", context->id);
 
 	if(context->protocol != mosq_p_mqtt31){

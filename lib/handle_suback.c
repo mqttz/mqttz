@@ -42,6 +42,11 @@ int handle__suback(struct mosquitto *mosq)
 	mosquitto_property *properties = NULL;
 
 	assert(mosq);
+
+	if(mosq->state != mosq_cs_connected){
+		return MOSQ_ERR_PROTOCOL;
+	}
+
 #ifdef WITH_BROKER
 	log__printf(NULL, MOSQ_LOG_DEBUG, "Received SUBACK from %s", mosq->id);
 #else

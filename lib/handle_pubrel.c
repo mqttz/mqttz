@@ -47,6 +47,11 @@ int handle__pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 	mosquitto_property *properties = NULL;
 
 	assert(mosq);
+
+	if(mosq->state != mosq_cs_connected){
+		return MOSQ_ERR_PROTOCOL;
+	}
+
 	if(mosq->protocol != mosq_p_mqtt31){
 		if((mosq->in_packet.command&0x0F) != 0x02){
 			return MOSQ_ERR_PROTOCOL;

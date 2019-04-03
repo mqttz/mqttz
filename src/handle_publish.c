@@ -61,6 +61,10 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	bool match;
 #endif
 
+	if(context->state != mosq_cs_connected){
+		return MOSQ_ERR_PROTOCOL;
+	}
+
 	payload.ptr = NULL;
 
 	dup = (header & 0x08)>>3;

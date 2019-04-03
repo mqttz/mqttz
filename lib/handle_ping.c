@@ -38,6 +38,11 @@ Contributors:
 int handle__pingreq(struct mosquitto *mosq)
 {
 	assert(mosq);
+
+	if(mosq->state != mosq_cs_connected){
+		return MOSQ_ERR_PROTOCOL;
+	}
+
 #ifdef WITH_BROKER
 	log__printf(NULL, MOSQ_LOG_DEBUG, "Received PINGREQ from %s", mosq->id);
 #else
@@ -49,6 +54,11 @@ int handle__pingreq(struct mosquitto *mosq)
 int handle__pingresp(struct mosquitto *mosq)
 {
 	assert(mosq);
+
+	if(mosq->state != mosq_cs_connected){
+		return MOSQ_ERR_PROTOCOL;
+	}
+
 	mosq->ping_t = 0; /* No longer waiting for a PINGRESP. */
 #ifdef WITH_BROKER
 	log__printf(NULL, MOSQ_LOG_DEBUG, "Received PINGRESP from %s", mosq->id);

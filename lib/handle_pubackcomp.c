@@ -49,6 +49,11 @@ int handle__pubackcomp(struct mosquitto *mosq, const char *type)
 	int qos;
 
 	assert(mosq);
+
+	if(mosq->state != mosq_cs_connected){
+		return MOSQ_ERR_PROTOCOL;
+	}
+
 	rc = packet__read_uint16(&mosq->in_packet, &mid);
 	if(rc) return rc;
 	qos = type[3] == 'A'?1:2; /* pubAck or pubComp */
