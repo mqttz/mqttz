@@ -569,6 +569,7 @@ int db__messages_delete(struct mosquitto_db *db, struct mosquitto *context)
 	while(tail){
 		db__msg_store_deref(db, &tail->store);
 		next = tail->next;
+		mosquitto_property_free_all(&tail->properties);
 		mosquitto__free(tail);
 		tail = next;
 	}
@@ -579,6 +580,7 @@ int db__messages_delete(struct mosquitto_db *db, struct mosquitto *context)
 	while(tail){
 		db__msg_store_deref(db, &tail->store);
 		next = tail->next;
+		mosquitto_property_free_all(&tail->properties);
 		mosquitto__free(tail);
 		tail = next;
 	}

@@ -161,16 +161,21 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	mosquitto_property_free_all(&properties);
 
 	if(topic_alias == 0 || topic_alias > context->listener->max_topic_alias){
+		mosquitto__free(topic);
 		send__disconnect(context, MQTT_RC_TOPIC_ALIAS_INVALID, NULL);
 		return MOSQ_ERR_PROTOCOL;
 	}else if(topic_alias > 0){
 		if(topic){
 			rc = alias__add(context, topic, topic_alias);
-			if(rc) return rc;
+			if(rc){
+				mosquitto__free(topic);
+				return rc;
+			}
 		}else{
 			rc = alias__find(context, &topic, topic_alias);
 			if(rc){
 				send__disconnect(context, MQTT_RC_TOPIC_ALIAS_INVALID, NULL);
+				mosquitto__free(topic);
 				return rc;
 			}
 		}

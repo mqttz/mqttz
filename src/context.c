@@ -102,7 +102,6 @@ struct mosquitto *context__init(struct mosquitto_db *db, mosq_sock_t sock)
 void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool do_free)
 {
 	struct mosquitto__packet *packet;
-	struct mosquitto_client_msg *msg, *next;
 #ifdef WITH_BRIDGE
 	int i;
 #endif
@@ -179,24 +178,7 @@ void context__cleanup(struct mosquitto_db *db, struct mosquitto *context, bool d
 		mosquitto__free(packet);
 	}
 	if(do_free || context->clean_start){
-		msg = context->inflight_msgs;
-		while(msg){
-			next = msg->next;
-			db__msg_store_deref(db, &msg->store);
-			mosquitto__free(msg);
-			msg = next;
-		}
-		context->inflight_msgs = NULL;
-		context->last_inflight_msg = NULL;
-		msg = context->queued_msgs;
-		while(msg){
-			next = msg->next;
-			db__msg_store_deref(db, &msg->store);
-			mosquitto__free(msg);
-			msg = next;
-		}
-		context->queued_msgs = NULL;
-		context->last_queued_msg = NULL;
+		db__messages_delete(db, context);
 	}
 #if defined(WITH_BROKER) && defined(__GLIBC__) && defined(WITH_ADNS)
 	if(context->adns){
