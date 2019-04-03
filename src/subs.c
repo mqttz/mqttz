@@ -418,6 +418,9 @@ static int sub__add_normal(struct mosquitto_db *db, struct mosquitto *context, i
 	int rc;
 
 	rc = sub__add_leaf(context, qos, identifier, options, &subhier->subs, &newleaf);
+	if(rc > 0){
+		return rc;
+	}
 
 	if(rc != MOSQ_ERR_SUB_EXISTS){
 		for(i=0; i<context->sub_count; i++){
