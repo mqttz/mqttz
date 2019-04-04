@@ -165,8 +165,10 @@
 						then another means of connection should be created to
 						control authenticated client access.</para>
 					<para>Defaults to <replaceable>true</replaceable> if no
-						other security options are set. If any other
-						authentication options are set, then
+						other security options are set. If <option>password_file</option>
+						or <option>psk_file</option> is set, or if an
+						authentication plugin is loaded which implements
+						username/password or TLS-PSK checks, then
 						<option>allow_anonymous</option> defaults to
 						<replaceable>false</replaceable>.</para>
 					<para>Reloaded on reload signal.</para>
@@ -228,7 +230,7 @@
 					<para>If <option>password_file</option>, or
 						<option>acl_file</option> are used in the config file
 						alongsize <option>auth_plugin</option>, the plugin
-						checks will run after the build in checks.</para>
+						checks will run after the built in checks.</para>
 					<para>Not currently reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>

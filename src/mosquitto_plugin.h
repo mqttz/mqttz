@@ -17,7 +17,7 @@ Contributors:
 #ifndef MOSQUITTO_PLUGIN_H
 #define MOSQUITTO_PLUGIN_H
 
-#define MOSQ_AUTH_PLUGIN_VERSION 3
+#define MOSQ_AUTH_PLUGIN_VERSION 4
 
 #define MOSQ_ACL_NONE 0x00
 #define MOSQ_ACL_READ 0x01
@@ -261,4 +261,5 @@ int mosquitto_auth_unpwd_check(void *user_data, const struct mosquitto *client, 
  */
 int mosquitto_auth_psk_key_get(void *user_data, const struct mosquitto *client, const char *hint, const char *identity, char *key, int max_key_len);
 
+int mosquitto_auth_start(void *user_data, const struct mosquitto *client, const char *method, const void *data, int data_len);
 #endif

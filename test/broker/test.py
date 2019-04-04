@@ -134,6 +134,7 @@ tests = [
     (1, './09-acl-change.py'),
     (1, './09-acl-empty-file.py'),
     (1, './09-auth-bad-method.py'),
+    (1, './09-extended-auth-single.py'),
     (1, './09-extended-auth-unsupported.py'),
     (1, './09-plugin-auth-acl-sub-denied.py'),
     (1, './09-plugin-auth-acl-sub.py'),

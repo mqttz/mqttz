@@ -131,6 +131,16 @@ typedef union {
 
 typedef uint64_t dbid_t;
 
+typedef int (*FUNC_auth_plugin_init_v4)(void **, struct mosquitto_opt *, int);
+typedef int (*FUNC_auth_plugin_cleanup_v4)(void *, struct mosquitto_opt *, int);
+typedef int (*FUNC_auth_plugin_security_init_v4)(void *, struct mosquitto_opt *, int, bool);
+typedef int (*FUNC_auth_plugin_security_cleanup_v4)(void *, struct mosquitto_opt *, int, bool);
+typedef int (*FUNC_auth_plugin_acl_check_v4)(void *, int, const struct mosquitto *, struct mosquitto_acl_msg *);
+typedef int (*FUNC_auth_plugin_unpwd_check_v4)(void *, const struct mosquitto *, const char *, const char *);
+typedef int (*FUNC_auth_plugin_psk_key_get_v4)(void *, const struct mosquitto *, const char *, const char *, char *, int);
+typedef int (*FUNC_auth_plugin_auth_start_v4)(void *, const struct mosquitto *, const char *, const void *, int);
+typedef int (*FUNC_auth_plugin_auth_continue_v4)(void *, const struct mosquitto *, const char *, const void *, int);
+
 typedef int (*FUNC_auth_plugin_init_v3)(void **, struct mosquitto_opt *, int);
 typedef int (*FUNC_auth_plugin_cleanup_v3)(void *, struct mosquitto_opt *, int);
 typedef int (*FUNC_auth_plugin_security_init_v3)(void *, struct mosquitto_opt *, int, bool);
@@ -151,6 +161,16 @@ struct mosquitto__auth_plugin{
 	void *lib;
 	void *user_data;
 	int (*plugin_version)(void);
+
+	FUNC_auth_plugin_init_v4 plugin_init_v4;
+	FUNC_auth_plugin_cleanup_v4 plugin_cleanup_v4;
+	FUNC_auth_plugin_security_init_v4 security_init_v4;
+	FUNC_auth_plugin_security_cleanup_v4 security_cleanup_v4;
+	FUNC_auth_plugin_acl_check_v4 acl_check_v4;
+	FUNC_auth_plugin_unpwd_check_v4 unpwd_check_v4;
+	FUNC_auth_plugin_psk_key_get_v4 psk_key_get_v4;
+	FUNC_auth_plugin_auth_start_v4 auth_start_v4;
+	FUNC_auth_plugin_auth_continue_v4 auth_continue_v4;
 
 	FUNC_auth_plugin_init_v3 plugin_init_v3;
 	FUNC_auth_plugin_cleanup_v3 plugin_cleanup_v3;
@@ -667,6 +687,9 @@ int mosquitto_security_cleanup_default(struct mosquitto_db *db, bool reload);
 int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int access);
 int mosquitto_unpwd_check_default(struct mosquitto_db *db, struct mosquitto *context, const char *username, const char *password);
 int mosquitto_psk_key_get_default(struct mosquitto_db *db, struct mosquitto *context, const char *hint, const char *identity, char *key, int max_key_len);
+
+int mosquitto_security_auth_start(struct mosquitto_db *db, struct mosquitto *context, const void *auth_data, int auth_data_len);
+int mosquitto_security_auth_continue(struct mosquitto_db *db, struct mosquitto *context, const void *auth_data, int auth_data_len);
 
 /* ============================================================
  * Session expiry

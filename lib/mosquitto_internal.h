@@ -111,6 +111,8 @@ enum mosquitto_client_state {
 	mosq_cs_duplicate = 17, /* client that has been taken over by another with the same id */
 	mosq_cs_disconnect_with_will = 18,
 	mosq_cs_disused = 19, /* client that has been added to the disused list to be freed */
+	mosq_cs_authentication = 20, /* Client has sent CONNECT but is still undergoing extended authentication */
+	mosq_cs_reauthentiction = 21, /* Client is undergoing reauthentication and shouldn't do anything else until complete */
 };
 
 enum mosquitto__protocol {
@@ -258,6 +260,7 @@ struct mosquitto {
 	struct mosquitto__packet *out_packet_last;
 	struct mosquitto__subhier **subs;
 	struct mosquitto__subshared_ref **shared_subs;
+	char *auth_method;
 	int sub_count;
 	int shared_sub_count;
 	int pollfd_index;

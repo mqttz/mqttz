@@ -238,6 +238,12 @@ int connect__on_authorised(struct mosquitto_db *db, struct mosquitto *context)
 				goto error;
 			}
 		}
+		if(context->auth_method){
+			if(mosquitto_property_add_string(&connack_props, MQTT_PROP_AUTHENTICATION_METHOD, context->auth_method)){
+				rc = MOSQ_ERR_NOMEM;
+				goto error;
+			}
+		}
 	}
 
 	context__set_state(context, mosq_cs_connected);
@@ -345,6 +351,8 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	uint16_t slen16;
 	int i;
 	mosquitto_property *properties = NULL;
+	void *auth_data = NULL;
+	int auth_data_len = 0;
 #ifdef WITH_TLS
 	X509 *client_cert = NULL;
 	X509_NAME *name;
@@ -476,12 +484,8 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 	property__process_connect(context, properties);
 
-	if(mosquitto_property_read_string(properties, MQTT_PROP_AUTHENTICATION_METHOD, NULL, false)){
-		mosquitto_property_free_all(&properties);
-		/* Client has requested extended authentication, but we don't support it yet. */
-		send__connack(db, context, 0, MQTT_RC_BAD_AUTHENTICATION_METHOD, NULL);
-		rc = MOSQ_ERR_PROTOCOL;
-		goto handle_connect_error;
+	if(mosquitto_property_read_string(properties, MQTT_PROP_AUTHENTICATION_METHOD, &context->auth_method, false)){
+		mosquitto_property_read_binary(properties, MQTT_PROP_AUTHENTICATION_DATA, &auth_data, &auth_data_len, false);
 	}
 
 	mosquitto_property_free_all(&properties); /* FIXME - TEMPORARY UNTIL PROPERTIES PROCESSED */
@@ -528,7 +532,11 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	/* clientid_prefixes check */
 	if(db->config->clientid_prefixes){
 		if(strncmp(db->config->clientid_prefixes, client_id, strlen(db->config->clientid_prefixes))){
-			send__connack(db, context, 0, CONNACK_REFUSED_NOT_AUTHORIZED, NULL);
+			if(context->protocol == mosq_p_mqtt5){
+				send__connack(db, context, 0, MQTT_RC_NOT_AUTHORIZED, NULL);
+			}else{
+				send__connack(db, context, 0, CONNACK_REFUSED_NOT_AUTHORIZED, NULL);
+			}
 			rc = 1;
 			goto handle_connect_error;
 		}
@@ -600,7 +608,11 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		password = NULL;
 
 		if(!context->ssl){
-			send__connack(db, context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD, NULL);
+			if(context->protocol == mosq_p_mqtt5){
+				send__connack(db, context, 0, MQTT_RC_BAD_USERNAME_OR_PASSWORD, NULL);
+			}else{
+				send__connack(db, context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD, NULL);
+			}
 			rc = 1;
 			goto handle_connect_error;
 		}
@@ -608,7 +620,11 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		if(context->listener->psk_hint){
 			/* Client should have provided an identity to get this far. */
 			if(!context->username){
-				send__connack(db, context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD, NULL);
+				if(context->protocol == mosq_p_mqtt5){
+					send__connack(db, context, 0, MQTT_RC_BAD_USERNAME_OR_PASSWORD, NULL);
+				}else{
+					send__connack(db, context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD, NULL);
+				}
 				rc = 1;
 				goto handle_connect_error;
 			}
@@ -616,20 +632,32 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 #endif /* FINAL_WITH_TLS_PSK */
 			client_cert = SSL_get_peer_certificate(context->ssl);
 			if(!client_cert){
-				send__connack(db, context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD, NULL);
+				if(context->protocol == mosq_p_mqtt5){
+					send__connack(db, context, 0, MQTT_RC_BAD_USERNAME_OR_PASSWORD, NULL);
+				}else{
+					send__connack(db, context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD, NULL);
+				}
 				rc = 1;
 				goto handle_connect_error;
 			}
 			name = X509_get_subject_name(client_cert);
 			if(!name){
-				send__connack(db, context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD, NULL);
+				if(context->protocol == mosq_p_mqtt5){
+					send__connack(db, context, 0, MQTT_RC_BAD_USERNAME_OR_PASSWORD, NULL);
+				}else{
+					send__connack(db, context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD, NULL);
+				}
 				rc = 1;
 				goto handle_connect_error;
 			}
 			if (context->listener->use_identity_as_username) { //use_identity_as_username
 				i = X509_NAME_get_index_by_NID(name, NID_commonName, -1);
 				if(i == -1){
-					send__connack(db, context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD, NULL);
+					if(context->protocol == mosq_p_mqtt5){
+						send__connack(db, context, 0, MQTT_RC_BAD_USERNAME_OR_PASSWORD, NULL);
+					}else{
+						send__connack(db, context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD, NULL);
+					}
 					rc = 1;
 					goto handle_connect_error;
 				}
@@ -637,7 +665,11 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 				if(name_entry){
 					name_asn1 = X509_NAME_ENTRY_get_data(name_entry);
 					if (name_asn1 == NULL) {
-						send__connack(db, context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD, NULL);
+						if(context->protocol == mosq_p_mqtt5){
+							send__connack(db, context, 0, MQTT_RC_BAD_USERNAME_OR_PASSWORD, NULL);
+						}else{
+							send__connack(db, context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD, NULL);
+						}
 						rc = 1;
 						goto handle_connect_error;
 					}
@@ -647,13 +679,21 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 					context->username = mosquitto__strdup((char *) ASN1_STRING_get0_data(name_asn1));
 #endif
 					if(!context->username){
-						send__connack(db, context, 0, CONNACK_REFUSED_SERVER_UNAVAILABLE, NULL);
+						if(context->protocol == mosq_p_mqtt5){
+							send__connack(db, context, 0, MQTT_RC_SERVER_UNAVAILABLE, NULL);
+						}else{
+							send__connack(db, context, 0, CONNACK_REFUSED_SERVER_UNAVAILABLE, NULL);
+						}
 						rc = MOSQ_ERR_NOMEM;
 						goto handle_connect_error;
 					}
 					/* Make sure there isn't an embedded NUL character in the CN */
 					if ((size_t)ASN1_STRING_length(name_asn1) != strlen(context->username)) {
-						send__connack(db, context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD, NULL);
+						if(context->protocol == mosq_p_mqtt5){
+							send__connack(db, context, 0, MQTT_RC_BAD_USERNAME_OR_PASSWORD, NULL);
+						}else{
+							send__connack(db, context, 0, CONNACK_REFUSED_BAD_USERNAME_PASSWORD, NULL);
+						}
 						rc = 1;
 						goto handle_connect_error;
 					}
@@ -697,7 +737,11 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 				case MOSQ_ERR_SUCCESS:
 					break;
 				case MOSQ_ERR_AUTH:
-					send__connack(db, context, 0, CONNACK_REFUSED_NOT_AUTHORIZED, NULL);
+					if(context->protocol == mosq_p_mqtt5){
+						send__connack(db, context, 0, MQTT_RC_NOT_AUTHORIZED, NULL);
+					}else{
+						send__connack(db, context, 0, CONNACK_REFUSED_NOT_AUTHORIZED, NULL);
+					}
 					context__disconnect(db, context);
 					rc = 1;
 					goto handle_connect_error;
@@ -718,7 +762,11 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			if((db->config->per_listener_settings && context->listener->security_options.allow_anonymous == false)
 					|| (!db->config->per_listener_settings && db->config->security_options.allow_anonymous == false)){
 
-				send__connack(db, context, 0, CONNACK_REFUSED_NOT_AUTHORIZED, NULL);
+				if(context->protocol == mosq_p_mqtt5){
+					send__connack(db, context, 0, MQTT_RC_NOT_AUTHORIZED, NULL);
+				}else{
+					send__connack(db, context, 0, CONNACK_REFUSED_NOT_AUTHORIZED, NULL);
+				}
 				rc = 1;
 				goto handle_connect_error;
 			}
@@ -736,7 +784,11 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 				goto handle_connect_error;
 			}
 		}else{
-			send__connack(db, context, 0, CONNACK_REFUSED_NOT_AUTHORIZED, NULL);
+			if(context->protocol == mosq_p_mqtt5){
+				send__connack(db, context, 0, MQTT_RC_NOT_AUTHORIZED, NULL);
+			}else{
+				send__connack(db, context, 0, CONNACK_REFUSED_NOT_AUTHORIZED, NULL);
+			}
 			rc = 1;
 			goto handle_connect_error;
 		}
@@ -745,9 +797,46 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	context->id = client_id;
 	context->will = will_struct;
 
-	return connect__on_authorised(db, context);
+
+	if(context->auth_method){
+		rc = mosquitto_security_auth_start(db, context, auth_data, auth_data_len);
+		mosquitto__free(auth_data);
+		if(rc == MOSQ_ERR_SUCCESS){
+			return connect__on_authorised(db, context);
+		}else if(rc == MOSQ_ERR_AUTH_CONTINUE){
+			return 1; // FIXME
+		}else{
+			if(context->will){
+				mosquitto_property_free_all(&context->will->properties);
+				mosquitto__free(context->will->msg.payload);
+				mosquitto__free(context->will->msg.topic);
+				mosquitto__free(context->will);
+				context->will = NULL;
+			}
+			if(rc == MOSQ_ERR_AUTH){
+				send__connack(db, context, 0, MQTT_RC_NOT_AUTHORIZED, NULL);
+				mosquitto__free(context->id);
+				context->id = NULL;
+				return MOSQ_ERR_PROTOCOL;
+			}else if(rc == MOSQ_ERR_NOT_SUPPORTED){
+				/* Client has requested extended authentication, but we don't support it. */
+				send__connack(db, context, 0, MQTT_RC_BAD_AUTHENTICATION_METHOD, NULL);
+				mosquitto__free(context->id);
+				context->id = NULL;
+				return MOSQ_ERR_PROTOCOL;
+			}else{
+				mosquitto__free(context->id);
+				context->id = NULL;
+				return rc;
+			}
+		}
+	}else{
+		return connect__on_authorised(db, context);
+	}
+
 
 handle_connect_error:
+	mosquitto__free(auth_data);
 	mosquitto__free(client_id);
 	mosquitto__free(username);
 	mosquitto__free(password);

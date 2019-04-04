@@ -9,7 +9,8 @@ PLUGIN_SRC = \
 	auth_plugin_acl_sub_denied.c \
 	auth_plugin_v2.c \
 	auth_plugin_context_params.c \
-	auth_plugin_msg_params.c
+	auth_plugin_msg_params.c \
+	auth_plugin_extended_single.c
 
 PLUGINS = ${PLUGIN_SRC:.c=.so}
 

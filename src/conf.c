@@ -615,7 +615,8 @@ int config__read(struct mosquitto_db *db, struct mosquitto__config *config, bool
 	int len;
 #endif
 	struct mosquitto__config config_reload;
-	int i;
+	struct mosquitto__auth_plugin *plugin;
+	int i, j;
 
 	if(reload){
 		memset(&config_reload, 0, sizeof(struct mosquitto__config));
@@ -655,33 +656,65 @@ int config__read(struct mosquitto_db *db, struct mosquitto__config *config, bool
 	if(config->per_listener_settings){
 		for(i=0; i<config->listener_count; i++){
 			if(config->listeners[i].security_options.allow_anonymous == -1){
+				/* Default option if no security options set */
+				config->listeners[i].security_options.allow_anonymous = true;
+
 				if(config->listeners[i].security_options.password_file
-					|| config->listeners[i].security_options.psk_file
-					|| config->listeners[i].security_options.auth_plugin_configs){
+					|| config->listeners[i].security_options.psk_file){
 
 					/* allow_anonymous not set explicitly, some other security options
 					* have been set - so disable allow_anonymous
 					*/
 					config->listeners[i].security_options.allow_anonymous = false;
-				}else{
-					/* Default option if no security options set */
-					config->listeners[i].security_options.allow_anonymous = true;
+				}
+
+				/* Check plugins loaded to see if they have username/password checks enabled */
+				for(j=0; j<config->listeners[i].security_options.auth_plugin_config_count; j++){ 
+					plugin = &config->listeners[i].security_options.auth_plugin_configs[j].plugin;
+
+					if(plugin->version == 3 || plugin->version == 2){
+						/* Version 2 and 3 always have username/password checks */
+						config->listeners[i].security_options.allow_anonymous = false;
+						break;
+					}else{
+						/* Version 4 has optional unpwd checks. */
+						if(plugin->unpwd_check_v4 != NULL){
+							config->listeners[i].security_options.allow_anonymous = false;
+							break;
+						}
+					}
 				}
 			}
 		}
 	}else{
 		if(config->security_options.allow_anonymous == -1){
+			/* Default option if no security options set */
+			config->security_options.allow_anonymous = true;
+
 			if(config->security_options.password_file
-				 || config->security_options.psk_file
-				 || config->security_options.auth_plugin_configs){
+				 || config->security_options.psk_file){
 
 				/* allow_anonymous not set explicitly, some other security options
 				* have been set - so disable allow_anonymous
 				*/
 				config->security_options.allow_anonymous = false;
-			}else{
-				/* Default option if no security options set */
-				config->security_options.allow_anonymous = true;
+			}
+
+			/* Check plugins loaded to see if they have username/password checks enabled */
+			for(j=0; j<config->security_options.auth_plugin_config_count; j++){ 
+				plugin = &config->security_options.auth_plugin_configs[j].plugin;
+
+				if(plugin->version == 3 || plugin->version == 2){
+					/* Version 2 and 3 always have username/password checks */
+					config->security_options.allow_anonymous = false;
+					break;
+				}else{
+					/* Version 4 has optional unpwd checks. */
+					if(plugin->unpwd_check_v4 != NULL){
+						config->security_options.allow_anonymous = false;
+						break;
+					}
+				}
 			}
 		}
 	}
