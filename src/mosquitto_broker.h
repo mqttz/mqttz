@@ -141,4 +141,24 @@ int mosquitto_client_sub_count(const struct mosquitto *client);
  */
 const char *mosquitto_client_username(const struct mosquitto *client);
 
+
+/* Function: mosquitto_set_username
+ *
+ * Set the username for a client.
+ *
+ * This removes and replaces the current username for a client and hence
+ * updates its access.
+ *
+ * username can be NULL, in which case the client will become anonymous, but
+ * must not be zero length.
+ *
+ * In the case of error, the client will be left with its original username.
+ *
+ * Returns:
+ *   MOSQ_ERR_SUCCESS - on success
+ *   MOSQ_ERR_INVAL - if client is NULL, or if username is zero length
+ *   MOSQ_ERR_NOMEM - on out of memory
+ */
+int mosquitto_set_username(struct mosquitto *client, const char *username);
+
 #endif

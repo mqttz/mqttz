@@ -19,6 +19,7 @@ Contributors:
 #include "mosquitto_broker_internal.h"
 #include "mosquitto_internal.h"
 #include "mosquitto_broker.h"
+#include "memory_mosq.h"
 
 #ifdef WITH_TLS
 #  include <openssl/ssl.h>
@@ -85,3 +86,33 @@ const char *mosquitto_client_username(const struct mosquitto *context)
 		return context->username;
 	}
 }
+
+int mosquitto_set_username(struct mosquitto *client, const char *username)
+{
+	char *u_dup;
+	char *old;
+	int rc;
+
+	if(!client) return MOSQ_ERR_INVAL;
+
+	if(username){
+		u_dup = mosquitto__strdup(username);
+		if(!u_dup) return MOSQ_ERR_NOMEM;
+	}else{
+		u_dup = NULL;
+	}
+
+	old = client->username;
+	client->username = u_dup;
+
+	rc = acl__find_acls(mosquitto__get_db(), client);
+	if(rc){
+		client->username = old;
+		mosquitto__free(u_dup);
+		return rc;
+	}else{
+		mosquitto__free(old);
+		return MOSQ_ERR_SUCCESS;
+	}
+}
+

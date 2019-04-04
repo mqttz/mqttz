@@ -29,13 +29,13 @@ int mosquitto_auth_security_cleanup(void *user_data, struct mosquitto_opt *auth_
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto_auth_acl_check(void *user_data, int access, const struct mosquitto *client, const struct mosquitto_acl_msg *msg)
+int mosquitto_auth_acl_check(void *user_data, int access, struct mosquitto *client, const struct mosquitto_acl_msg *msg)
 {
 	return MOSQ_ERR_PLUGIN_DEFER;
 }
 
 
-int mosquitto_auth_start(void *user_data, const struct mosquitto *client, const char *method, const void *data, int data_len)
+int mosquitto_auth_start(void *user_data, struct mosquitto *client, const char *method, const void *data, int data_len)
 {
 	if(!strcmp(method, "error")){
 		return MOSQ_ERR_INVAL;
@@ -48,11 +48,13 @@ int mosquitto_auth_start(void *user_data, const struct mosquitto *client, const 
 		}else{
 			return MOSQ_ERR_AUTH;
 		}
+	}else if(!strcmp(method, "change")){
+		return mosquitto_set_username(client, "new_username");
 	}
 	return MOSQ_ERR_NOT_SUPPORTED;
 }
 
-int mosquitto_auth_continue(void *user_data, const struct mosquitto *client, const char *method, const void *data, int data_len)
+int mosquitto_auth_continue(void *user_data, struct mosquitto *client, const char *method, const void *data, int data_len)
 {
 	return MOSQ_ERR_AUTH;
 }

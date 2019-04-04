@@ -8,4 +8,5 @@
 	mosquitto_client_protocol;
 	mosquitto_client_sub_count;
 	mosquitto_client_username;
+	mosquitto_set_username;
 };

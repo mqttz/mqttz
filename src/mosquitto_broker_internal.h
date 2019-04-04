@@ -135,11 +135,11 @@ typedef int (*FUNC_auth_plugin_init_v4)(void **, struct mosquitto_opt *, int);
 typedef int (*FUNC_auth_plugin_cleanup_v4)(void *, struct mosquitto_opt *, int);
 typedef int (*FUNC_auth_plugin_security_init_v4)(void *, struct mosquitto_opt *, int, bool);
 typedef int (*FUNC_auth_plugin_security_cleanup_v4)(void *, struct mosquitto_opt *, int, bool);
-typedef int (*FUNC_auth_plugin_acl_check_v4)(void *, int, const struct mosquitto *, struct mosquitto_acl_msg *);
-typedef int (*FUNC_auth_plugin_unpwd_check_v4)(void *, const struct mosquitto *, const char *, const char *);
-typedef int (*FUNC_auth_plugin_psk_key_get_v4)(void *, const struct mosquitto *, const char *, const char *, char *, int);
-typedef int (*FUNC_auth_plugin_auth_start_v4)(void *, const struct mosquitto *, const char *, const void *, int);
-typedef int (*FUNC_auth_plugin_auth_continue_v4)(void *, const struct mosquitto *, const char *, const void *, int);
+typedef int (*FUNC_auth_plugin_acl_check_v4)(void *, int, struct mosquitto *, struct mosquitto_acl_msg *);
+typedef int (*FUNC_auth_plugin_unpwd_check_v4)(void *, struct mosquitto *, const char *, const char *);
+typedef int (*FUNC_auth_plugin_psk_key_get_v4)(void *, struct mosquitto *, const char *, const char *, char *, int);
+typedef int (*FUNC_auth_plugin_auth_start_v4)(void *, struct mosquitto *, const char *, const void *, int);
+typedef int (*FUNC_auth_plugin_auth_continue_v4)(void *, struct mosquitto *, const char *, const void *, int);
 
 typedef int (*FUNC_auth_plugin_init_v3)(void **, struct mosquitto_opt *, int);
 typedef int (*FUNC_auth_plugin_cleanup_v3)(void *, struct mosquitto_opt *, int);
