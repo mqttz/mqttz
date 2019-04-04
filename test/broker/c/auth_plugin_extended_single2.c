@@ -36,7 +36,7 @@ int mosquitto_auth_acl_check(void *user_data, int access, struct mosquitto *clie
 }
 
 
-int mosquitto_auth_start(void *user_data, struct mosquitto *client, const char *method, const void *data, uint16_t data_len, void **data_out, uint16_t *data_out_len)
+int mosquitto_auth_start(void *user_data, struct mosquitto *client, const char *method, bool reauth, const void *data, uint16_t data_len, void **data_out, uint16_t *data_out_len)
 {
 	int i;
 

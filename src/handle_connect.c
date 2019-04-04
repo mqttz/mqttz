@@ -812,7 +812,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	context->will = will_struct;
 
 	if(context->auth_method){
-		rc = mosquitto_security_auth_start(db, context, auth_data, auth_data_len, &auth_data_out, &auth_data_out_len);
+		rc = mosquitto_security_auth_start(db, context, false, auth_data, auth_data_len, &auth_data_out, &auth_data_out_len);
 		mosquitto__free(auth_data);
 		if(rc == MOSQ_ERR_SUCCESS){
 			return connect__on_authorised(db, context, auth_data_out, auth_data_out_len);

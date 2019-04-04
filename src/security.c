@@ -796,7 +796,7 @@ int mosquitto_psk_key_get(struct mosquitto_db *db, struct mosquitto *context, co
 }
 
 
-int mosquitto_security_auth_start(struct mosquitto_db *db, struct mosquitto *context, const void *data_in, int data_in_len, void **data_out, uint16_t *data_out_len)
+int mosquitto_security_auth_start(struct mosquitto_db *db, struct mosquitto *context, bool reauth, const void *data_in, int data_in_len, void **data_out, uint16_t *data_out_len)
 {
 	int rc = MOSQ_ERR_PLUGIN_DEFER;
 	int i;
@@ -820,6 +820,7 @@ int mosquitto_security_auth_start(struct mosquitto_db *db, struct mosquitto *con
 					opts->auth_plugin_configs[i].plugin.user_data,
 					context,
 					context->auth_method,
+					reauth,
 					data_in, data_in_len,
 					data_out, data_out_len);
 

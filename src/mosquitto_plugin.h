@@ -276,12 +276,21 @@ int mosquitto_auth_psk_key_get(void *user_data, struct mosquitto *client, const 
  * Parameters:
  *	user_data :   the pointer provided in <mosquitto_auth_plugin_init>.
  *	method : the authentication method
+ *	reauth : this is set to false if this is the first authentication attempt
+ *	         on a connection, set to true if the client is attempting to
+ *	         reauthenticate.
  *	data_in : pointer to authentication data, or NULL
  *	data_in_len : length of data_in, in bytes
  *	data_out : if your plugin wishes to send authentication data back to the
  *	           client, allocate some memory using malloc or friends and set
  *	           data_out. The broker will free the memory after use.
  *	data_out_len : Set the length of data_out in bytes.
+ *
+ * Return value:
+ *	Return MOSQ_ERR_SUCCESS if authentication was successful.
+ *	Return MOSQ_ERR_AUTH_CONTINUE if the authentication is a multi step process and can continue.
+ *	Return MOSQ_ERR_AUTH if authentication was valid but did not succeed.
+ *	Return any other relevant positive integer MOSQ_ERR_* to produce an error.
  */
-int mosquitto_auth_start(void *user_data, struct mosquitto *client, const char *method, const void *data_in, uint16_t data_in_len, void **data_out, uint16_t *data_out_len);
+int mosquitto_auth_start(void *user_data, struct mosquitto *client, const char *method, bool reauth, const void *data_in, uint16_t data_in_len, void **data_out, uint16_t *data_out_len);
 #endif
