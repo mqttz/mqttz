@@ -224,6 +224,7 @@ struct mosquitto {
 	char *tls_engine;
 	char *tls_engine_kpass_sha1;
 	enum mosquitto__keyform tls_keyform;
+	char *tls_alpn;
 #endif
 	bool want_write;
 	bool want_connect;

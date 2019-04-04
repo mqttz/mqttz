@@ -527,6 +527,10 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 {
 	int ret;
 	ENGINE *engine = NULL;
+#if OPENSSL_VERSION_NUMBER >= 0x10002000L  /* ALPN was added into OpenSSL 1.0.2 */
+	uint8_t tls_alpn_wire[256];
+	uint8_t tls_alpn_len;
+#endif
 
 	if(mosq->ssl_ctx){
 		if(!mosq->ssl_ctx_defaults){
@@ -581,6 +585,18 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 
 		/* Disable compression */
 		SSL_CTX_set_options(mosq->ssl_ctx, SSL_OP_NO_COMPRESSION);
+
+		/* Set ALPN */
+		if(mosq->tls_alpn) {
+#if OPENSSL_VERSION_NUMBER >= 0x10002000L  /* ALPN was added into OpenSSL 1.0.2 */
+			tls_alpn_len = (uint8_t) strnlen(mosq->tls_alpn, 254);
+			tls_alpn_wire[0] = tls_alpn_len;  // first byte is length of string
+			memcpy(tls_alpn_wire + 1, mosq->tls_alpn, tls_alpn_len);
+			SSL_CTX_set_alpn_protos(mosq->ssl_ctx, tls_alpn_wire, tls_alpn_len + 1);
+#else
+			log__printf(mosq, MOSQ_LOG_ERR, "Error: TLS ALPN not supported by version of OpenSSL.");
+#endif
+		}
 
 #ifdef SSL_MODE_RELEASE_BUFFERS
 			/* Use even less memory per SSL connection. */
