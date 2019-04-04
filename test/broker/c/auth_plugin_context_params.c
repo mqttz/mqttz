@@ -30,12 +30,12 @@ int mosquitto_auth_security_cleanup(void *user_data, struct mosquitto_opt *auth_
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto_auth_acl_check(void *user_data, int access, const struct mosquitto *client, const struct mosquitto_acl_msg *msg)
+int mosquitto_auth_acl_check(void *user_data, int access, struct mosquitto *client, const struct mosquitto_acl_msg *msg)
 {
 	return MOSQ_ERR_PLUGIN_DEFER;
 }
 
-int mosquitto_auth_unpwd_check(void *user_data, const struct mosquitto *client, const char *username, const char *password)
+int mosquitto_auth_unpwd_check(void *user_data, struct mosquitto *client, const char *username, const char *password)
 {
 	const char *tmp;
 
@@ -84,7 +84,7 @@ int mosquitto_auth_unpwd_check(void *user_data, const struct mosquitto *client, 
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto_auth_psk_key_get(void *user_data, const struct mosquitto *client, const char *hint, const char *identity, char *key, int max_key_len)
+int mosquitto_auth_psk_key_get(void *user_data, struct mosquitto *client, const char *hint, const char *identity, char *key, int max_key_len)
 {
 	return MOSQ_ERR_AUTH;
 }

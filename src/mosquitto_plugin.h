@@ -272,6 +272,16 @@ int mosquitto_auth_psk_key_get(void *user_data, struct mosquitto *client, const 
  *
  * This function is OPTIONAL. Only include this function in your plugin if you
  * are making extended authentication checks.
+ *
+ * Parameters:
+ *	user_data :   the pointer provided in <mosquitto_auth_plugin_init>.
+ *	method : the authentication method
+ *	data_in : pointer to authentication data, or NULL
+ *	data_in_len : length of data_in, in bytes
+ *	data_out : if your plugin wishes to send authentication data back to the
+ *	           client, allocate some memory using malloc or friends and set
+ *	           data_out. The broker will free the memory after use.
+ *	data_out_len : Set the length of data_out in bytes.
  */
-int mosquitto_auth_start(void *user_data, struct mosquitto *client, const char *method, const void *data, int data_len);
+int mosquitto_auth_start(void *user_data, struct mosquitto *client, const char *method, const void *data_in, uint16_t data_in_len, void **data_out, uint16_t *data_out_len);
 #endif

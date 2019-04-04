@@ -82,6 +82,6 @@ def do_test(per_listener):
             exit(rc)
 
 
-#do_test("true")
+do_test("true")
 do_test("false")
 exit(0)

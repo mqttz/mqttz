@@ -796,13 +796,14 @@ int mosquitto_psk_key_get(struct mosquitto_db *db, struct mosquitto *context, co
 }
 
 
-int mosquitto_security_auth_start(struct mosquitto_db *db, struct mosquitto *context, const void *auth_data, int auth_data_len)
+int mosquitto_security_auth_start(struct mosquitto_db *db, struct mosquitto *context, const void *data_in, int data_in_len, void **data_out, uint16_t *data_out_len)
 {
 	int rc = MOSQ_ERR_PLUGIN_DEFER;
 	int i;
 	struct mosquitto__security_options *opts;
 
 	if(!context || !context->listener || !context->auth_method) return MOSQ_ERR_INVAL;
+	if(!data_out || !data_out_len) return MOSQ_ERR_INVAL;
 
 	if(db->config->per_listener_settings){
 		opts = &context->listener->security_options;
@@ -812,12 +813,15 @@ int mosquitto_security_auth_start(struct mosquitto_db *db, struct mosquitto *con
 
 	for(i=0; i<opts->auth_plugin_config_count; i++){
 		if(opts->auth_plugin_configs[i].plugin.auth_start_v4){
+			*data_out = NULL;
+			*data_out_len = 0;
+
 			rc = opts->auth_plugin_configs[i].plugin.auth_start_v4(
 					opts->auth_plugin_configs[i].plugin.user_data,
 					context,
 					context->auth_method,
-					auth_data,
-					auth_data_len);
+					data_in, data_in_len,
+					data_out, data_out_len);
 
 			if(rc == MOSQ_ERR_SUCCESS){
 				return MOSQ_ERR_SUCCESS;

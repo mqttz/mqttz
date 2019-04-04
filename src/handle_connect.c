@@ -100,7 +100,7 @@ void connection_check_acl(struct mosquitto_db *db, struct mosquitto *context, st
 }
 
 
-int connect__on_authorised(struct mosquitto_db *db, struct mosquitto *context)
+int connect__on_authorised(struct mosquitto_db *db, struct mosquitto *context, void *auth_data_out, uint16_t auth_data_out_len)
 {
 	struct mosquitto *found_context;
 	struct mosquitto__subleaf *leaf;
@@ -164,7 +164,10 @@ int connect__on_authorised(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	rc = acl__find_acls(db, context);
-	if(rc) return rc;
+	if(rc){
+		free(auth_data_out);
+		return rc;
+	}
 
 	if(db->config->connection_messages == true){
 		if(context->is_bridge){
@@ -243,14 +246,23 @@ int connect__on_authorised(struct mosquitto_db *db, struct mosquitto *context)
 				rc = MOSQ_ERR_NOMEM;
 				goto error;
 			}
+
+			if(auth_data_out && auth_data_out_len > 0){
+				if(mosquitto_property_add_binary(&connack_props, MQTT_PROP_AUTHENTICATION_DATA, auth_data_out, auth_data_out_len)){
+					rc = MOSQ_ERR_NOMEM;
+					goto error;
+				}
+			}
 		}
 	}
+	free(auth_data_out);
 
 	context__set_state(context, mosq_cs_connected);
 	rc = send__connack(db, context, connect_ack, CONNACK_ACCEPTED, connack_props);
 	mosquitto_property_free_all(&connack_props);
 	return rc;
 error:
+	free(auth_data_out);
 	mosquitto_property_free_all(&connack_props);
 	return rc;
 }
@@ -353,6 +365,8 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	mosquitto_property *properties = NULL;
 	void *auth_data = NULL;
 	int auth_data_len = 0;
+	void *auth_data_out = NULL;
+	uint16_t auth_data_out_len = 0;
 #ifdef WITH_TLS
 	X509 *client_cert = NULL;
 	X509_NAME *name;
@@ -797,12 +811,11 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	context->id = client_id;
 	context->will = will_struct;
 
-
 	if(context->auth_method){
-		rc = mosquitto_security_auth_start(db, context, auth_data, auth_data_len);
+		rc = mosquitto_security_auth_start(db, context, auth_data, auth_data_len, &auth_data_out, &auth_data_out_len);
 		mosquitto__free(auth_data);
 		if(rc == MOSQ_ERR_SUCCESS){
-			return connect__on_authorised(db, context);
+			return connect__on_authorised(db, context, auth_data_out, auth_data_out_len);
 		}else if(rc == MOSQ_ERR_AUTH_CONTINUE){
 			return 1; // FIXME
 		}else{
@@ -831,7 +844,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			}
 		}
 	}else{
-		return connect__on_authorised(db, context);
+		return connect__on_authorised(db, context, NULL, 0);
 	}
 
 
