@@ -68,9 +68,9 @@ int send__pingresp(struct mosquitto *mosq)
 int send__puback(struct mosquitto *mosq, uint16_t mid, uint8_t reason_code)
 {
 #ifdef WITH_BROKER
-	log__printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBACK to %s (Mid: %d, RC:%d)", mosq->id, mid, reason_code);
+	log__printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBACK to %s (m%d, rc%d)", mosq->id, mid, reason_code);
 #else
-	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBACK (Mid: %d, RC:%d)", mosq->id, mid, reason_code);
+	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBACK (m%d, rc%d)", mosq->id, mid, reason_code);
 #endif
 	util__increment_receive_quota(mosq);
 	/* We don't use Reason String or User Property yet. */
@@ -80,9 +80,9 @@ int send__puback(struct mosquitto *mosq, uint16_t mid, uint8_t reason_code)
 int send__pubcomp(struct mosquitto *mosq, uint16_t mid)
 {
 #ifdef WITH_BROKER
-	log__printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBCOMP to %s (Mid: %d)", mosq->id, mid);
+	log__printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBCOMP to %s (m%d)", mosq->id, mid);
 #else
-	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBCOMP (Mid: %d)", mosq->id, mid);
+	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBCOMP (m%d)", mosq->id, mid);
 #endif
 	util__increment_receive_quota(mosq);
 	/* We don't use Reason String or User Property yet. */
@@ -93,9 +93,9 @@ int send__pubcomp(struct mosquitto *mosq, uint16_t mid)
 int send__pubrec(struct mosquitto *mosq, uint16_t mid, uint8_t reason_code)
 {
 #ifdef WITH_BROKER
-	if(mosq) log__printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBREC to %s (Mid: %d, RC:%d)", mosq->id, mid, reason_code);
+	if(mosq) log__printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBREC to %s (m%d, rc%d)", mosq->id, mid, reason_code);
 #else
-	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBREC (Mid: %d, RC:%d)", mosq->id, mid, reason_code);
+	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBREC (m%d, rc%d)", mosq->id, mid, reason_code);
 #endif
 	/* FIXME - if rc >= 0x80 quota needs incrementing
 	if(rc >= 0x80){
@@ -109,9 +109,9 @@ int send__pubrec(struct mosquitto *mosq, uint16_t mid, uint8_t reason_code)
 int send__pubrel(struct mosquitto *mosq, uint16_t mid)
 {
 #ifdef WITH_BROKER
-	if(mosq) log__printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBREL to %s (Mid: %d)", mosq->id, mid);
+	if(mosq) log__printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBREL to %s (m%d)", mosq->id, mid);
 #else
-	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBREL (Mid: %d)", mosq->id, mid);
+	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBREL (m%d)", mosq->id, mid);
 #endif
 	/* We don't use Reason String or User Property yet. */
 	return send__command_with_mid(mosq, CMD_PUBREL|2, mid, false, 0, NULL);
