@@ -79,6 +79,7 @@ int send__connack(struct mosquitto_db *db, struct mosquitto *context, int ack, i
 
 	rc = packet__alloc(packet);
 	if(rc){
+		mosquitto_property_free_all(&connack_props);
 		mosquitto__free(packet);
 		return rc;
 	}

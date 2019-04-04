@@ -41,6 +41,7 @@ set (MOSQ_SRCS
 	../lib/read_handle.h
 	security.c security_default.c
 	../lib/send_mosq.c ../lib/send_mosq.h
+	send_auth.c
 	send_connack.c
 	../lib/send_connect.c
 	../lib/send_disconnect.c

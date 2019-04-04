@@ -2829,7 +2829,7 @@ libmosq_EXPORT const mosquitto_property *mosquitto_property_read_binary(
 		const mosquitto_property *proplist,
 		int identifier,
 		void **value,
-		int *len,
+		uint16_t *len,
 		bool skip_first);
 
 /*

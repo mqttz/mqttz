@@ -40,20 +40,7 @@ int mosquitto_auth_start(void *user_data, struct mosquitto *client, const char *
 {
 	int i;
 
-	if(!strcmp(method, "error")){
-		return MOSQ_ERR_INVAL;
-	}else if(!strcmp(method, "non-matching")){
-		return MOSQ_ERR_NOT_SUPPORTED;
-	}else if(!strcmp(method, "single")){
-		data_len = data_len>strlen("data")?strlen("data"):data_len;
-		if(!memcmp(data, "data", data_len)){
-			return MOSQ_ERR_SUCCESS;
-		}else{
-			return MOSQ_ERR_AUTH;
-		}
-	}else if(!strcmp(method, "change")){
-		return mosquitto_set_username(client, "new_username");
-	}else if(!strcmp(method, "mirror")){
+	if(!strcmp(method, "mirror")){
 		if(data_len > 0){
 			*data_out = malloc(data_len);
 			if(!(*data_out)){
@@ -64,7 +51,7 @@ int mosquitto_auth_start(void *user_data, struct mosquitto *client, const char *
 			}
 			*data_out_len = data_len;
 
-			return MOSQ_ERR_SUCCESS;
+			return MOSQ_ERR_AUTH_CONTINUE;
 		}else{
 			return MOSQ_ERR_INVAL;
 		}
@@ -72,7 +59,22 @@ int mosquitto_auth_start(void *user_data, struct mosquitto *client, const char *
 	return MOSQ_ERR_NOT_SUPPORTED;
 }
 
+
 int mosquitto_auth_continue(void *user_data, struct mosquitto *client, const char *method, const void *data, uint16_t data_len, void **data_out, uint16_t *data_out_len)
 {
-	return MOSQ_ERR_AUTH;
+	int len;
+
+	if(!strcmp(method, "mirror")){
+		if(data_len > 0){
+			len = strlen("supercalifragilisticexpialidocious")>data_len?data_len:strlen("supercalifragilisticexpialidocious");
+			if(!memcmp(data, "supercalifragilisticexpialidocious", len)){
+				return MOSQ_ERR_SUCCESS;
+			}else{
+				return MOSQ_ERR_AUTH;
+			}
+		}else{
+			return MOSQ_ERR_INVAL;
+		}
+	}
+	return MOSQ_ERR_NOT_SUPPORTED;
 }

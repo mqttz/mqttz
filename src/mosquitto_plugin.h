@@ -293,4 +293,6 @@ int mosquitto_auth_psk_key_get(void *user_data, struct mosquitto *client, const 
  *	Return any other relevant positive integer MOSQ_ERR_* to produce an error.
  */
 int mosquitto_auth_start(void *user_data, struct mosquitto *client, const char *method, bool reauth, const void *data_in, uint16_t data_in_len, void **data_out, uint16_t *data_out_len);
+
+int mosquitto_auth_continue(void *user_data, struct mosquitto *client, const char *method, const void *data_in, uint16_t data_in_len, void **data_out, uint16_t *data_out_len);
 #endif

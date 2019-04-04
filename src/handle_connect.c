@@ -364,7 +364,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	int i;
 	mosquitto_property *properties = NULL;
 	void *auth_data = NULL;
-	int auth_data_len = 0;
+	uint16_t auth_data_len = 0;
 	void *auth_data_out = NULL;
 	uint16_t auth_data_out_len = 0;
 #ifdef WITH_TLS
@@ -817,8 +817,12 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		if(rc == MOSQ_ERR_SUCCESS){
 			return connect__on_authorised(db, context, auth_data_out, auth_data_out_len);
 		}else if(rc == MOSQ_ERR_AUTH_CONTINUE){
-			return 1; // FIXME
+			context__set_state(context, mosq_cs_authenticating);
+			rc = send__auth(db, context, MQTT_RC_CONTINUE_AUTHENTICATION, auth_data_out, auth_data_out_len);
+			free(auth_data_out);
+			return rc;
 		}else{
+			free(auth_data_out);
 			if(context->will){
 				mosquitto_property_free_all(&context->will->properties);
 				mosquitto__free(context->will->msg.payload);

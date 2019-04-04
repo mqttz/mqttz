@@ -47,6 +47,7 @@ OBJS=	mosquitto.o \
 		read_handle.o \
 		security.o \
 		security_default.o \
+		send_auth.o \
 		send_connack.o \
 		send_connect.o \
 		send_disconnect.o \
@@ -188,6 +189,9 @@ security.o : security.c mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
 security_default.o : security_default.c mosquitto_broker_internal.h
+	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
+
+send_auth.o : send_auth.c mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
 send_connect.o : ../lib/send_connect.c ../lib/send_mosq.h

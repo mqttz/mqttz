@@ -312,8 +312,9 @@ def to_string(packet):
         (cmd, rl) = struct.unpack('!BB', packet)
         return "DISCONNECT, rl="+str(rl)
     elif cmd == 0xF0:
-        # Reserved
-        return "0xF0"
+        # AUTH
+        (cmd, rl) = struct.unpack('!BB', packet)
+        return "AUTH, rl="+str(rl)
 
 def gen_connect(client_id, clean_session=True, keepalive=60, username=None, password=None, will_topic=None, will_qos=0, will_retain=False, will_payload=b"", proto_ver=4, connect_reserved=False, properties=b"", will_properties=b""):
     if (proto_ver&0x7F) == 3 or proto_ver == 0:
@@ -556,13 +557,13 @@ def _gen_short(cmd, reason_code=-1, proto_ver=5, properties=None):
             properties = mqtt5_props.prop_finalise(properties)
             return struct.pack("!BBB", cmd, 1+len(properties), reason_code) + properties
     else:
-        return struct.pack('!BB', 224, 0)
+        return struct.pack('!BB', cmd, 0)
 
 def gen_disconnect(reason_code=-1, proto_ver=4, properties=None):
-    return _gen_short(224, reason_code, proto_ver, properties)
+    return _gen_short(0xE0, reason_code, proto_ver, properties)
 
 def gen_auth(reason_code=-1, properties=None):
-    return _gen_short(240, 5, properties)
+    return _gen_short(0xF0, reason_code, 5, properties)
 
 
 def pack_remaining_length(remaining_length):

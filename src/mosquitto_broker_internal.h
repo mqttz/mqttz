@@ -139,7 +139,7 @@ typedef int (*FUNC_auth_plugin_acl_check_v4)(void *, int, struct mosquitto *, st
 typedef int (*FUNC_auth_plugin_unpwd_check_v4)(void *, struct mosquitto *, const char *, const char *);
 typedef int (*FUNC_auth_plugin_psk_key_get_v4)(void *, struct mosquitto *, const char *, const char *, char *, int);
 typedef int (*FUNC_auth_plugin_auth_start_v4)(void *, struct mosquitto *, const char *, bool, const void *, uint16_t, void **, uint16_t *);
-typedef int (*FUNC_auth_plugin_auth_continue_v4)(void *, struct mosquitto *, const char *, const void *, int);
+typedef int (*FUNC_auth_plugin_auth_continue_v4)(void *, struct mosquitto *, const char *, const void *, uint16_t, void **, uint16_t *);
 
 typedef int (*FUNC_auth_plugin_init_v3)(void **, struct mosquitto_opt *, int);
 typedef int (*FUNC_auth_plugin_cleanup_v3)(void *, struct mosquitto_opt *, int);
@@ -564,6 +564,7 @@ int restore_privileges(void);
 int send__connack(struct mosquitto_db *db, struct mosquitto *context, int ack, int reason_code, const mosquitto_property *properties);
 int send__suback(struct mosquitto *context, uint16_t mid, uint32_t payloadlen, const void *payload);
 int send__unsuback(struct mosquitto *context, uint16_t mid, int reason_code_count, uint8_t *reason_codes, const mosquitto_property *properties);
+int send__auth(struct mosquitto_db *db, struct mosquitto *context, int reason_code, const void *auth_data, uint16_t auth_data_len);
 
 /* ============================================================
  * Network functions
@@ -640,6 +641,8 @@ void context__send_will(struct mosquitto_db *db, struct mosquitto *context);
 void context__remove_from_by_id(struct mosquitto_db *db, struct mosquitto *context);
 void context__set_state(struct mosquitto *context, enum mosquitto_client_state state);
 
+int connect__on_authorised(struct mosquitto_db *db, struct mosquitto *context, void *auth_data_out, uint16_t auth_data_out_len);
+
 /* ============================================================
  * Logging functions
  * ============================================================ */
@@ -688,8 +691,8 @@ int mosquitto_acl_check_default(struct mosquitto_db *db, struct mosquitto *conte
 int mosquitto_unpwd_check_default(struct mosquitto_db *db, struct mosquitto *context, const char *username, const char *password);
 int mosquitto_psk_key_get_default(struct mosquitto_db *db, struct mosquitto *context, const char *hint, const char *identity, char *key, int max_key_len);
 
-int mosquitto_security_auth_start(struct mosquitto_db *db, struct mosquitto *context, bool reauth, const void *data_in, int data_in_len, void **data_out, uint16_t *data_out_len);
-int mosquitto_security_auth_continue(struct mosquitto_db *db, struct mosquitto *context, const void *auth_data, int auth_data_len);
+int mosquitto_security_auth_start(struct mosquitto_db *db, struct mosquitto *context, bool reauth, const void *data_in, uint16_t data_in_len, void **data_out, uint16_t *data_out_len);
+int mosquitto_security_auth_continue(struct mosquitto_db *db, struct mosquitto *context, const void *data_in, uint16_t data_len, void **data_out, uint16_t *data_out_len);
 
 /* ============================================================
  * Session expiry

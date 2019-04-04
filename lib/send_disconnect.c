@@ -40,9 +40,15 @@ int send__disconnect(struct mosquitto *mosq, uint8_t reason_code, const mosquitt
 
 	assert(mosq);
 #ifdef WITH_BROKER
-# ifdef WITH_BRIDGE
-	log__printf(mosq, MOSQ_LOG_DEBUG, "Bridge %s sending DISCONNECT", mosq->id);
-# endif
+#  ifdef WITH_BRIDGE
+	if(mosq->bridge){
+		log__printf(mosq, MOSQ_LOG_DEBUG, "Bridge %s sending DISCONNECT", mosq->id);
+	}else
+#  else
+	{
+		log__printf(mosq, MOSQ_LOG_DEBUG, "Sending DISCONNECT to %s (rc%d)", mosq->id, reason_code);
+	}
+#  endif
 #else
 	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending DISCONNECT", mosq->id);
 #endif

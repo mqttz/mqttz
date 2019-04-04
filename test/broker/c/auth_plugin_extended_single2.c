@@ -72,7 +72,7 @@ int mosquitto_auth_start(void *user_data, struct mosquitto *client, const char *
 	return MOSQ_ERR_NOT_SUPPORTED;
 }
 
-int mosquitto_auth_continue(void *user_data, struct mosquitto *client, const char *method, const void *data, int data_len)
+int mosquitto_auth_continue(void *user_data, struct mosquitto *client, const char *method, const void *data, uint16_t data_len, void **data_out, uint16_t *data_out_len)
 {
 	return MOSQ_ERR_AUTH;
 }

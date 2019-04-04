@@ -992,7 +992,7 @@ const mosquitto_property *mosquitto_property_read_varint(const mosquitto_propert
 }
 
 
-const mosquitto_property *mosquitto_property_read_binary(const mosquitto_property *proplist, int identifier, void **value, int *len, bool skip_first)
+const mosquitto_property *mosquitto_property_read_binary(const mosquitto_property *proplist, int identifier, void **value, uint16_t *len, bool skip_first)
 {
 	const mosquitto_property *p;
 	if(!proplist || (value && !len) || (!value && len)) return NULL;
