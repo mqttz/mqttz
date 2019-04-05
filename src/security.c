@@ -828,9 +828,7 @@ int mosquitto_security_auth_start(struct mosquitto_db *db, struct mosquitto *con
 				return MOSQ_ERR_SUCCESS;
 			}else if(rc == MOSQ_ERR_AUTH_CONTINUE){
 				return MOSQ_ERR_AUTH_CONTINUE;
-			}else if(rc == MOSQ_ERR_NOT_SUPPORTED){
-				rc = MOSQ_ERR_PLUGIN_DEFER;
-			}else{
+			}else if(rc != MOSQ_ERR_NOT_SUPPORTED){
 				return rc;
 			}
 		}
@@ -871,9 +869,7 @@ int mosquitto_security_auth_continue(struct mosquitto_db *db, struct mosquitto *
 				return MOSQ_ERR_SUCCESS;
 			}else if(rc == MOSQ_ERR_AUTH_CONTINUE){
 				return MOSQ_ERR_AUTH_CONTINUE;
-			}else if(rc == MOSQ_ERR_NOT_SUPPORTED){
-				rc = MOSQ_ERR_PLUGIN_DEFER;
-			}else{
+			}else if(rc != MOSQ_ERR_NOT_SUPPORTED){
 				return rc;
 			}
 		}
