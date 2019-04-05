@@ -2113,7 +2113,6 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
 						cur_listener->max_topic_alias = atoi(token);
-						if(cur_listener->max_topic_alias < 0) cur_listener->max_topic_alias = -1;
 					}else{
 						log__printf(NULL, MOSQ_LOG_ERR, "Error: Empty max_topic_alias value in configuration.");
 					}
