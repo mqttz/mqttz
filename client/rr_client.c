@@ -131,34 +131,8 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 
 void my_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_count, const int *granted_qos)
 {
-	int rc = MOSQ_ERR_SUCCESS;
-
 	if(granted_qos[0] < 128){
 		client_state = rr_s_ready_to_publish;
-
-		if(rc){
-			if(!cfg.quiet){
-				switch(rc){
-					case MOSQ_ERR_INVAL:
-						fprintf(stderr, "Error: Invalid input. Does your topic contain '+' or '#'?\n");
-						break;
-					case MOSQ_ERR_NOMEM:
-						fprintf(stderr, "Error: Out of memory when trying to publish message.\n");
-						break;
-					case MOSQ_ERR_NO_CONN:
-						fprintf(stderr, "Error: Client not connected when trying to publish.\n");
-						break;
-					case MOSQ_ERR_PROTOCOL:
-						fprintf(stderr, "Error: Protocol error when communicating with broker.\n");
-						break;
-					case MOSQ_ERR_PAYLOAD_SIZE:
-						fprintf(stderr, "Error: Message payload is too large.\n");
-						break;
-				}
-			}
-			client_state = rr_s_disconnect;
-			mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
-		}
 	}else{
 		client_state = rr_s_disconnect;
 		if(!cfg.quiet){

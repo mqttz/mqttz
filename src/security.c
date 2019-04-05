@@ -836,11 +836,7 @@ int mosquitto_security_auth_start(struct mosquitto_db *db, struct mosquitto *con
 		}
 	}
 
-	if(rc == MOSQ_ERR_PLUGIN_DEFER){
-		return MOSQ_ERR_NOT_SUPPORTED;
-	}else{
-		return rc;
-	}
+	return MOSQ_ERR_NOT_SUPPORTED;
 }
 
 
@@ -883,9 +879,5 @@ int mosquitto_security_auth_continue(struct mosquitto_db *db, struct mosquitto *
 		}
 	}
 
-	if(rc == MOSQ_ERR_PLUGIN_DEFER){
-		return MOSQ_ERR_NOT_SUPPORTED;
-	}else{
-		return rc;
-	}
+	return MOSQ_ERR_NOT_SUPPORTED;
 }
