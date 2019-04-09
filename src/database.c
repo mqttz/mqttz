@@ -520,7 +520,6 @@ int db__message_update(struct mosquitto *context, uint16_t mid, enum mosquitto_m
 			tail->timestamp = mosquitto_time();
 			return MOSQ_ERR_SUCCESS;
 		}
-		tail = tail->next;
 	}
 	return MOSQ_ERR_NOT_FOUND;
 }
