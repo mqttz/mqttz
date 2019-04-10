@@ -357,20 +357,8 @@ process_bad_message:
 			if(context->protocol == mosq_p_mqtt5){
 				return send__pubrec(context, mid, reason_code);
 			}else{
-				db__message_store_find(context, mid, &stored);
-				if(!stored){
-					if(db__message_store(db, context, mid, NULL, qos, 0, NULL, false, &stored, 0, NULL, 0)){
-						return 1;
-					}
-					res = db__message_insert(db, context, mid, mosq_md_in, qos, false, stored, NULL);
-				}else{
-					res = 0;
-				}
-				if(!res){
-					res = send__pubrec(context, mid, 0);
-				}
+				return send__pubrec(context, mid, 0);
 			}
-			return res;
 	}
 	return 1;
 }

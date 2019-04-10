@@ -169,6 +169,7 @@ endif
 	./09-extended-auth-multistep.py
 	./09-extended-auth-single.py
 	./09-extended-auth-unsupported.py
+	./09-plugin-auth-acl-pub.py
 	./09-plugin-auth-acl-sub-denied.py
 	./09-plugin-auth-acl-sub.py
 	./09-plugin-auth-context-params.py

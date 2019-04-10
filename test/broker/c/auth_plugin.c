@@ -37,6 +37,15 @@ int mosquitto_auth_acl_check(void *user_data, int access, struct mosquitto *clie
 		return MOSQ_ERR_SUCCESS;
 	}else if(username && !strcmp(username, "readonly") && access == MOSQ_ACL_SUBSCRIBE &&!strchr(msg->topic, '#') && !strchr(msg->topic, '+')) {
 		return MOSQ_ERR_SUCCESS;
+	}else if(username && !strcmp(username, "readwrite")){
+		if((!strcmp(msg->topic, "readonly") && access == MOSQ_ACL_READ)
+				|| !strcmp(msg->topic, "writeable")){
+
+			return MOSQ_ERR_SUCCESS;
+		}else{
+			return MOSQ_ERR_ACL_DENIED;
+		}
+
 	}else{
 		return MOSQ_ERR_ACL_DENIED;
 	}
@@ -46,7 +55,7 @@ int mosquitto_auth_unpwd_check(void *user_data, struct mosquitto *client, const 
 {
 	if(!strcmp(username, "test-username") && password && !strcmp(password, "cnwTICONIURW")){
 		return MOSQ_ERR_SUCCESS;
-	}else if(!strcmp(username, "readonly")){
+	}else if(!strcmp(username, "readonly") || !strcmp(username, "readwrite")){
 		return MOSQ_ERR_SUCCESS;
 	}else if(!strcmp(username, "test-username@v2")){
 		return MOSQ_ERR_PLUGIN_DEFER;

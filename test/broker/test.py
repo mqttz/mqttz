@@ -139,6 +139,7 @@ tests = [
     (1, './09-extended-auth-multistep.py'),
     (1, './09-extended-auth-single.py'),
     (1, './09-extended-auth-unsupported.py'),
+    (1, './09-plugin-auth-acl-pub.py'),
     (1, './09-plugin-auth-acl-sub-denied.py'),
     (1, './09-plugin-auth-acl-sub.py'),
     (1, './09-plugin-auth-context-params.py'),
