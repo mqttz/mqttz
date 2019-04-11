@@ -1811,6 +1811,14 @@ topic clients/total in 0 test/mosquitto/org $SYS/broker/
 							connection to succeed.</para>
 					</listitem>
 				</varlistentry>
+				<varlistentry>
+					<term><option>bridge_alpn</option> <replaceable>alpn</replaceable></term>
+					<listitem>
+						<para>Configure the application layer protocol negotiation
+							option for the TLS session.  Useful for brokers that support
+							both websockets and MQTT on the same port.</para>
+					</listitem>
+				</varlistentry>
 			</variablelist>
 		</refsect2>
 	</refsect1>

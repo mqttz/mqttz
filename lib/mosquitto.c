@@ -247,6 +247,7 @@ void mosquitto__destroy(struct mosquitto *mosq)
 	mosquitto__free(mosq->tls_ciphers);
 	mosquitto__free(mosq->tls_psk);
 	mosquitto__free(mosq->tls_psk_identity);
+	mosquitto__free(mosq->tls_alpn);
 #endif
 
 	mosquitto__free(mosq->address);

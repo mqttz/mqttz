@@ -356,6 +356,7 @@ void config__cleanup(struct mosquitto__config *config)
 #ifdef WITH_TLS
 			mosquitto__free(config->bridges[i].tls_version);
 			mosquitto__free(config->bridges[i].tls_cafile);
+			mosquitto__free(config->bridges[i].tls_alpn);
 #ifdef FINAL_WITH_TLS_PSK
 			mosquitto__free(config->bridges[i].tls_psk_identity);
 			mosquitto__free(config->bridges[i].tls_psk);
@@ -993,6 +994,17 @@ int config__read_file_core(struct mosquitto__config *config, bool reload, struct
 					}
 #endif
 					if(conf__parse_string(&token, "bridge_cafile", &cur_bridge->tls_cafile, saveptr)) return MOSQ_ERR_INVAL;
+#else
+					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or TLS support not available.");
+#endif
+				}else if(!strcmp(token, "bridge_alpn")){
+#if defined(WITH_BRIDGE) && defined(WITH_TLS)
+					if(reload) continue; // FIXME
+					if(!cur_bridge){
+						log__printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
+						return MOSQ_ERR_INVAL;
+					}
+					if(conf__parse_string(&token, "bridge_alpn", &cur_bridge->tls_alpn, saveptr)) return MOSQ_ERR_INVAL;
 #else
 					log__printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or TLS support not available.");
 #endif
