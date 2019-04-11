@@ -50,6 +50,8 @@ Client features:
 Client fixes:
 - mosquitto_pub wouldn't always publish all messages when using `-l` and
   QoS>0. This has been fixed.
+- mosquitto_sub was incorrectly encoding special characters when using %j
+  output format. Closes #1220.
 
 
 1.5.8 - 20190228

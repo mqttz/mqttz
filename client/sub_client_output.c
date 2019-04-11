@@ -101,7 +101,7 @@ static void write_json_payload(const char *payload, int payloadlen)
 
 	for(i=0; i<payloadlen; i++){
 		if(payload[i] == '"' || payload[i] == '\\' || (payload[i] >=0 && payload[i] < 32)){
-			printf("\\u%04d", payload[i]);
+			printf("\\u%04x", payload[i]);
 		}else{
 			fputc(payload[i], stdout);
 		}
