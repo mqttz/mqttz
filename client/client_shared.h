@@ -18,6 +18,7 @@ Contributors:
 #define CLIENT_CONFIG_H
 
 #include <stdio.h>
+#include <sys/time.h>
 
 /* pub_client.c modes */
 #define MSGMODE_NONE 0
@@ -47,6 +48,8 @@ struct mosq_config {
 	long msglen; /* pub, rr */
 	char *topic; /* pub, rr */
 	char *bind_address;
+	int repeat_count; /* pub */
+	struct timeval repeat_delay; /* pub */
 #ifdef WITH_SRV
 	bool use_srv;
 #endif

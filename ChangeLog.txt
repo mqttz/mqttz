@@ -39,6 +39,8 @@ Client features:
   session without requiring a message to be received.
 - Add --remove-retained to mosquitto_sub, which can be used to clear retained
   messages on a broker.
+- Add --repeat and --repeat-delay to mosquitto_pub, which can be used to
+  repeat single message publishes at a regular interval.
 - -V now accepts `5, `311`, `31`, as well as `mqttv5` etc.
 - Add TLS Engine support.
 - Add support for ALPN on TLS connections. Closes #924.

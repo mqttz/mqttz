@@ -129,6 +129,9 @@ void init_config(struct mosq_config *cfg, int pub_or_sub)
 	cfg->keepalive = 60;
 	cfg->clean_session = true;
 	cfg->eol = true;
+	cfg->repeat_count = 1;
+	cfg->repeat_delay.tv_sec = 0;
+	cfg->repeat_delay.tv_usec = 0;
 	if(pub_or_sub == CLIENT_RR){
 		cfg->protocol_version = MQTT_PROTOCOL_V5;
 		cfg->msg_count = 1;
@@ -445,6 +448,7 @@ int cfg_add_topic(struct mosq_config *cfg, int type, char *topic, const char *ar
 int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, char *argv[])
 {
 	int i;
+	float f;
 
 	for(i=1; i<argc; i++){
 		if(!strcmp(argv[i], "-A")){
@@ -812,6 +816,39 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				goto unknown_option;
 			}
 			cfg->remove_retained = true;
+		}else if(!strcmp(argv[i], "--repeat")){
+			if(pub_or_sub != CLIENT_PUB){
+				goto unknown_option;
+			}
+			if(i==argc-1){
+				fprintf(stderr, "Error: --repeat argument given but no count specified.\n\n");
+				return 1;
+			}else{
+				cfg->repeat_count = atoi(argv[i+1]);
+				if(cfg->repeat_count < 1){
+					fprintf(stderr, "Error: --repeat argument must be >0.\n\n");
+					return 1;
+				}
+			}
+			i++;
+		}else if(!strcmp(argv[i], "--repeat-delay")){
+			if(pub_or_sub != CLIENT_PUB){
+				goto unknown_option;
+			}
+			if(i==argc-1){
+				fprintf(stderr, "Error: --repeat-delay argument given but no time specified.\n\n");
+				return 1;
+			}else{
+				f = atof(argv[i+1]);
+				if(f < 0.0f){
+					fprintf(stderr, "Error: --repeat-delay argument must be >=0.0.\n\n");
+					return 1;
+				}
+				f *= 1.0e6;
+				cfg->repeat_delay.tv_sec = (int)f/1e6;
+				cfg->repeat_delay.tv_usec = (int)f%1000000;
+			}
+			i++;
 		}else if(!strcmp(argv[i], "--retain-as-published")){
 			if(pub_or_sub == CLIENT_PUB){
 				goto unknown_option;

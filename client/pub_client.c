@@ -43,7 +43,35 @@ static char *line_buf = NULL;
 static int line_buf_len = 1024;
 static bool connected = true;
 static bool disconnect_sent = false;
+static int publish_count = 0;
+static bool ready_for_repeat = false;
+static struct timeval next_publish_tv;
 
+static void set_repeat_time(void)
+{
+	gettimeofday(&next_publish_tv, NULL);
+	next_publish_tv.tv_sec += cfg.repeat_delay.tv_sec;
+	next_publish_tv.tv_usec += cfg.repeat_delay.tv_usec;
+
+	next_publish_tv.tv_sec += next_publish_tv.tv_usec/1e6;
+	next_publish_tv.tv_usec = next_publish_tv.tv_usec%1000000;
+}
+
+static int check_repeat_time(void)
+{
+	struct timeval tv;
+
+	gettimeofday(&tv, NULL);
+
+	if(tv.tv_sec > next_publish_tv.tv_sec){
+		return 1;
+	}else if(tv.tv_sec == next_publish_tv.tv_sec
+			&& tv.tv_usec > next_publish_tv.tv_usec){
+
+		return 1;
+	}
+	return 0;
+}
 
 void my_disconnect_callback(struct mosquitto *mosq, void *obj, int rc, const mosquitto_property *properties)
 {
@@ -57,6 +85,7 @@ void my_disconnect_callback(struct mosquitto *mosq, void *obj, int rc, const mos
 
 int my_publish(struct mosquitto *mosq, int *mid, const char *topic, int payloadlen, void *payload, int qos, bool retain)
 {
+	ready_for_repeat = false;
 	if(cfg.protocol_version == MQTT_PROTOCOL_V5 && cfg.have_topic_alias && first_publish == false){
 		return mosquitto_publish_v5(mosq, mid, NULL, payloadlen, payload, qos, retain, cfg.publish_props);
 	}else{
@@ -134,11 +163,16 @@ void my_publish_callback(struct mosquitto *mosq, void *obj, int mid, int reason_
 	if(reason_code > 127){
 		if(!cfg.quiet) fprintf(stderr, "Warning: Publish %d failed: %s.\n", mid, mosquitto_reason_string(reason_code));
 	}
+	publish_count++;
+
 	if(cfg.pub_mode == MSGMODE_STDIN_LINE){
 		if(mid == last_mid){
 			mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
 			disconnect_sent = true;
 		}
+	}else if(publish_count < cfg.repeat_count){
+		ready_for_repeat = true;
+		set_repeat_time();
 	}else if(disconnect_sent == false){
 		mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
 		disconnect_sent = true;
@@ -165,6 +199,11 @@ int pub_shared_loop(struct mosquitto *mosq)
 	char *buf2;
 	int buf_len_actual;
 	int mode;
+	int loop_delay = 1000;
+
+	if(cfg.repeat_count > 1 && (cfg.repeat_delay.tv_sec == 0 || cfg.repeat_delay.tv_usec != 0)){
+		loop_delay = cfg.repeat_delay.tv_usec / 2000;
+	}
 
 	mode = cfg.pub_mode;
 
@@ -226,7 +265,25 @@ int pub_shared_loop(struct mosquitto *mosq)
 			}
 			rc = MOSQ_ERR_SUCCESS;
 		}else{
-			rc = mosquitto_loop(mosq, -1, 1);
+			rc = mosquitto_loop(mosq, loop_delay, 1);
+			if(ready_for_repeat && check_repeat_time()){
+				rc = 0;
+				switch(cfg.pub_mode){
+					case MSGMODE_CMD:
+					case MSGMODE_FILE:
+					case MSGMODE_STDIN_FILE:
+						rc = my_publish(mosq, &mid_sent, cfg.topic, cfg.msglen, cfg.message, cfg.qos, cfg.retain);
+						break;
+					case MSGMODE_NULL:
+						rc = my_publish(mosq, &mid_sent, cfg.topic, 0, NULL, cfg.qos, cfg.retain);
+						break;
+					case MSGMODE_STDIN_LINE:
+						break;
+				}
+				if(rc){
+					fprintf(stderr, "Error sending repeat publish: %s", mosquitto_strerror(rc));
+				}
+			}
 		}
 	}while(rc == MOSQ_ERR_SUCCESS && connected);
 
@@ -252,7 +309,7 @@ void print_usage(void)
 	printf("mosquitto_pub version %s running on libmosquitto %d.%d.%d.\n\n", VERSION, major, minor, revision);
 	printf("Usage: mosquitto_pub {[-h host] [-p port] [-u username [-P password]] -t topic | -L URL}\n");
 	printf("                     {-f file | -l | -n | -m message}\n");
-	printf("                     [-c] [-k keepalive] [-q qos] [-r]\n");
+	printf("                     [-c] [-k keepalive] [-q qos] [-r] [--repeat N] [--repeat-delay time]\n");
 #ifdef WITH_SRV
 	printf("                     [-A bind_address] [-S]\n");
 #else
@@ -307,6 +364,8 @@ void print_usage(void)
 	printf(" -V : specify the version of the MQTT protocol to use when connecting.\n");
 	printf("      Can be mqttv5, mqttv311 or mqttv31. Defaults to mqttv311.\n");
 	printf(" --help : display this message.\n");
+	printf(" --repeat : if publish mode is -f, -m, or -s, then repeat the publish N times.\n");
+	printf(" --repeat-delay : if using --repeat, wait time seconds between publishes. Defaults to 0.\n");
 	printf(" --quiet : don't print error messages.\n");
 	printf(" --will-payload : payload for the client Will, which is sent by the broker in case of\n");
 	printf("                  unexpected disconnection. If not given and will-topic is set, a zero\n");

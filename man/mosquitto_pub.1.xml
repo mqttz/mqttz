@@ -39,6 +39,8 @@
 			<arg><option>-q</option> <replaceable>message-QoS</replaceable></arg>
 			<arg><option>--quiet</option></arg>
 			<arg><option>-r</option></arg>
+			<arg><option>--repeat</option> <replaceable>count</replaceable></arg>
+			<arg><option>--repeat-delay</option> <replaceable>seconds</replaceable></arg>
 			<arg><option>-S</option></arg>
 			<group choice='req'>
 				<arg choice='plain'><option>-f</option> <replaceable>file</replaceable></arg>
@@ -429,6 +431,33 @@
 				<term><option>--retain</option></term>
 				<listitem>
 					<para>If retain is given, the message will be retained as a "last known good" value on the broker. See <citerefentry><refentrytitle>mqtt</refentrytitle><manvolnum>7</manvolnum></citerefentry> for more information.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>--repeat</option></term>
+				<listitem>
+                    <para>If the publish mode is<option>-m</option>,
+						<option>-f</option>, or <option>-s</option> (i.e. the modes
+						where only a single message is sent), then
+						<option>--repeat</option> can be used to specify that the
+						message will be published multiple times.</para>
+					<para>See also <option>--repeat-delay</option>.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>--repeat-delay</option></term>
+				<listitem>
+					<para>If using <option>--repeat</option>, then the default
+						behaviour is to publish repeated messages as soon as the
+						previous message is delivered. Use
+						<option>--repeat-delay</option> to specify the number of
+						seconds to wait after the previous message was delivered
+						before publishing the next. Does not need to be an integer
+						number of seconds.</para>
+					<para>Note that there is no guarantee as to the actual interval
+						between messages, this option simply defines the minimum
+						time from delivery of one message to the start of the
+						publish of the next.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
