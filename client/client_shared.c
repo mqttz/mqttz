@@ -159,6 +159,7 @@ void client_config_cleanup(struct mosq_config *cfg)
 	free(cfg->certfile);
 	free(cfg->keyfile);
 	free(cfg->ciphers);
+	free(cfg->tls_alpn);
 	free(cfg->tls_version);
 	free(cfg->tls_engine);
 	free(cfg->tls_engine_kpass_sha1);
@@ -870,6 +871,14 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 			}
 			i++;
 #ifdef WITH_TLS
+		}else if(!strcmp(argv[i], "--tls-alpn")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --tls-alpn argument given but no protocol specified.\n\n");
+				return 1;
+			}else{
+				cfg->tls_alpn = strdup(argv[i+1]);
+			}
+			i++;
 		}else if(!strcmp(argv[i], "--tls-engine")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: --tls-engine argument given but no engine_id specified.\n\n");
@@ -1065,6 +1074,11 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 	}
 	if(cfg->tls_engine_kpass_sha1 && mosquitto_string_option(mosq, MOSQ_OPT_TLS_ENGINE_KPASS_SHA1, cfg->tls_engine_kpass_sha1)){
 		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting TLS engine key pass sha.\n");
+		mosquitto_lib_cleanup();
+		return 1;
+	}
+	if(cfg->tls_alpn && mosquitto_string_option(mosq, MOSQ_OPT_TLS_ALPN, cfg->tls_alpn)){
+		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting TLS ALPN protocol.\n");
 		mosquitto_lib_cleanup();
 		return 1;
 	}

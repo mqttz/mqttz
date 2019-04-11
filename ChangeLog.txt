@@ -20,6 +20,7 @@ Broker features:
 - Disallow writing to $ topics where appropriate.
 - Fix mosquitto_passwd crashing on corrupt password file. Closes #1207.
 - Add support for OCSP stapling.
+- Add support for ALPN on bridge TLS connections. Closes #924.
 
 Client library features:
 - Add mosquitto_subscribe_multiple() for sending subscriptions to multiple
@@ -28,6 +29,7 @@ Client library features:
 - Add explicit support for TLS v1.3.
 - Drop support for TLS v1.0.
 - Add support for OCSP stapling to bridges.
+- Add support for ALPN on TLS connections. Closes #924.
 
 Client features:
 - Add mosquitto_rr client, which can be used for "request-response" messaging,
@@ -39,6 +41,7 @@ Client features:
   messages on a broker.
 - -V now accepts `5, `311`, `31`, as well as `mqttv5` etc.
 - Add TLS Engine support.
+- Add support for ALPN on TLS connections. Closes #924.
 - Add explicit support for TLS v1.3.
 - Drop support for TLS v1.0.
 

@@ -185,8 +185,9 @@ void print_usage(void)
 	printf("                     [--will-topic [--will-payload payload] [--will-qos qos] [--will-retain]]\n");
 #ifdef WITH_TLS
 	printf("                     [{--cafile file | --capath dir} [--cert file] [--key file]\n");
-	printf("                      [--ciphers ciphers] [--insecure] [--tls-engine engine]\n");
-	printf("                      [--keyform keyform] [--tls-engine-kpass-sha1]]\n");
+	printf("                       [--ciphers ciphers] [--insecure]\n");
+	printf("                       [--tls-alpn protocol]\n");
+	printf("                       [--tls-engine engine] [--keyform keyform] [--tls-engine-kpass-sha1]]\n");
 #ifdef FINAL_WITH_TLS_PSK
 	printf("                     [--psk hex-key --psk-identity identity [--ciphers ciphers]]\n");
 #endif

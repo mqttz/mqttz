@@ -70,6 +70,7 @@
 					<arg><option>--cert</option> <replaceable>file</replaceable></arg>
 					<arg><option>--key</option> <replaceable>file</replaceable></arg>
 					<arg><option>--tls-version</option> <replaceable>version</replaceable></arg>
+					<arg><option>--tls-alpn</option> <replaceable>protocol</replaceable></arg>
 					<arg><option>--insecure</option></arg>
 				</arg>
 				<arg>
@@ -472,6 +473,13 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>--tls-alpn</option></term>
+				<listitem>
+					<para>Provide a protocol to use when connecting to a broker
+						that has multiple protocols available on a single port,
+						e.g. MQTT and WebSockets.</para>
+				</listitem>
+			</varlistentry>
 				<term><option>--tls-version</option></term>
 				<listitem>
 					<para>Choose which TLS protocol version to use when

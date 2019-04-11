@@ -2070,6 +2070,10 @@ libmosq_EXPORT void mosquitto_log_callback_set(struct mosquitto *mosq, void (*on
  *	          accessed, this option allows a hex encoded SHA1 hash of the
  *	          private key password to be passed to the engine directly.
  *	          Must be set before <mosquitto_connect>.
+ *	MOSQ_OPT_TLS_ALPN
+ *	          If the broker being connected to has multiple services available
+ *	          on a single TLS port, such as both MQTT and WebSockets, use this
+ *	          option to configure the ALPN option for the connection.
  */
 libmosq_EXPORT int mosquitto_string_option(struct mosquitto *mosq, enum mosq_opt_t option, const char *value);
 

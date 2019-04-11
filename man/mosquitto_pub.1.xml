@@ -63,6 +63,7 @@
 					<arg><option>--key</option> <replaceable>file</replaceable></arg>
 					<arg><option>--ciphers</option> <replaceable>ciphers</replaceable></arg>
 					<arg><option>--tls-version</option> <replaceable>version</replaceable></arg>
+					<arg><option>--tls-alpn</option> <replaceable>protocol</replaceable></arg>
 					<arg><option>--tls-engine</option> <replaceable>engine</replaceable></arg>
 					<arg><option>--keyform</option>
 					<group choice='req'>
@@ -453,6 +454,14 @@
 				<term><option>--topic</option></term>
 				<listitem>
 					<para>The MQTT topic on which to publish the message. See <citerefentry><refentrytitle>mqtt</refentrytitle><manvolnum>7</manvolnum></citerefentry> for more information on MQTT topics.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>--tls-alpn</option></term>
+				<listitem>
+					<para>Provide a protocol to use when connecting to a broker
+						that has multiple protocols available on a single port,
+						e.g. MQTT and WebSockets.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

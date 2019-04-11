@@ -67,6 +67,7 @@ struct mosq_config {
 	char *keyfile;
 	char *ciphers;
 	bool insecure;
+	char *tls_alpn;
 	char *tls_version;
 	char *tls_engine;
 	char *tls_engine_kpass_sha1;

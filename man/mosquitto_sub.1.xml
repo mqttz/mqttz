@@ -72,6 +72,7 @@
 					<arg><option>--cert</option> <replaceable>file</replaceable></arg>
 					<arg><option>--key</option> <replaceable>file</replaceable></arg>
 					<arg><option>--tls-version</option> <replaceable>version</replaceable></arg>
+					<arg><option>--tls-alpn</option> <replaceable>protocol</replaceable></arg>
 					<arg><option>--tls-engine</option> <replaceable>engine</replaceable></arg>
 					<arg><option>--keyform</option>
 					<group choice='req'>
@@ -563,6 +564,14 @@ mosquitto_sub -t 'bbc/#' -T bbc/bbc1 --remove-retained</programlisting>
 					</itemizedlist>
 					<para>This option may be repeated to filter out multiple
 						topics or topic trees.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>--tls-alpn</option></term>
+				<listitem>
+					<para>Provide a protocol to use when connecting to a broker
+						that has multiple protocols available on a single port,
+						e.g. MQTT and WebSockets.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
