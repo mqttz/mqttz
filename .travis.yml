@@ -7,6 +7,9 @@ os:
   - linux
   - osx
 
+dist:
+  - xenial
+
 sudo: true
 
 env:
