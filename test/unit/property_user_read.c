@@ -194,7 +194,7 @@ static void read_binary_helper(const mosquitto_property *proplist, int identifie
 {
 	const mosquitto_property *prop;
 	void *value = NULL;
-	int length;
+	uint16_t length;
 
 	prop = mosquitto_property_read_binary(proplist, identifier, &value, &length, false);
 	CU_ASSERT_PTR_NOT_NULL(prop);
@@ -439,7 +439,7 @@ static void missing_read_helper(mosquitto_property *proplist)
 	uint16_t int16_value;
 	uint32_t int32_value;
 	char *key, *value;
-	int length;
+	uint16_t length;
 
 	/* MISSING */
 	prop = mosquitto_property_read_byte(proplist, MQTT_PROP_MESSAGE_EXPIRY_INTERVAL, &byte_value, false);
