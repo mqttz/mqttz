@@ -26,7 +26,7 @@ static_pub : pub_client.o pub_shared.o client_props.o client_shared.o ../lib/lib
 static_sub : sub_client.o sub_client_output.o client_props.o client_shared.o ../lib/libmosquitto.a
 	${CROSS_COMPILE}${CC} $^ -o mosquitto_sub ${CLIENT_LDFLAGS} ${STATIC_LIB_DEPS}
 
-static_rr : rr_client.o client_props.o client_shared.o pub_shared.o ../lib/libmosquitto.a
+static_rr : rr_client.o client_props.o client_shared.o pub_shared.o sub_client_output.o ../lib/libmosquitto.a
 	${CROSS_COMPILE}${CC} $^ -o mosquitto_rr ${CLIENT_LDFLAGS} ${STATIC_LIB_DEPS}
 
 mosquitto_pub : pub_client.o pub_shared.o client_shared.o client_props.o
