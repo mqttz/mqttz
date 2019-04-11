@@ -47,6 +47,9 @@ Client features:
 - Add explicit support for TLS v1.3.
 - Drop support for TLS v1.0.
 
+Broker fixes:
+- Fix build on SmartOS due to missing IPV6_V6ONLY. Closes #1212.
+
 Client fixes:
 - mosquitto_pub wouldn't always publish all messages when using `-l` and
   QoS>0. This has been fixed.
