@@ -69,13 +69,22 @@
 					</group>
 					<arg><option>--cert</option> <replaceable>file</replaceable></arg>
 					<arg><option>--key</option> <replaceable>file</replaceable></arg>
+					<arg><option>--ciphers</option> <replaceable>ciphers</replaceable></arg>
 					<arg><option>--tls-version</option> <replaceable>version</replaceable></arg>
 					<arg><option>--tls-alpn</option> <replaceable>protocol</replaceable></arg>
+					<arg><option>--tls-engine</option> <replaceable>engine</replaceable></arg>
+					<arg><option>--keyform</option>
+					<group choice='req'>
+						<arg choice='plain'><replaceable>pem</replaceable></arg>
+						<arg choice='plain'><replaceable>engine</replaceable></arg>
+					</group></arg>
+					<arg><option>--tls-engine-kpass-sha1</option> <replaceable>kpass-sha1</replaceable></arg>
 					<arg><option>--insecure</option></arg>
 				</arg>
 				<arg>
 					<arg choice='plain'><option>--psk</option> <replaceable>hex-key</replaceable></arg>
 					<arg choice='plain'><option>--psk-identity</option> <replaceable>identity</replaceable></arg>
+					<arg><option>--ciphers</option> <replaceable>ciphers</replaceable></arg>
 					<arg><option>--tls-version</option> <replaceable>version</replaceable></arg>
 				</arg>
 			</group>
@@ -316,6 +325,18 @@
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>--keyform</option></term>
+				<listitem>
+					<para>Specifies the type of private key in use when making
+						TLS connections.. This can be "pem" or "engine". This
+						parameter is useful when a TPM module is being used and
+						the private key has been created with it. Defaults to
+						"pem", which means normal private key files are
+						used.</para>
+					<para>See also <option>--tls-engine</option>.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>-L</option></term>
 				<term><option>--url</option></term>
 				<listitem>
@@ -480,16 +501,35 @@
 						e.g. MQTT and WebSockets.</para>
 				</listitem>
 			</varlistentry>
+			<varlistentry>
+				<term><option>--tls-engine</option></term>
+				<listitem>
+					<para>A valid openssl engine id. These can be listed with
+						openssl engine command.</para>
+					<para>See also <option>--keyform</option>.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>--tls-engine-kpass-sha1</option></term>
+				<listitem>
+					<para>SHA1 of the private key password when using an TLS
+						engine.  Some TLS engines such as the TPM engine may
+						require the use of a password in order to be accessed.
+						This option allows a hex encoded SHA1 hash of the
+						password to the engine directly, instead of the user
+						being prompted for the password.</para>
+					<para>See also <option>--tls-engine</option>.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>--tls-version</option></term>
 				<listitem>
 					<para>Choose which TLS protocol version to use when
 						communicating with the broker. Valid options are
-						<option>tlsv1.2</option>, <option>tlsv1.1</option> and
-						<option>tlsv1</option>. The default value is
-						<option>tlsv1.2</option>. If the installed version of
-						openssl is too old, only <option>tlsv1</option> will be
-						available. Must match the protocol version used by the
-						broker.</para>
+						<option>tlsv1.3</option>, <option>tlsv1.2</option> and
+						<option>tlsv1.1</option>. The default value is
+						<option>tlsv1.2</option>. Must match the protocol
+						version used by the broker.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -517,19 +557,11 @@
 				<listitem>
 					<para>Specify which version of the MQTT protocol should be
 						used when connecting to the rmeote broker. Can be
-						<option>mqttv5</option>, <option>mqttv311</option> or
+						<option>5</option>, <option>311</option>,
+						<option>31</option>, or the more verbose
+						<option>mqttv5</option>, <option>mqttv311</option>, or
 						<option>mqttv31</option>.
-						Defaults to <option>mqttv311</option>.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>-W</option></term>
-				<listitem>
-					<para>Provide a timeout as an integer number of seconds.
-						mosquitto_rr will stop processing messages and
-						disconnect after this number of seconds has
-						passed. The timeout starts just after the client has
-						connected to the broker.</para>
+						Defaults to <option>311</option>.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
