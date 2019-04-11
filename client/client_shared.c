@@ -1065,9 +1065,7 @@ unknown_option:
 
 int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 {
-#ifdef WITH_SOCKS
 	int rc;
-#endif
 
 	mosquitto_int_option(mosq, MOSQ_OPT_PROTOCOL_VERSION, cfg->protocol_version);
 
@@ -1087,12 +1085,17 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 		return 1;
 	}
 #ifdef WITH_TLS
-	if((cfg->cafile || cfg->capath)
-			&& mosquitto_tls_set(mosq, cfg->cafile, cfg->capath, cfg->certfile, cfg->keyfile, NULL)){
-
-		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting TLS options.\n");
-		mosquitto_lib_cleanup();
-		return 1;
+	if(cfg->cafile || cfg->capath){
+		rc = mosquitto_tls_set(mosq, cfg->cafile, cfg->capath, cfg->certfile, cfg->keyfile, NULL);
+		if(rc){
+			if(rc == MOSQ_ERR_INVAL){
+				if(!cfg->quiet) fprintf(stderr, "Error: Problem setting TLS options: File not found.\n");
+			}else{
+				if(!cfg->quiet) fprintf(stderr, "Error: Problem setting TLS options: %s.\n", mosquitto_strerror(rc));
+			}
+			mosquitto_lib_cleanup();
+			return 1;
+		}
 	}
 	if(cfg->insecure && mosquitto_tls_insecure_set(mosq, true)){
 		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting TLS insecure option.\n");
@@ -1100,17 +1103,17 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 		return 1;
 	}
 	if(cfg->tls_engine && mosquitto_string_option(mosq, MOSQ_OPT_TLS_ENGINE, cfg->tls_engine)){
-		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting TLS engine.\n");
+		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting TLS engine, is %s a valid engine?\n", cfg->tls_engine);
 		mosquitto_lib_cleanup();
 		return 1;
 	}
 	if(cfg->keyform && mosquitto_string_option(mosq, MOSQ_OPT_TLS_KEYFORM, cfg->keyform)){
-		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting keyform.\n");
+		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting key form, it must be one of 'pem' or 'engine'.\n");
 		mosquitto_lib_cleanup();
 		return 1;
 	}
 	if(cfg->tls_engine_kpass_sha1 && mosquitto_string_option(mosq, MOSQ_OPT_TLS_ENGINE_KPASS_SHA1, cfg->tls_engine_kpass_sha1)){
-		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting TLS engine key pass sha.\n");
+		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting TLS engine key pass sha, is it a 40 character hex string?\n");
 		mosquitto_lib_cleanup();
 		return 1;
 	}
@@ -1127,7 +1130,7 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 	}
 #  endif
 	if((cfg->tls_version || cfg->ciphers) && mosquitto_tls_opts_set(mosq, 1, cfg->tls_version, cfg->ciphers)){
-		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting TLS options.\n");
+		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting TLS options, check the options are valid.\n");
 		mosquitto_lib_cleanup();
 		return 1;
 	}
