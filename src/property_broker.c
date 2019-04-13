@@ -40,8 +40,8 @@ int property__process_connect(struct mosquitto *context, mosquitto_property *pro
 				return MOSQ_ERR_PROTOCOL;
 			}
 
-			context->send_maximum = p->value.i16;
-			context->send_quota = context->send_maximum;
+			context->msgs_out.inflight_maximum = p->value.i16;
+			context->msgs_out.inflight_quota = context->msgs_out.inflight_maximum;
 		}else if(p->identifier == MQTT_PROP_MAXIMUM_PACKET_SIZE){
 			if(p->value.i32 == 0){
 				return MOSQ_ERR_PROTOCOL;

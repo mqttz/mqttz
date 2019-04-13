@@ -139,7 +139,7 @@ int mosquitto_publish_v5(struct mosquitto *mosq, int *mid, const char *topic, in
 		message->msg.retain = retain;
 		message->dup = false;
 
-		pthread_mutex_lock(&mosq->out_message_mutex);
+		pthread_mutex_lock(&mosq->msgs_out.mutex);
 		queue_status = message__queue(mosq, message, mosq_md_out);
 		if(queue_status == 0){
 			if(qos == 1){
@@ -147,11 +147,11 @@ int mosquitto_publish_v5(struct mosquitto *mosq, int *mid, const char *topic, in
 			}else if(qos == 2){
 				message->state = mosq_ms_wait_for_pubrec;
 			}
-			pthread_mutex_unlock(&mosq->out_message_mutex);
+			pthread_mutex_unlock(&mosq->msgs_out.mutex);
 			return send__publish(mosq, message->msg.mid, message->msg.topic, message->msg.payloadlen, message->msg.payload, message->msg.qos, message->msg.retain, message->dup, outgoing_properties, NULL, 0);
 		}else{
 			message->state = mosq_ms_invalid;
-			pthread_mutex_unlock(&mosq->out_message_mutex);
+			pthread_mutex_unlock(&mosq->msgs_out.mutex);
 			return MOSQ_ERR_SUCCESS;
 		}
 	}

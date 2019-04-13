@@ -112,6 +112,7 @@ static int persist__client_msg_restore(struct mosquitto_db *db, struct P_client_
 	struct mosquitto_client_msg *cmsg;
 	struct mosquitto_msg_store_load *load;
 	struct mosquitto *context;
+	struct mosquitto_msg_data *msg_data;
 
 	cmsg = mosquitto__calloc(1, sizeof(struct mosquitto_client_msg));
 	if(!cmsg){
@@ -146,10 +147,25 @@ static int persist__client_msg_restore(struct mosquitto_db *db, struct P_client_
 		return 1;
 	}
 
-	if(chunk->F.state == mosq_ms_queued){
-		DL_APPEND(context->queued_msgs, cmsg);
+	if(cmsg->direction == mosq_md_out){
+		msg_data = &context->msgs_out;
 	}else{
-		DL_APPEND(context->inflight_msgs, cmsg);
+		msg_data = &context->msgs_in;
+	}
+
+	if(chunk->F.state == mosq_ms_queued || (chunk->F.qos > 0 && msg_data->inflight_quota == 0)){
+		DL_APPEND(msg_data->queued, cmsg);
+	}else{
+		DL_APPEND(msg_data->inflight, cmsg);
+		if(chunk->F.qos > 0 && msg_data->inflight_quota > 0){
+			msg_data->inflight_quota--;
+		}
+	}
+	msg_data->msg_count++;
+	msg_data->msg_bytes += cmsg->store->payloadlen;
+	if(chunk->F.qos > 0){
+		msg_data->msg_count12++;
+		msg_data->msg_bytes12 += cmsg->store->payloadlen;
 	}
 
 	return MOSQ_ERR_SUCCESS;

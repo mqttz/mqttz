@@ -289,17 +289,30 @@ FILE *mosquitto__fopen(const char *path, const char *mode, bool restrict_read)
 
 void util__increment_receive_quota(struct mosquitto *mosq)
 {
-	if(mosq->protocol == mosq_p_mqtt5){
-		if(mosq->receive_quota < mosq->receive_maximum){
-			mosq->receive_quota++;
-		}
+	if(mosq->msgs_in.inflight_quota < mosq->msgs_in.inflight_maximum){
+		mosq->msgs_in.inflight_quota++;
 	}
 }
 
 void util__increment_send_quota(struct mosquitto *mosq)
 {
-	if(mosq->send_quota < mosq->send_maximum){
-		mosq->send_quota++;
+	if(mosq->msgs_out.inflight_quota < mosq->msgs_out.inflight_maximum){
+		mosq->msgs_out.inflight_quota++;
+	}
+}
+
+
+void util__decrement_receive_quota(struct mosquitto *mosq)
+{
+	if(mosq->msgs_in.inflight_quota > 0){
+		mosq->msgs_in.inflight_quota--;
+	}
+}
+
+void util__decrement_send_quota(struct mosquitto *mosq)
+{
+	if(mosq->msgs_out.inflight_quota > 0){
+		mosq->msgs_out.inflight_quota--;
 	}
 }
 

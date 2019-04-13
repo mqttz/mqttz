@@ -179,8 +179,10 @@ static int persist__client_save(struct mosquitto_db *db, FILE *db_fptr)
 				return rc;
 			}
 
-			if(persist__client_messages_save(db, db_fptr, context, context->inflight_msgs)) return 1;
-			if(persist__client_messages_save(db, db_fptr, context, context->queued_msgs)) return 1;
+			if(persist__client_messages_save(db, db_fptr, context, context->msgs_in.inflight)) return 1;
+			if(persist__client_messages_save(db, db_fptr, context, context->msgs_in.queued)) return 1;
+			if(persist__client_messages_save(db, db_fptr, context, context->msgs_out.inflight)) return 1;
+			if(persist__client_messages_save(db, db_fptr, context, context->msgs_out.queued)) return 1;
 		}
 	}
 

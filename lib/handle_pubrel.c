@@ -77,7 +77,7 @@ int handle__pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 	/* Immediately free, we don't do anything with Reason String or User Property at the moment */
 	mosquitto_property_free_all(&properties);
 
-	rc = db__message_release(db, mosq, mid, mosq_md_in);
+	rc = db__message_release_incoming(db, mosq, mid);
 	if(rc == MOSQ_ERR_PROTOCOL){
 		return rc;
 	}else if(rc != MOSQ_ERR_SUCCESS){

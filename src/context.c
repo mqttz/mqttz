@@ -50,6 +50,7 @@ struct mosquitto *context__init(struct mosquitto_db *db, mosq_sock_t sock)
 	context->password = NULL;
 	context->listener = NULL;
 	context->acl_list = NULL;
+
 	/* is_bridge records whether this client is a bridge or not. This could be
 	 * done by looking at context->bridge for bridges that we create ourself,
 	 * but incoming bridges need some other way of being recorded. */
@@ -72,13 +73,11 @@ struct mosquitto *context__init(struct mosquitto_db *db, mosq_sock_t sock)
 		}
 	}
 	context->bridge = NULL;
-	context->receive_maximum = db->config->max_inflight_messages;
-	context->send_maximum = db->config->max_inflight_messages;
+	context->msgs_in.inflight_maximum = db->config->max_inflight_messages;
+	context->msgs_out.inflight_maximum = db->config->max_inflight_messages;
+	context->msgs_in.inflight_quota = db->config->max_inflight_messages;
+	context->msgs_out.inflight_quota = db->config->max_inflight_messages;
 	context->maximum_qos = 2;
-	context->msg_bytes = 0;
-	context->msg_bytes12 = 0;
-	context->msg_count = 0;
-	context->msg_count12 = 0;
 #ifdef WITH_TLS
 	context->ssl = NULL;
 #endif

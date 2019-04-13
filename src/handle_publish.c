@@ -344,6 +344,10 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 			break;
 	}
 
+	if(rc == MOSQ_ERR_SUCCESS && qos > 0){
+		util__decrement_receive_quota(context);
+	}
+
 	return rc;
 process_bad_message:
 	mosquitto__free(topic);

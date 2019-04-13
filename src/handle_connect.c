@@ -129,11 +129,15 @@ int connect__on_authorised(struct mosquitto_db *db, struct mosquitto *context, v
 				connect_ack |= 0x01;
 			}
 
-			if(found_context->inflight_msgs || found_context->queued_msgs){
-				context->inflight_msgs = found_context->inflight_msgs;
-				context->queued_msgs = found_context->queued_msgs;
-				found_context->inflight_msgs = NULL;
-				found_context->queued_msgs = NULL;
+			if(found_context->msgs_in.inflight || found_context->msgs_in.queued
+					|| found_context->msgs_out.inflight || found_context->msgs_out.queued){
+
+				memcpy(&context->msgs_in, &found_context->msgs_in, sizeof(struct mosquitto_msg_data));
+				memcpy(&context->msgs_out, &found_context->msgs_out, sizeof(struct mosquitto_msg_data));
+
+				memset(&found_context->msgs_in, 0, sizeof(struct mosquitto_msg_data));
+				memset(&found_context->msgs_out, 0, sizeof(struct mosquitto_msg_data));
+
 				db__message_reconnect_reset(db, context);
 			}
 			context->subs = found_context->subs;
@@ -203,8 +207,10 @@ int connect__on_authorised(struct mosquitto_db *db, struct mosquitto *context, v
 	context->ping_t = 0;
 	context->is_dropping = false;
 
-	connection_check_acl(db, context, &context->inflight_msgs);
-	connection_check_acl(db, context, &context->queued_msgs);
+	connection_check_acl(db, context, &context->msgs_in.inflight);
+	connection_check_acl(db, context, &context->msgs_in.queued);
+	connection_check_acl(db, context, &context->msgs_out.inflight);
+	connection_check_acl(db, context, &context->msgs_out.queued);
 
 	HASH_ADD_KEYPTR(hh_id, db->contexts_by_id, context->id, strlen(context->id), context);
 

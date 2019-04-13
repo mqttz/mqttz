@@ -16,7 +16,16 @@ extern uint32_t last_identifier;
 
 struct mosquitto *context__init(struct mosquitto_db *db, mosq_sock_t sock)
 {
-	return mosquitto__calloc(1, sizeof(struct mosquitto));
+	struct mosquitto *m;
+
+	m = mosquitto__calloc(1, sizeof(struct mosquitto));
+	if(m){
+		m->msgs_in.inflight_maximum = 20;
+		m->msgs_out.inflight_maximum = 20;
+		m->msgs_in.inflight_quota = 20;
+		m->msgs_out.inflight_quota = 20;
+	}
+	return m;
 }
 
 int db__message_store(struct mosquitto_db *db, const struct mosquitto *source, uint16_t source_mid, char *topic, int qos, uint32_t payloadlen, mosquitto__payload_uhpa *payload, int retain, struct mosquitto_msg_store **stored, uint32_t message_expiry_interval, mosquitto_property *properties, dbid_t store_id)

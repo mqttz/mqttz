@@ -242,7 +242,8 @@ static void TEST_v3_client(void)
 	HASH_FIND(hh_id, db.contexts_by_id, "client-id", strlen("client-id"), context);
 	CU_ASSERT_PTR_NOT_NULL(context);
 	if(context){
-		CU_ASSERT_PTR_NULL(context->inflight_msgs);
+		CU_ASSERT_PTR_NULL(context->msgs_in.inflight);
+		CU_ASSERT_PTR_NULL(context->msgs_out.inflight);
 		CU_ASSERT_EQUAL(context->last_mid, 0x5287);
 	}
 }
@@ -260,6 +261,7 @@ static void TEST_v3_client_message(void)
 
 	config.persistence = true;
 	config.persistence_filepath = "files/persist_read/v3-client-message.test-db";
+	config.max_inflight_messages = 20;
 
 	rc = persist__restore(&db);
 	CU_ASSERT_EQUAL(rc, MOSQ_ERR_SUCCESS);
@@ -268,33 +270,33 @@ static void TEST_v3_client_message(void)
 	HASH_FIND(hh_id, db.contexts_by_id, "client-id", strlen("client-id"), context);
 	CU_ASSERT_PTR_NOT_NULL(context);
 	if(context){
-		CU_ASSERT_PTR_NOT_NULL(context->inflight_msgs);
-		if(context->inflight_msgs){
-			CU_ASSERT_PTR_NULL(context->inflight_msgs->next);
-			CU_ASSERT_PTR_NOT_NULL(context->inflight_msgs->store);
-			if(context->inflight_msgs->store){
-				CU_ASSERT_EQUAL(context->inflight_msgs->store->ref_count, 1);
-				CU_ASSERT_STRING_EQUAL(context->inflight_msgs->store->source_id, "source_id");
-				CU_ASSERT_EQUAL(context->inflight_msgs->store->source_mid, 2);
-				CU_ASSERT_EQUAL(context->inflight_msgs->store->mid, 0);
-				CU_ASSERT_EQUAL(context->inflight_msgs->store->qos, 2);
-				CU_ASSERT_EQUAL(context->inflight_msgs->store->retain, 1);
-				CU_ASSERT_PTR_NOT_NULL(context->inflight_msgs->store->topic);
-				if(context->inflight_msgs->store->topic){
-					CU_ASSERT_STRING_EQUAL(context->inflight_msgs->store->topic, "topic");
+		CU_ASSERT_PTR_NOT_NULL(context->msgs_out.inflight);
+		if(context->msgs_out.inflight){
+			CU_ASSERT_PTR_NULL(context->msgs_out.inflight->next);
+			CU_ASSERT_PTR_NOT_NULL(context->msgs_out.inflight->store);
+			if(context->msgs_out.inflight->store){
+				CU_ASSERT_EQUAL(context->msgs_out.inflight->store->ref_count, 1);
+				CU_ASSERT_STRING_EQUAL(context->msgs_out.inflight->store->source_id, "source_id");
+				CU_ASSERT_EQUAL(context->msgs_out.inflight->store->source_mid, 2);
+				CU_ASSERT_EQUAL(context->msgs_out.inflight->store->mid, 0);
+				CU_ASSERT_EQUAL(context->msgs_out.inflight->store->qos, 2);
+				CU_ASSERT_EQUAL(context->msgs_out.inflight->store->retain, 1);
+				CU_ASSERT_PTR_NOT_NULL(context->msgs_out.inflight->store->topic);
+				if(context->msgs_out.inflight->store->topic){
+					CU_ASSERT_STRING_EQUAL(context->msgs_out.inflight->store->topic, "topic");
 				}
-				CU_ASSERT_EQUAL(context->inflight_msgs->store->payloadlen, 7);
-				if(context->inflight_msgs->store->payloadlen == 7){
-					CU_ASSERT_NSTRING_EQUAL(UHPA_ACCESS_PAYLOAD(context->inflight_msgs->store), "payload", 7);
+				CU_ASSERT_EQUAL(context->msgs_out.inflight->store->payloadlen, 7);
+				if(context->msgs_out.inflight->store->payloadlen == 7){
+					CU_ASSERT_NSTRING_EQUAL(UHPA_ACCESS_PAYLOAD(context->msgs_out.inflight->store), "payload", 7);
 				}
 			}
-			CU_ASSERT_EQUAL(context->inflight_msgs->mid, 0x73);
-			CU_ASSERT_EQUAL(context->inflight_msgs->qos, 1);
-			CU_ASSERT_EQUAL(context->inflight_msgs->retain, 0);
-			CU_ASSERT_EQUAL(context->inflight_msgs->direction, mosq_md_out);
-			CU_ASSERT_EQUAL(context->inflight_msgs->state, mosq_ms_wait_for_puback);
-			CU_ASSERT_EQUAL(context->inflight_msgs->dup, 0);
-			CU_ASSERT_PTR_NULL(context->inflight_msgs->properties);
+			CU_ASSERT_EQUAL(context->msgs_out.inflight->mid, 0x73);
+			CU_ASSERT_EQUAL(context->msgs_out.inflight->qos, 1);
+			CU_ASSERT_EQUAL(context->msgs_out.inflight->retain, 0);
+			CU_ASSERT_EQUAL(context->msgs_out.inflight->direction, mosq_md_out);
+			CU_ASSERT_EQUAL(context->msgs_out.inflight->state, mosq_ms_wait_for_puback);
+			CU_ASSERT_EQUAL(context->msgs_out.inflight->dup, 0);
+			CU_ASSERT_PTR_NULL(context->msgs_out.inflight->properties);
 		}
 	}
 }
@@ -565,7 +567,8 @@ static void TEST_v5_client(void)
 	HASH_FIND(hh_id, db.contexts_by_id, "client-id", strlen("client-id"), context);
 	CU_ASSERT_PTR_NOT_NULL(context);
 	if(context){
-		CU_ASSERT_PTR_NULL(context->inflight_msgs);
+		CU_ASSERT_PTR_NULL(context->msgs_in.inflight);
+		CU_ASSERT_PTR_NULL(context->msgs_out.inflight);
 		CU_ASSERT_EQUAL(context->last_mid, 0x5287);
 	}
 }
@@ -591,30 +594,30 @@ static void TEST_v5_client_message(void)
 	HASH_FIND(hh_id, db.contexts_by_id, "client-id", strlen("client-id"), context);
 	CU_ASSERT_PTR_NOT_NULL(context);
 	if(context){
-		CU_ASSERT_PTR_NOT_NULL(context->inflight_msgs);
-		if(context->inflight_msgs){
-			CU_ASSERT_PTR_NULL(context->inflight_msgs->next);
-			CU_ASSERT_PTR_NOT_NULL(context->inflight_msgs->store);
-			if(context->inflight_msgs->store){
-				CU_ASSERT_EQUAL(context->inflight_msgs->store->ref_count, 1);
-				CU_ASSERT_STRING_EQUAL(context->inflight_msgs->store->source_id, "source_id");
-				CU_ASSERT_EQUAL(context->inflight_msgs->store->source_mid, 2);
-				CU_ASSERT_EQUAL(context->inflight_msgs->store->mid, 0);
-				CU_ASSERT_EQUAL(context->inflight_msgs->store->qos, 2);
-				CU_ASSERT_EQUAL(context->inflight_msgs->store->retain, 1);
-				CU_ASSERT_STRING_EQUAL(context->inflight_msgs->store->topic, "topic");
-				CU_ASSERT_EQUAL(context->inflight_msgs->store->payloadlen, 7);
-				if(context->inflight_msgs->store->payloadlen == 7){
-					CU_ASSERT_NSTRING_EQUAL(UHPA_ACCESS_PAYLOAD(context->inflight_msgs->store), "payload", 7);
+		CU_ASSERT_PTR_NOT_NULL(context->msgs_out.inflight);
+		if(context->msgs_out.inflight){
+			CU_ASSERT_PTR_NULL(context->msgs_out.inflight->next);
+			CU_ASSERT_PTR_NOT_NULL(context->msgs_out.inflight->store);
+			if(context->msgs_out.inflight->store){
+				CU_ASSERT_EQUAL(context->msgs_out.inflight->store->ref_count, 1);
+				CU_ASSERT_STRING_EQUAL(context->msgs_out.inflight->store->source_id, "source_id");
+				CU_ASSERT_EQUAL(context->msgs_out.inflight->store->source_mid, 2);
+				CU_ASSERT_EQUAL(context->msgs_out.inflight->store->mid, 0);
+				CU_ASSERT_EQUAL(context->msgs_out.inflight->store->qos, 2);
+				CU_ASSERT_EQUAL(context->msgs_out.inflight->store->retain, 1);
+				CU_ASSERT_STRING_EQUAL(context->msgs_out.inflight->store->topic, "topic");
+				CU_ASSERT_EQUAL(context->msgs_out.inflight->store->payloadlen, 7);
+				if(context->msgs_out.inflight->store->payloadlen == 7){
+					CU_ASSERT_NSTRING_EQUAL(UHPA_ACCESS_PAYLOAD(context->msgs_out.inflight->store), "payload", 7);
 				}
 			}
-			CU_ASSERT_EQUAL(context->inflight_msgs->mid, 0x73);
-			CU_ASSERT_EQUAL(context->inflight_msgs->qos, 1);
-			CU_ASSERT_EQUAL(context->inflight_msgs->retain, 0);
-			CU_ASSERT_EQUAL(context->inflight_msgs->direction, mosq_md_out);
-			CU_ASSERT_EQUAL(context->inflight_msgs->state, mosq_ms_wait_for_puback);
-			CU_ASSERT_EQUAL(context->inflight_msgs->dup, 0);
-			CU_ASSERT_PTR_NULL(context->inflight_msgs->properties);
+			CU_ASSERT_EQUAL(context->msgs_out.inflight->mid, 0x73);
+			CU_ASSERT_EQUAL(context->msgs_out.inflight->qos, 1);
+			CU_ASSERT_EQUAL(context->msgs_out.inflight->retain, 0);
+			CU_ASSERT_EQUAL(context->msgs_out.inflight->direction, mosq_md_out);
+			CU_ASSERT_EQUAL(context->msgs_out.inflight->state, mosq_ms_wait_for_puback);
+			CU_ASSERT_EQUAL(context->msgs_out.inflight->dup, 0);
+			CU_ASSERT_PTR_NULL(context->msgs_out.inflight->properties);
 		}
 	}
 }
@@ -640,33 +643,33 @@ static void TEST_v5_client_message_props(void)
 	HASH_FIND(hh_id, db.contexts_by_id, "client-id", strlen("client-id"), context);
 	CU_ASSERT_PTR_NOT_NULL(context);
 	if(context){
-		CU_ASSERT_PTR_NOT_NULL(context->inflight_msgs);
-		if(context->inflight_msgs){
-			CU_ASSERT_PTR_NULL(context->inflight_msgs->next);
-			CU_ASSERT_PTR_NOT_NULL(context->inflight_msgs->store);
-			if(context->inflight_msgs->store){
-				CU_ASSERT_EQUAL(context->inflight_msgs->store->ref_count, 1);
-				CU_ASSERT_STRING_EQUAL(context->inflight_msgs->store->source_id, "source_id");
-				CU_ASSERT_EQUAL(context->inflight_msgs->store->source_mid, 2);
-				CU_ASSERT_EQUAL(context->inflight_msgs->store->mid, 0);
-				CU_ASSERT_EQUAL(context->inflight_msgs->store->qos, 2);
-				CU_ASSERT_EQUAL(context->inflight_msgs->store->retain, 1);
-				CU_ASSERT_STRING_EQUAL(context->inflight_msgs->store->topic, "topic");
-				CU_ASSERT_EQUAL(context->inflight_msgs->store->payloadlen, 7);
-				if(context->inflight_msgs->store->payloadlen == 7){
-					CU_ASSERT_NSTRING_EQUAL(UHPA_ACCESS_PAYLOAD(context->inflight_msgs->store), "payload", 7);
+		CU_ASSERT_PTR_NOT_NULL(context->msgs_out.inflight);
+		if(context->msgs_out.inflight){
+			CU_ASSERT_PTR_NULL(context->msgs_out.inflight->next);
+			CU_ASSERT_PTR_NOT_NULL(context->msgs_out.inflight->store);
+			if(context->msgs_out.inflight->store){
+				CU_ASSERT_EQUAL(context->msgs_out.inflight->store->ref_count, 1);
+				CU_ASSERT_STRING_EQUAL(context->msgs_out.inflight->store->source_id, "source_id");
+				CU_ASSERT_EQUAL(context->msgs_out.inflight->store->source_mid, 2);
+				CU_ASSERT_EQUAL(context->msgs_out.inflight->store->mid, 0);
+				CU_ASSERT_EQUAL(context->msgs_out.inflight->store->qos, 2);
+				CU_ASSERT_EQUAL(context->msgs_out.inflight->store->retain, 1);
+				CU_ASSERT_STRING_EQUAL(context->msgs_out.inflight->store->topic, "topic");
+				CU_ASSERT_EQUAL(context->msgs_out.inflight->store->payloadlen, 7);
+				if(context->msgs_out.inflight->store->payloadlen == 7){
+					CU_ASSERT_NSTRING_EQUAL(UHPA_ACCESS_PAYLOAD(context->msgs_out.inflight->store), "payload", 7);
 				}
 			}
-			CU_ASSERT_EQUAL(context->inflight_msgs->mid, 0x73);
-			CU_ASSERT_EQUAL(context->inflight_msgs->qos, 1);
-			CU_ASSERT_EQUAL(context->inflight_msgs->retain, 0);
-			CU_ASSERT_EQUAL(context->inflight_msgs->direction, mosq_md_out);
-			CU_ASSERT_EQUAL(context->inflight_msgs->state, mosq_ms_wait_for_puback);
-			CU_ASSERT_EQUAL(context->inflight_msgs->dup, 0);
-			CU_ASSERT_PTR_NOT_NULL(context->inflight_msgs->properties);
-			if(context->inflight_msgs->properties){
-				CU_ASSERT_EQUAL(context->inflight_msgs->properties->identifier, 1);
-				CU_ASSERT_EQUAL(context->inflight_msgs->properties->value.i8, 1);
+			CU_ASSERT_EQUAL(context->msgs_out.inflight->mid, 0x73);
+			CU_ASSERT_EQUAL(context->msgs_out.inflight->qos, 1);
+			CU_ASSERT_EQUAL(context->msgs_out.inflight->retain, 0);
+			CU_ASSERT_EQUAL(context->msgs_out.inflight->direction, mosq_md_out);
+			CU_ASSERT_EQUAL(context->msgs_out.inflight->state, mosq_ms_wait_for_puback);
+			CU_ASSERT_EQUAL(context->msgs_out.inflight->dup, 0);
+			CU_ASSERT_PTR_NOT_NULL(context->msgs_out.inflight->properties);
+			if(context->msgs_out.inflight->properties){
+				CU_ASSERT_EQUAL(context->msgs_out.inflight->properties->identifier, 1);
+				CU_ASSERT_EQUAL(context->msgs_out.inflight->properties->value.i8, 1);
 			}
 		}
 	}

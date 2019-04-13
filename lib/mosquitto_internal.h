@@ -163,6 +163,7 @@ struct mosquitto__packet{
 
 struct mosquitto_message_all{
 	struct mosquitto_message_all *next;
+	struct mosquitto_message_all *prev;
 	mosquitto_property *properties;
 	time_t timestamp;
 	//enum mosquitto_msg_direction direction;
@@ -178,6 +179,26 @@ enum mosquitto__keyform {
 	mosq_k_engine = 1,
 };
 #endif
+
+struct mosquitto_msg_data{
+#ifdef WITH_BROKER
+	struct mosquitto_client_msg *inflight;
+	struct mosquitto_client_msg *queued;
+	unsigned long msg_bytes;
+	unsigned long msg_bytes12;
+	int msg_count;
+	int msg_count12;
+#else
+	struct mosquitto_message_all *inflight;
+	int queue_len;
+#  ifdef WITH_THREADING
+	pthread_mutex_t mutex;
+#  endif
+#endif
+	int inflight_quota;
+	uint16_t inflight_maximum;
+};
+
 
 struct mosquitto {
 	mosq_sock_t sock;
@@ -237,8 +258,6 @@ struct mosquitto {
 	pthread_mutex_t out_packet_mutex;
 	pthread_mutex_t current_out_packet_mutex;
 	pthread_mutex_t state_mutex;
-	pthread_mutex_t in_message_mutex;
-	pthread_mutex_t out_message_mutex;
 	pthread_mutex_t mid_mutex;
 	pthread_t thread_id;
 #endif
@@ -250,12 +269,8 @@ struct mosquitto {
 	bool is_dropping;
 	bool is_bridge;
 	struct mosquitto__bridge *bridge;
-	struct mosquitto_client_msg *inflight_msgs;
-	struct mosquitto_client_msg *queued_msgs;
-	unsigned long msg_bytes;
-	unsigned long msg_bytes12;
-	int msg_count;
-	int msg_count12;
+	struct mosquitto_msg_data msgs_in;
+	struct mosquitto_msg_data msgs_out;
 	struct mosquitto__acl_user *acl_list;
 	struct mosquitto__listener *listener;
 	struct mosquitto__packet *out_packet_last;
@@ -284,10 +299,8 @@ struct mosquitto {
 #  endif
 	void *userdata;
 	bool in_callback;
-	struct mosquitto_message_all *in_messages;
-	struct mosquitto_message_all *in_messages_last;
-	struct mosquitto_message_all *out_messages;
-	struct mosquitto_message_all *out_messages_last;
+	struct mosquitto_msg_data msgs_in;
+	struct mosquitto_msg_data msgs_out;
 	void (*on_connect)(struct mosquitto *, void *userdata, int rc);
 	void (*on_connect_with_flags)(struct mosquitto *, void *userdata, int rc, int flags);
 	void (*on_connect_v5)(struct mosquitto *, void *userdata, int rc, int flags, const mosquitto_property *props);
@@ -305,8 +318,6 @@ struct mosquitto {
 	//void (*on_error)();
 	char *host;
 	int port;
-	int in_queue_len;
-	int out_queue_len;
 	char *bind_address;
 	unsigned int reconnect_delay;
 	unsigned int reconnect_delay_max;
@@ -316,11 +327,9 @@ struct mosquitto {
 #  ifdef WITH_SRV
 	ares_channel achan;
 #  endif
-#endif
-	int send_quota;
-	int receive_quota;
 	uint16_t send_maximum;
 	uint16_t receive_maximum;
+#endif
 	uint8_t maximum_qos;
 
 #ifdef WITH_BROKER

@@ -68,11 +68,11 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 	if(mosq->protocol == mosq_p_mqtt5){
 		/* Generate properties from options */
 		if(!mosquitto_property_read_int16(properties, MQTT_PROP_RECEIVE_MAXIMUM, &receive_maximum, false)){
-			rc = mosquitto_property_add_int16(&local_props, MQTT_PROP_RECEIVE_MAXIMUM, mosq->receive_maximum);
+			rc = mosquitto_property_add_int16(&local_props, MQTT_PROP_RECEIVE_MAXIMUM, mosq->msgs_in.inflight_maximum);
 			if(rc) return rc;
 		}else{
-			mosq->receive_maximum = receive_maximum;
-			mosq->receive_quota = receive_maximum;
+			mosq->msgs_in.inflight_maximum = receive_maximum;
+			mosq->msgs_in.inflight_quota = receive_maximum;
 		}
 
 		version = MQTT_PROTOCOL_V5;

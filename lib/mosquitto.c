@@ -152,13 +152,11 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_st
 	mosq->ping_t = 0;
 	mosq->last_mid = 0;
 	mosq->state = mosq_cs_new;
-	mosq->in_messages = NULL;
-	mosq->in_messages_last = NULL;
-	mosq->out_messages = NULL;
-	mosq->out_messages_last = NULL;
 	mosq->maximum_qos = 2;
-	mosq->receive_maximum = 20;
-	mosq->send_maximum = 20;
+	mosq->msgs_in.inflight_maximum = 20;
+	mosq->msgs_out.inflight_maximum = 20;
+	mosq->msgs_in.inflight_quota = 20;
+	mosq->msgs_out.inflight_quota = 20;
 	mosq->will = NULL;
 	mosq->on_connect = NULL;
 	mosq->on_publish = NULL;
@@ -168,8 +166,6 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_st
 	mosq->host = NULL;
 	mosq->port = 1883;
 	mosq->in_callback = false;
-	mosq->in_queue_len = 0;
-	mosq->out_queue_len = 0;
 	mosq->reconnect_delay = 1;
 	mosq->reconnect_delay_max = 1;
 	mosq->reconnect_exponential_backoff = false;
@@ -189,8 +185,8 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_st
 	pthread_mutex_init(&mosq->out_packet_mutex, NULL);
 	pthread_mutex_init(&mosq->current_out_packet_mutex, NULL);
 	pthread_mutex_init(&mosq->msgtime_mutex, NULL);
-	pthread_mutex_init(&mosq->in_message_mutex, NULL);
-	pthread_mutex_init(&mosq->out_message_mutex, NULL);
+	pthread_mutex_init(&mosq->msgs_in.mutex, NULL);
+	pthread_mutex_init(&mosq->msgs_out.mutex, NULL);
 	pthread_mutex_init(&mosq->mid_mutex, NULL);
 	mosq->thread_id = pthread_self();
 #endif
@@ -221,8 +217,8 @@ void mosquitto__destroy(struct mosquitto *mosq)
 		pthread_mutex_destroy(&mosq->out_packet_mutex);
 		pthread_mutex_destroy(&mosq->current_out_packet_mutex);
 		pthread_mutex_destroy(&mosq->msgtime_mutex);
-		pthread_mutex_destroy(&mosq->in_message_mutex);
-		pthread_mutex_destroy(&mosq->out_message_mutex);
+		pthread_mutex_destroy(&mosq->msgs_in.mutex);
+		pthread_mutex_destroy(&mosq->msgs_out.mutex);
 		pthread_mutex_destroy(&mosq->mid_mutex);
 	}
 #endif

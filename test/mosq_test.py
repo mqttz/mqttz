@@ -157,7 +157,7 @@ def to_string(packet):
     if len(packet) == 0:
         return ""
 
-    packet0 = struct.unpack("!B", packet[0])
+    packet0 = struct.unpack("!B", bytes(packet[0]))
     packet0 = packet0[0]
     cmd = packet0 & 0xF0
     if cmd == 0x00:

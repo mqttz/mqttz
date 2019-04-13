@@ -97,11 +97,9 @@ int send__pubrec(struct mosquitto *mosq, uint16_t mid, uint8_t reason_code)
 #else
 	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBREC (m%d, rc%d)", mosq->id, mid, reason_code);
 #endif
-	/* FIXME - if rc >= 0x80 quota needs incrementing
-	if(rc >= 0x80){
+	if(reason_code >= 0x80){
 		util__increment_receive_quota(mosq);
 	}
-	*/
 	/* We don't use Reason String or User Property yet. */
 	return send__command_with_mid(mosq, CMD_PUBREC, mid, false, reason_code, NULL);
 }

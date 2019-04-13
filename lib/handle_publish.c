@@ -29,6 +29,7 @@ Contributors:
 #include "property_mosq.h"
 #include "send_mosq.h"
 #include "time_mosq.h"
+#include "util_mosq.h"
 
 
 int handle__publish(struct mosquitto *mosq)
@@ -67,13 +68,13 @@ int handle__publish(struct mosquitto *mosq)
 
 	if(message->msg.qos > 0){
 		if(mosq->protocol == mosq_p_mqtt5){
-			if(mosq->receive_quota == 0){
+			if(mosq->msgs_in.inflight_quota == 0){
 				message__cleanup(&message);
 				/* FIXME - should send a DISCONNECT here */
 				return MOSQ_ERR_PROTOCOL;
 			}
-			mosq->receive_quota--;
 		}
+		util__decrement_receive_quota(mosq);
 
 		rc = packet__read_uint16(&mosq->in_packet, &mid);
 		if(rc){
@@ -150,10 +151,10 @@ int handle__publish(struct mosquitto *mosq)
 			return rc;
 		case 2:
 			rc = send__pubrec(mosq, message->msg.mid, 0);
-			pthread_mutex_lock(&mosq->in_message_mutex);
+			pthread_mutex_lock(&mosq->msgs_in.mutex);
 			message->state = mosq_ms_wait_for_pubrel;
 			message__queue(mosq, message, mosq_md_in);
-			pthread_mutex_unlock(&mosq->in_message_mutex);
+			pthread_mutex_unlock(&mosq->msgs_in.mutex);
 			mosquitto_property_free_all(&properties);
 			return rc;
 		default:

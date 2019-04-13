@@ -54,6 +54,8 @@ int handle__pubackcomp(struct mosquitto *mosq, const char *type)
 		return MOSQ_ERR_PROTOCOL;
 	}
 
+	util__increment_send_quota(mosq);
+
 	rc = packet__read_uint16(&mosq->in_packet, &mid);
 	if(rc) return rc;
 	qos = type[3] == 'A'?1:2; /* pubAck or pubComp */
@@ -75,7 +77,7 @@ int handle__pubackcomp(struct mosquitto *mosq, const char *type)
 	/* Immediately free, we don't do anything with Reason String or User Property at the moment */
 	mosquitto_property_free_all(&properties);
 
-	rc = db__message_delete(db, mosq, mid, mosq_md_out, mosq_ms_wait_for_pubcomp, qos);
+	rc = db__message_delete_outgoing(db, mosq, mid, mosq_ms_wait_for_pubcomp, qos);
 	if(rc == MOSQ_ERR_NOT_FOUND){
 		log__printf(mosq, MOSQ_LOG_WARNING, "Warning: Received %s from %s for an unknown packet identifier %d.", type, mosq->id, mid);
 		return MOSQ_ERR_SUCCESS;
@@ -104,6 +106,7 @@ int handle__pubackcomp(struct mosquitto *mosq, const char *type)
 		pthread_mutex_unlock(&mosq->callback_mutex);
 		mosquitto_property_free_all(&properties);
 	}
+	message__release_to_inflight(mosq, mosq_md_out);
 
 	return MOSQ_ERR_SUCCESS;
 #endif
