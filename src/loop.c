@@ -92,7 +92,7 @@ static void temp__expire_websockets_clients(struct mosquitto_db *db)
 						}
 					}
 					/* Client has exceeded keepalive*1.5 */
-					do_disconnect(db, context);
+					do_disconnect(db, context, MOSQ_ERR_KEEPALIVE);
 				}
 			}
 		}
@@ -314,19 +314,11 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 						pollfd_index++;
 #endif
 					}else{
-						do_disconnect(db, context);
+						do_disconnect(db, context, MOSQ_ERR_CONN_LOST);
 					}
 				}else{
-					if(db->config->connection_messages == true){
-						if(context->id){
-							id = context->id;
-						}else{
-							id = "<unknown>";
-						}
-						log__printf(NULL, MOSQ_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", id);
-					}
 					/* Client has exceeded keepalive*1.5 */
-					do_disconnect(db, context);
+					do_disconnect(db, context, MOSQ_ERR_KEEPALIVE);
 				}
 			}
 		}
@@ -485,7 +477,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 						G_CLIENTS_EXPIRED_INC();
 						context->session_expiry_interval = 0;
 						context__set_state(context, mosq_cs_expiring);
-						do_disconnect(db, context);
+						do_disconnect(db, context, MOSQ_ERR_SUCCESS);
 					}
 				}
 			}
@@ -616,7 +608,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 	return MOSQ_ERR_SUCCESS;
 }
 
-void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
+void do_disconnect(struct mosquitto_db *db, struct mosquitto *context, int reason)
 {
 	char *id;
 #ifdef WITH_EPOLL
@@ -628,7 +620,7 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 	}
 #ifdef WITH_WEBSOCKETS
 	if(context->wsi){
-		if(context->state != mosq_cs_disconnecting){
+		if(context->state != mosq_cs_disconnecting && context->state != mosq_cs_disconnect_with_will){
 			context__set_state(context, mosq_cs_disconnect_ws);
 		}
 		if(context->wsi){
@@ -654,8 +646,26 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 			}else{
 				id = "<unknown>";
 			}
-			if(context->state != mosq_cs_disconnecting){
-				log__printf(NULL, MOSQ_LOG_NOTICE, "Socket error on client %s, disconnecting.", id);
+			if(context->state != mosq_cs_disconnecting && context->state != mosq_cs_disconnect_with_will){
+				switch(reason){
+					case MOSQ_ERR_SUCCESS:
+						break;
+					case MOSQ_ERR_PROTOCOL:
+						log__printf(NULL, MOSQ_LOG_NOTICE, "Client %s disconnected due to protocol error.", id);
+						break;
+					case MOSQ_ERR_CONN_LOST:
+						log__printf(NULL, MOSQ_LOG_NOTICE, "Socket error on client %s, disconnecting.", id);
+						break;
+					case MOSQ_ERR_AUTH:
+						log__printf(NULL, MOSQ_LOG_NOTICE, "Client %s disconnected, no longer authorised.", id);
+						break;
+					case MOSQ_ERR_KEEPALIVE:
+						log__printf(NULL, MOSQ_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", id);
+						break;
+					default:
+						log__printf(NULL, MOSQ_LOG_NOTICE, "Socket error on client %s, disconnecting.", id);
+						break;
+				}
 			}else{
 				log__printf(NULL, MOSQ_LOG_NOTICE, "Client %s disconnected.", id);
 			}
@@ -751,12 +761,12 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 #endif
 					}
 				}else{
-					do_disconnect(db, context);
+					do_disconnect(db, context, MOSQ_ERR_CONN_LOST);
 					continue;
 				}
 			}
 			if(packet__write(context)){
-				do_disconnect(db, context);
+				do_disconnect(db, context, MOSQ_ERR_CONN_LOST);
 				continue;
 			}
 		}
@@ -798,7 +808,7 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 #endif
 			do{
 				if(packet__read(db, context)){
-					do_disconnect(db, context);
+					do_disconnect(db, context, MOSQ_ERR_CONN_LOST);
 					continue;
 				}
 			}while(SSL_DATA_PENDING(context));
@@ -808,7 +818,7 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 #else
 			if(context->pollfd_index >= 0 && pollfds[context->pollfd_index].revents & (POLLERR | POLLNVAL | POLLHUP)){
 #endif
-				do_disconnect(db, context);
+				do_disconnect(db, context, MOSQ_ERR_CONN_LOST);
 				continue;
 			}
 		}

@@ -333,6 +333,12 @@ bool mosquitto_want_write(struct mosquitto *mosq)
 const char *mosquitto_strerror(int mosq_errno)
 {
 	switch(mosq_errno){
+		case MOSQ_ERR_AUTH_CONTINUE:
+			return "Continue with authentication.";
+		case MOSQ_ERR_NO_SUBSCRIBERS:
+			return "No subscribers.";
+		case MOSQ_ERR_SUB_EXISTS:
+			return "Subscription already exists.";
 		case MOSQ_ERR_CONN_PENDING:
 			return "Connection pending.";
 		case MOSQ_ERR_SUCCESS:
@@ -379,6 +385,8 @@ const char *mosquitto_strerror(int mosq_errno)
 			return "Requested QoS not supported on server.";
 		case MOSQ_ERR_OVERSIZE_PACKET:
 			return "Packet larger than supported by the server.";
+		case MOSQ_ERR_OCSP:
+			return "OCSP error.";
 		default:
 			return "Unknown error.";
 	}

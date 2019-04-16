@@ -725,7 +725,7 @@ struct lws_context *mosq_websockets_init(struct mosquitto__listener *listener, c
 struct libwebsocket_context *mosq_websockets_init(struct mosquitto__listener *listener, const struct mosquitto__config *conf);
 #  endif
 #endif
-void do_disconnect(struct mosquitto_db *db, struct mosquitto *context);
+void do_disconnect(struct mosquitto_db *db, struct mosquitto *context, int reason);
 
 /* ============================================================
  * Will delay

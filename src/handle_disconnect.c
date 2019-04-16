@@ -59,7 +59,7 @@ int handle__disconnect(struct mosquitto_db *db, struct mosquitto *context)
 	log__printf(NULL, MOSQ_LOG_DEBUG, "Received DISCONNECT from %s", context->id);
 	if(context->protocol == mosq_p_mqtt311 || context->protocol == mosq_p_mqtt5){
 		if((context->in_packet.command&0x0F) != 0x00){
-			do_disconnect(db, context);
+			do_disconnect(db, context, MOSQ_ERR_PROTOCOL);
 			return MOSQ_ERR_PROTOCOL;
 		}
 	}
@@ -68,6 +68,6 @@ int handle__disconnect(struct mosquitto_db *db, struct mosquitto *context)
 	}else{
 		context__set_state(context, mosq_cs_disconnecting);
 	}
-	do_disconnect(db, context);
+	do_disconnect(db, context, MOSQ_ERR_SUCCESS);
 	return MOSQ_ERR_SUCCESS;
 }

@@ -160,7 +160,7 @@ int connect__on_authorised(struct mosquitto_db *db, struct mosquitto *context, v
 		found_context->clean_start = true;
 		found_context->session_expiry_interval = 0;
 		context__set_state(found_context, mosq_cs_duplicate);
-		do_disconnect(db, found_context);
+		do_disconnect(db, found_context, MOSQ_ERR_SUCCESS);
 	}
 
 	rc = acl__find_acls(db, context);
