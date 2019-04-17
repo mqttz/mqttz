@@ -18,7 +18,6 @@ Contributors:
 #define CLIENT_CONFIG_H
 
 #include <stdio.h>
-#include <sys/time.h>
 
 /* pub_client.c modes */
 #define MSGMODE_NONE 0

@@ -22,6 +22,7 @@ Contributors:
 #include <stdlib.h>
 #include <string.h>
 #ifndef WIN32
+#include <sys/time.h>
 #include <time.h>
 #else
 #include <process.h>
@@ -45,6 +46,28 @@ static bool connected = true;
 static bool disconnect_sent = false;
 static int publish_count = 0;
 static bool ready_for_repeat = false;
+
+#ifdef WIN32
+static uint64_t next_publish_tv;
+
+static void set_repeat_time(void)
+{
+	uint64_t ticks = GetTickCount64();
+	next_publish_tv = ticks + cfg.repeat_delay.tv_sec*1000 + cfg.repeat_delay.tv_usec/1000;
+}
+
+static int check_repeat_time(void)
+{
+	uint64_t ticks = GetTickCount64();
+
+	if(ticks > next_publish_tv){
+		return 1;
+	}else{
+		return 0;
+	}
+}
+#else
+
 static struct timeval next_publish_tv;
 
 static void set_repeat_time(void)
@@ -72,6 +95,7 @@ static int check_repeat_time(void)
 	}
 	return 0;
 }
+#endif
 
 void my_disconnect_callback(struct mosquitto *mosq, void *obj, int rc, const mosquitto_property *properties)
 {

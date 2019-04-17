@@ -58,9 +58,7 @@ static DltContext dltContext;
 
 static int get_time(struct tm **ti)
 {
-#ifdef WIN32
-	SYSTEMTIME st;
-#elif defined(__APPLE__)
+#if defined(__APPLE__)
 	struct timeval tv;
 #else
 	struct timespec ts;
@@ -70,8 +68,6 @@ static int get_time(struct tm **ti)
 #ifdef WIN32
 	s = time(NULL);
 
-	GetLocalTime(&st);
-	*ns = st.wMilliseconds*1000000L;
 #elif defined(__APPLE__)
 	gettimeofday(&tv, NULL);
 	s = tv.tv_sec;

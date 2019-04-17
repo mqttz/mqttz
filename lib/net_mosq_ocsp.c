@@ -41,14 +41,14 @@ in this Software without prior written authorization of the copyright holder.
 */
 
 #ifdef WITH_TLS
+#include <logging_mosq.h>
+#include <mosquitto_internal.h>
+#include <net_mosq.h>
+
 #include <openssl/safestack.h>
 #include <openssl/tls1.h>
 #include <openssl/ssl.h>
 #include <openssl/ocsp.h>
-
-#include <logging_mosq.h>
-#include <mosquitto_internal.h>
-#include <net_mosq.h>
 
 int mosquitto__verify_ocsp_status_cb(SSL * ssl, void *arg)
 {
