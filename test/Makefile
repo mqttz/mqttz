@@ -15,6 +15,7 @@ ptest : utest
 utest :
 	$(MAKE) -C unit test
 
+reallyclean : clean
 clean : 
 	$(MAKE) -C lib clean
 	$(MAKE) -C broker clean
