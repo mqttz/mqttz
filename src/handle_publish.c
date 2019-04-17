@@ -164,7 +164,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	}
 	mosquitto_property_free_all(&properties);
 
-	if(topic_alias == 0 || topic_alias > context->listener->max_topic_alias){
+	if(topic_alias == 0 || (context->listener && topic_alias > context->listener->max_topic_alias)){
 		mosquitto__free(topic);
 		send__disconnect(context, MQTT_RC_TOPIC_ALIAS_INVALID, NULL);
 		return MOSQ_ERR_PROTOCOL;

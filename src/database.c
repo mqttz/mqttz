@@ -941,7 +941,7 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 	int msg_count = 0;
 	mosquitto_property *cmsg_props = NULL, *store_props = NULL;
 	time_t now = 0;
-	uint32_t expiry_interval = 0;
+	uint32_t expiry_interval;
 
 	if(!context || context->sock == INVALID_SOCKET
 			|| (context->state == mosq_cs_connected && !context->id)){

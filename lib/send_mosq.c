@@ -58,9 +58,9 @@ int send__pingreq(struct mosquitto *mosq)
 int send__pingresp(struct mosquitto *mosq)
 {
 #ifdef WITH_BROKER
-	if(mosq) log__printf(NULL, MOSQ_LOG_DEBUG, "Sending PINGRESP to %s", mosq->id);
+	log__printf(NULL, MOSQ_LOG_DEBUG, "Sending PINGRESP to %s", mosq->id);
 #else
-	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PINGRESP", mosq->id);
+	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PINGRESP", mosq->id);
 #endif
 	return send__simple_command(mosq, CMD_PINGRESP);
 }
@@ -93,9 +93,9 @@ int send__pubcomp(struct mosquitto *mosq, uint16_t mid)
 int send__pubrec(struct mosquitto *mosq, uint16_t mid, uint8_t reason_code)
 {
 #ifdef WITH_BROKER
-	if(mosq) log__printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBREC to %s (m%d, rc%d)", mosq->id, mid, reason_code);
+	log__printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBREC to %s (m%d, rc%d)", mosq->id, mid, reason_code);
 #else
-	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBREC (m%d, rc%d)", mosq->id, mid, reason_code);
+	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBREC (m%d, rc%d)", mosq->id, mid, reason_code);
 #endif
 	if(reason_code >= 0x80 && mosq->protocol == mosq_p_mqtt5){
 		util__increment_receive_quota(mosq);
@@ -107,9 +107,9 @@ int send__pubrec(struct mosquitto *mosq, uint16_t mid, uint8_t reason_code)
 int send__pubrel(struct mosquitto *mosq, uint16_t mid)
 {
 #ifdef WITH_BROKER
-	if(mosq) log__printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBREL to %s (m%d)", mosq->id, mid);
+	log__printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBREL to %s (m%d)", mosq->id, mid);
 #else
-	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBREL (m%d)", mosq->id, mid);
+	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBREL (m%d)", mosq->id, mid);
 #endif
 	/* We don't use Reason String or User Property yet. */
 	return send__command_with_mid(mosq, CMD_PUBREL|2, mid, false, 0, NULL);
