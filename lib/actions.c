@@ -38,7 +38,6 @@ int mosquitto_publish_v5(struct mosquitto *mosq, int *mid, const char *topic, in
 {
 	struct mosquitto_message_all *message;
 	uint16_t local_mid;
-	int queue_status;
 	const mosquitto_property *p;
 	const mosquitto_property *outgoing_properties = NULL;
 	mosquitto_property local_property;
@@ -140,20 +139,10 @@ int mosquitto_publish_v5(struct mosquitto *mosq, int *mid, const char *topic, in
 		message->dup = false;
 
 		pthread_mutex_lock(&mosq->msgs_out.mutex);
-		queue_status = message__queue(mosq, message, mosq_md_out);
-		if(queue_status == 0){
-			if(qos == 1){
-				message->state = mosq_ms_wait_for_puback;
-			}else if(qos == 2){
-				message->state = mosq_ms_wait_for_pubrec;
-			}
-			pthread_mutex_unlock(&mosq->msgs_out.mutex);
-			return send__publish(mosq, message->msg.mid, message->msg.topic, message->msg.payloadlen, message->msg.payload, message->msg.qos, message->msg.retain, message->dup, outgoing_properties, NULL, 0);
-		}else{
-			message->state = mosq_ms_invalid;
-			pthread_mutex_unlock(&mosq->msgs_out.mutex);
-			return MOSQ_ERR_SUCCESS;
-		}
+		message->state = mosq_ms_invalid;
+		message__queue(mosq, message, mosq_md_out);
+		pthread_mutex_unlock(&mosq->msgs_out.mutex);
+		return MOSQ_ERR_SUCCESS;
 	}
 }
 

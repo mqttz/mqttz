@@ -319,6 +319,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 			if(rc2 > 0) rc = 1;
 			break;
 		case 1:
+			util__decrement_receive_quota(context);
 			rc2 = sub__messages_queue(db, context->id, topic, qos, retain, &stored);
 			if(rc2 == MOSQ_ERR_SUCCESS || context->protocol != mosq_p_mqtt5){
 				if(send__puback(context, mid, 0)) rc = 1;
@@ -329,7 +330,8 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 			}
 			break;
 		case 2:
-			if(!dup){
+			if(dup == 0){
+				util__decrement_receive_quota(context);
 				res = db__message_insert(db, context, mid, mosq_md_in, qos, retain, stored, NULL);
 			}else{
 				res = 0;
@@ -342,10 +344,6 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 				rc = 1;
 			}
 			break;
-	}
-
-	if(rc == MOSQ_ERR_SUCCESS && qos > 0){
-		util__decrement_receive_quota(context);
 	}
 
 	return rc;

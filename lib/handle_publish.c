@@ -74,7 +74,6 @@ int handle__publish(struct mosquitto *mosq)
 				return MOSQ_ERR_PROTOCOL;
 			}
 		}
-		util__decrement_receive_quota(mosq);
 
 		rc = packet__read_uint16(&mosq->in_packet, &mid);
 		if(rc){
@@ -133,6 +132,7 @@ int handle__publish(struct mosquitto *mosq)
 			mosquitto_property_free_all(&properties);
 			return MOSQ_ERR_SUCCESS;
 		case 1:
+			util__decrement_receive_quota(mosq);
 			rc = send__puback(mosq, message->msg.mid, 0);
 			pthread_mutex_lock(&mosq->callback_mutex);
 			if(mosq->on_message){
@@ -150,6 +150,7 @@ int handle__publish(struct mosquitto *mosq)
 			mosquitto_property_free_all(&properties);
 			return rc;
 		case 2:
+			util__decrement_receive_quota(mosq);
 			rc = send__pubrec(mosq, message->msg.mid, 0);
 			pthread_mutex_lock(&mosq->msgs_in.mutex);
 			message->state = mosq_ms_wait_for_pubrel;

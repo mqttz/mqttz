@@ -77,7 +77,7 @@ int handle__pubrec(struct mosquitto_db *db, struct mosquitto *mosq)
 
 	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s received PUBREC (Mid: %d)", mosq->id, mid);
 
-	if(reason_code < 0x80){
+	if(reason_code < 0x80 || mosq->protocol != mosq_p_mqtt5){
 		rc = message__out_update(mosq, mid, mosq_ms_wait_for_pubcomp, 2);
 	}else{
 		if(!message__delete(mosq, mid, mosq_md_out, 2)){
@@ -91,7 +91,9 @@ int handle__pubrec(struct mosquitto_db *db, struct mosquitto *mosq)
 			pthread_mutex_unlock(&mosq->callback_mutex);
 		}
 		util__increment_send_quota(mosq);
+		pthread_mutex_lock(&mosq->msgs_out.mutex);
 		message__release_to_inflight(mosq, mosq_md_out);
+		pthread_mutex_unlock(&mosq->msgs_out.mutex);
 		return MOSQ_ERR_SUCCESS;
 	}
 #endif

@@ -286,9 +286,6 @@ void db__message_dequeue_first(struct mosquitto *context, struct mosquitto_msg_d
 	msg = msg_data->queued;
 	DL_DELETE(msg_data->queued, msg);
 	DL_APPEND(msg_data->inflight, msg);
-	if(msg_data->inflight_quota > 0){
-		msg_data->inflight_quota--;
-	}
 }
 
 

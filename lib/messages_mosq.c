@@ -118,29 +118,20 @@ void mosquitto_message_free_contents(struct mosquitto_message *message)
 
 int message__queue(struct mosquitto *mosq, struct mosquitto_message_all *message, enum mosquitto_msg_direction dir)
 {
-	struct mosquitto_msg_data *msg_data;
-	int rc = 0;
-
 	/* mosq->*_message_mutex should be locked before entering this function */
 	assert(mosq);
 	assert(message);
 	assert(message->msg.qos != 0);
 
 	if(dir == mosq_md_out){
-		msg_data = &mosq->msgs_out;
-		if(mosq->msgs_out.inflight_quota == 0){
-			rc = 1;
-		}
-		util__decrement_send_quota(mosq);
+		DL_APPEND(mosq->msgs_out.inflight, message);
+		mosq->msgs_out.queue_len++;
 	}else{
-		msg_data = &mosq->msgs_in;
-		util__decrement_receive_quota(mosq);
+		DL_APPEND(mosq->msgs_in.inflight, message);
+		mosq->msgs_in.queue_len++;
 	}
 
-	msg_data->queue_len++;
-	DL_APPEND(msg_data->inflight, message);
-
-	return rc;
+	return message__release_to_inflight(mosq, dir);
 }
 
 void message__reconnect_reset(struct mosquitto *mosq)
@@ -149,6 +140,7 @@ void message__reconnect_reset(struct mosquitto *mosq)
 	assert(mosq);
 
 	pthread_mutex_lock(&mosq->msgs_in.mutex);
+	mosq->msgs_in.inflight_quota = mosq->msgs_in.inflight_maximum;
 	mosq->msgs_in.queue_len = 0;
 	DL_FOREACH_SAFE(mosq->msgs_in.inflight, message, tmp){
 		mosq->msgs_in.queue_len++;
@@ -159,6 +151,7 @@ void message__reconnect_reset(struct mosquitto *mosq)
 		}else{
 			/* Message state can be preserved here because it should match
 			* whatever the client has got. */
+			util__decrement_receive_quota(mosq);
 		}
 	}
 	pthread_mutex_unlock(&mosq->msgs_in.mutex);
@@ -193,11 +186,11 @@ void message__reconnect_reset(struct mosquitto *mosq)
 
 int message__release_to_inflight(struct mosquitto *mosq, enum mosquitto_msg_direction dir)
 {
+	/* mosq->*_message_mutex should be locked before entering this function */
 	struct mosquitto_message_all *cur, *tmp;
 	int rc = MOSQ_ERR_SUCCESS;
 
 	if(dir == mosq_md_out){
-		pthread_mutex_lock(&mosq->msgs_out.mutex);
 		DL_FOREACH_SAFE(mosq->msgs_out.inflight, cur, tmp){
 			if(mosq->msgs_out.inflight_quota > 0){
 				if(cur->msg.qos > 0 && cur->state == mosq_ms_invalid){
@@ -208,17 +201,14 @@ int message__release_to_inflight(struct mosquitto *mosq, enum mosquitto_msg_dire
 					}
 					rc = send__publish(mosq, cur->msg.mid, cur->msg.topic, cur->msg.payloadlen, cur->msg.payload, cur->msg.qos, cur->msg.retain, cur->dup, NULL, NULL, 0);
 					if(rc){
-						pthread_mutex_unlock(&mosq->msgs_out.mutex);
 						return rc;
 					}
 					util__decrement_send_quota(mosq);
 				}
 			}else{
-				pthread_mutex_unlock(&mosq->msgs_out.mutex);
 				return MOSQ_ERR_SUCCESS;
 			}
 		}
-		pthread_mutex_unlock(&mosq->msgs_out.mutex);
 	}
 
 	return rc;

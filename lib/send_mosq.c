@@ -97,7 +97,7 @@ int send__pubrec(struct mosquitto *mosq, uint16_t mid, uint8_t reason_code)
 #else
 	if(mosq) log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBREC (m%d, rc%d)", mosq->id, mid, reason_code);
 #endif
-	if(reason_code >= 0x80){
+	if(reason_code >= 0x80 && mosq->protocol == mosq_p_mqtt5){
 		util__increment_receive_quota(mosq);
 	}
 	/* We don't use Reason String or User Property yet. */
