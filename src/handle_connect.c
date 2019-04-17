@@ -367,13 +367,13 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 	int rc;
 	int slen;
 	uint16_t slen16;
-	int i;
 	mosquitto_property *properties = NULL;
 	void *auth_data = NULL;
 	uint16_t auth_data_len = 0;
 	void *auth_data_out = NULL;
 	uint16_t auth_data_out_len = 0;
 #ifdef WITH_TLS
+	int i;
 	X509 *client_cert = NULL;
 	X509_NAME *name;
 	X509_NAME_ENTRY *name_entry;

@@ -1065,7 +1065,9 @@ unknown_option:
 
 int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 {
+#if defined(WITH_TLS) || defined(WITH_SOCKS)
 	int rc;
+#endif
 
 	mosquitto_int_option(mosq, MOSQ_OPT_PROTOCOL_VERSION, cfg->protocol_version);
 
