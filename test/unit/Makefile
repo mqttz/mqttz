@@ -2,7 +2,7 @@ include ../../config.mk
 
 .PHONY: all test test-broker test-lib clean coverage
 
-CFLAGS=-I../.. -I../../lib -I../../src -coverage -Wall -ggdb
+CFLAGS=-I../.. -I../../lib -I../../src -I../../src/deps -coverage -Wall -ggdb
 TEST_LDFLAGS=-lcunit -coverage
 
 TEST_OBJS = test.o \
