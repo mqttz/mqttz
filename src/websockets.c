@@ -260,7 +260,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 #ifdef WITH_TLS
 				mosq->ssl = NULL;
 #endif
-				do_disconnect(db, mosq);
+				do_disconnect(db, mosq, MOSQ_ERR_CONN_LOST);
 			}
 			break;
 
@@ -425,7 +425,7 @@ static int callback_mqtt(struct libwebsocket_context *context,
 					}
 					libwebsocket_callback_on_writable(mosq->ws_context, mosq->wsi);
 				} else if (rc) {
-					do_disconnect(db, mosq);
+					do_disconnect(db, mosq, MOSQ_ERR_CONN_LOST);
 					return -1;
 				}
 			}
