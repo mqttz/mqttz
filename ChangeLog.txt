@@ -8,6 +8,7 @@ Broker features:
 - Add support for Automotive DLT logging.
 - Add TLS Engine support.
 - Persistence file read/write performance improvements.
+- General performance improvements.
 - Add max_keepalive option, to allow a maximum keepalive value to be set for
   MQTT v5 clients only.
 - Add `bind_interface` option which allows a listener to be bound to a
@@ -53,7 +54,11 @@ Client features:
 - Drop support for TLS v1.0.
 
 Broker fixes:
+- Improve error reporting when creating listeners.
 - Fix build on SmartOS due to missing IPV6_V6ONLY. Closes #1212.
+
+Client library fixes
+- Add missing `mosquitto_userdata()` function.
 
 Client fixes:
 - mosquitto_pub wouldn't always publish all messages when using `-l` and
