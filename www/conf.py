@@ -94,6 +94,7 @@ NAVIGATION_LINKS = {
                 ("/man/mosquitto-conf-5.html", "mosquitto.conf"),
                 ("/man/mosquitto_passwd-1.html", "mosquitto_passwd"),
                 ("/man/mosquitto_pub-1.html", "mosquitto_pub"),
+                ("/man/mosquitto_rr-1.html", "mosquitto_rr"),
                 ("/man/mosquitto_sub-1.html", "mosquitto_sub"),
                 ("/man/mosquitto-tls-7.html", "mosquitto-tls"),
                 ("/man/mqtt-7.html", "mqtt"),
@@ -155,7 +156,7 @@ PAGES = (
     ("pages/*.txt", "", "story.tmpl"),
     ("pages/*.html", "", "story.tmpl"),
     ("pages/*.md", "", "story.tmpl"),
-    ("../man/*.xml", "man", "story.tmpl"),
+    ("man/*.xml", "man", "story.tmpl"),
 )
 
 
