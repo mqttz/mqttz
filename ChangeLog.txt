@@ -1,3 +1,10 @@
+1.6.1 - 201905xx
+================
+
+Clients:
+- Fix compilation on musl C systems due to missing sys/time.h header.
+
+
 1.6 - 20190417
 ==============
 
