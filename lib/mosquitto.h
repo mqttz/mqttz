@@ -100,7 +100,7 @@ enum mosq_err_t {
 	MOSQ_ERR_OCSP = 26,
 };
 
-/* Error values */
+/* Option values */
 enum mosq_opt_t {
 	MOSQ_OPT_PROTOCOL_VERSION = 1,
 	MOSQ_OPT_SSL_CTX = 2,
