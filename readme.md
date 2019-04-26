@@ -1,8 +1,8 @@
 Eclipse Mosquitto
 =================
 
-Mosquitto is an open source implementation of a server for version 3.1 and
-3.1.1 of the MQTT protocol. It also includes a C and C++ client library, and
+Mosquitto is an open source implementation of a server for version 5.0, 3.1.1,
+and 3.1 of the MQTT protocol. It also includes a C and C++ client library, and
 the `mosquitto_pub` and `mosquitto_sub` utilities for publishing and
 subscribing.
 
@@ -66,10 +66,14 @@ already be built. Use `make binary` to skip building the man pages, or install
 
 ### Build Dependencies
 
-* c-ares (libc-ares-dev on Debian based systems) - disable with `make WITH_SRV=no`
+* c-ares (libc-ares-dev on Debian based systems) - only when compiled with `make WITH_SRV=yes`
 * libwebsockets (libwebsockets-dev) - enable with `make WITH_WEBSOCKETS=yes`
 * openssl (libssl-dev on Debian based systems) - disable with `make WITH_TLS=no`
 * xsltproc (xsltproc and docbook-xsl on Debian based systems) - only needed when building from git sources - disable with `make WITH_DOCS=no`
+* uthash / utlist - bundled versions of these headers are provided, disable their use with `make WITH_BUNDLED_DEPS=no`
+
+Equivalent options for enabling/disabling features are available when using the CMake build.
+
 
 ## Credits
 
