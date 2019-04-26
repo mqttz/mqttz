@@ -12,6 +12,7 @@ Build:
 - Document bundled dependencies and how to disable. Closes #1231.
 - Split CFLAGS and CPPFLAGS, and LDFLAGS and LDADD/LIBADD.
 - test/unit now respects CPPFLAGS and LDFLAGS. Closes #1232.
+- Don't call ldconfig in CMake scripts. Closes #1048.
 
 
 1.6 - 20190417

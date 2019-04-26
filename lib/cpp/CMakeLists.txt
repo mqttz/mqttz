@@ -38,8 +38,3 @@ if (WITH_STATIC_LIBRARIES)
 endif (WITH_STATIC_LIBRARIES)
 
 install(FILES mosquittopp.h DESTINATION "${INCLUDEDIR}")
-
-if (UNIX AND NOT APPLE)
-	install(CODE "EXEC_PROGRAM(/sbin/ldconfig)")
-endif (UNIX AND NOT APPLE)
-

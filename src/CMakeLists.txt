@@ -192,7 +192,3 @@ if (WITH_TLS)
 	target_link_libraries(mosquitto_passwd ${OPENSSL_LIBRARIES})
 	install(TARGETS mosquitto_passwd RUNTIME DESTINATION "${BINDIR}" LIBRARY DESTINATION "${LIBDIR}")
 endif (WITH_TLS)
-
-if (UNIX AND NOT APPLE)
-	install(CODE "EXEC_PROGRAM(/sbin/ldconfig)")
-endif (UNIX AND NOT APPLE)
