@@ -11,7 +11,7 @@
 
 	<refnamediv>
 		<refname>mosquitto_rr</refname>
-		<refpurpose>an MQTT version 5/3.1.1 client for subscribing to topics</refpurpose>
+		<refpurpose>an MQTT version 5/3.1.1 client for request/response messaging</refpurpose>
 	</refnamediv>
 
 	<refsynopsisdiv>

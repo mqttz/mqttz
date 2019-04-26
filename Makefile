@@ -4,7 +4,7 @@ DIRS=lib client src
 DOCDIRS=man
 DISTDIRS=man
 
-.PHONY : all mosquitto api docs binary clean reallyclean test install uninstall dist sign copy
+.PHONY : all mosquitto api docs binary check clean reallyclean test install uninstall dist sign copy
 
 all : $(MAKE_ALL)
 
@@ -35,6 +35,8 @@ reallyclean :
 	set -e; for d in ${DOCDIRS}; do $(MAKE) -C $${d} reallyclean; done
 	$(MAKE) -C test reallyclean
 	-rm -f *.orig
+
+check : test
 
 test : mosquitto
 	$(MAKE) -C test test

@@ -1,8 +1,10 @@
 include ../config.mk
 
-.PHONY: all test ptest clean
+.PHONY: all check test ptest clean
 
 all :
+
+check : test
 
 test : utest
 	$(MAKE) -C broker test
