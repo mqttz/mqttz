@@ -589,8 +589,26 @@ log_timestamp_format %Y-%m-%dT%H:%M:%S
 				</listitem>
 			</varlistentry>
 			<varlistentry>
+				<term><option>memory_limit</option> <replaceable>limit</replaceable></term>
+				<listitem>
+                    <para>
+						This option sets the maximum number of heap memory bytes that the broker
+						will allocate, and hence sets a hard limit on memory use by the broker.
+						Memory requests that exceed this value will be denied. The effect will
+						vary depending on what has been denied. If an incoming message is being
+						processed, then the message will be dropped and the publishing client
+						will be disconnected. If an outgoing message is being sent, then the
+						individual message will be dropped and the receiving client will be
+						disconnected. Defaults to no limit.</para>
+					<para>This option is only available if memory tracking support is compiled
+						in.</para>
+					<para>Reloaded on reload signal. Setting to a lower value and reloading will
+						not result in memory being freed.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>message_size_limit</option> <replaceable>limit</replaceable></term>
-				<listitem> 
+				<listitem>
 					<para>This option sets the maximum publish payload size
 						that the broker will allow. Received messages that
 						exceed this size will not be accepted by the broker.
