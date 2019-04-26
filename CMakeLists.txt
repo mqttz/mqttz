@@ -16,34 +16,11 @@ set (VERSION 1.6.0)
 add_definitions (-DCMAKE -DVERSION=\"${VERSION}\")
 
 if (WIN32)
-	set (BINDIR .)
-	set (SBINDIR .)
-	set (SYSCONFDIR .)
-	set (LIBDIR .)
-	set (INCLUDEDIR include)
-	set (DATAROOTDIR share)
-	set (MANDIR man)
-	set (SHAREDEST .)
-	set (PKGCONFIGDIR "${LIBDIR}/pkgconfig")
 	add_definitions("-D_CRT_SECURE_NO_WARNINGS")
 	add_definitions("-D_CRT_NONSTDC_NO_DEPRECATE")
-else (WIN32)
-	set (BINDIR bin)
-	set (SBINDIR sbin)
-	if ("${CMAKE_INSTALL_PREFIX}" STREQUAL /usr)
-		set (SYSCONFDIR /etc/mosquitto)
-	else ("${CMAKE_INSTALL_PREFIX}" STREQUAL /usr)
-		set (SYSCONFDIR etc/mosquitto)
-	endif ("${CMAKE_INSTALL_PREFIX}" STREQUAL /usr)
-	
-	set (LIBDIR lib${LIB_SUFFIX})
-	set (CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIBDIR}")
-	set (INCLUDEDIR include)
-	set (DATAROOTDIR share)
-	set (MANDIR "${DATAROOTDIR}/man")
-	set (SHAREDIR "${DATAROOTDIR}/mosquitto")
-	set (PKGCONFIGDIR "${LIBDIR}/pkgconfig")
 endif (WIN32)
+
+include(GNUInstallDirs)
 
 option(WITH_TLS
 	"Include SSL/TLS support?" ON)
@@ -123,7 +100,7 @@ endif (DOCUMENTATION)
 # Install config file
 # ========================================
 
-install(FILES mosquitto.conf aclfile.example pskfile.example pwfile.example DESTINATION "${SYSCONFDIR}")
+install(FILES mosquitto.conf aclfile.example pskfile.example pwfile.example DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/mosquitto")
 
 
 # ========================================
@@ -131,9 +108,9 @@ install(FILES mosquitto.conf aclfile.example pskfile.example pwfile.example DEST
 # ========================================
 
 configure_file(libmosquitto.pc.in libmosquitto.pc @ONLY)
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libmosquitto.pc" DESTINATION "${PKGCONFIGDIR}")
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libmosquitto.pc" DESTINATION "${CMAKE_INSTALL_PREFIX}/share/pkgconfig")
 configure_file(libmosquittopp.pc.in libmosquittopp.pc @ONLY)
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libmosquittopp.pc" DESTINATION "${PKGCONFIGDIR}")
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libmosquittopp.pc" DESTINATION "${CMAKE_INSTALL_PREFIX}/share/pkgconfig")
 
 # ========================================
 # Testing

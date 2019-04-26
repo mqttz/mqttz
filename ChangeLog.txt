@@ -13,6 +13,7 @@ Build:
 - Split CFLAGS and CPPFLAGS, and LDFLAGS and LDADD/LIBADD.
 - test/unit now respects CPPFLAGS and LDFLAGS. Closes #1232.
 - Don't call ldconfig in CMake scripts. Closes #1048.
+- Use CMAKE_INSTALL_* variables when installing in CMake. Closes #1049.
 
 
 1.6 - 20190417
