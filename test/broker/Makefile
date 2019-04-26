@@ -1,9 +1,11 @@
 include ../../config.mk
 
-.PHONY: all clean test ptest
+.PHONY: all check clean test ptest
 .NOTPARALLEL:
 
 all :
+
+check : test
 
 clean :
 	-rm -f *.vglog *.db

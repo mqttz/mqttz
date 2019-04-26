@@ -1,11 +1,13 @@
 include ../../config.mk
 
-.PHONY: all test test-compile test-compile-c test-compile-cpp c cpp
+.PHONY: all check test test-compile test-compile-c test-compile-cpp c cpp
 .NOTPARALLEL:
 
 LD_LIBRARY_PATH=../../lib
 
 all :
+
+check : test
 
 ptest : test-compile
 	./test.py

@@ -1,6 +1,6 @@
 include ../../config.mk
 
-.PHONY: all test test-broker test-lib clean coverage
+.PHONY: all check test test-broker test-lib clean coverage
 
 CFLAGS=-I../.. -I../../lib -I../../src -I../../src/deps -coverage -Wall -ggdb
 TEST_LDFLAGS=-lcunit -coverage
@@ -56,6 +56,7 @@ PERSIST_WRITE_OBJS = \
 
 all : test
 
+check : test
 
 mosq_test : ${TEST_OBJS} ${LIB_OBJS}
 	$(CROSS_COMPILE)$(CC) -o $@ $^ ${TEST_LDFLAGS}

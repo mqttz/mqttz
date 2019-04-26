@@ -138,4 +138,5 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libmosquittopp.pc" DESTINATION "${PKG
 # ========================================
 # Testing
 # ========================================
-add_custom_target(Tests COMMAND make -C ${mosquitto_SOURCE_DIR}/test test)
+enable_testing()
+add_test("test" make -C ${mosquitto_SOURCE_DIR}/test test)

@@ -7,6 +7,9 @@ Broker:
 Clients:
 - Fix compilation on non glibc systems due to missing sys/time.h header.
 
+Build:
+- Add `make check` target and document testing procedure. Closes #1230.
+
 
 1.6 - 20190417
 ==============
