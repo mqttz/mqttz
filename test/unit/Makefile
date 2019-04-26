@@ -2,8 +2,10 @@ include ../../config.mk
 
 .PHONY: all check test test-broker test-lib clean coverage
 
-CFLAGS=-I../.. -I../../lib -I../../src -I../../src/deps -coverage -Wall -ggdb
-TEST_LDFLAGS=-lcunit -coverage
+CPPFLAGS:=$(CPPFLAGS) -I../.. -I../../lib -I../../src -I../../src/deps
+CFLAGS:=$(CFLAGS) -coverage -Wall -ggdb
+LDFLAGS:=$(LDFLAGS) -coverage
+LDADD:=$(LDADD) -lcunit
 
 TEST_OBJS = test.o \
 			datatype_read.o \
@@ -59,53 +61,53 @@ all : test
 check : test
 
 mosq_test : ${TEST_OBJS} ${LIB_OBJS}
-	$(CROSS_COMPILE)$(CC) -o $@ $^ ${TEST_LDFLAGS}
+	$(CROSS_COMPILE)$(CC) $(LDFLAGS) -o $@ $^ $(LDADD)
 
 persist_read_test : ${PERSIST_READ_TEST_OBJS} ${PERSIST_READ_OBJS}
-	$(CROSS_COMPILE)$(CC) -o $@ $^ ${TEST_LDFLAGS}
+	$(CROSS_COMPILE)$(CC) $(LDFLAGS) -o $@ $^ $(LDADD)
 
 persist_write_test : ${PERSIST_WRITE_TEST_OBJS} ${PERSIST_WRITE_OBJS}
-	$(CROSS_COMPILE)$(CC) -o $@ $^ ${TEST_LDFLAGS}
+	$(CROSS_COMPILE)$(CC) $(LDFLAGS) -o $@ $^ $(LDADD)
 
 
 database.o : ../../src/database.c
-	$(CROSS_COMPILE)$(CC) $(CFLAGS) -DWITH_BROKER -DWITH_PERSISTENCE -c -o $@ $^
+	$(CROSS_COMPILE)$(CC) $(CPPFLAGS) $(CFLAGS) -DWITH_BROKER -DWITH_PERSISTENCE -c -o $@ $^
 
 memory_mosq.o : ../../lib/memory_mosq.c
-	$(CROSS_COMPILE)$(CC) $(CFLAGS) -c -o $@ $^
+	$(CROSS_COMPILE)$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $^
 
 packet_datatypes.o : ../../lib/packet_datatypes.c
-	$(CROSS_COMPILE)$(CC) $(CFLAGS) -c -o $@ $^
+	$(CROSS_COMPILE)$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $^
 
 persist_read.o : ../../src/persist_read.c
-	$(CROSS_COMPILE)$(CC) $(CFLAGS) -DWITH_BROKER -DWITH_PERSISTENCE -c -o $@ $^
+	$(CROSS_COMPILE)$(CC) $(CPPFLAGS) $(CFLAGS) -DWITH_BROKER -DWITH_PERSISTENCE -c -o $@ $^
 
 persist_read_v234.o : ../../src/persist_read_v234.c
-	$(CROSS_COMPILE)$(CC) $(CFLAGS) -DWITH_BROKER -DWITH_PERSISTENCE -c -o $@ $^
+	$(CROSS_COMPILE)$(CC) $(CPPFLAGS) $(CFLAGS) -DWITH_BROKER -DWITH_PERSISTENCE -c -o $@ $^
 
 persist_read_v5.o : ../../src/persist_read_v5.c
-	$(CROSS_COMPILE)$(CC) $(CFLAGS) -DWITH_BROKER -DWITH_PERSISTENCE -c -o $@ $^
+	$(CROSS_COMPILE)$(CC) $(CPPFLAGS) $(CFLAGS) -DWITH_BROKER -DWITH_PERSISTENCE -c -o $@ $^
 
 persist_write.o : ../../src/persist_write.c
-	$(CROSS_COMPILE)$(CC) $(CFLAGS) -DWITH_BROKER -DWITH_PERSISTENCE -c -o $@ $^
+	$(CROSS_COMPILE)$(CC) $(CPPFLAGS) $(CFLAGS) -DWITH_BROKER -DWITH_PERSISTENCE -c -o $@ $^
 
 persist_write_v5.o : ../../src/persist_write_v5.c
-	$(CROSS_COMPILE)$(CC) $(CFLAGS) -DWITH_BROKER -DWITH_PERSISTENCE -c -o $@ $^
+	$(CROSS_COMPILE)$(CC) $(CPPFLAGS) $(CFLAGS) -DWITH_BROKER -DWITH_PERSISTENCE -c -o $@ $^
 
 property_mosq.o : ../../lib/property_mosq.c
-	$(CROSS_COMPILE)$(CC) $(CFLAGS) -c -o $@ $^
+	$(CROSS_COMPILE)$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $^
 
 subs.o : ../../src/subs.c
-	$(CROSS_COMPILE)$(CC) $(CFLAGS) -DWITH_BROKER -DWITH_PERSISTENCE -c -o $@ $^
+	$(CROSS_COMPILE)$(CC) $(CPPFLAGS) $(CFLAGS) -DWITH_BROKER -DWITH_PERSISTENCE -c -o $@ $^
 
 util_mosq.o : ../../lib/util_mosq.c
-	$(CROSS_COMPILE)$(CC) $(CFLAGS) -c -o $@ $^
+	$(CROSS_COMPILE)$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $^
 
 util_topic.o : ../../lib/util_topic.c
-	$(CROSS_COMPILE)$(CC) $(CFLAGS) -c -o $@ $^
+	$(CROSS_COMPILE)$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $^
 
 utf8_mosq.o : ../../lib/utf8_mosq.c
-	$(CROSS_COMPILE)$(CC) $(CFLAGS) -c -o $@ $^
+	$(CROSS_COMPILE)$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $^
 
 test-lib : mosq_test
 	./mosq_test

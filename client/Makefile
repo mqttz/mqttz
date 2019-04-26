@@ -30,34 +30,34 @@ static_rr : rr_client.o client_props.o client_shared.o pub_shared.o sub_client_o
 	${CROSS_COMPILE}${CC} $^ -o mosquitto_rr ${CLIENT_LDFLAGS} ${STATIC_LIB_DEPS}
 
 mosquitto_pub : pub_client.o pub_shared.o client_shared.o client_props.o
-	${CROSS_COMPILE}${CC} $^ -o $@ ${CLIENT_LDFLAGS}
+	${CROSS_COMPILE}${CC} $(CLIENT_LDFLAGS) $^ -o $@ $(CLIENT_LDADD)
 
 mosquitto_sub : sub_client.o sub_client_output.o client_shared.o client_props.o
-	${CROSS_COMPILE}${CC} $^ -o $@ ${CLIENT_LDFLAGS}
+	${CROSS_COMPILE}${CC} $(CLIENT_LDFLAGS) $^ -o $@ $(CLIENT_LDADD)
 
 mosquitto_rr : rr_client.o client_shared.o client_props.o pub_shared.o sub_client_output.o
-	${CROSS_COMPILE}${CC} $^ -o $@ ${CLIENT_LDFLAGS}
+	${CROSS_COMPILE}${CC} $(CLIENT_LDFLAGS) $^ -o $@ $(CLIENT_LDADD)
 
 pub_client.o : pub_client.c ${SHARED_DEP}
-	${CROSS_COMPILE}${CC} -c $< -o $@ ${CLIENT_CFLAGS}
+	${CROSS_COMPILE}${CC} $(CLIENT_CPPFLAGS) $(CLIENT_CFLAGS) -c $< -o $@
 
 pub_shared.o : pub_shared.c ${SHARED_DEP}
-	${CROSS_COMPILE}${CC} -c $< -o $@ ${CLIENT_CFLAGS}
+	${CROSS_COMPILE}${CC} $(CLIENT_CPPFLAGS) $(CLIENT_CFLAGS) -c $< -o $@
 
 sub_client.o : sub_client.c ${SHARED_DEP}
-	${CROSS_COMPILE}${CC} -c $< -o $@ ${CLIENT_CFLAGS}
+	${CROSS_COMPILE}${CC} $(CLIENT_CPPFLAGS) $(CLIENT_CFLAGS) -c $< -o $@
 
 sub_client_output.o : sub_client_output.c ${SHARED_DEP}
-	${CROSS_COMPILE}${CC} -c $< -o $@ ${CLIENT_CFLAGS}
+	${CROSS_COMPILE}${CC} $(CLIENT_CPPFLAGS) $(CLIENT_CFLAGS) -c $< -o $@
 
 rr_client.o : rr_client.c ${SHARED_DEP}
-	${CROSS_COMPILE}${CC} -c $< -o $@ ${CLIENT_CFLAGS}
+	${CROSS_COMPILE}${CC} $(CLIENT_CPPFLAGS) $(CLIENT_CFLAGS) -c $< -o $@
 
 client_shared.o : client_shared.c client_shared.h
-	${CROSS_COMPILE}${CC} -c $< -o $@ ${CLIENT_CFLAGS}
+	${CROSS_COMPILE}${CC} $(CLIENT_CPPFLAGS) $(CLIENT_CFLAGS) -c $< -o $@
 
 client_props.o : client_props.c client_shared.h
-	${CROSS_COMPILE}${CC} -c $< -o $@ ${CLIENT_CFLAGS}
+	${CROSS_COMPILE}${CC} $(CLIENT_CPPFLAGS) $(CLIENT_CFLAGS) -c $< -o $@
 
 ../lib/libmosquitto.so.${SOVERSION} :
 	$(MAKE) -C ../lib

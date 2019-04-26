@@ -10,6 +10,8 @@ Clients:
 Build:
 - Add `make check` target and document testing procedure. Closes #1230.
 - Document bundled dependencies and how to disable. Closes #1231.
+- Split CFLAGS and CPPFLAGS, and LDFLAGS and LDADD/LIBADD.
+- test/unit now respects CPPFLAGS and LDFLAGS. Closes #1232.
 
 
 1.6 - 20190417
