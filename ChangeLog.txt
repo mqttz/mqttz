@@ -8,10 +8,13 @@ Broker:
   `response-topic`.  Closes #1244.
 - Fix build for WITH_TLS=no. Closes #1250.
 
-Client library:
+Library:
 - Fix crash after client has been unable to connect to a broker. This occurs
   when the client is exiting and is part of the final library cleanup routine.
   Closes #1246.
+
+Clients:
+- Fix -L url parsing. Closes #1248.
 
 
 1.6.1 - 20190426
