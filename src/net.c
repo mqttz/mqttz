@@ -412,13 +412,13 @@ int net__socket_listen(struct mosquitto__listener *listener)
 	struct addrinfo hints;
 	struct addrinfo *ainfo, *rp;
 	char service[10];
+	int rc;
 #ifndef WIN32
 	int ss_opt = 1;
 #else
 	char ss_opt = 1;
 #endif
 #ifdef WITH_TLS
-	int rc;
 	X509_STORE *store;
 	X509_LOOKUP *lookup;
 	ENGINE *engine = NULL;
