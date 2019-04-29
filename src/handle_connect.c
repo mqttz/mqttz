@@ -292,7 +292,7 @@ static int will__read(struct mosquitto *context, struct mosquitto_message_all **
 		rc = property__read_all(CMD_WILL, &context->in_packet, &properties);
 		if(rc) goto error_cleanup;
 
-		rc = property__process_will(context, will_struct, properties);
+		rc = property__process_will(context, will_struct, &properties);
 		mosquitto_property_free_all(&properties);
 		if(rc) goto error_cleanup;
 	}
@@ -502,7 +502,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 		rc = property__read_all(CMD_CONNECT, &context->in_packet, &properties);
 		if(rc) goto handle_connect_error;
 	}
-	property__process_connect(context, properties);
+	property__process_connect(context, &properties);
 
 	if(mosquitto_property_read_string(properties, MQTT_PROP_AUTHENTICATION_METHOD, &context->auth_method, false)){
 		mosquitto_property_read_binary(properties, MQTT_PROP_AUTHENTICATION_DATA, &auth_data, &auth_data_len, false);

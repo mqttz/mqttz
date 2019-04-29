@@ -2,6 +2,10 @@
 ================
 
 Broker:
+- Fix memory access after free, leading to possible crash, when v5 client with
+  Will message disconnects, where the Will message has as its first property
+  one of `content-type`, `correlation-data`, `payload-format-indicator`, or
+  `response-topic`.  Closes #1244.
 - Fix build for WITH_TLS=no. Closes #1250.
 
 

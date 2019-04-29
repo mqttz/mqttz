@@ -26,11 +26,11 @@ Contributors:
 
 /* Process the incoming properties, we should be able to assume that only valid
  * properties for CONNECT are present here. */
-int property__process_connect(struct mosquitto *context, mosquitto_property *props)
+int property__process_connect(struct mosquitto *context, mosquitto_property **props)
 {
 	mosquitto_property *p;
 
-	p = props;
+	p = *props;
 
 	while(p){
 		if(p->identifier == MQTT_PROP_SESSION_EXPIRY_INTERVAL){
@@ -55,12 +55,12 @@ int property__process_connect(struct mosquitto *context, mosquitto_property *pro
 }
 
 
-int property__process_will(struct mosquitto *context, struct mosquitto_message_all *msg, mosquitto_property *props)
+int property__process_will(struct mosquitto *context, struct mosquitto_message_all *msg, mosquitto_property **props)
 {
 	mosquitto_property *p, *p_prev;
 	mosquitto_property *msg_properties, *msg_properties_last;
 
-	p = props;
+	p = *props;
 	p_prev = NULL;
 	msg_properties = NULL;
 	msg_properties_last = NULL;
@@ -81,8 +81,8 @@ int property__process_will(struct mosquitto *context, struct mosquitto_message_a
 					p_prev->next = p->next;
 					p = p_prev->next;
 				}else{
-					props = p->next;
-					p = props;
+					*props = p->next;
+					p = *props;
 				}
 				msg_properties_last->next = NULL;
 				break;
@@ -112,11 +112,11 @@ int property__process_will(struct mosquitto *context, struct mosquitto_message_a
 
 /* Process the incoming properties, we should be able to assume that only valid
  * properties for DISCONNECT are present here. */
-int property__process_disconnect(struct mosquitto *context, mosquitto_property *props)
+int property__process_disconnect(struct mosquitto *context, mosquitto_property **props)
 {
 	mosquitto_property *p;
 
-	p = props;
+	p = *props;
 
 	while(p){
 		if(p->identifier == MQTT_PROP_SESSION_EXPIRY_INTERVAL){

@@ -43,7 +43,7 @@ int handle__disconnect(struct mosquitto_db *db, struct mosquitto *context)
 			if(rc) return rc;
 		}
 	}
-	rc = property__process_disconnect(context, properties);
+	rc = property__process_disconnect(context, &properties);
 	if(rc){
 		if(rc == MOSQ_ERR_PROTOCOL){
 			send__disconnect(context, MQTT_RC_PROTOCOL_ERROR, NULL);
