@@ -141,6 +141,7 @@ endif
 	./07-will-no-flag.py
 	./07-will-null-topic.py
 	./07-will-null.py
+	./07-will-properties.py
 	./07-will-qos0.py
 
 08 :
