@@ -82,7 +82,7 @@ Section "Files" SecInstall
 SectionEnd
 
 Section "Service" SecService
-	ExeWait '"$INSTDIR\mosquitto.exe" install'
+	ExecWait '"$INSTDIR\mosquitto.exe" install'
 SectionEnd
 
 Section "Uninstall"

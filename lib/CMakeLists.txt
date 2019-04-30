@@ -89,7 +89,7 @@ set_target_properties(libmosquitto PROPERTIES
 	SOVERSION 1
 )
 
-install(TARGETS libmosquitto LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}")
+install(TARGETS libmosquitto RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}")
 
 if (WITH_STATIC_LIBRARIES)
 	add_library(libmosquitto_static STATIC ${C_SRC})
