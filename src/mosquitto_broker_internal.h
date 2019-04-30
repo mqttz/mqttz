@@ -157,6 +157,12 @@ typedef int (*FUNC_auth_plugin_acl_check_v2)(void *, const char *, const char *,
 typedef int (*FUNC_auth_plugin_unpwd_check_v2)(void *, const char *, const char *);
 typedef int (*FUNC_auth_plugin_psk_key_get_v2)(void *, const char *, const char *, char *, int);
 
+
+enum mosquitto_msg_origin{
+	mosq_mo_client = 0,
+	mosq_mo_broker = 1
+};
+
 struct mosquitto__auth_plugin{
 	void *lib;
 	void *user_data;
@@ -367,6 +373,7 @@ struct mosquitto_msg_store{
 	uint16_t mid;
 	uint8_t qos;
 	bool retain;
+	uint8_t origin;
 };
 
 struct mosquitto_client_msg{
@@ -608,7 +615,7 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context);
 void db__message_dequeue_first(struct mosquitto *context, struct mosquitto_msg_data *msg_data);
 int db__messages_delete(struct mosquitto_db *db, struct mosquitto *context);
 int db__messages_easy_queue(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain, uint32_t message_expiry_interval, mosquitto_property **properties);
-int db__message_store(struct mosquitto_db *db, const struct mosquitto *source, uint16_t source_mid, char *topic, int qos, uint32_t payloadlen, mosquitto__payload_uhpa *payload, int retain, struct mosquitto_msg_store **stored, uint32_t message_expiry_interval, mosquitto_property *properties, dbid_t store_id);
+int db__message_store(struct mosquitto_db *db, const struct mosquitto *source, uint16_t source_mid, char *topic, int qos, uint32_t payloadlen, mosquitto__payload_uhpa *payload, int retain, struct mosquitto_msg_store **stored, uint32_t message_expiry_interval, mosquitto_property *properties, dbid_t store_id, enum mosquitto_msg_origin origin);
 int db__message_store_find(struct mosquitto *context, uint16_t mid, struct mosquitto_msg_store **stored);
 void db__msg_store_add(struct mosquitto_db *db, struct mosquitto_msg_store *store);
 void db__msg_store_remove(struct mosquitto_db *db, struct mosquitto_msg_store *store);

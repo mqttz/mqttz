@@ -8,6 +8,8 @@ Broker:
   `response-topic`.  Closes #1244.
 - Fix build for WITH_TLS=no. Closes #1250.
 - Fix Will message not allowing user-property properties.
+- Fix broker originated messages (e.g. $SYS/broker/version) not being
+  published when `check_retain_source` set to true. Closes #1245.
 
 Library:
 - Fix crash after client has been unable to connect to a broker. This occurs
