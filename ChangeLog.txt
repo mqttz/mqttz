@@ -10,6 +10,8 @@ Broker:
 - Fix Will message not allowing user-property properties.
 - Fix broker originated messages (e.g. $SYS/broker/version) not being
   published when `check_retain_source` set to true. Closes #1245.
+- Fix $SYS/broker/version being incorrectly expired after 60 seconds.
+  Closes #1245.
 
 Library:
 - Fix crash after client has been unable to connect to a broker. This occurs
