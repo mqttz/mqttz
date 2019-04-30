@@ -7,6 +7,7 @@ Broker:
   one of `content-type`, `correlation-data`, `payload-format-indicator`, or
   `response-topic`.  Closes #1244.
 - Fix build for WITH_TLS=no. Closes #1250.
+- Fix Will message not allowing user-property properties.
 
 Library:
 - Fix crash after client has been unable to connect to a broker. This occurs
