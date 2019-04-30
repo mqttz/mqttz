@@ -9,7 +9,7 @@
 !define env_hklm 'HKLM "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"'
 
 Name "Eclipse Mosquitto"
-!define VERSION 1.6.1
+!define VERSION 1.6.2
 OutFile "mosquitto-${VERSION}-install-windows-x64.exe"
 
 !include "x64.nsh"
@@ -82,7 +82,7 @@ Section "Files" SecInstall
 SectionEnd
 
 Section "Service" SecService
-	ExeWait '"$INSTDIR\mosquitto.exe" install'
+	ExecWait '"$INSTDIR\mosquitto.exe" install'
 SectionEnd
 
 Section "Uninstall"

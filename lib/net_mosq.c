@@ -107,6 +107,7 @@ static void cleanup_ui_method(void)
 {
 	if(_ui_method){
 		UI_destroy_method(_ui_method);
+		_ui_method = NULL;
 	}
 }
 

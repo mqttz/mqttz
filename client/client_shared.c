@@ -669,13 +669,13 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 
 				tmp = strchr(url, '@');
 				if(tmp) {
-					char *colon = strchr(url, ':');
 					*tmp++ = 0;
+					char *colon = strchr(url, ':');
 					if(colon) {
 						*colon = 0;
-						cfg->password = colon + 1;
+						cfg->password = strdup(colon + 1);
 					}
-					cfg->username = url;
+					cfg->username = strdup(url);
 					url = tmp;
 				}
 				cfg->host = url;
@@ -685,6 +685,8 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 					*tmp++ = 0;
 					cfg->port = atoi(tmp);
 				}
+				/* Now we've removed the port, time to get the host on the heap */
+				cfg->host = strdup(cfg->host);
 			}
 			i++;
 		}else if(!strcmp(argv[i], "-l") || !strcmp(argv[i], "--stdin-line")){

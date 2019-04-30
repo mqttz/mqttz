@@ -1000,7 +1000,7 @@ static int retain__process(struct mosquitto_db *db, struct mosquitto__subhier *b
 	}
 
 	/* Check for original source access */
-	if(db->config->check_retain_source && retained->source_id){
+	if(db->config->check_retain_source && retained->origin != mosq_mo_broker && retained->source_id){
 		struct mosquitto retain_ctxt;
 		memset(&retain_ctxt, 0, sizeof(struct mosquitto));
 

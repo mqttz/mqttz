@@ -300,7 +300,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	}
 	if(!stored){
 		dup = 0;
-		if(db__message_store(db, context, mid, topic, qos, payloadlen, &payload, retain, &stored, message_expiry_interval, msg_properties, 0)){
+		if(db__message_store(db, context, mid, topic, qos, payloadlen, &payload, retain, &stored, message_expiry_interval, msg_properties, 0, mosq_mo_client)){
 			mosquitto_property_free_all(&msg_properties);
 			return 1;
 		}

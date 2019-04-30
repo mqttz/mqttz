@@ -1,3 +1,27 @@
+1.6.2 - 20190430
+================
+
+Broker:
+- Fix memory access after free, leading to possible crash, when v5 client with
+  Will message disconnects, where the Will message has as its first property
+  one of `content-type`, `correlation-data`, `payload-format-indicator`, or
+  `response-topic`.  Closes #1244.
+- Fix build for WITH_TLS=no. Closes #1250.
+- Fix Will message not allowing user-property properties.
+- Fix broker originated messages (e.g. $SYS/broker/version) not being
+  published when `check_retain_source` set to true. Closes #1245.
+- Fix $SYS/broker/version being incorrectly expired after 60 seconds.
+  Closes #1245.
+
+Library:
+- Fix crash after client has been unable to connect to a broker. This occurs
+  when the client is exiting and is part of the final library cleanup routine.
+  Closes #1246.
+
+Clients:
+- Fix -L url parsing. Closes #1248.
+
+
 1.6.1 - 20190426
 ================
 
