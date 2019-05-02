@@ -50,6 +50,7 @@ Contributors:
 #include <openssl/conf.h>
 #include <openssl/engine.h>
 #include <openssl/err.h>
+#include <openssl/ui.h>
 #include <tls_mosq.h>
 #endif
 
