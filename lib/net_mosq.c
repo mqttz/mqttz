@@ -141,7 +141,9 @@ int net__init(void)
 			| OPENSSL_INIT_ADD_ALL_DIGESTS \
 			| OPENSSL_INIT_LOAD_CONFIG, NULL);
 #  endif
+#if !defined(OPENSSL_NO_ENGINE)
 	ENGINE_load_builtin_engines();
+#endif
 	setup_ui_method();
 	if(tls_ex_index_mosq == -1){
 		tls_ex_index_mosq = SSL_get_ex_new_index(0, "client context", NULL, NULL, NULL);
@@ -599,6 +601,7 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 			SSL_CTX_set_mode(mosq->ssl_ctx, SSL_MODE_RELEASE_BUFFERS);
 #endif
 
+#if !defined(OPENSSL_NO_ENGINE)
 		if(mosq->tls_engine){
 			engine = ENGINE_by_id(mosq->tls_engine);
 			if(!engine){
@@ -615,12 +618,15 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 			ENGINE_set_default(engine, ENGINE_METHOD_ALL);
 			ENGINE_free(engine); /* release the structural reference from ENGINE_by_id() */
 		}
+#endif
 
 		if(mosq->tls_ciphers){
 			ret = SSL_CTX_set_cipher_list(mosq->ssl_ctx, mosq->tls_ciphers);
 			if(ret == 0){
 				log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to set TLS ciphers. Check cipher list \"%s\".", mosq->tls_ciphers);
+#if !defined(OPENSSL_NO_ENGINE)
 				ENGINE_FINISH(engine);
+#endif
 				COMPAT_CLOSE(mosq->sock);
 				mosq->sock = INVALID_SOCKET;
 				net__print_ssl_error(mosq);
@@ -647,7 +653,9 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 					log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check capath \"%s\".", mosq->tls_capath);
 				}
 #endif
+#if !defined(OPENSSL_NO_ENGINE)
 				ENGINE_FINISH(engine);
+#endif
 				COMPAT_CLOSE(mosq->sock);
 				mosq->sock = INVALID_SOCKET;
 				net__print_ssl_error(mosq);
@@ -672,7 +680,9 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 #else
 					log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load client certificate \"%s\".", mosq->tls_certfile);
 #endif
+#if !defined(OPENSSL_NO_ENGINE)
 					ENGINE_FINISH(engine);
+#endif
 					COMPAT_CLOSE(mosq->sock);
 					mosq->sock = INVALID_SOCKET;
 					net__print_ssl_error(mosq);
@@ -681,6 +691,7 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 			}
 			if(mosq->tls_keyfile){
 				if(mosq->tls_keyform == mosq_k_engine){
+#if !defined(OPENSSL_NO_ENGINE)
 					UI_METHOD *ui_method = net__get_ui_method();
 					if(mosq->tls_engine_kpass_sha1){
 						if(!ENGINE_ctrl_cmd(engine, ENGINE_SECRET_MODE, ENGINE_SECRET_MODE_SHA, NULL, NULL, 0)){
@@ -714,6 +725,7 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 						net__print_ssl_error(mosq);
 						return MOSQ_ERR_TLS;
 					}
+#endif
 				}else{
 					ret = SSL_CTX_use_PrivateKey_file(mosq->ssl_ctx, mosq->tls_keyfile, SSL_FILETYPE_PEM);
 					if(ret != 1){
@@ -722,7 +734,9 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 #else
 						log__printf(mosq, MOSQ_LOG_ERR, "Error: Unable to load client key file \"%s\".", mosq->tls_keyfile);
 #endif
+#if !defined(OPENSSL_NO_ENGINE)
 						ENGINE_FINISH(engine);
+#endif
 						COMPAT_CLOSE(mosq->sock);
 						mosq->sock = INVALID_SOCKET;
 						net__print_ssl_error(mosq);
@@ -732,7 +746,9 @@ static int net__init_ssl_ctx(struct mosquitto *mosq)
 				ret = SSL_CTX_check_private_key(mosq->ssl_ctx);
 				if(ret != 1){
 					log__printf(mosq, MOSQ_LOG_ERR, "Error: Client certificate/key are inconsistent.");
+#if !defined(OPENSSL_NO_ENGINE)
 					ENGINE_FINISH(engine);
+#endif
 					COMPAT_CLOSE(mosq->sock);
 					mosq->sock = INVALID_SOCKET;
 					net__print_ssl_error(mosq);
