@@ -3,8 +3,41 @@ include config.mk
 DIRS=lib client src
 DOCDIRS=man
 DISTDIRS=man
+DISTFILES= \
+	client/ \
+	examples/ \
+	installer/ \
+	lib/ \
+	logo/ \
+	man/ \
+	misc/ \
+	security/ \
+	service/ \
+	src/ \
+	test/ \
+	\
+	CMakeLists.txt \
+	CONTRIBUTING.md \
+	ChangeLog.txt \
+	LICENSE.txt \
+	Makefile \
+	about.html \
+	aclfile.example \
+	compiling.txt \
+	config.h \
+	config.mk \
+	edl-v10 \
+	epl-v10 \
+	libmosquitto.pc.in \
+	libmosquittopp.pc.in \
+	mosquitto.conf \
+	notice.html \
+	pskfile.example \
+	pwfile.example \
+	readme-windows.txt \
+	readme.md
 
-.PHONY : all mosquitto api docs binary check clean reallyclean test install uninstall dist sign copy
+.PHONY : all mosquitto api docs binary check clean reallyclean test install uninstall dist sign copy localdocker
 
 all : $(MAKE_ALL)
 
@@ -69,14 +102,8 @@ dist : reallyclean
 	set -e; for d in ${DISTDIRS}; do $(MAKE) -C $${d} dist; done
 	
 	mkdir -p dist/mosquitto-${VERSION}
-	cp -r client examples installer lib logo man misc security service src test about.html aclfile.example ChangeLog.txt CMakeLists.txt compiling.txt config.h config.mk CONTRIBUTING.md edl-v10 epl-v10 libmosquitto.pc.in libmosquittopp.pc.in LICENSE.txt Makefile mosquitto.conf notice.html pskfile.example pwfile.example readme.md readme-windows.txt dist/mosquitto-${VERSION}/
+	cp -r ${DISTFILES} dist/mosquitto-${VERSION}/
 	cd dist; tar -zcf mosquitto-${VERSION}.tar.gz mosquitto-${VERSION}/
-	set -e; for m in man/*.xml; \
-		do \
-		hfile=$$(echo $${m} | sed -e 's#man/\(.*\)\.xml#\1#' | sed -e 's/\./-/g'); \
-		$(XSLTPROC) $(DB_HTML_XSL) $${m} > dist/$${hfile}.html; \
-	done
-
 
 sign : dist
 	cd dist; gpg --detach-sign -a mosquitto-${VERSION}.tar.gz
@@ -89,3 +116,15 @@ copy : sign
 coverage :
 	lcov --capture --directory . --output-file coverage.info
 	genhtml coverage.info --output-directory out
+
+localdocker : reallyclean
+	set -e; for d in ${DISTDIRS}; do $(MAKE) -C $${d} dist; done
+	
+	rm -rf dockertmp/
+	mkdir -p dockertmp/mosquitto-${VERSION}
+	cp -r ${DISTFILES} dockertmp/mosquitto-${VERSION}/
+	cd dockertmp/; tar -zcf mosq.tar.gz mosquitto-${VERSION}/
+	cp dockertmp/mosq.tar.gz docker/local
+	rm -rf dockertmp/
+	cd docker/local && docker build .
+

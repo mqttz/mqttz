@@ -25,6 +25,8 @@ cov-int/
 
 dist/
 
+docker/local/mosq.tar.gz
+
 examples/mysql_log/mosquitto_mysql_log
 examples/temperature_conversion/mqtt_temperature_conversion
 

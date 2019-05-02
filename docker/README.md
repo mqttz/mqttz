@@ -17,3 +17,5 @@ docker build -t eclipse-mosquitto:1.5.1 --build-arg VERSION="1.5.1" .
 docker run --rm -it eclipse-mosquitto:1.5.1
 ```
 
+The `local` directory can be used to build an image based on the files in the
+working directory by using `make localdocker` from the root of the repository.
