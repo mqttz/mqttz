@@ -426,9 +426,16 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			goto handle_connect_error;
 		}
 		context->protocol = mosq_p_mqtt31;
+		if((protocol_version&0x80) == 0x80){
+			context->is_bridge = true;
+		}
 	}else if(!strcmp(protocol_name, PROTOCOL_NAME)){
 		if((protocol_version&0x7F) == PROTOCOL_VERSION_v311){
 			context->protocol = mosq_p_mqtt311;
+
+			if((protocol_version&0x80) == 0x80){
+				context->is_bridge = true;
+			}
 		}else if((protocol_version&0x7F) == PROTOCOL_VERSION_v5){
 			context->protocol = mosq_p_mqtt5;
 		}else{

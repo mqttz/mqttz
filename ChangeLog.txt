@@ -1,3 +1,10 @@
+1.6.3 - 201905xx
+================
+
+Broker:
+- Fix detection of incoming v3.1/v3.1.1 bridges. Closes #1263.
+
+
 1.6.2 - 20190430
 ================
 
