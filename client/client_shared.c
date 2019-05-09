@@ -662,6 +662,10 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 					return 1;
 				}
 				topic = strchr(url, '/');
+				if(!topic){
+					fprintf(stderr, "Error: invalid URL for -L argument specified.\n\n");
+					return 1;
+				}
 				*topic++ = 0;
 
 				if(cfg_add_topic(cfg, pub_or_sub, topic, "-L topic"))
