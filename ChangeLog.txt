@@ -4,6 +4,9 @@
 Broker:
 - Fix detection of incoming v3.1/v3.1.1 bridges. Closes #1263.
 
+Clients:
+- Fix -L url parsing when `/topic` part is missing.
+
 
 1.6.2 - 20190430
 ================
