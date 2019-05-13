@@ -19,9 +19,6 @@ def do_test(proto_ver_connect, proto_ver_msgs, sub_opts):
 
     publish_packet = mosq_test.gen_publish("loop/test", qos=0, payload="message", proto_ver=proto_ver_msgs)
 
-    pingreq_packet = mosq_test.gen_pingreq()
-    pingresp_packet = mosq_test.gen_pingresp()
-
     port = mosq_test.get_port()
     broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port)
 
@@ -31,7 +28,7 @@ def do_test(proto_ver_connect, proto_ver_msgs, sub_opts):
         mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
 
         sock.send(publish_packet)
-        mosq_test.do_send_receive(sock, pingreq_packet, pingresp_packet, "pingresp")
+        mosq_test.do_ping(sock)
         rc = 0
 
         sock.close()

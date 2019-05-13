@@ -79,17 +79,11 @@ def test(bridge, sock):
                 ))
                 return 1
         else:
-            bridge.settimeout(3)
-            try:
-                bridge.recv(1)
-                print("FAIL: Received data when nothing is expected")
-                print("Fail on cases local_topic=%r, remote_topic=%r" % (
-                    local_topic, remote_topic,
+            time.sleep(1)
+            mosq_test.do_ping(bridge,
+                "FAIL: Received data when nothing is expected\nFail on cases local_topic=%r, remote_topic=%r" % (
+                local_topic, remote_topic,
                 ))
-                return 1
-            except socket.timeout:
-                pass
-            bridge.settimeout(20)
     return 0
 
 try:

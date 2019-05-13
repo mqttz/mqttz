@@ -28,9 +28,6 @@ pubrec2_packet = mosq_test.gen_pubrec(mid, proto_ver=5)
 pubrel2_packet = mosq_test.gen_pubrel(mid, proto_ver=5)
 pubcomp2_packet = mosq_test.gen_pubcomp(mid, proto_ver=5)
 
-pingreq_packet = mosq_test.gen_pingreq()
-pingresp_packet = mosq_test.gen_pingresp()
-
 port = mosq_test.get_port()
 broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port)
 
@@ -42,7 +39,7 @@ try:
     mosq_test.do_send_receive(sock, pubrel1_packet, pubcomp1_packet, "pubcomp 1")
 
     # We shouldn't receive the publish here because it is > MAXIMUM_PACKET_SIZE
-    mosq_test.do_send_receive(sock, pingreq_packet, pingresp_packet)
+    mosq_test.do_ping(sock)
 
     mosq_test.do_send_receive(sock, publish2_packet, pubrec2_packet, "pubrec 2")
     mosq_test.do_send_receive(sock, pubrel2_packet, pubcomp2_packet, "pubcomp 2")

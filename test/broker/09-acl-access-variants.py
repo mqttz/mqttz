@@ -45,14 +45,12 @@ def single_test(port, per_listener, username, topic, expect_deny):
 
         mid=1
         publish1r_packet = mosq_test.gen_publish(topic=topic, mid=mid, qos=1, payload="message")
-        pingreq_packet = mosq_test.gen_pingreq()
-        pingresp_packet = mosq_test.gen_pingresp()
 
         sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=port)
         mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
         mosq_test.do_send_receive(sock, publish1s_packet, puback1s_packet, "puback")
         if expect_deny:
-            mosq_test.do_send_receive(sock, pingreq_packet, pingresp_packet, "pingresp")
+            mosq_test.do_ping(sock)
         else:
             mosq_test.expect_packet(sock, "publish1r", publish1r_packet)
         sock.close()

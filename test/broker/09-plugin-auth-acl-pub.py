@@ -37,9 +37,6 @@ mid = 2
 publish2_packet = mosq_test.gen_publish("writeable", qos=1, mid=mid, payload="message")
 puback2_packet = mosq_test.gen_puback(mid)
 
-pingreq_packet = mosq_test.gen_pingreq()
-pingresp_packet = mosq_test.gen_pingresp()
-
 broker = mosq_test.start_broker(filename=os.path.basename(__file__), use_conf=True, port=port)
 
 try:
@@ -51,7 +48,7 @@ try:
     sock = mosq_test.do_client_connect(connect2_packet, connack2_packet, timeout=20, port=port)
     mosq_test.do_send_receive(sock, publish2_packet, puback2_packet, "puback2")
 
-    mosq_test.do_send_receive(sock, pingreq_packet, pingresp_packet, "pingresp")
+    mosq_test.do_ping(sock)
 
     rc = 0
 

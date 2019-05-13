@@ -34,9 +34,6 @@ def do_test(port, per_listener):
     subscribe_packet = mosq_test.gen_subscribe(mid, "test/topic", 0)
     suback_packet = mosq_test.gen_suback(mid, 0)
 
-    pingreq_packet = mosq_test.gen_pingreq()
-    pingresp_packet = mosq_test.gen_pingresp()
-
     broker = mosq_test.start_broker(filename=os.path.basename(__file__), use_conf=True, port=port)
 
     try:
@@ -46,7 +43,7 @@ def do_test(port, per_listener):
         sock.send(publish_packet)
 
         # If we receive the message, this will fail.
-        mosq_test.do_send_receive(sock, pingreq_packet, pingresp_packet, "pingresp")
+        mosq_test.do_ping(sock)
         rc = 0
 
         sock.close()

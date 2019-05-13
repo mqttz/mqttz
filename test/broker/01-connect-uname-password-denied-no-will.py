@@ -31,9 +31,6 @@ mid = 1
 subscribe_packet = mosq_test.gen_subscribe(mid, topic="will/test", qos=0)
 suback_packet = mosq_test.gen_suback(mid, 0)
 
-pingreq_packet = mosq_test.gen_pingreq()
-pingresp_packet = mosq_test.gen_pingresp()
-
 connect2_packet = mosq_test.gen_connect("connect-uname-pwd-test", keepalive=keepalive, username="user", password="password9")
 connack2_packet = mosq_test.gen_connack(rc=5)
 
@@ -47,7 +44,7 @@ try:
     sock2.close()
 
     # If we receive a will here, this is an error
-    mosq_test.do_send_receive(sock1, pingreq_packet, pingresp_packet)
+    mosq_test.do_ping(sock1)
     sock1.close()
     rc = 0
 

@@ -62,19 +62,16 @@ reauth3_packet = mosq_test.gen_auth(reason_code=mqtt5_rc.MQTT_RC_REAUTHENTICATE,
 disconnect3_packet = mosq_test.gen_disconnect(reason_code=mqtt5_rc.MQTT_RC_PROTOCOL_ERROR, proto_ver=5)
 
 
-pingreq_packet = mosq_test.gen_pingreq()
-pingresp_packet = mosq_test.gen_pingresp()
-
 broker = mosq_test.start_broker(filename=os.path.basename(__file__), use_conf=True, port=port)
 
 try:
     sock = mosq_test.do_client_connect(connect1_packet, auth1_1_packet, timeout=20, port=port, connack_error="auth1")
     mosq_test.do_send_receive(sock, auth1_2_packet, connack1_packet, "connack1")
-    mosq_test.do_send_receive(sock, pingreq_packet, pingresp_packet, "pingresp1")
+    mosq_test.do_ping(sock, "pingresp1")
 
     mosq_test.do_send_receive(sock, reauth2_packet, auth2_1_packet, "auth2_1")
     mosq_test.do_send_receive(sock, auth2_2_packet, auth2_3_packet, "auth2_3")
-    mosq_test.do_send_receive(sock, pingreq_packet, pingresp_packet, "pingresp2")
+    mosq_test.do_ping(sock, "pingresp2")
 
     mosq_test.do_send_receive(sock, reauth3_packet, disconnect3_packet, "disconnect3")
 

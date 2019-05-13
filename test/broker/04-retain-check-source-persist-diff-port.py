@@ -62,9 +62,6 @@ def do_test(per_listener, username):
     subscribe_packet = mosq_test.gen_subscribe(mid, "test/topic", 0)
     suback_packet = mosq_test.gen_suback(mid, 0)
 
-    pingreq_packet = mosq_test.gen_pingreq()
-    pingresp_packet = mosq_test.gen_pingresp()
-
     broker = mosq_test.start_broker(filename=os.path.basename(__file__), use_conf=True, port=port1)
 
     try:
@@ -88,7 +85,7 @@ def do_test(per_listener, username):
             sock = mosq_test.do_client_connect(connect2_packet, connack2_packet, port=port2)
             mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback 2")
             # If we receive the retained message here, it is a failure.
-            mosq_test.do_send_receive(sock, pingreq_packet, pingresp_packet, "pingresp")
+            mosq_test.do_ping(sock)
             rc = 0
 
         sock.close()
