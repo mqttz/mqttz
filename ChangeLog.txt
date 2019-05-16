@@ -3,6 +3,8 @@
 
 Broker:
 - Fix detection of incoming v3.1/v3.1.1 bridges. Closes #1263.
+- Fix default max_topic_alias listener config not being copied to the in-use
+  listener when compiled without TLS support.
 
 Clients:
 - Fix -L url parsing when `/topic` part is missing.
