@@ -326,7 +326,7 @@ int util__random_bytes(void *bytes, int count)
 		rc = MOSQ_ERR_SUCCESS;
 	}
 #elif defined(__GLIBC__) && __GLIBC_PREREQ(2, 25)
-	if(getrandom(bytes, count, 0) == 0){
+	if(getrandom(bytes, count, 0) == count){
 		rc = MOSQ_ERR_SUCCESS;
 	}
 #elif defined(WIN32)

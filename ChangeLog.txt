@@ -5,6 +5,10 @@ Broker:
 - Fix detection of incoming v3.1/v3.1.1 bridges. Closes #1263.
 - Fix default max_topic_alias listener config not being copied to the in-use
   listener when compiled without TLS support.
+- Fix random number generation if compiling using WITH_TLS=no and on Linux
+  with glibc >= 2.25. Without this fix, no random numbers would be generated
+  for e.g. on broker client id generation, and so clients connecting expecting
+  this feature would be unable to connect.
 
 Clients:
 - Fix -L url parsing when `/topic` part is missing.
