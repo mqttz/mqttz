@@ -9,6 +9,7 @@ Broker:
   with glibc >= 2.25. Without this fix, no random numbers would be generated
   for e.g. on broker client id generation, and so clients connecting expecting
   this feature would be unable to connect.
+- Fix compilation problem related to getrandom() on non-glibc systems.
 
 Clients:
 - Fix -L url parsing when `/topic` part is missing.

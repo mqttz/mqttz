@@ -28,9 +28,10 @@ Contributors:
 #  include <sys/stat.h>
 #endif
 
-#if !defined(WITH_TLS) && defined(__linux__)
-#  if defined(__GLIBC__) && __GLIBC_PREREQ(2, 25)
+#if !defined(WITH_TLS) && defined(__linux__) && defined(__GLIBC__)
+#  if __GLIBC_PREREQ(2, 25)
 #    include <sys/random.h>
+#    define HAVE_GETRANDOM 1
 #  endif
 #endif
 
@@ -325,7 +326,7 @@ int util__random_bytes(void *bytes, int count)
 	if(RAND_bytes(bytes, count) == 1){
 		rc = MOSQ_ERR_SUCCESS;
 	}
-#elif defined(__GLIBC__) && __GLIBC_PREREQ(2, 25)
+#elif defined(HAVE_GETRANDOM)
 	if(getrandom(bytes, count, 0) == count){
 		rc = MOSQ_ERR_SUCCESS;
 	}
