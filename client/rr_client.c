@@ -121,8 +121,8 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 		mosquitto_subscribe_v5(mosq, NULL, cfg.response_topic, cfg.qos, 0, cfg.subscribe_props);
 	}else{
 		client_state = rr_s_disconnect;
-		if(result && !cfg.quiet){
-			fprintf(stderr, "%s\n", mosquitto_connack_string(result));
+		if(result){
+			err_printf(&cfg, "%s\n", mosquitto_connack_string(result));
 		}
 		mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
 	}
@@ -135,10 +135,8 @@ void my_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_c
 		client_state = rr_s_ready_to_publish;
 	}else{
 		client_state = rr_s_disconnect;
-		if(!cfg.quiet){
-			fprintf(stderr, "%s\n", mosquitto_reason_string(granted_qos[0]));
-			mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
-		}
+		err_printf(&cfg, "%s\n", mosquitto_reason_string(granted_qos[0]));
+		mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
 	}
 }
 
@@ -282,7 +280,7 @@ int main(int argc, char *argv[])
 	}
 	rc = mosquitto_property_check_all(CMD_PUBLISH, cfg.publish_props);
 	if(rc){
-		if(!cfg.quiet) fprintf(stderr, "Error in PUBLISH properties: Duplicate response topic.\n");
+		err_printf(&cfg, "Error in PUBLISH properties: Duplicate response topic.\n");
 		goto cleanup;
 	}
 
@@ -294,10 +292,10 @@ int main(int argc, char *argv[])
 	if(!mosq){
 		switch(errno){
 			case ENOMEM:
-				if(!cfg.quiet) fprintf(stderr, "Error: Out of memory.\n");
+				err_printf(&cfg, "Error: Out of memory.\n");
 				break;
 			case EINVAL:
-				if(!cfg.quiet) fprintf(stderr, "Error: Invalid id and/or clean_session.\n");
+				err_printf(&cfg, "Error: Invalid id and/or clean_session.\n");
 				break;
 		}
 		goto cleanup;

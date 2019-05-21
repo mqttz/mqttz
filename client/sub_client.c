@@ -35,7 +35,7 @@ Contributors:
 #include <mqtt_protocol.h>
 #include "client_shared.h"
 
-static struct mosq_config cfg;
+struct mosq_config cfg;
 bool process_messages = true;
 int msg_count = 0;
 struct mosquitto *mosq = NULL;
@@ -124,11 +124,11 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 			mosquitto_unsubscribe_v5(mosq, NULL, cfg.unsub_topics[i], cfg.unsubscribe_props);
 		}
 	}else{
-		if(result && !cfg.quiet){
+		if(result){
 			if(cfg.protocol_version == MQTT_PROTOCOL_V5){
-				fprintf(stderr, "%s\n", mosquitto_reason_string(result));
+				err_printf(&cfg, "%s\n", mosquitto_reason_string(result));
 			}else{
-				fprintf(stderr, "%s\n", mosquitto_connack_string(result));
+				err_printf(&cfg, "%s\n", mosquitto_connack_string(result));
 			}
 		}
 		mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
@@ -307,10 +307,10 @@ int main(int argc, char *argv[])
 	if(!mosq){
 		switch(errno){
 			case ENOMEM:
-				if(!cfg.quiet) fprintf(stderr, "Error: Out of memory.\n");
+				err_printf(&cfg, "Error: Out of memory.\n");
 				break;
 			case EINVAL:
-				if(!cfg.quiet) fprintf(stderr, "Error: Invalid id and/or clean_session.\n");
+				err_printf(&cfg, "Error: Invalid id and/or clean_session.\n");
 				break;
 		}
 		goto cleanup;

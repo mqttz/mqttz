@@ -37,6 +37,7 @@ Contributors:
 #include <mosquitto.h>
 #include "client_shared.h"
 
+extern struct mosq_config cfg;
 
 static int get_time(struct tm **ti, long *ns)
 {
@@ -60,7 +61,7 @@ static int get_time(struct tm **ti, long *ns)
 	*ns = tv.tv_usec*1000;
 #else
 	if(clock_gettime(CLOCK_REALTIME, &ts) != 0){
-		fprintf(stderr, "Error obtaining system time.\n");
+		err_printf(&cfg, "Error obtaining system time.\n");
 		return 1;
 	}
 	s = ts.tv_sec;
@@ -69,7 +70,7 @@ static int get_time(struct tm **ti, long *ns)
 
 	*ti = localtime(&s);
 	if(!(*ti)){
-		fprintf(stderr, "Error obtaining system time.\n");
+		err_printf(&cfg, "Error obtaining system time.\n");
 		return 1;
 	}
 
@@ -130,7 +131,7 @@ static void json_print(const struct mosquitto_message *message, const struct tm 
 }
 
 
-static void formatted_print(const struct mosq_config *cfg, const struct mosquitto_message *message)
+static void formatted_print(const struct mosq_config *lcfg, const struct mosquitto_message *message)
 {
 	int len;
 	int i;
@@ -139,13 +140,13 @@ static void formatted_print(const struct mosq_config *cfg, const struct mosquitt
 	char strf[3];
 	char buf[100];
 
-	len = strlen(cfg->format);
+	len = strlen(lcfg->format);
 
 	for(i=0; i<len; i++){
-		if(cfg->format[i] == '%'){
+		if(lcfg->format[i] == '%'){
 			if(i < len-1){
 				i++;
-				switch(cfg->format[i]){
+				switch(lcfg->format[i]){
 					case '%':
 						fputc('%', stdout);
 						break;
@@ -153,7 +154,7 @@ static void formatted_print(const struct mosq_config *cfg, const struct mosquitt
 					case 'I':
 						if(!ti){
 							if(get_time(&ti, &ns)){
-								fprintf(stderr, "Error obtaining system time.\n");
+								err_printf(lcfg, "Error obtaining system time.\n");
 								return;
 							}
 						}
@@ -165,7 +166,7 @@ static void formatted_print(const struct mosq_config *cfg, const struct mosquitt
 					case 'j':
 						if(!ti){
 							if(get_time(&ti, &ns)){
-								fprintf(stderr, "Error obtaining system time.\n");
+								err_printf(lcfg, "Error obtaining system time.\n");
 								return;
 							}
 						}
@@ -175,7 +176,7 @@ static void formatted_print(const struct mosq_config *cfg, const struct mosquitt
 					case 'J':
 						if(!ti){
 							if(get_time(&ti, &ns)){
-								fprintf(stderr, "Error obtaining system time.\n");
+								err_printf(lcfg, "Error obtaining system time.\n");
 								return;
 							}
 						}
@@ -213,7 +214,7 @@ static void formatted_print(const struct mosq_config *cfg, const struct mosquitt
 					case 'U':
 						if(!ti){
 							if(get_time(&ti, &ns)){
-								fprintf(stderr, "Error obtaining system time.\n");
+								err_printf(lcfg, "Error obtaining system time.\n");
 								return;
 							}
 						}
@@ -231,24 +232,24 @@ static void formatted_print(const struct mosq_config *cfg, const struct mosquitt
 						break;
 				}
 			}
-		}else if(cfg->format[i] == '@'){
+		}else if(lcfg->format[i] == '@'){
 			if(i < len-1){
 				i++;
-				if(cfg->format[i] == '@'){
+				if(lcfg->format[i] == '@'){
 					fputc('@', stdout);
 				}else{
 					if(!ti){
 						if(get_time(&ti, &ns)){
-							fprintf(stderr, "Error obtaining system time.\n");
+							err_printf(lcfg, "Error obtaining system time.\n");
 							return;
 						}
 					}
 
 					strf[0] = '%';
-					strf[1] = cfg->format[i];
+					strf[1] = lcfg->format[i];
 					strf[2] = 0;
 
-					if(cfg->format[i] == 'N'){
+					if(lcfg->format[i] == 'N'){
 						printf("%09ld", ns);
 					}else{
 						if(strftime(buf, 100, strf, ti) != 0){
@@ -257,10 +258,10 @@ static void formatted_print(const struct mosq_config *cfg, const struct mosquitt
 					}
 				}
 			}
-		}else if(cfg->format[i] == '\\'){
+		}else if(lcfg->format[i] == '\\'){
 			if(i < len-1){
 				i++;
-				switch(cfg->format[i]){
+				switch(lcfg->format[i]){
 					case '\\':
 						fputc('\\', stdout);
 						break;
@@ -295,10 +296,10 @@ static void formatted_print(const struct mosq_config *cfg, const struct mosquitt
 				}
 			}
 		}else{
-			fputc(cfg->format[i], stdout);
+			fputc(lcfg->format[i], stdout);
 		}
 	}
-	if(cfg->eol){
+	if(lcfg->eol){
 		fputc('\n', stdout);
 	}
 	fflush(stdout);

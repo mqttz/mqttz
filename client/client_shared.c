@@ -18,6 +18,7 @@ Contributors:
 
 #include <errno.h>
 #include <fcntl.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -229,7 +230,7 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 		len = strlen(env) + strlen("/mosquitto_pub") + 1;
 		loc = malloc(len);
 		if(!loc){
-			fprintf(stderr, "Error: Out of memory.\n");
+			err_printf(cfg, "Error: Out of memory.\n");
 			return 1;
 		}
 		if(pub_or_sub == CLIENT_PUB){
@@ -246,7 +247,7 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 			len = strlen(env) + strlen("/.config/mosquitto_pub") + 1;
 			loc = malloc(len);
 			if(!loc){
-				fprintf(stderr, "Error: Out of memory.\n");
+				err_printf(cfg, "Error: Out of memory.\n");
 				return 1;
 			}
 			if(pub_or_sub == CLIENT_PUB){
@@ -257,8 +258,6 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 				snprintf(loc, len, "%s/.config/mosquitto_rr", env);
 			}
 			loc[len-1] = '\0';
-		}else{
-			fprintf(stderr, "Warning: Unable to locate configuration directory, default config not loaded.\n");
 		}
 	}
 
@@ -268,7 +267,7 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 		len = strlen(env) + strlen("\\mosquitto_pub.conf") + 1;
 		loc = malloc(len);
 		if(!loc){
-			fprintf(stderr, "Error: Out of memory.\n");
+			err_printf(cfg, "Error: Out of memory.\n");
 			return 1;
 		}
 		if(pub_or_sub == CLIENT_PUB){
@@ -279,8 +278,6 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 			snprintf(loc, len, "%s\\mosquitto_rr.conf", env);
 		}
 		loc[len-1] = '\0';
-	}else{
-		fprintf(stderr, "Warning: Unable to locate configuration directory, default config not loaded.\n");
 	}
 #endif
 
@@ -329,7 +326,7 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 		return 1;
 	}
 	if(cfg->password && !cfg->username){
-		if(!cfg->quiet) fprintf(stderr, "Warning: Not using password since username not set.\n");
+		err_printf(cfg, "Warning: Not using password since username not set.\n");
 	}
 #ifdef WITH_TLS
 	if((cfg->certfile && !cfg->keyfile) || (cfg->keyfile && !cfg->certfile)){
@@ -347,23 +344,23 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 #endif
 #ifdef FINAL_WITH_TLS_PSK
 	if((cfg->cafile || cfg->capath) && cfg->psk){
-		if(!cfg->quiet) fprintf(stderr, "Error: Only one of --psk or --cafile/--capath may be used at once.\n");
+		fprintf(stderr, "Error: Only one of --psk or --cafile/--capath may be used at once.\n");
 		return 1;
 	}
 	if(cfg->psk && !cfg->psk_identity){
-		if(!cfg->quiet) fprintf(stderr, "Error: --psk-identity required if --psk used.\n");
+		fprintf(stderr, "Error: --psk-identity required if --psk used.\n");
 		return 1;
 	}
 #endif
 
 	if(cfg->clean_session == false && (cfg->id_prefix || !cfg->id)){
-		if(!cfg->quiet) fprintf(stderr, "Error: You must provide a client id if you are using the -c option.\n");
+		fprintf(stderr, "Error: You must provide a client id if you are using the -c option.\n");
 		return 1;
 	}
 
 	if(pub_or_sub == CLIENT_SUB){
 		if(cfg->topic_count == 0){
-			if(!cfg->quiet) fprintf(stderr, "Error: You must specify a topic to subscribe to.\n");
+			fprintf(stderr, "Error: You must specify a topic to subscribe to.\n");
 			return 1;
 		}
 	}
@@ -371,39 +368,39 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 	if(!cfg->host){
 		cfg->host = strdup("localhost");
 		if(!cfg->host){
-			if(!cfg->quiet) fprintf(stderr, "Error: Out of memory.\n");
+			err_printf(cfg, "Error: Out of memory.\n");
 			return 1;
 		}
 	}
 
 	rc = mosquitto_property_check_all(CMD_CONNECT, cfg->connect_props);
 	if(rc){
-		if(!cfg->quiet) fprintf(stderr, "Error in CONNECT properties: %s\n", mosquitto_strerror(rc));
+		err_printf(cfg, "Error in CONNECT properties: %s\n", mosquitto_strerror(rc));
 		return 1;
 	}
 	rc = mosquitto_property_check_all(CMD_PUBLISH, cfg->publish_props);
 	if(rc){
-		if(!cfg->quiet) fprintf(stderr, "Error in PUBLISH properties: %s\n", mosquitto_strerror(rc));
+		err_printf(cfg, "Error in PUBLISH properties: %s\n", mosquitto_strerror(rc));
 		return 1;
 	}
 	rc = mosquitto_property_check_all(CMD_SUBSCRIBE, cfg->subscribe_props);
 	if(rc){
-		if(!cfg->quiet) fprintf(stderr, "Error in SUBSCRIBE properties: %s\n", mosquitto_strerror(rc));
+		err_printf(cfg, "Error in SUBSCRIBE properties: %s\n", mosquitto_strerror(rc));
 		return 1;
 	}
 	rc = mosquitto_property_check_all(CMD_UNSUBSCRIBE, cfg->unsubscribe_props);
 	if(rc){
-		if(!cfg->quiet) fprintf(stderr, "Error in UNSUBSCRIBE properties: %s\n", mosquitto_strerror(rc));
+		err_printf(cfg, "Error in UNSUBSCRIBE properties: %s\n", mosquitto_strerror(rc));
 		return 1;
 	}
 	rc = mosquitto_property_check_all(CMD_DISCONNECT, cfg->disconnect_props);
 	if(rc){
-		if(!cfg->quiet) fprintf(stderr, "Error in DISCONNECT properties: %s\n", mosquitto_strerror(rc));
+		err_printf(cfg, "Error in DISCONNECT properties: %s\n", mosquitto_strerror(rc));
 		return 1;
 	}
 	rc = mosquitto_property_check_all(CMD_WILL, cfg->will_props);
 	if(rc){
-		if(!cfg->quiet) fprintf(stderr, "Error in Will properties: %s\n", mosquitto_strerror(rc));
+		err_printf(cfg, "Error in Will properties: %s\n", mosquitto_strerror(rc));
 		return 1;
 	}
 
@@ -436,7 +433,7 @@ int cfg_add_topic(struct mosq_config *cfg, int type, char *topic, const char *ar
 		cfg->topic_count++;
 		cfg->topics = realloc(cfg->topics, cfg->topic_count*sizeof(char *));
 		if(!cfg->topics){
-			fprintf(stderr, "Error: Out of memory.\n");
+			err_printf(cfg, "Error: Out of memory.\n");
 			return 1;
 		}
 		cfg->topics[cfg->topic_count-1] = strdup(topic);
@@ -551,7 +548,7 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				cfg->pub_mode = MSGMODE_FILE;
 				cfg->file_input = strdup(argv[i+1]);
 				if(!cfg->file_input){
-					fprintf(stderr, "Error: Out of memory.\n");
+					err_printf(cfg, "Error: Out of memory.\n");
 					return 1;
 				}
 			}
@@ -1081,14 +1078,14 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 				cfg->will_payloadlen, cfg->will_payload, cfg->will_qos,
 				cfg->will_retain, cfg->will_props)){
 
-		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting will.\n");
+		err_printf(cfg, "Error: Problem setting will.\n");
 		mosquitto_lib_cleanup();
 		return 1;
 	}
 	cfg->will_props = NULL;
 
 	if(cfg->username && mosquitto_username_pw_set(mosq, cfg->username, cfg->password)){
-		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting username and password.\n");
+		err_printf(cfg, "Error: Problem setting username and password.\n");
 		mosquitto_lib_cleanup();
 		return 1;
 	}
@@ -1097,48 +1094,48 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 		rc = mosquitto_tls_set(mosq, cfg->cafile, cfg->capath, cfg->certfile, cfg->keyfile, NULL);
 		if(rc){
 			if(rc == MOSQ_ERR_INVAL){
-				if(!cfg->quiet) fprintf(stderr, "Error: Problem setting TLS options: File not found.\n");
+				err_printf(cfg, "Error: Problem setting TLS options: File not found.\n");
 			}else{
-				if(!cfg->quiet) fprintf(stderr, "Error: Problem setting TLS options: %s.\n", mosquitto_strerror(rc));
+				err_printf(cfg, "Error: Problem setting TLS options: %s.\n", mosquitto_strerror(rc));
 			}
 			mosquitto_lib_cleanup();
 			return 1;
 		}
 	}
 	if(cfg->insecure && mosquitto_tls_insecure_set(mosq, true)){
-		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting TLS insecure option.\n");
+		err_printf(cfg, "Error: Problem setting TLS insecure option.\n");
 		mosquitto_lib_cleanup();
 		return 1;
 	}
 	if(cfg->tls_engine && mosquitto_string_option(mosq, MOSQ_OPT_TLS_ENGINE, cfg->tls_engine)){
-		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting TLS engine, is %s a valid engine?\n", cfg->tls_engine);
+		err_printf(cfg, "Error: Problem setting TLS engine, is %s a valid engine?\n", cfg->tls_engine);
 		mosquitto_lib_cleanup();
 		return 1;
 	}
 	if(cfg->keyform && mosquitto_string_option(mosq, MOSQ_OPT_TLS_KEYFORM, cfg->keyform)){
-		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting key form, it must be one of 'pem' or 'engine'.\n");
+		err_printf(cfg, "Error: Problem setting key form, it must be one of 'pem' or 'engine'.\n");
 		mosquitto_lib_cleanup();
 		return 1;
 	}
 	if(cfg->tls_engine_kpass_sha1 && mosquitto_string_option(mosq, MOSQ_OPT_TLS_ENGINE_KPASS_SHA1, cfg->tls_engine_kpass_sha1)){
-		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting TLS engine key pass sha, is it a 40 character hex string?\n");
+		err_printf(cfg, "Error: Problem setting TLS engine key pass sha, is it a 40 character hex string?\n");
 		mosquitto_lib_cleanup();
 		return 1;
 	}
 	if(cfg->tls_alpn && mosquitto_string_option(mosq, MOSQ_OPT_TLS_ALPN, cfg->tls_alpn)){
-		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting TLS ALPN protocol.\n");
+		err_printf(cfg, "Error: Problem setting TLS ALPN protocol.\n");
 		mosquitto_lib_cleanup();
 		return 1;
 	}
 #  ifdef FINAL_WITH_TLS_PSK
 	if(cfg->psk && mosquitto_tls_psk_set(mosq, cfg->psk, cfg->psk_identity, NULL)){
-		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting TLS-PSK options.\n");
+		err_printf(cfg, "Error: Problem setting TLS-PSK options.\n");
 		mosquitto_lib_cleanup();
 		return 1;
 	}
 #  endif
 	if((cfg->tls_version || cfg->ciphers) && mosquitto_tls_opts_set(mosq, 1, cfg->tls_version, cfg->ciphers)){
-		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting TLS options, check the options are valid.\n");
+		err_printf(cfg, "Error: Problem setting TLS options, check the options are valid.\n");
 		mosquitto_lib_cleanup();
 		return 1;
 	}
@@ -1161,7 +1158,7 @@ int client_id_generate(struct mosq_config *cfg)
 	if(cfg->id_prefix){
 		cfg->id = malloc(strlen(cfg->id_prefix)+10);
 		if(!cfg->id){
-			if(!cfg->quiet) fprintf(stderr, "Error: Out of memory.\n");
+			err_printf(cfg, "Error: Out of memory.\n");
 			mosquitto_lib_cleanup();
 			return 1;
 		}
@@ -1207,17 +1204,15 @@ int client_connect(struct mosquitto *mosq, struct mosq_config *cfg)
 	rc = mosquitto_connect_bind_v5(mosq, cfg->host, port, cfg->keepalive, cfg->bind_address, cfg->connect_props);
 #endif
 	if(rc>0){
-		if(!cfg->quiet){
-			if(rc == MOSQ_ERR_ERRNO){
+		if(rc == MOSQ_ERR_ERRNO){
 #ifndef WIN32
-				err = strerror(errno);
+			err = strerror(errno);
 #else
-				FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, errno, 0, (LPTSTR)&err, 1024, NULL);
+			FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, errno, 0, (LPTSTR)&err, 1024, NULL);
 #endif
-				fprintf(stderr, "Error: %s\n", err);
-			}else{
-				fprintf(stderr, "Unable to connect (%s).\n", mosquitto_strerror(rc));
-			}
+			err_printf(cfg, "Error: %s\n", err);
+		}else{
+			err_printf(cfg, "Unable to connect (%s).\n", mosquitto_strerror(rc));
 		}
 		mosquitto_lib_cleanup();
 		return rc;
@@ -1284,7 +1279,7 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 	if(!strncmp(url, "socks5h://", strlen("socks5h://"))){
 		str = url + strlen("socks5h://");
 	}else{
-		fprintf(stderr, "Error: Unsupported proxy protocol: %s\n", url);
+		err_printf(cfg, "Error: Unsupported proxy protocol: %s\n", url);
 		return 1;
 	}
 
@@ -1311,7 +1306,7 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 				len = i-start;
 				host = malloc(len + 1);
 				if(!host){
-					fprintf(stderr, "Error: Out of memory.\n");
+					err_printf(cfg, "Error: Out of memory.\n");
 					goto cleanup;
 				}
 				memcpy(host, &(str[start]), len);
@@ -1324,7 +1319,7 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 				len = i-start;
 				username_or_host = malloc(len + 1);
 				if(!username_or_host){
-					fprintf(stderr, "Error: Out of memory.\n");
+					err_printf(cfg, "Error: Out of memory.\n");
 					goto cleanup;
 				}
 				memcpy(username_or_host, &(str[start]), len);
@@ -1344,7 +1339,7 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 				len = i-start;
 				password = malloc(len + 1);
 				if(!password){
-					fprintf(stderr, "Error: Out of memory.\n");
+					err_printf(cfg, "Error: Out of memory.\n");
 					goto cleanup;
 				}
 				memcpy(password, &(str[start]), len);
@@ -1360,7 +1355,7 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 				len = i-start;
 				username = malloc(len + 1);
 				if(!username){
-					fprintf(stderr, "Error: Out of memory.\n");
+					err_printf(cfg, "Error: Out of memory.\n");
 					goto cleanup;
 				}
 				memcpy(username, &(str[start]), len);
@@ -1378,7 +1373,7 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 			 * socks5h://username[:password]@host:port */
 			port = malloc(len + 1);
 			if(!port){
-				fprintf(stderr, "Error: Out of memory.\n");
+				err_printf(cfg, "Error: Out of memory.\n");
 				goto cleanup;
 			}
 			memcpy(port, &(str[start]), len);
@@ -1390,7 +1385,7 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 			username_or_host = NULL;
 			port = malloc(len + 1);
 			if(!port){
-				fprintf(stderr, "Error: Out of memory.\n");
+				err_printf(cfg, "Error: Out of memory.\n");
 				goto cleanup;
 			}
 			memcpy(port, &(str[start]), len);
@@ -1398,7 +1393,7 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 		}else{
 			host = malloc(len + 1);
 			if(!host){
-				fprintf(stderr, "Error: Out of memory.\n");
+				err_printf(cfg, "Error: Out of memory.\n");
 				goto cleanup;
 			}
 			memcpy(host, &(str[start]), len);
@@ -1407,7 +1402,7 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 	}
 
 	if(!host){
-		fprintf(stderr, "Error: Invalid proxy.\n");
+		err_printf(cfg, "Error: Invalid proxy.\n");
 		goto cleanup;
 	}
 
@@ -1420,7 +1415,7 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 	if(port){
 		port_int = atoi(port);
 		if(port_int < 1 || port_int > 65535){
-			fprintf(stderr, "Error: Invalid proxy port %d\n", port_int);
+			err_printf(cfg, "Error: Invalid proxy port %d\n", port_int);
 			goto cleanup;
 		}
 		free(port);
@@ -1441,6 +1436,17 @@ cleanup:
 	if(host) free(host);
 	if(port) free(port);
 	return 1;
+}
+
+void err_printf(const struct mosq_config *cfg, const char *fmt, ...)
+{
+	va_list va;
+
+	if(cfg->quiet) return;
+
+	va_start(va, fmt);
+	vfprintf(stderr, fmt, va);
+	va_end(va);
 }
 
 #endif

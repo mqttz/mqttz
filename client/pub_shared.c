@@ -61,7 +61,7 @@ int load_stdin(void)
 		rlen = fread(buf, 1, 1024, stdin);
 		aux_message = realloc(cfg.message, pos+rlen);
 		if(!aux_message){
-			if(!cfg.quiet) fprintf(stderr, "Error: Out of memory.\n");
+			err_printf(&cfg, "Error: Out of memory.\n");
 			free(cfg.message);
 			return 1;
 		} else
@@ -74,7 +74,7 @@ int load_stdin(void)
 	cfg.msglen = pos;
 
 	if(!cfg.msglen){
-		if(!cfg.quiet) fprintf(stderr, "Error: Zero length input.\n");
+		err_printf(&cfg, "Error: Zero length input.\n");
 		return 1;
 	}
 
@@ -88,7 +88,7 @@ int load_file(const char *filename)
 
 	fptr = fopen(filename, "rb");
 	if(!fptr){
-		if(!cfg.quiet) fprintf(stderr, "Error: Unable to open file \"%s\".\n", filename);
+		err_printf(&cfg, "Error: Unable to open file \"%s\".\n", filename);
 		return 1;
 	}
 	cfg.pub_mode = MSGMODE_FILE;
@@ -96,22 +96,22 @@ int load_file(const char *filename)
 	cfg.msglen = ftell(fptr);
 	if(cfg.msglen > 268435455){
 		fclose(fptr);
-		if(!cfg.quiet) fprintf(stderr, "Error: File \"%s\" is too large (>268,435,455 bytes).\n", filename);
+		err_printf(&cfg, "Error: File \"%s\" is too large (>268,435,455 bytes).\n", filename);
 		return 1;
 	}else if(cfg.msglen == 0){
 		fclose(fptr);
-		if(!cfg.quiet) fprintf(stderr, "Error: File \"%s\" is empty.\n", filename);
+		err_printf(&cfg, "Error: File \"%s\" is empty.\n", filename);
 		return 1;
 	}else if(cfg.msglen < 0){
 		fclose(fptr);
-		if(!cfg.quiet) fprintf(stderr, "Error: Unable to determine size of file \"%s\".\n", filename);
+		err_printf(&cfg, "Error: Unable to determine size of file \"%s\".\n", filename);
 		return 1;
 	}
 	fseek(fptr, 0, SEEK_SET);
 	cfg.message = malloc(cfg.msglen);
 	if(!cfg.message){
 		fclose(fptr);
-		if(!cfg.quiet) fprintf(stderr, "Error: Out of memory.\n");
+		err_printf(&cfg, "Error: Out of memory.\n");
 		return 1;
 	}
 	pos = 0;

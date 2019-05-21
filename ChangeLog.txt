@@ -13,6 +13,8 @@ Broker:
 
 Clients:
 - Fix -L url parsing when `/topic` part is missing.
+- Stop some error messages being printed even when `--quiet` was used.
+  Closes #1284.
 
 
 1.6.2 - 20190430
