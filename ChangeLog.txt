@@ -52,7 +52,6 @@ Documentation:
 
 Build:
 - CLIENT_LDFLAGS now uses LDFLAGS. Closes #1294.
-=======
 
 
 1.6.2 - 20190430
