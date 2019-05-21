@@ -476,7 +476,7 @@ int main(int argc, char *argv[])
 		goto cleanup;
 	}
 
-	mosq = mosquitto_new(cfg.id, true, NULL);
+	mosq = mosquitto_new(cfg.id, cfg.clean_session, NULL);
 	if(!mosq){
 		switch(errno){
 			case ENOMEM:

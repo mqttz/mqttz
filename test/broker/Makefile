@@ -144,6 +144,7 @@ endif
 	./07-will-null.py
 	./07-will-properties.py
 	./07-will-qos0.py
+	./07-will-reconnect-1273.py
 
 08 :
 ifeq ($(WITH_TLS),yes)

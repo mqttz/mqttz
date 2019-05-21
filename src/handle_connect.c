@@ -30,6 +30,7 @@ Contributors:
 #include "time_mosq.h"
 #include "tls_mosq.h"
 #include "util_mosq.h"
+#include "will_mosq.h"
 
 #ifdef WITH_WEBSOCKETS
 #  include <libwebsockets.h>
@@ -160,6 +161,8 @@ int connect__on_authorised(struct mosquitto_db *db, struct mosquitto *context, v
 		}
 
 		session_expiry__remove(found_context);
+		will_delay__remove(found_context);
+		will__clear(found_context);
 
 		found_context->clean_start = true;
 		found_context->session_expiry_interval = 0;
@@ -836,13 +839,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			return rc;
 		}else{
 			free(auth_data_out);
-			if(context->will){
-				mosquitto_property_free_all(&context->will->properties);
-				mosquitto__free(context->will->msg.payload);
-				mosquitto__free(context->will->msg.topic);
-				mosquitto__free(context->will);
-				context->will = NULL;
-			}
+			will__clear(context);
 			if(rc == MOSQ_ERR_AUTH){
 				send__connack(db, context, 0, MQTT_RC_NOT_AUTHORIZED, NULL);
 				mosquitto__free(context->id);

@@ -21,6 +21,7 @@ Contributors:
 #include "packet_mosq.h"
 #include "property_mosq.h"
 #include "send_mosq.h"
+#include "will_mosq.h"
 
 
 int handle__disconnect(struct mosquitto_db *db, struct mosquitto *context)
@@ -66,6 +67,7 @@ int handle__disconnect(struct mosquitto_db *db, struct mosquitto *context)
 	if(reason_code == MQTT_RC_DISCONNECT_WITH_WILL_MSG){
 		context__set_state(context, mosq_cs_disconnect_with_will);
 	}else{
+		will__clear(context);
 		context__set_state(context, mosq_cs_disconnecting);
 	}
 	do_disconnect(db, context, MOSQ_ERR_SUCCESS);

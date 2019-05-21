@@ -118,6 +118,7 @@ tests = [
     (1, './07-will-null.py'),
     (1, './07-will-properties.py'),
     (1, './07-will-qos0.py'),
+    (1, './07-will-reconnect-1273.py'),
 
     (2, './08-ssl-bridge.py'),
     (2, './08-ssl-connect-cert-auth-crl.py'),

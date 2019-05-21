@@ -24,12 +24,6 @@ Contributors:
 #include "memory_mosq.h"
 #include "time_mosq.h"
 
-struct will_delay_list {
-	struct mosquitto *context;
-	struct will_delay_list *prev;
-	struct will_delay_list *next;
-};
-
 static struct will_delay_list *delay_list = NULL;
 static time_t last_check = 0;
 
@@ -48,6 +42,7 @@ int will_delay__add(struct mosquitto *context)
 	if(!item) return MOSQ_ERR_NOMEM;
 
 	item->context = context;
+	context->will_delay_entry = item;
 	item->context->will_delay_time = time(NULL) + item->context->will_delay_interval;
 
 	DL_INSERT_INORDER(delay_list, item, will_delay__cmp);
@@ -64,6 +59,7 @@ void will_delay__send_all(struct mosquitto_db *db)
 	DL_FOREACH_SAFE(delay_list, item, tmp){
 		DL_DELETE(delay_list, item);
 		item->context->will_delay_interval = 0;
+		item->context->will_delay_entry = NULL;
 		context__send_will(db, item->context);
 		mosquitto__free(item);
 	}
@@ -90,5 +86,14 @@ void will_delay__check(struct mosquitto_db *db, time_t now)
 		}
 	}
 	
+}
+
+
+void will_delay__remove(struct mosquitto *mosq)
+{
+	if(mosq->will_delay_entry != NULL){
+		DL_DELETE(delay_list, mosq->will_delay_entry);
+		mosq->will_delay_entry = NULL;
+	}
 }
 

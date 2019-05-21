@@ -740,6 +740,7 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context, int reaso
 int will_delay__add(struct mosquitto *context);
 void will_delay__check(struct mosquitto_db *db, time_t now);
 void will_delay__send_all(struct mosquitto_db *db);
+void will_delay__remove(struct mosquitto *mosq);
 
 #endif
 
