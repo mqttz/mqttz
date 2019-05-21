@@ -586,25 +586,10 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 
 	if(username_flag){
 		rc = packet__read_string(&context->in_packet, &username, &slen);
-		if(rc == MOSQ_ERR_SUCCESS){
-			if(password_flag){
-				rc = packet__read_binary(&context->in_packet, (uint8_t **)&password, &slen);
-				if(rc == MOSQ_ERR_NOMEM){
-					rc = MOSQ_ERR_NOMEM;
-					goto handle_connect_error;
-				}else if(rc == MOSQ_ERR_PROTOCOL){
-					if(context->protocol == mosq_p_mqtt31){
-						/* Password flag given, but no password. Ignore. */
-					}else{
-						rc = MOSQ_ERR_PROTOCOL;
-						goto handle_connect_error;
-					}
-				}
-			}
-		}else if(rc == MOSQ_ERR_NOMEM){
+		if(rc == MOSQ_ERR_NOMEM){
 			rc = MOSQ_ERR_NOMEM;
 			goto handle_connect_error;
-		}else{
+		}else if(rc != MOSQ_ERR_SUCCESS){
 			if(context->protocol == mosq_p_mqtt31){
 				/* Username flag given, but no username. Ignore. */
 				username_flag = 0;
@@ -614,7 +599,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			}
 		}
 	}else{
-		if(context->protocol == mosq_p_mqtt311 || context->protocol == mosq_p_mqtt5){
+		if(context->protocol == mosq_p_mqtt311 || context->protocol == mosq_p_mqtt31){
 			if(password_flag){
 				/* username_flag == 0 && password_flag == 1 is forbidden */
 				log__printf(NULL, MOSQ_LOG_ERR, "Protocol error from %s: password without username, closing connection.", client_id);
@@ -623,6 +608,21 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			}
 		}
 	}
+	if(password_flag){
+		rc = packet__read_binary(&context->in_packet, (uint8_t **)&password, &slen);
+		if(rc == MOSQ_ERR_NOMEM){
+			rc = MOSQ_ERR_NOMEM;
+			goto handle_connect_error;
+		}else if(rc == MOSQ_ERR_PROTOCOL){
+			if(context->protocol == mosq_p_mqtt31){
+				/* Password flag given, but no password. Ignore. */
+			}else{
+				rc = MOSQ_ERR_PROTOCOL;
+				goto handle_connect_error;
+			}
+		}
+	}
+
 	if(context->in_packet.pos != context->in_packet.remaining_length){
 		/* Surplus data at end of packet, this must be an error. */
 		rc = MOSQ_ERR_PROTOCOL;
@@ -755,7 +755,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 #endif /* FINAL_WITH_TLS_PSK */
 	}else{
 #endif /* WITH_TLS */
-		if(username_flag){
+		if(username_flag || password_flag){
 			/* FIXME - these ensure the mosquitto_client_id() and
 			 * mosquitto_client_username() functions work, but is hacky */
 			context->id = client_id;
@@ -786,9 +786,7 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			context->password = password;
 			username = NULL; /* Avoid free() in error: below. */
 			password = NULL;
-		}
-
-		if(!username_flag){
+		}else{
 			if((db->config->per_listener_settings && context->listener->security_options.allow_anonymous == false)
 					|| (!db->config->per_listener_settings && db->config->security_options.allow_anonymous == false)){
 

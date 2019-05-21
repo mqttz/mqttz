@@ -156,7 +156,7 @@ void print_usage(void)
 	printf("             Defaults to MQTT v5, where the Request-Response feature will be used, but v3.1.1 can also be used\n");
 	printf("             with v3.1.1 brokers.\n");
 	printf("mosquitto_rr version %s running on libmosquitto %d.%d.%d.\n\n", VERSION, major, minor, revision);
-	printf("Usage: mosquitto_rr {[-h host] [-p port] [-u username [-P password]] -t topic | -L URL} -e response-topic\n");
+	printf("Usage: mosquitto_rr {[-h host] [-p port] [-u username] [-P password] -t topic | -L URL} -e response-topic\n");
 	printf("                    [-c] [-k keepalive] [-q qos] [-R]\n");
 	printf("                    [-F format]\n");
 #ifndef WIN32

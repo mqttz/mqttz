@@ -21,10 +21,8 @@
 				<arg choice='plain'>
 					<arg><option>-h</option> <replaceable>hostname</replaceable></arg>
 					<arg><option>-p</option> <replaceable>port-number</replaceable></arg>
-					<arg>
-						<arg><option>-u</option> <replaceable>username</replaceable></arg>
-						<arg><option>-P</option> <replaceable>password</replaceable></arg>
-					</arg>
+					<arg><option>-u</option> <replaceable>username</replaceable></arg>
+					<arg><option>-P</option> <replaceable>password</replaceable></arg>
 					<arg choice='plain' rep='repeat'><option>-t</option> <replaceable>message-topic</replaceable></arg>
 				</arg>
 				<arg choice='plain'>
@@ -396,8 +394,8 @@
 				<listitem>
 					<para>Provide a password to be used for authenticating with
 						the broker. Using this argument without also specifying
-						a username is invalid. See also the
-						<option>--username</option> option.</para>
+						a username is invalid when using MQTT v3.1 or v3.1.1.
+						See also the <option>--username</option> option.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>

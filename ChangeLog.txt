@@ -28,6 +28,8 @@ Clients:
 - Fix mosquitto_pub exiting with error code 0 when an error occurred.
   Closes #1285.
 - Fix mosquitto_pub not using the `-c` option. Closes #1273.
+- Fix MQTT v5 clients not being able to specify a password without a username.
+  Closes #1274.
 
 
 1.6.2 - 20190430

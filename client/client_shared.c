@@ -325,9 +325,6 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 		fprintf(stderr, "Error: Will retain given, but no will topic given.\n");
 		return 1;
 	}
-	if(cfg->password && !cfg->username){
-		err_printf(cfg, "Warning: Not using password since username not set.\n");
-	}
 #ifdef WITH_TLS
 	if((cfg->certfile && !cfg->keyfile) || (cfg->keyfile && !cfg->certfile)){
 		fprintf(stderr, "Error: Both certfile and keyfile must be provided if one of them is set.\n");
@@ -1084,8 +1081,8 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 	}
 	cfg->will_props = NULL;
 
-	if(cfg->username && mosquitto_username_pw_set(mosq, cfg->username, cfg->password)){
-		err_printf(cfg, "Error: Problem setting username and password.\n");
+	if((cfg->username || cfg->password) && mosquitto_username_pw_set(mosq, cfg->username, cfg->password)){
+		err_printf(cfg, "Error: Problem setting username and/or password.\n");
 		mosquitto_lib_cleanup();
 		return 1;
 	}
