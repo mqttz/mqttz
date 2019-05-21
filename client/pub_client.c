@@ -312,7 +312,7 @@ int pub_shared_loop(struct mosquitto *mosq)
 	if(mode == MSGMODE_STDIN_LINE){
 		mosquitto_loop_stop(mosq, false);
 	}
-	return 0;
+	return rc;
 }
 
 

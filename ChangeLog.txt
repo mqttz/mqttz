@@ -15,6 +15,8 @@ Clients:
 - Fix -L url parsing when `/topic` part is missing.
 - Stop some error messages being printed even when `--quiet` was used.
   Closes #1284.
+- Fix mosquitto_pub exiting with error code 0 when an error occurred.
+  Closes #1285.
 
 
 1.6.2 - 20190430
