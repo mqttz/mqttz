@@ -15,6 +15,10 @@ Broker:
 - Fix Will message for a persistent client not being sent on disconnect.
   Closes #1273.
 
+Client library:
+- Fix typo causing build error on Windows when building without TLS support.
+  Closes #1264.
+
 Clients:
 - Fix -L url parsing when `/topic` part is missing.
 - Stop some error messages being printed even when `--quiet` was used.

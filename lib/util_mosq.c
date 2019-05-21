@@ -331,7 +331,7 @@ int util__random_bytes(void *bytes, int count)
 		rc = MOSQ_ERR_SUCCESS;
 	}
 #elif defined(WIN32)
-	HRYPTPROV provider;
+	HCRYPTPROV provider;
 
 	if(!CryptAcquireContext(&provider, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT)){
 		return MOSQ_ERR_UNKNOWN;
