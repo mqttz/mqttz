@@ -686,6 +686,13 @@ log_timestamp_format %Y-%m-%dT%H:%M:%S
 						signal. If <replaceable>false</replaceable>, the data
 						will be stored in memory only. Defaults to
 						<replaceable>false</replaceable>.</para>
+					<para>The persistence file may change its format in a new
+						version. The broker can currently read all old formats,
+						but will only save in the latest format. It should always
+						be safe to upgrade, but cautious users may wish to take a
+						copy of the persistence file before installing a new
+						version so that they can roll back to an earlier version
+						if necessary.</para>
 					<para>Reloaded on reload signal.</para>
 				</listitem>
 			</varlistentry>

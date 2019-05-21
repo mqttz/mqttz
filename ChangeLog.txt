@@ -14,6 +14,8 @@ Broker:
   client reconnects after a clean disconnect. Closes #1273.
 - Fix Will message for a persistent client not being sent on disconnect.
   Closes #1273.
+- Improve documentation around the upgrading of persistence files. Closes
+  #1276.
 
 Client library:
 - Fix typo causing build error on Windows when building without TLS support.
