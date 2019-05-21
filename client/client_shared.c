@@ -1081,8 +1081,8 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 	}
 	cfg->will_props = NULL;
 
-	if((cfg->username || cfg->password) && mosquitto_username_pw_set(mosq, cfg->username, cfg->password)){
-		err_printf(cfg, "Error: Problem setting username and/or password.\n");
+	if(cfg->username && mosquitto_username_pw_set(mosq, cfg->username, cfg->password)){
+		err_printf(cfg, "Error: Problem setting username and password.\n");
 		mosquitto_lib_cleanup();
 		return 1;
 	}

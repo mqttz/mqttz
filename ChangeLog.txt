@@ -43,8 +43,6 @@ Clients:
 - Fix mosquitto_pub not using the `-c` option. Closes #1273.
 - Fix MQTT v5 clients not being able to specify a password without a username.
   Closes #1274.
-
-Clients:
 - Fix `mosquitto_pub -l` not handling network failures. Closes #1152.
 - Fix double free on exit in mosquitto_pub. Closes #1280.
 
@@ -54,6 +52,7 @@ Documentation:
 
 Build:
 - CLIENT_LDFLAGS now uses LDFLAGS. Closes #1294.
+=======
 
 
 1.6.2 - 20190430
