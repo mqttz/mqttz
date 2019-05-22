@@ -77,6 +77,16 @@ struct mosquitto_acl_msg {
  *   denied.
  */
 
+/* =========================================================================
+ *
+ * Helper Functions
+ *
+ * ========================================================================= */
+
+/* There are functions that are available for plugin developers to use in
+ * mosquitto_broker.h, including logging and accessor functions.
+ */
+
 
 /* =========================================================================
  *
