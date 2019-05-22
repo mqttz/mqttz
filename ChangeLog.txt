@@ -31,6 +31,10 @@ Clients:
 - Fix MQTT v5 clients not being able to specify a password without a username.
   Closes #1274.
 
+Documentation:
+- Remove references to Python binding and C++ wrapper in libmosquitto man
+  page. Closes #1266.
+
 
 1.6.2 - 20190430
 ================
