@@ -92,7 +92,7 @@ void connection_check_acl(struct mosquitto_db *db, struct mosquitto *context, st
 								   msg_tail->store->qos, msg_tail->store->retain, MOSQ_ACL_READ) != MOSQ_ERR_SUCCESS){
 
 				DL_DELETE((*head), msg_tail);
-				db__msg_store_deref(db, &msg_tail->store);
+				db__msg_store_ref_dec(db, &msg_tail->store);
 				mosquitto_property_free_all(&msg_tail->properties);
 				mosquitto__free(msg_tail);
 			}

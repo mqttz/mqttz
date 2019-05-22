@@ -146,14 +146,14 @@ static int subs__process(struct mosquitto_db *db, struct mosquitto__subhier *hie
 		}
 #endif
 		if(hier->retained){
-			db__msg_store_deref(db, &hier->retained);
+			db__msg_store_ref_dec(db, &hier->retained);
 #ifdef WITH_SYS_TREE
 			db->retained_count--;
 #endif
 		}
 		if(stored->payloadlen){
 			hier->retained = stored;
-			hier->retained->ref_count++;
+			db__msg_store_ref_inc(hier->retained);
 #ifdef WITH_SYS_TREE
 			db->retained_count++;
 #endif
@@ -803,7 +803,7 @@ int sub__messages_queue(struct mosquitto_db *db, const char *source_id, const ch
 	clients - this is required because websockets client calls
 	db__message_write(), which could remove the message if ref_count==0.
 	*/
-	(*stored)->ref_count++;
+	db__msg_store_ref_inc(*stored);
 
 	HASH_FIND(hh, db->subs, tokens->topic, tokens->topic_len, subhier);
 	if(subhier){
@@ -818,7 +818,7 @@ int sub__messages_queue(struct mosquitto_db *db, const char *source_id, const ch
 	sub__topic_tokens_free(tokens);
 
 	/* Remove our reference and free if needed. */
-	db__msg_store_deref(db, stored);
+	db__msg_store_ref_dec(db, stored);
 
 	return rc;
 }
@@ -981,7 +981,7 @@ static int retain__process(struct mosquitto_db *db, struct mosquitto__subhier *b
 	struct mosquitto_msg_store *retained;
 
 	if(branch->retained->message_expiry_time > 0 && now > branch->retained->message_expiry_time){
-		db__msg_store_deref(db, &branch->retained);
+		db__msg_store_ref_dec(db, &branch->retained);
 		branch->retained = NULL;
 #ifdef WITH_SYS_TREE
 		db->retained_count--;
