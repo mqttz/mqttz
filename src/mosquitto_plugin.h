@@ -17,6 +17,10 @@ Contributors:
 #ifndef MOSQUITTO_PLUGIN_H
 #define MOSQUITTO_PLUGIN_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MOSQ_AUTH_PLUGIN_VERSION 4
 
 #define MOSQ_ACL_NONE 0x00
@@ -305,4 +309,10 @@ int mosquitto_auth_psk_key_get(void *user_data, struct mosquitto *client, const 
 int mosquitto_auth_start(void *user_data, struct mosquitto *client, const char *method, bool reauth, const void *data_in, uint16_t data_in_len, void **data_out, uint16_t *data_out_len);
 
 int mosquitto_auth_continue(void *user_data, struct mosquitto *client, const char *method, const void *data_in, uint16_t data_in_len, void **data_out, uint16_t *data_out_len);
+
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

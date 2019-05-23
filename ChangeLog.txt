@@ -16,6 +16,8 @@ Broker:
   Closes #1273.
 - Improve documentation around the upgrading of persistence files. Closes
   #1276.
+- Add 'extern "C"' on mosquitto_broker.h and mosquitto_plugin.h for C++ plugin
+  writing. Closes #1290.
 
 Client library:
 - Fix typo causing build error on Windows when building without TLS support.

@@ -17,6 +17,10 @@ Contributors:
 #ifndef MOSQUITTO_BROKER_H
 #define MOSQUITTO_BROKER_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdbool.h>
 
 struct mosquitto;
@@ -160,5 +164,9 @@ const char *mosquitto_client_username(const struct mosquitto *client);
  *   MOSQ_ERR_NOMEM - on out of memory
  */
 int mosquitto_set_username(struct mosquitto *client, const char *username);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
