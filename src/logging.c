@@ -373,10 +373,19 @@ int log__printf(struct mosquitto *mosq, int priority, const char *fmt, ...)
 void log__internal(const char *fmt, ...)
 {
 	va_list va;
+	char buf[200];
+	int len;
 
 	va_start(va, fmt);
-	log__vprintf(MOSQ_LOG_INTERNAL, fmt, va);
+	len = vsnprintf(buf, 200, fmt, va);
 	va_end(va);
+
+	if(len >= 200){
+		log__printf(NULL, MOSQ_LOG_INTERNAL, "Internal log buffer too short (%d)", len);
+		return;
+	}
+
+	log__printf(NULL, MOSQ_LOG_INTERNAL, "%s%s%s", "\e[32m", buf, "\e[0m"); 
 }
 
 int mosquitto_log_vprintf(int level, const char *fmt, va_list va)
