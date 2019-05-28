@@ -614,12 +614,19 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context, int reaso
 #ifdef WITH_EPOLL
 	struct epoll_event ev;
 #endif
+#ifdef WITH_WEBSOCKETS
+	bool is_duplicate = false;
+#endif
 
 	if(context->state == mosq_cs_disconnected){
 		return;
 	}
 #ifdef WITH_WEBSOCKETS
 	if(context->wsi){
+		if(context->state == mosq_cs_duplicate){
+			is_duplicate = true;
+		}
+
 		if(context->state != mosq_cs_disconnecting && context->state != mosq_cs_disconnect_with_will){
 			context__set_state(context, mosq_cs_disconnect_ws);
 		}
@@ -636,7 +643,15 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context, int reaso
 			context->sock = INVALID_SOCKET;
 			context->pollfd_index = -1;
 		}
-		context__remove_from_by_id(db, context);
+		if(is_duplicate){
+			/* This occurs if another client is taking over the same client id.
+			 * It is important to remove this from the by_id hash here, so it
+			 * doesn't leave us with multiple clients in the hash with the same
+			 * id. Websockets doesn't actually close the connection here,
+			 * unlike for normal clients, which means there is extra time when
+			 * there could be two clients with the same id in the hash. */
+			context__remove_from_by_id(db, context);
+		}
 	}else
 #endif
 	{

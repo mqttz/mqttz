@@ -18,6 +18,8 @@ Broker:
   #1276.
 - Add 'extern "C"' on mosquitto_broker.h and mosquitto_plugin.h for C++ plugin
   writing. Closes #1290.
+- Fix persistent Websockets clients not receiving messages after they
+  reconnect, having sent DISCONNECT on a previous session. Closes #1227.
 
 Client library:
 - Fix typo causing build error on Windows when building without TLS support.
