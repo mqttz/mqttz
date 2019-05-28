@@ -78,8 +78,11 @@ void will_delay__check(struct mosquitto_db *db, time_t now)
 		if(item->context->will_delay_time < now){
 			DL_DELETE(delay_list, item);
 			item->context->will_delay_interval = 0;
+			item->context->will_delay_entry = NULL;
 			context__send_will(db, item->context);
-			context__add_to_disused(db, item->context);
+			if(item->context->session_expiry_interval == 0){
+				context__add_to_disused(db, item->context);
+			}
 			mosquitto__free(item);
 		}else{
 			return;
