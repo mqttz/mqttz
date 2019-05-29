@@ -540,8 +540,12 @@ int handle__connect(struct mosquitto_db *db, struct mosquitto *context)
 			}else{
 				allow_zero_length_clientid = db->config->security_options.allow_zero_length_clientid;
 			}
-			if(clean_start == 0 || allow_zero_length_clientid == false){
-				send__connack(db, context, 0, CONNACK_REFUSED_IDENTIFIER_REJECTED, NULL);
+			if((context->protocol == mosq_p_mqtt311 && clean_start == 0) || allow_zero_length_clientid == false){
+				if(context->protocol == mosq_p_mqtt311){
+					send__connack(db, context, 0, CONNACK_REFUSED_IDENTIFIER_REJECTED, NULL);
+				}else{
+					send__connack(db, context, 0, MQTT_RC_UNSPECIFIED, NULL);
+				}
 				rc = MOSQ_ERR_PROTOCOL;
 				goto handle_connect_error;
 			}else{
