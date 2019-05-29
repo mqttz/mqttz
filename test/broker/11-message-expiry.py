@@ -75,7 +75,10 @@ try:
     sock.close()
     broker = mosq_test.start_broker(filename=os.path.basename(__file__), use_conf=True, port=port)
 
-    time.sleep(2)
+    if os.environ.get('TRAVIS') is not None:
+        time.sleep(5)
+    else:
+        time.sleep(2)
     
     sock = mosq_test.do_client_connect(connect_packet, connack2_packet, timeout=20, port=port)
     packet = sock.recv(len(publish2s_packet))
