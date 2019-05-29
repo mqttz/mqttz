@@ -25,6 +25,9 @@ Broker:
 - Fix incorrect shared subscription topic '$shared'.
 - Fix zero length client ids being rejected for MQTT v5 clients with clean
   start set to true.
+- Fix MQTT v5 overlapping subscription behaviour. Clients now receive message
+  from all matching subscriptions rather than the first one encountered, which
+  ensures the maximum QoS requirement is met.
 
 Client library:
 - Fix typo causing build error on Windows when building without TLS support.

@@ -364,7 +364,8 @@ int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint1
 	 * multiple times for overlapping subscriptions, although this is only the
 	 * case for SUBSCRIPTION with multiple subs in so is a minor concern.
 	 */
-	if(db->config->allow_duplicate_messages == false
+	if(context->protocol != mosq_p_mqtt5
+			&& db->config->allow_duplicate_messages == false
 			&& dir == mosq_md_out && retain == false && stored->dest_ids){
 
 		for(i=0; i<stored->dest_id_count; i++){
