@@ -368,6 +368,10 @@ static int mosquitto__tls_server_ctx(struct mosquitto__listener *listener)
 #endif
 #endif
 
+#ifdef SSL_OP_NO_RENEGOTIATION
+	SSL_CTX_set_options(listener->ssl_ctx, SSL_OP_NO_RENEGOTIATION);
+#endif
+
 	snprintf(buf, 256, "mosquitto-%d", listener->port);
 	SSL_CTX_set_session_id_context(listener->ssl_ctx, (unsigned char *)buf, strlen(buf));
 
