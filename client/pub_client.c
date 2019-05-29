@@ -42,7 +42,6 @@ static int last_mid = -1;
 static int last_mid_sent = -1;
 static char *line_buf = NULL;
 static int line_buf_len = 1024;
-static bool connected = true;
 static bool disconnect_sent = false;
 static int publish_count = 0;
 static bool ready_for_repeat = false;
@@ -104,7 +103,7 @@ void my_disconnect_callback(struct mosquitto *mosq, void *obj, int rc, const mos
 	UNUSED(rc);
 	UNUSED(properties);
 
-	connected = false;
+	status = STATUS_DISCONNECTED;
 }
 
 int my_publish(struct mosquitto *mosq, int *mid, const char *topic, int payloadlen, void *payload, int qos, bool retain)
@@ -222,6 +221,7 @@ int pub_shared_loop(struct mosquitto *mosq)
 	int buf_len_actual;
 	int mode;
 	int loop_delay = 1000;
+	bool stdin_finished = false;
 
 	if(cfg.repeat_count > 1 && (cfg.repeat_delay.tv_sec == 0 || cfg.repeat_delay.tv_usec != 0)){
 		loop_delay = cfg.repeat_delay.tv_usec / 2000;
@@ -231,6 +231,7 @@ int pub_shared_loop(struct mosquitto *mosq)
 
 	if(mode == MSGMODE_STDIN_LINE){
 		mosquitto_loop_start(mosq);
+		stdin_finished = false;
 	}
 
 	do{
@@ -238,7 +239,7 @@ int pub_shared_loop(struct mosquitto *mosq)
 			if(status == STATUS_CONNACK_RECVD){
 				pos = 0;
 				read_len = line_buf_len;
-				while(connected && fgets(&line_buf[pos], read_len, stdin)){
+				while(status == STATUS_CONNACK_RECVD && fgets(&line_buf[pos], read_len, stdin)){
 					buf_len_actual = strlen(line_buf);
 					if(line_buf[buf_len_actual-1] == '\n'){
 						line_buf[buf_len_actual-1] = '\0';
@@ -270,6 +271,10 @@ int pub_shared_loop(struct mosquitto *mosq)
 						last_mid = mid_sent;
 						status = STATUS_WAITING;
 					}
+					stdin_finished = true;
+				}else if(status == STATUS_DISCONNECTED){
+					/* Not end of stdin, so we've lost our connection and must
+					 * reconnect */
 				}
 			}else if(status == STATUS_WAITING){
 				if(last_mid_sent == last_mid && disconnect_sent == false){
@@ -307,12 +312,16 @@ int pub_shared_loop(struct mosquitto *mosq)
 				}
 			}
 		}
-	}while(rc == MOSQ_ERR_SUCCESS && connected);
+	}while(rc == MOSQ_ERR_SUCCESS && stdin_finished == false);
 
 	if(mode == MSGMODE_STDIN_LINE){
 		mosquitto_loop_stop(mosq, false);
 	}
-	return rc;
+	if(status == STATUS_DISCONNECTED){
+		return MOSQ_ERR_SUCCESS;
+	}else{
+		return rc;
+	}
 }
 
 

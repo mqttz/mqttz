@@ -20,6 +20,7 @@ Contributors:
 #define STATUS_CONNACK_RECVD 1
 #define STATUS_WAITING 2
 #define STATUS_DISCONNECTING 3
+#define STATUS_DISCONNECTED 4
 
 extern int mid_sent;
 extern int status;
