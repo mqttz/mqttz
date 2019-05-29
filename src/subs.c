@@ -706,7 +706,7 @@ int sub__add(struct mosquitto_db *db, struct mosquitto *context, const char *sub
 
 	if(sub__topic_tokenise(sub, &tokens)) return 1;
 
-	if(!strcmp(tokens->topic, "$shared")){
+	if(!strcmp(tokens->topic, "$share")){
 		if(!tokens->next || !tokens->next->next){
 			sub__topic_tokens_free(tokens);
 			return MOSQ_ERR_PROTOCOL;
@@ -756,7 +756,7 @@ int sub__remove(struct mosquitto_db *db, struct mosquitto *context, const char *
 
 	if(sub__topic_tokenise(sub, &tokens)) return 1;
 
-	if(!strcmp(tokens->topic, "$shared")){
+	if(!strcmp(tokens->topic, "$share")){
 		if(!tokens->next || !tokens->next->next){
 			sub__topic_tokens_free(tokens);
 			return MOSQ_ERR_PROTOCOL;
