@@ -57,6 +57,9 @@ Documentation:
 - Remove references to Python binding and C++ wrapper in libmosquitto man
   page. Closes #1266.
 
+Build:
+- CLIENT_LDFLAGS now uses LDFLAGS. Closes #1294.
+
 
 1.6.2 - 20190430
 ================
