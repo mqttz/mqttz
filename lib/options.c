@@ -262,6 +262,7 @@ int mosquitto_string_option(struct mosquitto *mosq, enum mosq_opt_t option, cons
 	switch(option){
 		case MOSQ_OPT_TLS_ENGINE:
 #ifdef WITH_TLS
+#    if !defined(OPENSSL_NO_ENGINE)
 			eng = ENGINE_by_id(value);
 			if(!eng){
 				return MOSQ_ERR_INVAL;
@@ -272,6 +273,7 @@ int mosquitto_string_option(struct mosquitto *mosq, enum mosq_opt_t option, cons
 				return MOSQ_ERR_NOMEM;
 			}
 			return MOSQ_ERR_SUCCESS;
+#endif
 #else
 			return MOSQ_ERR_NOT_SUPPORTED;
 #endif
