@@ -43,6 +43,9 @@ Clients:
 - Fix MQTT v5 clients not being able to specify a password without a username.
   Closes #1274.
 
+Clients:
+- Fix double free on exit in mosquitto_pub. Closes #1280.
+
 Documentation:
 - Remove references to Python binding and C++ wrapper in libmosquitto man
   page. Closes #1266.

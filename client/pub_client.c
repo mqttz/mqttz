@@ -508,6 +508,7 @@ int main(int argc, char *argv[])
 
 	if(cfg.message && cfg.pub_mode == MSGMODE_FILE){
 		free(cfg.message);
+		cfg.message = NULL;
 	}
 	mosquitto_destroy(mosq);
 	mosquitto_lib_cleanup();
