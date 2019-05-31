@@ -291,6 +291,9 @@ void db__message_dequeue_first(struct mosquitto *context, struct mosquitto_msg_d
 	msg = msg_data->queued;
 	DL_DELETE(msg_data->queued, msg);
 	DL_APPEND(msg_data->inflight, msg);
+	if(msg_data->inflight_quota > 0){
+		msg_data->inflight_quota--;
+	}
 }
 
 
@@ -757,9 +760,7 @@ int db__message_reconnect_reset_outgoing(struct mosquitto_db *db, struct mosquit
 		if(msg->qos > 0){
 			context->msgs_out.msg_count12++;
 			context->msgs_out.msg_bytes12 += msg->store->payloadlen;
-			if(context->msgs_out.inflight_quota > 0){
-				context->msgs_out.inflight_quota--;
-			}
+			util__decrement_receive_quota(context);
 		}
 
 		switch(msg->qos){
@@ -828,9 +829,7 @@ int db__message_reconnect_reset_incoming(struct mosquitto_db *db, struct mosquit
 		if(msg->qos > 0){
 			context->msgs_in.msg_count12++;
 			context->msgs_in.msg_bytes12 += msg->store->payloadlen;
-			if(context->msgs_in.inflight_quota > 0){
-				context->msgs_in.inflight_quota--;
-			}
+			util__decrement_receive_quota(context);
 		}
 
 		if(msg->qos != 2){
@@ -1107,7 +1106,7 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	DL_FOREACH_SAFE(context->msgs_in.queued, tail, tmp){
-		if(context->msgs_out.inflight_maximum != 0 && msg_count >= context->msgs_out.inflight_maximum){
+		if(context->msgs_out.inflight_maximum != 0 && context->msgs_in.inflight_quota == 0){
 			break;
 		}
 
@@ -1126,7 +1125,7 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	DL_FOREACH_SAFE(context->msgs_out.queued, tail, tmp){
-		if(context->msgs_out.inflight_maximum != 0 && msg_count >= context->msgs_out.inflight_maximum){
+		if(context->msgs_out.inflight_maximum != 0 && context->msgs_out.inflight_quota == 0){
 			break;
 		}
 
