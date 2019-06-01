@@ -116,4 +116,3 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libmosquittopp.pc" DESTINATION "${CMA
 # Testing
 # ========================================
 enable_testing()
-add_test("test" make -C ${mosquitto_SOURCE_DIR}/test test)
