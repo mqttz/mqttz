@@ -45,6 +45,7 @@ Clients:
 - Fix MQTT v5 clients not being able to specify a password without a username.
   Closes #1274.
 - Fix `mosquitto_pub -l` not handling network failures. Closes #1152.
+- Fix `mosquitto_pub -l` not handling zero length input. Closes #1302.
 - Fix double free on exit in mosquitto_pub. Closes #1280.
 
 Documentation:
