@@ -1434,6 +1434,7 @@ cleanup:
 	if(port) free(port);
 	return 1;
 }
+#endif
 
 void err_printf(const struct mosq_config *cfg, const char *fmt, ...)
 {
@@ -1446,4 +1447,3 @@ void err_printf(const struct mosq_config *cfg, const char *fmt, ...)
 	va_end(va);
 }
 
-#endif
