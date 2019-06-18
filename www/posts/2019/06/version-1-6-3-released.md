@@ -1,7 +1,7 @@
 <!--
 .. title: Version 1.6.3 released
 .. slug: version-1-6-3-released
-.. date: 2019-06-13 17:00:00 UTC+1
+.. date: 2019-06-18 13:00:00 UTC+1
 .. tags: Releases
 .. category:
 .. link:
