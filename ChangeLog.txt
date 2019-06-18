@@ -30,6 +30,7 @@ Broker:
   ensures the maximum QoS requirement is met.
 - Fix incoming/outgoing quota problems for QoS>0.
 - Remove obsolete `store_clean_interval` from documentation.
+- Fix v4 authentication plugin never calling psk_key_get.
 
 Client library:
 - Fix typo causing build error on Windows when building without TLS support.
