@@ -61,4 +61,9 @@
 
 #define UNUSED(A) (void)(A)
 
+/* Android Bionic libpthread implementation doesn't have pthread_cancel */
+#ifndef ANDROID
+#  define HAVE_PTHREAD_CANCEL
+#endif
+
 #endif
