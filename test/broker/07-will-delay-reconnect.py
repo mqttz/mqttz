@@ -25,9 +25,6 @@ def do_test():
     subscribe_packet = mosq_test.gen_subscribe(mid, "will/test", 0, proto_ver=5)
     suback_packet = mosq_test.gen_suback(mid, 0, proto_ver=5)
 
-    pingreq_packet = mosq_test.gen_pingreq()
-    pingresp_packet = mosq_test.gen_pingresp()
-
     port = mosq_test.get_port()
     broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port)
 
@@ -47,7 +44,7 @@ def do_test():
         # whether we get the old will. We should not.
         sock2.close()
 
-        mosq_test.do_send_receive(sock1, pingreq_packet, pingresp_packet, "pingresp")
+        mosq_test.do_ping(sock1)
         rc = 0
 
         sock1.close()

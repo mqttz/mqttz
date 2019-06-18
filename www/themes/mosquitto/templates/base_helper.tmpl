@@ -22,16 +22,6 @@ lang="${lang}">
 <head>
     <meta charset="utf-8">
 
-  <!-- Global site tag (gtag.js) - Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-11832660-3"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'UA-11832660-3');
-  </script>
-
     % if use_base_tag:
     <base href="${abs_link(permalink)}">
     % endif

@@ -25,6 +25,7 @@ Contributors:
 #include "packet_mosq.h"
 #include "property_mosq.h"
 #include "send_mosq.h"
+#include "will_mosq.h"
 
 
 int handle__auth(struct mosquitto_db *db, struct mosquitto *context)
@@ -119,11 +120,7 @@ int handle__auth(struct mosquitto_db *db, struct mosquitto *context)
 		free(auth_data_out);
 		if(context->state == mosq_cs_authenticating && context->will){
 			/* Free will without sending if this is our first authentication attempt */
-			mosquitto_property_free_all(&context->will->properties);
-			mosquitto__free(context->will->msg.payload);
-			mosquitto__free(context->will->msg.topic);
-			mosquitto__free(context->will);
-			context->will = NULL;
+			will__clear(context);
 		}
 		if(rc == MOSQ_ERR_AUTH){
 			send__connack(db, context, 0, MQTT_RC_NOT_AUTHORIZED, NULL);

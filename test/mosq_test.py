@@ -603,6 +603,10 @@ def get_lib_port():
         return 1888
 
 
+def do_ping(sock, error_string="pingresp"):
+     do_send_receive(sock, gen_pingreq(), gen_pingresp(), error_string)
+
+
 @atexit.register
 def test_cleanup():
     global vg_logfiles

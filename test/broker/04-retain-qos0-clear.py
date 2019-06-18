@@ -41,13 +41,12 @@ try:
         # Subscribe to topic, we shouldn't get anything back apart
         # from the SUBACK.
         mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback")
-        try:
-            retain_clear = sock.recv(256)
-        except socket.timeout:
-            # This is the expected event
-            rc = 0
-        else:
-            print("FAIL: Received unexpected message.")
+        time.sleep(1)
+        # If we do get something back, it should be before this ping, so if
+        # this succeeds then we're ok.
+        mosq_test.do_ping(sock)
+        # This is the expected event
+        rc = 0
 
     sock.close()
 finally:

@@ -62,9 +62,6 @@ mid = 3
 publish4s_packet = mosq_test.gen_publish(topic="topic/two", mid=mid, qos=1, payload="message4")
 puback4s_packet = mosq_test.gen_puback(mid)
 
-pingreq_packet = mosq_test.gen_pingreq()
-pingresp_packet = mosq_test.gen_pingresp()
-
 rc = 1
 
 port = mosq_test.get_port()
@@ -108,7 +105,7 @@ try:
     mosq_test.do_send_receive(sock, publish4s_packet, puback4s_packet, "puback4")
 
     # Check for non delivery with a ping
-    mosq_test.do_send_receive(sock, pingreq_packet, pingresp_packet, "pingresp")
+    mosq_test.do_ping(sock)
 
     sock.close()
     rc = 0

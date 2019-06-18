@@ -504,12 +504,12 @@ int config__parse_args(struct mosquitto_db *db, struct mosquitto__config *config
 		config->listeners[config->listener_count-1].client_count = 0;
 		config->listeners[config->listener_count-1].use_username_as_clientid = config->default_listener.use_username_as_clientid;
 		config->listeners[config->listener_count-1].maximum_qos = config->default_listener.maximum_qos;
+		config->listeners[config->listener_count-1].max_topic_alias = config->default_listener.max_topic_alias;
 #ifdef WITH_TLS
 		config->listeners[config->listener_count-1].tls_version = config->default_listener.tls_version;
 		config->listeners[config->listener_count-1].tls_engine = config->default_listener.tls_engine;
 		config->listeners[config->listener_count-1].tls_keyform = config->default_listener.tls_keyform;
 		config->listeners[config->listener_count-1].tls_engine_kpass_sha1 = config->default_listener.tls_engine_kpass_sha1;
-		config->listeners[config->listener_count-1].max_topic_alias = config->default_listener.max_topic_alias;
 		config->listeners[config->listener_count-1].cafile = config->default_listener.cafile;
 		config->listeners[config->listener_count-1].capath = config->default_listener.capath;
 		config->listeners[config->listener_count-1].certfile = config->default_listener.certfile;

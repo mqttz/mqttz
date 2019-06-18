@@ -40,9 +40,6 @@ mid = 1
 publish_packet = mosq_test.gen_publish("bridge/test", qos=1, mid=mid, payload="message", retain=True)
 puback_packet = mosq_test.gen_puback(mid)
 
-pingreq_packet = mosq_test.gen_pingreq()
-pingresp_packet = mosq_test.gen_pingresp()
-
 ssock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 ssock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 ssock.settimeout(40)
@@ -75,7 +72,7 @@ try:
             # Guard against multiple retained messages of the same type by
             # sending a pingreq to give us something to expect back. If we get
             # a publish, it's a fail.
-            mosq_test.do_send_receive(bridge, pingreq_packet, pingresp_packet, "pingresp")
+            mosq_test.do_ping(bridge)
             rc = 0
 
     bridge.close()

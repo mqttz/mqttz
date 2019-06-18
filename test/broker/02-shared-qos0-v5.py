@@ -3,10 +3,10 @@
 # Test whether shared subscriptions work
 
 # Client 1 subscribes to #, non shared. Should receive everything.
-# Client 2 subscribes to $shared/one/share-test
-# Client 3 subscribes to $shared/one/share-test and $shared/two/share-test
-# Client 4 subscribes to $shared/two/share-test
-# Client 5 subscribes to $shared/one/share-test
+# Client 2 subscribes to $share/one/share-test
+# Client 3 subscribes to $share/one/share-test and $share/two/share-test
+# Client 4 subscribes to $share/two/share-test
+# Client 5 subscribes to $share/one/share-test
 
 # A publish to "share-test" should always go to client 1.
 # The first publish should also go to client 2 (share one) and client 3 (share two)
@@ -37,19 +37,19 @@ connack5_packet = mosq_test.gen_connack(rc=0, proto_ver=5)
 subscribe1_packet = mosq_test.gen_subscribe(mid, "#", 0, proto_ver=5)
 suback1_packet = mosq_test.gen_suback(mid, 0, proto_ver=5)
 
-subscribe2_packet = mosq_test.gen_subscribe(mid, "$shared/one/share-test", 0, proto_ver=5)
+subscribe2_packet = mosq_test.gen_subscribe(mid, "$share/one/share-test", 0, proto_ver=5)
 suback2_packet = mosq_test.gen_suback(mid, 0, proto_ver=5)
 
-subscribe3a_packet = mosq_test.gen_subscribe(mid, "$shared/one/share-test", 0, proto_ver=5)
+subscribe3a_packet = mosq_test.gen_subscribe(mid, "$share/one/share-test", 0, proto_ver=5)
 suback3a_packet = mosq_test.gen_suback(mid, 0, proto_ver=5)
 
-subscribe3b_packet = mosq_test.gen_subscribe(mid, "$shared/two/share-test", 0, proto_ver=5)
+subscribe3b_packet = mosq_test.gen_subscribe(mid, "$share/two/share-test", 0, proto_ver=5)
 suback3b_packet = mosq_test.gen_suback(mid, 0, proto_ver=5)
 
-subscribe4_packet = mosq_test.gen_subscribe(mid, "$shared/two/share-test", 0, proto_ver=5)
+subscribe4_packet = mosq_test.gen_subscribe(mid, "$share/two/share-test", 0, proto_ver=5)
 suback4_packet = mosq_test.gen_suback(mid, 0, proto_ver=5)
 
-subscribe5_packet = mosq_test.gen_subscribe(mid, "$shared/one/share-test", 0, proto_ver=5)
+subscribe5_packet = mosq_test.gen_subscribe(mid, "$share/one/share-test", 0, proto_ver=5)
 suback5_packet = mosq_test.gen_suback(mid, 0, proto_ver=5)
 
 publish1_packet = mosq_test.gen_publish("share-test", qos=0, payload="message1", proto_ver=5)
@@ -60,19 +60,19 @@ mid = 2
 unsubscribe1_packet = mosq_test.gen_unsubscribe(mid, "#", proto_ver=5)
 unsuback1_packet = mosq_test.gen_unsuback(mid, proto_ver=5)
 
-unsubscribe2_packet = mosq_test.gen_unsubscribe(mid, "$shared/one/share-test", proto_ver=5)
+unsubscribe2_packet = mosq_test.gen_unsubscribe(mid, "$share/one/share-test", proto_ver=5)
 unsuback2_packet = mosq_test.gen_unsuback(mid, proto_ver=5)
 
-unsubscribe3a_packet = mosq_test.gen_unsubscribe(mid, "$shared/one/share-test", proto_ver=5)
+unsubscribe3a_packet = mosq_test.gen_unsubscribe(mid, "$share/one/share-test", proto_ver=5)
 unsuback3a_packet = mosq_test.gen_unsuback(mid, proto_ver=5)
 
-unsubscribe3b_packet = mosq_test.gen_unsubscribe(mid, "$shared/two/share-test", proto_ver=5)
+unsubscribe3b_packet = mosq_test.gen_unsubscribe(mid, "$share/two/share-test", proto_ver=5)
 unsuback3b_packet = mosq_test.gen_unsuback(mid, proto_ver=5)
 
-unsubscribe4_packet = mosq_test.gen_unsubscribe(mid, "$shared/two/share-test", proto_ver=5)
+unsubscribe4_packet = mosq_test.gen_unsubscribe(mid, "$share/two/share-test", proto_ver=5)
 unsuback4_packet = mosq_test.gen_unsuback(mid, proto_ver=5)
 
-unsubscribe5_packet = mosq_test.gen_unsubscribe(mid, "$shared/one/share-test", proto_ver=5)
+unsubscribe5_packet = mosq_test.gen_unsubscribe(mid, "$share/one/share-test", proto_ver=5)
 unsuback5_packet = mosq_test.gen_unsuback(mid, proto_ver=5)
 
 

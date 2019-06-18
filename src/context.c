@@ -25,6 +25,7 @@ Contributors:
 #include "packet_mosq.h"
 #include "property_mosq.h"
 #include "time_mosq.h"
+#include "will_mosq.h"
 
 #include "uthash.h"
 
@@ -218,13 +219,7 @@ void context__send_will(struct mosquitto_db *db, struct mosquitto *ctxt)
 					&ctxt->will->properties);
 		}
 	}
-	if(ctxt->will){
-		mosquitto_property_free_all(&ctxt->will->properties);
-		mosquitto__free(ctxt->will->msg.topic);
-		mosquitto__free(ctxt->will->msg.payload);
-		mosquitto__free(ctxt->will);
-		ctxt->will = NULL;
-	}
+	will__clear(ctxt);
 }
 
 
@@ -232,8 +227,8 @@ void context__disconnect(struct mosquitto_db *db, struct mosquitto *context)
 {
 	net__socket_close(db, context);
 
+	context__send_will(db, context);
 	if(context->session_expiry_interval == 0){
-		context__send_will(db, context);
 
 #ifdef WITH_BRIDGE
 		if(!context->bridge)

@@ -180,6 +180,12 @@ enum mosquitto__keyform {
 };
 #endif
 
+struct will_delay_list {
+	struct mosquitto *context;
+	struct will_delay_list *prev;
+	struct will_delay_list *next;
+};
+
 struct mosquitto_msg_data{
 #ifdef WITH_BROKER
 	struct mosquitto_client_msg *inflight;
@@ -224,6 +230,7 @@ struct mosquitto {
 	struct mosquitto__packet *out_packet;
 	struct mosquitto_message_all *will;
 	struct mosquitto__alias *aliases;
+	struct will_delay_list *will_delay_entry;
 	uint32_t maximum_packet_size;
 	int alias_count;
 	uint32_t will_delay_interval;

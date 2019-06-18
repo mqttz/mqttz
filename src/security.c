@@ -752,7 +752,7 @@ int mosquitto_psk_key_get(struct mosquitto_db *db, struct mosquitto *context, co
 	}
 
 	for(i=0; i<opts->auth_plugin_config_count; i++){
-		if(opts->auth_plugin_configs[i].plugin.version == 3
+		if(opts->auth_plugin_configs[i].plugin.version == 4
 				&& opts->auth_plugin_configs[i].plugin.psk_key_get_v4){
 
 			rc = opts->auth_plugin_configs[i].plugin.psk_key_get_v4(

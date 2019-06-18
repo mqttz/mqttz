@@ -142,3 +142,9 @@ int sub__messages_queue(struct mosquitto_db *db, const char *source_id, const ch
 	return MOSQ_ERR_SUCCESS;
 }
 
+
+void db__msg_store_ref_inc(struct mosquitto_msg_store *store)
+{
+	store->ref_count++;
+}
+

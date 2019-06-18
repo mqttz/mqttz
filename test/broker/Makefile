@@ -129,6 +129,7 @@ endif
 	./06-bridge-br2b-remapping.py
 	./06-bridge-fail-persist-resend-qos1.py
 	./06-bridge-fail-persist-resend-qos2.py
+	./06-bridge-no-local.py
 	./06-bridge-per-listener-settings.py
 	./06-bridge-reconnect-local-out.py
 
@@ -143,6 +144,7 @@ endif
 	./07-will-null.py
 	./07-will-properties.py
 	./07-will-qos0.py
+	./07-will-reconnect-1273.py
 
 08 :
 ifeq ($(WITH_TLS),yes)

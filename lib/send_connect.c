@@ -111,11 +111,21 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 			payloadlen += will_proplen + varbytes;
 		}
 	}
+
+	/* After this check we can be sure that the username and password are
+	 * always valid for the current protocol, so there is no need to check
+	 * username before checking password. */
+	if(mosq->protocol == mosq_p_mqtt31 || mosq->protocol == mosq_p_mqtt311){
+		if(password != NULL && username == NULL){
+			return MOSQ_ERR_INVAL;
+		}
+	}
+
 	if(username){
 		payloadlen += 2+strlen(username);
-		if(password){
-			payloadlen += 2+strlen(password);
-		}
+	}
+	if(password){
+		payloadlen += 2+strlen(password);
 	}
 
 	packet->command = CMD_CONNECT;
@@ -145,9 +155,9 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 	}
 	if(username){
 		byte = byte | 0x1<<7;
-		if(mosq->password){
-			byte = byte | 0x1<<6;
-		}
+	}
+	if(mosq->password){
+		byte = byte | 0x1<<6;
 	}
 	packet__write_byte(packet, byte);
 	packet__write_uint16(packet, keepalive);
@@ -173,11 +183,12 @@ int send__connect(struct mosquitto *mosq, uint16_t keepalive, bool clean_session
 		packet__write_string(packet, mosq->will->msg.topic, strlen(mosq->will->msg.topic));
 		packet__write_string(packet, (const char *)mosq->will->msg.payload, mosq->will->msg.payloadlen);
 	}
+
 	if(username){
 		packet__write_string(packet, username, strlen(username));
-		if(password){
-			packet__write_string(packet, password, strlen(password));
-		}
+	}
+	if(password){
+		packet__write_string(packet, password, strlen(password));
 	}
 
 	mosq->keepalive = keepalive;

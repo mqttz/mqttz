@@ -83,7 +83,6 @@ int handle__pubrel(struct mosquitto_db *db, struct mosquitto *mosq)
 	}else if(rc != MOSQ_ERR_SUCCESS){
 		/* Message not found. Still send a PUBCOMP anyway because this could be
 		 * due to a repeated PUBREL after a client has reconnected. */
-		log__printf(mosq, MOSQ_LOG_WARNING, "Warning: Received PUBREL from %s for an unknown packet identifier %d.", mosq->id, mid);
 	}
 
 	rc = send__pubcomp(mosq, mid);

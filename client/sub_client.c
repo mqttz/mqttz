@@ -35,7 +35,7 @@ Contributors:
 #include <mqtt_protocol.h>
 #include "client_shared.h"
 
-static struct mosq_config cfg;
+struct mosq_config cfg;
 bool process_messages = true;
 int msg_count = 0;
 struct mosquitto *mosq = NULL;
@@ -124,11 +124,11 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 			mosquitto_unsubscribe_v5(mosq, NULL, cfg.unsub_topics[i], cfg.unsubscribe_props);
 		}
 	}else{
-		if(result && !cfg.quiet){
+		if(result){
 			if(cfg.protocol_version == MQTT_PROTOCOL_V5){
-				fprintf(stderr, "%s\n", mosquitto_reason_string(result));
+				err_printf(&cfg, "%s\n", mosquitto_reason_string(result));
 			}else{
-				fprintf(stderr, "%s\n", mosquitto_connack_string(result));
+				err_printf(&cfg, "%s\n", mosquitto_connack_string(result));
 			}
 		}
 		mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
@@ -168,7 +168,7 @@ void print_usage(void)
 	mosquitto_lib_version(&major, &minor, &revision);
 	printf("mosquitto_sub is a simple mqtt client that will subscribe to a set of topics and print all messages it receives.\n");
 	printf("mosquitto_sub version %s running on libmosquitto %d.%d.%d.\n\n", VERSION, major, minor, revision);
-	printf("Usage: mosquitto_sub {[-h host] [-p port] [-u username [-P password]] -t topic | -L URL [-t topic]}\n");
+	printf("Usage: mosquitto_sub {[-h host] [-p port] [-u username] [-P password] -t topic | -L URL [-t topic]}\n");
 	printf("                     [-c] [-k keepalive] [-q qos]\n");
 	printf("                     [-C msg_count] [-E] [-R] [--retained-only] [--remove-retained] [-T filter_out] [-U topic ...]\n");
 	printf("                     [-F format]\n");
@@ -307,10 +307,10 @@ int main(int argc, char *argv[])
 	if(!mosq){
 		switch(errno){
 			case ENOMEM:
-				if(!cfg.quiet) fprintf(stderr, "Error: Out of memory.\n");
+				err_printf(&cfg, "Error: Out of memory.\n");
 				break;
 			case EINVAL:
-				if(!cfg.quiet) fprintf(stderr, "Error: Invalid id and/or clean_session.\n");
+				err_printf(&cfg, "Error: Invalid id and/or clean_session.\n");
 				break;
 		}
 		goto cleanup;

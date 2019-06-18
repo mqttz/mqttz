@@ -138,7 +138,7 @@ static int persist__client_msg_restore(struct mosquitto_db *db, struct P_client_
 		return 1;
 	}
 	cmsg->store = load->store;
-	cmsg->store->ref_count++;
+	db__msg_store_ref_inc(cmsg->store);
 
 	context = persist__find_or_add_context(db, chunk->client_id, 0);
 	if(!context){

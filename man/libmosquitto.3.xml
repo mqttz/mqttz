@@ -18,11 +18,10 @@
 		<title>Description</title>
 		<para>This is an overview of how to use libmosquitto to create MQTT
 		aware client programs. There may be separate man pages on each of the
-		functions described here in the future. There is also a binding for
-		libmosquitto for C++ and a Python implementation. They are not
-		documented here but operate in a similar way.</para>
-		<para>This is fairly incomplete, please see mosquitto.h for a better
-		description of the functions.</para>
+		functions described here in the future.</para>
+		<para>This man page is woefully incomplete, please see the comments
+		in mosquitto.h for missing functions and a description of the
+		functions.</para>
 	</refsect1>
 
 	<refsect1>

@@ -11,7 +11,7 @@ project(mosquitto)
 cmake_minimum_required(VERSION 2.8)
 # Only for version 3 and up. cmake_policy(SET CMP0042 NEW)
 
-set (VERSION 1.6.2)
+set (VERSION 1.6.3)
 
 add_definitions (-DCMAKE -DVERSION=\"${VERSION}\")
 
@@ -116,4 +116,3 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libmosquittopp.pc" DESTINATION "${CMA
 # Testing
 # ========================================
 enable_testing()
-add_test("test" make -C ${mosquitto_SOURCE_DIR}/test test)

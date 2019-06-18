@@ -69,6 +69,12 @@ int mosquitto_username_pw_set(struct mosquitto *mosq, const char *username, cons
 {
 	if(!mosq) return MOSQ_ERR_INVAL;
 
+	if(mosq->protocol == mosq_p_mqtt311 || mosq->protocol == mosq_p_mqtt31){
+		if(password != NULL && username == NULL){
+			return MOSQ_ERR_INVAL;
+		}
+	}
+
 	mosquitto__free(mosq->username);
 	mosq->username = NULL;
 
@@ -81,13 +87,14 @@ int mosquitto_username_pw_set(struct mosquitto *mosq, const char *username, cons
 		}
 		mosq->username = mosquitto__strdup(username);
 		if(!mosq->username) return MOSQ_ERR_NOMEM;
-		if(password){
-			mosq->password = mosquitto__strdup(password);
-			if(!mosq->password){
-				mosquitto__free(mosq->username);
-				mosq->username = NULL;
-				return MOSQ_ERR_NOMEM;
-			}
+	}
+
+	if(password){
+		mosq->password = mosquitto__strdup(password);
+		if(!mosq->password){
+			mosquitto__free(mosq->username);
+			mosq->username = NULL;
+			return MOSQ_ERR_NOMEM;
 		}
 	}
 	return MOSQ_ERR_SUCCESS;
@@ -255,6 +262,7 @@ int mosquitto_string_option(struct mosquitto *mosq, enum mosq_opt_t option, cons
 	switch(option){
 		case MOSQ_OPT_TLS_ENGINE:
 #ifdef WITH_TLS
+#    if !defined(OPENSSL_NO_ENGINE)
 			eng = ENGINE_by_id(value);
 			if(!eng){
 				return MOSQ_ERR_INVAL;
@@ -265,6 +273,7 @@ int mosquitto_string_option(struct mosquitto *mosq, enum mosq_opt_t option, cons
 				return MOSQ_ERR_NOMEM;
 			}
 			return MOSQ_ERR_SUCCESS;
+#endif
 #else
 			return MOSQ_ERR_NOT_SUPPORTED;
 #endif

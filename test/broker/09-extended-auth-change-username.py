@@ -37,9 +37,6 @@ def do_test(per_listener):
     publish1_packet = mosq_test.gen_publish("topic/one", qos=1, mid=mid, payload="message", proto_ver=5)
     puback1_packet = mosq_test.gen_puback(mid, proto_ver=5, reason_code=mqtt5_rc.MQTT_RC_NOT_AUTHORIZED)
 
-    pingreq_packet = mosq_test.gen_pingreq()
-    pingresp_packet = mosq_test.gen_pingresp()
-
     # Connect without a username, but have the plugin change it
     props = mqtt5_props.gen_string_prop(mqtt5_props.PROP_AUTHENTICATION_METHOD, "change")
     connect2_packet = mosq_test.gen_connect("client-params-test2", keepalive=42, proto_ver=5, properties=props)
@@ -59,14 +56,14 @@ def do_test(per_listener):
         sock = mosq_test.do_client_connect(connect1_packet, connack1_packet, timeout=20, port=port)
         mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback1")
         mosq_test.do_send_receive(sock, publish1_packet, puback1_packet, "puback1")
-        mosq_test.do_send_receive(sock, pingreq_packet, pingresp_packet, "pingresp")
+        mosq_test.do_ping(sock)
         sock.close()
 
         sock = mosq_test.do_client_connect(connect2_packet, connack2_packet, timeout=20, port=port)
         mosq_test.do_send_receive(sock, subscribe_packet, suback_packet, "suback2")
         mosq_test.do_send_receive(sock, publish2s_packet, puback2s_packet, "puback2")
         if mosq_test.expect_packet(sock, "publish2", publish2r_packet):
-            mosq_test.do_send_receive(sock, pingreq_packet, pingresp_packet, "pingresp")
+            mosq_test.do_ping(sock)
             rc = 0
 
         sock.close()

@@ -24,9 +24,6 @@ mid=2
 publish2_packet = mosq_test.gen_publish(topic="test/topic", mid=mid, qos=1, payload="7890", proto_ver=5)
 puback2_packet = mosq_test.gen_puback(mid, proto_ver=5)
 
-pingreq_packet = mosq_test.gen_pingreq()
-pingresp_packet = mosq_test.gen_pingresp()
-
 port = mosq_test.get_port()
 broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port)
 
@@ -37,7 +34,7 @@ try:
     mosq_test.do_send_receive(sock, publish1_packet, puback1_packet, "puback 1")
 
     # We shouldn't receive the publish here because it is > MAXIMUM_PACKET_SIZE
-    mosq_test.do_send_receive(sock, pingreq_packet, pingresp_packet)
+    mosq_test.do_ping(sock)
 
     mosq_test.do_send_receive(sock, publish2_packet, puback2_packet, "puback 2")
 

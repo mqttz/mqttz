@@ -21,9 +21,6 @@ def len_test(test, pubrec_packet, pubcomp_packet):
     publish_packet = mosq_test.gen_publish("qos2/len/test", qos=2, mid=mid, payload="len-message", proto_ver=5)
     pubrel_packet = mosq_test.gen_pubrel(mid)
 
-    pingreq_packet = mosq_test.gen_pingreq()
-    pingresp_packet = mosq_test.gen_pingresp()
-
     broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=port)
 
     try:
@@ -40,7 +37,7 @@ def len_test(test, pubrec_packet, pubcomp_packet):
             mosq_test.do_send_receive(sock, pubrec_packet, pubrel_packet, "pubrel")
             sock.send(pubcomp_packet)
 
-            mosq_test.do_send_receive(sock, pingreq_packet, pingresp_packet, "pingresp")
+            mosq_test.do_ping(sock)
             rc = 0
 
         sock.close()

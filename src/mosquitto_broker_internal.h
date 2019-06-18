@@ -619,7 +619,8 @@ int db__message_store(struct mosquitto_db *db, const struct mosquitto *source, u
 int db__message_store_find(struct mosquitto *context, uint16_t mid, struct mosquitto_msg_store **stored);
 void db__msg_store_add(struct mosquitto_db *db, struct mosquitto_msg_store *store);
 void db__msg_store_remove(struct mosquitto_db *db, struct mosquitto_msg_store *store);
-void db__msg_store_deref(struct mosquitto_db *db, struct mosquitto_msg_store **store);
+void db__msg_store_ref_inc(struct mosquitto_msg_store *store);
+void db__msg_store_ref_dec(struct mosquitto_db *db, struct mosquitto_msg_store **store);
 void db__msg_store_clean(struct mosquitto_db *db);
 void db__msg_store_compact(struct mosquitto_db *db);
 int db__message_reconnect_reset(struct mosquitto_db *db, struct mosquitto *context);
@@ -740,6 +741,7 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context, int reaso
 int will_delay__add(struct mosquitto *context);
 void will_delay__check(struct mosquitto_db *db, time_t now);
 void will_delay__send_all(struct mosquitto_db *db);
+void will_delay__remove(struct mosquitto *mosq);
 
 #endif
 

@@ -157,7 +157,7 @@ static void subhier_clean(struct mosquitto_db *db, struct mosquitto__subhier **s
 			leaf = nextleaf;
 		}
 		if(peer->retained){
-			db__msg_store_deref(db, &peer->retained);
+			db__msg_store_ref_dec(db, &peer->retained);
 		}
 		subhier_clean(db, &peer->children);
 		mosquitto__free(peer->topic);
@@ -232,7 +232,12 @@ void db__msg_store_clean(struct mosquitto_db *db)
 	}
 }
 
-void db__msg_store_deref(struct mosquitto_db *db, struct mosquitto_msg_store **store)
+void db__msg_store_ref_inc(struct mosquitto_msg_store *store)
+{
+	store->ref_count++;
+}
+
+void db__msg_store_ref_dec(struct mosquitto_db *db, struct mosquitto_msg_store **store)
 {
 	(*store)->ref_count--;
 	if((*store)->ref_count == 0){
@@ -271,7 +276,7 @@ static void db__message_remove(struct mosquitto_db *db, struct mosquitto_msg_dat
 			msg_data->msg_count12--;
 			msg_data->msg_bytes12 -= item->store->payloadlen;
 		}
-		db__msg_store_deref(db, &item->store);
+		db__msg_store_ref_dec(db, &item->store);
 	}
 
 	mosquitto_property_free_all(&item->properties);
@@ -286,6 +291,9 @@ void db__message_dequeue_first(struct mosquitto *context, struct mosquitto_msg_d
 	msg = msg_data->queued;
 	DL_DELETE(msg_data->queued, msg);
 	DL_APPEND(msg_data->inflight, msg);
+	if(msg_data->inflight_quota > 0){
+		msg_data->inflight_quota--;
+	}
 }
 
 
@@ -359,7 +367,8 @@ int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint1
 	 * multiple times for overlapping subscriptions, although this is only the
 	 * case for SUBSCRIPTION with multiple subs in so is a minor concern.
 	 */
-	if(db->config->allow_duplicate_messages == false
+	if(context->protocol != mosq_p_mqtt5
+			&& db->config->allow_duplicate_messages == false
 			&& dir == mosq_md_out && retain == false && stored->dest_ids){
 
 		for(i=0; i<stored->dest_id_count; i++){
@@ -450,7 +459,7 @@ int db__message_insert(struct mosquitto_db *db, struct mosquitto *context, uint1
 	msg->prev = NULL;
 	msg->next = NULL;
 	msg->store = stored;
-	msg->store->ref_count++;
+	db__msg_store_ref_inc(msg->store);
 	msg->mid = mid;
 	msg->timestamp = mosquitto_time();
 	msg->direction = dir;
@@ -543,7 +552,7 @@ void db__messages_delete_list(struct mosquitto_db *db, struct mosquitto_client_m
 
 	DL_FOREACH_SAFE(*head, tail, tmp){
 		DL_DELETE(*head, tail);
-		db__msg_store_deref(db, &tail->store);
+		db__msg_store_ref_dec(db, &tail->store);
 		mosquitto_property_free_all(&tail->properties);
 		mosquitto__free(tail);
 	}
@@ -751,9 +760,7 @@ int db__message_reconnect_reset_outgoing(struct mosquitto_db *db, struct mosquit
 		if(msg->qos > 0){
 			context->msgs_out.msg_count12++;
 			context->msgs_out.msg_bytes12 += msg->store->payloadlen;
-			if(context->msgs_out.inflight_quota > 0){
-				context->msgs_out.inflight_quota--;
-			}
+			util__decrement_receive_quota(context);
 		}
 
 		switch(msg->qos){
@@ -822,9 +829,7 @@ int db__message_reconnect_reset_incoming(struct mosquitto_db *db, struct mosquit
 		if(msg->qos > 0){
 			context->msgs_in.msg_count12++;
 			context->msgs_in.msg_bytes12 += msg->store->payloadlen;
-			if(context->msgs_in.inflight_quota > 0){
-				context->msgs_in.inflight_quota--;
-			}
+			util__decrement_receive_quota(context);
 		}
 
 		if(msg->qos != 2){
@@ -1101,7 +1106,7 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	DL_FOREACH_SAFE(context->msgs_in.queued, tail, tmp){
-		if(context->msgs_out.inflight_maximum != 0 && msg_count >= context->msgs_out.inflight_maximum){
+		if(context->msgs_out.inflight_maximum != 0 && context->msgs_in.inflight_quota == 0){
 			break;
 		}
 
@@ -1120,7 +1125,7 @@ int db__message_write(struct mosquitto_db *db, struct mosquitto *context)
 	}
 
 	DL_FOREACH_SAFE(context->msgs_out.queued, tail, tmp){
-		if(context->msgs_out.inflight_maximum != 0 && msg_count >= context->msgs_out.inflight_maximum){
+		if(context->msgs_out.inflight_maximum != 0 && context->msgs_out.inflight_quota == 0){
 			break;
 		}
 
