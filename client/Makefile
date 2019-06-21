@@ -35,8 +35,17 @@ mosquitto_pub : pub_client.o pub_shared.o client_shared.o client_props.o
 mosquitto_sub : sub_client.o sub_client_output.o client_shared.o client_props.o
 	${CROSS_COMPILE}${CC} $(CLIENT_LDFLAGS) $^ -o $@ $(CLIENT_LDADD)
 
+mt-tz_pub : mqt-tz_pub_client.o pub_shared.o client_shared.o client_props.o
+	${CROSS_COMPILE}${CC} $(CLIENT_LDFLAGS) $^ -o $@ $(CLIENT_LDADD)
+
+mqt-tz_sub : sub_client.o sub_client_output.o client_shared.o client_props.o
+	${CROSS_COMPILE}${CC} $(CLIENT_LDFLAGS) $^ -o $@ $(CLIENT_LDADD)
+
 mosquitto_rr : rr_client.o client_shared.o client_props.o pub_shared.o sub_client_output.o
 	${CROSS_COMPILE}${CC} $(CLIENT_LDFLAGS) $^ -o $@ $(CLIENT_LDADD)
+
+mqt-tz_pub_client.o : mqt-tz_pub_client.c ${SHARED_DEP}
+	${CROSS_COMPILE}${CC} $(CLIENT_CPPFLAGS) $(CLIENT_CFLAGS) -c $< -o $@
 
 pub_client.o : pub_client.c ${SHARED_DEP}
 	${CROSS_COMPILE}${CC} $(CLIENT_CPPFLAGS) $(CLIENT_CFLAGS) -c $< -o $@
