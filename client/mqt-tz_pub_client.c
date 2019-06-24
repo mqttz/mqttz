@@ -127,6 +127,11 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 	UNUSED(properties);
 
 	if(!result){
+        int id = 1337;
+        int *mid = &id;
+        const char topic[] = "test";
+        char payload[] = "Hello World!";
+        mosquitto_publish_v5(mosq, mid, topic, sizeof(payload), payload, 0, 1, cfg.publish_props);
 		switch(cfg.pub_mode){
 			case MSGMODE_CMD:
 			case MSGMODE_FILE:

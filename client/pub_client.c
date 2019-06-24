@@ -34,6 +34,7 @@ Contributors:
 #include <mosquitto.h>
 #include "client_shared.h"
 #include "pub_shared.h"
+#include "mqt-tz_shared.h"
 
 /* Global variables for use in callbacks. See sub_client.c for an example of
  * using a struct to hold variables for use in callbacks. */
@@ -113,6 +114,12 @@ int my_publish(struct mosquitto *mosq, int *mid, const char *topic, int payloadl
 		return mosquitto_publish_v5(mosq, mid, NULL, payloadlen, payload, qos, retain, cfg.publish_props);
 	}else{
 		first_publish = false;
+        char tmp[] = "Hello World!";
+        char cli_id[] = "a123";
+        char res[MAX_SIZE];
+        test_method(tmp);
+        format_payload(res, cli_id, tmp);
+        printf("%s", res);
 		return mosquitto_publish_v5(mosq, mid, topic, payloadlen, payload, qos, retain, cfg.publish_props);
 	}
 }
@@ -130,7 +137,7 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
         int id = 1337;
         int *mid = &id;
         const char topic[] = "test";
-        char payload[] = "Hello World!";
+        char payload[] = "Hello World!\n";
         mosquitto_publish_v5(mosq, mid, topic, sizeof(payload), payload, 0, 1, cfg.publish_props);
 		switch(cfg.pub_mode){
 			case MSGMODE_CMD:
