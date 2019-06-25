@@ -46,6 +46,8 @@ static int line_buf_len = 1024;
 static bool disconnect_sent = false;
 static int publish_count = 0;
 static bool ready_for_repeat = false;
+// static mqttz_config mqttz = { .cli_id = NULL, .cli_key = NULL };
+static mqttz_config mqttz; //= { .cli_id = NULL, .cli_key = NULL };
 
 #ifdef WIN32
 static uint64_t next_publish_tv;
@@ -116,8 +118,8 @@ int my_publish(struct mosquitto *mosq, int *mid, const char *topic, int payloadl
 		first_publish = false;
         char tmp[] = "Hello World!";
         char cli_id[] = "a123";
-        char res[MAX_SIZE];
-        test_method(tmp);
+        char res[4096];
+        // test_method(tmp);
         format_payload(res, cli_id, tmp);
         printf("%s", res);
 		return mosquitto_publish_v5(mosq, mid, topic, payloadlen, payload, qos, retain, cfg.publish_props);
@@ -138,18 +140,22 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
         int *mid = &id;
         const char topic[] = "test";
         char payload[] = "Hello World!\n";
-        mosquitto_publish_v5(mosq, mid, topic, sizeof(payload), payload, 0, 1, cfg.publish_props);
 		switch(cfg.pub_mode){
 			case MSGMODE_CMD:
 			case MSGMODE_FILE:
 			case MSGMODE_STDIN_FILE:
+                // MQTT Control Message
 				rc = my_publish(mosq, &mid_sent, cfg.topic, cfg.msglen, cfg.message, cfg.qos, cfg.retain);
+                // On Connect, execute Key Exchange Protocol
+                key_exchange(&mqttz);
+                my_publish(mosq, mid, topic, sizeof(payload), payload, cfg.qos, cfg.retain);
 				break;
 			case MSGMODE_NULL:
 				rc = my_publish(mosq, &mid_sent, cfg.topic, 0, NULL, cfg.qos, cfg.retain);
 				break;
 			case MSGMODE_STDIN_LINE:
 				status = STATUS_CONNACK_RECVD;
+                mosquitto_publish_v5(mosq, mid, topic, sizeof(payload), payload, 0, 1, cfg.publish_props);
 				break;
 		}
 		if(rc){
