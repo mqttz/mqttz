@@ -146,10 +146,12 @@ int key_exchange(mqttz_config *mqttz)
         printf("MQT-TZ: Generated client's Initial Vector!\n");
         // 2nd: Send to broker a RR to the `key_query` topic
         // Ugly Version: spawn a ./mosquitto_rr bash process
-        char *cmd = (char*)malloc(4098 * sizeof(char)); //FIXME
         // Send the following message: TODO
         // {cli_id: '?', payload: ENC(mqttz->cli_aes_key + mqttz->cli_aes_iv,
         //  sPubKey)}
+        //  TODO enc my stuff with his stuff
+        // char *msg = format_payload('?', enc_key)
+        char *cmd = (char*)malloc(4098 * sizeof(char)); //FIXME
         sprintf(cmd, "mosquitto_rr -p 1887 -t '%s' -m '%s' -e '%s'",
                 MQTTZ_REQUEST_TOPIC, "hello", MQTTZ_RESPONSE_TOPIC);
         fp = popen(cmd, "r");
@@ -162,7 +164,6 @@ int key_exchange(mqttz_config *mqttz)
         pclose(fp);
         // Decrypt message which should have the following format:
         // {cli_id: <my_cli_id>, payload: ENC(OK, mqttz->cli_aes_key)}
-        // TODO
         char enc_payload[MQTTZ_MAX_MSG_SIZE];
         mqttz->cli_id = malloc(MQTTZ_CLI_ID_SIZE * sizeof(char));
         memset(mqttz->cli_id, '\0', MQTTZ_CLI_ID_SIZE);
@@ -174,10 +175,14 @@ int key_exchange(mqttz_config *mqttz)
         }
         printf("We received this: %s\n- Client ID: %s\n- Payload: %s\n",
                 tmp_response, mqttz->cli_id, enc_payload);
-        // Write client id to file
-        // fp = fopen(MQTTZ_CLI_ID_FILE, "w");
-        // fputs(mqttz->cli_id, fp);
-        // fclose(fp);
+        // TODO: decrypt payload
+        // if (dec_payload == "OK")
+        // {
+            // Write client id to file
+            // fp = fopen(MQTTZ_CLI_ID_FILE, "w");
+            // fputs(mqttz->cli_id, fp);
+            // fclose(fp);
+        // }
         // Nice Version: creare a rr client and use it TODO
         return MQTTZ_SUCCESS;
     }
