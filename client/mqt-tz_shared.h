@@ -11,16 +11,21 @@
 #include <string.h>
 #include <unistd.h>
 
-#define MQTTZ_CLI_ID_FILE       "cli_id.txt"
-#define MQTTZ_CLI_IV_FILE       "cli_aes_iv.txt"
-#define MQTTZ_CLI_KEY_FILE      "cli_aes_key.txt"
-#define MQTTZ_BRK_PKEY_FILE     "sPubKey.pem"
-#define MQTTZ_MAX_MSG_SIZE      120
+#define MQTTZ_CLI_ID_FILE       "mqt-tz/cli_id.txt"
+#define MQTTZ_CLI_IV_FILE       "mqt-tz/cli_aes_iv.txt"
+#define MQTTZ_CLI_KEY_FILE      "mqt-tz/cli_aes_key.txt"
+#define MQTTZ_BRK_PKEY_FILE     "mqt-tz/sPubKey.pem"
+#define MQTTZ_MAX_MSG_SIZE      4096
+#define MQTTZ_CLI_ID_SIZE       12
 #define MQTTZ_RSA_PADDING       RSA_PKCS1_PADDING
+#define MQTTZ_REQUEST_TOPIC     "id_query"
+#define MQTTZ_RESPONSE_TOPIC    "id_response"
 
+#define MQTTZ_SUCCESS                   0
 #define MQTTZ_FILE_NOT_FOUND_ERROR      1
 #define MQTTZ_FILE_READING_ERROR        2
 #define MQTTZ_OPENSSL_ERROR             3
+#define MQTTZ_MALFORMED_PAYLOAD         4
 
 typedef struct mqttz_config {
     char *cli_id;
@@ -35,5 +40,6 @@ int private_decrypt(unsigned char *enc_data, int data_len,
         unsigned char *decrypted);
 int public_encrypt(unsigned char *data, int data_len, 
         unsigned char *encrypted);
+int unwrap_payload(char *msg, char *cli_id, char *payload);
 
 #endif
