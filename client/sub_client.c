@@ -34,6 +34,7 @@ Contributors:
 #include <mosquitto.h>
 #include <mqtt_protocol.h>
 #include "client_shared.h"
+#include "mqt-tz_shared.h"
 
 struct mosq_config cfg;
 bool process_messages = true;
@@ -73,6 +74,11 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 
 	UNUSED(obj);
 	UNUSED(properties);
+
+    if (strcmp(message->topic, MQTTZ_REQUEST_TOPIC) == 0)
+    {
+        printf("Test: %s\n", message->topic);
+    }
 
 	if(process_messages == false) return;
 

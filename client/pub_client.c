@@ -148,9 +148,9 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
                 // MQTT Control Message
 				rc = my_publish(mosq, &mid_sent, cfg.topic, cfg.msglen, cfg.message, cfg.qos, cfg.retain);
                 // On Connect, execute Key Exchange Protocol
-                mqttz_init(&mqttz);
+                //mqttz_init(&mqttz);
                 key_exchange(&mqttz);
-                mqttz_free(&mqttz);
+                //mqttz_clean(&mqttz);
                 // my_publish(mosq, mid, topic, sizeof(payload), payload, cfg.qos, cfg.retain);
 				break;
 			case MSGMODE_NULL:

@@ -5,12 +5,12 @@ void test_method(char *tmp)
     printf("%s", tmp);
 }
 
-int mqttz_init(mqttz_config  *mqttz)
+int mqttz_init(mqttz_config *mqttz)
 {
 
-    mqttz->cli_id = malloc(MQTTZ_CLI_ID_SIZE * sizeof(char));
-    mqttz->cli_aes_key = malloc(32 * sizeof(char));
-    mqttz->cli_aes_iv = malloc(16 * sizeof(char));
+    mqttz->cli_id = malloc((MQTTZ_CLI_ID_SIZE + 1) * sizeof(char));
+    mqttz->cli_aes_key = malloc((32 + 1) * sizeof(char));
+    mqttz->cli_aes_iv = malloc((16 + 1) * sizeof(char));
     memset(mqttz->cli_id, '\0', sizeof(*(mqttz->cli_id)));
     memset(mqttz->cli_aes_key, '\0', sizeof(*(mqttz->cli_aes_key)));
     memset(mqttz->cli_aes_key, '\0', sizeof(*(mqttz->cli_aes_key)));
@@ -99,46 +99,34 @@ int wrap_payload(mqttz_config *mqttz, char *ret_val, char *load, int mode)
     strcpy(ret_val, "{client_id: ");
     strcat(ret_val, mqttz->cli_id);
     strcat(ret_val, ", payload: ");
-    printf("Debug: ret_val %s\n", ret_val);
+    // Encrypt Payload According to the mode
+    unsigned char enc_text[MQTTZ_MAX_MSG_SIZE];
+    unsigned char dec_text[MQTTZ_MAX_MSG_SIZE];
+    int dec_len, enc_len;
     if (mode == MQTTZ_RSA)
     {
         return MQTTZ_SUCCESS;
     }
     else if (mode == MQTTZ_AES)
     {
-        unsigned char enc_text[MQTTZ_MAX_MSG_SIZE];
-        unsigned char dec_text[MQTTZ_MAX_MSG_SIZE];
-        int dec_len, enc_len;
         printf("Original plaintext is: %s\n", load);
-        printf("Original plaintext is: %s\n", mqttz->cli_aes_key);
-        printf("Original plaintext is: %s\n", mqttz->cli_aes_iv);
-        printf("Original plaintext is: %s\n", enc_text);
-//        unsigned char key[32], iv[16];
-//        memset(key, '\0', sizeof(key));
-//        memset(iv, '\0', sizeof(iv));
-//        RAND_bytes(key, sizeof(key));
-//        RAND_bytes(iv, sizeof(iv));
-//        unsigned char ciphertext[128];
-//        unsigned char *plaintext = (unsigned char *) "Hello World!";
-//        enc_len = symmetric_encrypt(plaintext, strlen((char *)plaintext), key, 
-//                iv, ciphertext);
         enc_len = symmetric_encrypt((unsigned char *) load, strlen(load), 
                 (unsigned char *) mqttz->cli_aes_key, 
                 (unsigned char *) mqttz->cli_aes_iv, enc_text);
-        printf("Ciphertext is: \n");
+        // For decrypting if needed
+        /*printf("Ciphertext is: \n");
         BIO_dump_fp(stdout, (const char *)enc_text, enc_len);
-//        dec_len = symmetric_decrypt(enc_text, enc_len,
-//                (unsigned char *) mqttz->cli_aes_key,
-//                (unsigned char *) mqttz->cli_aes_iv, dec_text);
-//        printf("Decrypted text is: %s\n", dec_text);
-        return MQTTZ_SUCCESS;
+        dec_len = symmetric_decrypt(enc_text, enc_len,
+                (unsigned char *) mqttz->cli_aes_key,
+                (unsigned char *) mqttz->cli_aes_iv, dec_text);
+        printf("Decrypted text is: %s\n", dec_text);*/
     }
     else
     {
         printf("ERROR: Incorrect mode in wrap_payload. Mode: %i\n", mode);
         return MQTTZ_BAD_PARAMETERS_ERROR;
     }
-    strcat(ret_val, load);
+    strcat(ret_val, enc_text);
     strcat(ret_val, "}");
 //    unsigned char tmp[4096];
 //    unsigned char tmp2[4096];
@@ -256,8 +244,10 @@ int key_exchange(mqttz_config *mqttz)
             return MQTTZ_OPENSSL_ERROR;
         }
         // Initially, client id is set to '?'
-        strcpy(mqttz->cli_id, "?");
-        strcpy(mqttz->cli_aes_key, (char *) key);
+        mqttz->cli_id = "?";
+        //strcpy(mqttz->cli_id, "?");
+        mqttz->cli_aes_key = (char *) key;
+        //strcpy(mqttz->cli_aes_key, (char *) key);
         fp = fopen(MQTTZ_CLI_KEY_FILE, "w");
         fputs(mqttz->cli_aes_key, fp);
         fclose(fp);
@@ -267,7 +257,8 @@ int key_exchange(mqttz_config *mqttz)
             printf("MQT-TZ: OpenSSL Error when generating key!\n");
             return MQTTZ_OPENSSL_ERROR;
         }
-        strcpy(mqttz->cli_aes_iv, (char *) iv);
+        //strcpy(mqttz->cli_aes_iv, (char *) iv);
+        mqttz->cli_aes_iv = (char *) iv;
         fp = fopen(MQTTZ_CLI_IV_FILE, "w");
         fputs(mqttz->cli_aes_iv, fp);
         fclose(fp);
@@ -280,12 +271,15 @@ int key_exchange(mqttz_config *mqttz)
         //  TODO enc my stuff with his stuff
         char ret_val[MQTTZ_MAX_MSG_SIZE];
         memset(ret_val, '\0', sizeof(ret_val));
+        // Example for encrypting with AES
         wrap_payload(mqttz, ret_val, "Hello World!", MQTTZ_AES);
-        return MQTTZ_SUCCESS;
+        // BIO_dump_fp(stdout, (const char *)ret_val, strlen(ret_val));
         // char *msg = format_payload('?', enc_key)
-        char *cmd = (char*)malloc(4098 * sizeof(char)); //FIXME
+        // char *cmd = (char*)malloc(4098 * sizeof(char)); //FIXME
+        char cmd[MQTTZ_MAX_MSG_SIZE];
         sprintf(cmd, "mosquitto_rr -p 1887 -t '%s' -m '%s' -e '%s'",
-                MQTTZ_REQUEST_TOPIC, "hello", MQTTZ_RESPONSE_TOPIC);
+                MQTTZ_REQUEST_TOPIC, ret_val, MQTTZ_RESPONSE_TOPIC);
+        BIO_dump_fp(stdout, (const char *)cmd, strlen(cmd));
         fp = popen(cmd, "r");
         char *tmp_response = NULL;
         len = 0;
