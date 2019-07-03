@@ -39,7 +39,7 @@ typedef struct mqttz_config {
 } mqttz_config;
 
 void test_method(char *tmp);
-int key_exchange(mqttz_config *mqttz);
+int publisher_init(mqttz_config *mqttz);
 int mqttz_clean(mqttz_config *mqttz);
 int mqttz_init(mqttz_config *mqttz);
 int private_decrypt(unsigned char *enc_data, int data_len, 

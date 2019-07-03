@@ -180,7 +180,7 @@ int unwrap_payload(char *msg, char *cli_id, char *payload)
     return MQTTZ_SUCCESS;
 }
 
-int key_exchange(mqttz_config *mqttz)
+int publisher_init(mqttz_config *mqttz)
 {
     FILE *fp;
     size_t len = 0;
