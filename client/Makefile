@@ -32,7 +32,7 @@ static_rr : rr_client.o client_props.o client_shared.o pub_shared.o sub_client_o
 mosquitto_pub : pub_client.o pub_shared.o client_shared.o client_props.o mqt-tz_shared.o
 	${CROSS_COMPILE}${CC} $(CLIENT_LDFLAGS) $^ -o $@ $(CLIENT_LDADD)
 
-mosquitto_sub : sub_client.o sub_client_output.o client_shared.o client_props.o
+mosquitto_sub : sub_client.o sub_client_output.o client_shared.o client_props.o mqt-tz_shared.o
 	${CROSS_COMPILE}${CC} $(CLIENT_LDFLAGS) $^ -o $@ $(CLIENT_LDADD)
 
 mosquitto_rr : rr_client.o client_shared.o client_props.o pub_shared.o sub_client_output.o

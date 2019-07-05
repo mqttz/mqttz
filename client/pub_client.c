@@ -111,19 +111,26 @@ void my_disconnect_callback(struct mosquitto *mosq, void *obj, int rc, const mos
 
 int my_publish(struct mosquitto *mosq, int *mid, const char *topic, int payloadlen, void *payload, int qos, bool retain)
 {
+    char wrapped_payload[MQTTZ_MAX_MSG_SIZE];
+    memset(wrapped_payload, '\0', MQTTZ_MAX_MSG_SIZE);
+    if (wrap_payload(&mqttz, wrapped_payload, (char *) payload, MQTTZ_AES) != MQTTZ_SUCCESS)
+    {
+        printf("MQT-TZ: Error Wrapping the Payload!\n");
+        return MQTTZ_ERROR;    
+    }
+    printf("Wrapping the payload: \n");
+    BIO_dump_fp(stdout, (const char *)wrapped_payload, strlen(wrapped_payload));
+    // Testing IV
+    // char tmp[MQTTZ_MAX_MSG_SIZE];
+    // unwrap_payload(&mqttz, wrapped_payload, tmp, MQTTZ_AES);
+    // End Testing
 	ready_for_repeat = false;
 	if(cfg.protocol_version == MQTT_PROTOCOL_V5 && cfg.have_topic_alias && first_publish == false){
 		return mosquitto_publish_v5(mosq, mid, NULL, payloadlen, payload, qos, retain, cfg.publish_props);
 	}else{
 		first_publish = false;
-        // char tmp[] = "Hello World!";
-        // char cli_id[] = "a123";
-        // char res[4096];
-        // test_method(tmp);
-        // TODO: format payload before sending w/ client id
-        // format_payload(res, cli_id, tmp);
-        // printf("%s", res);
-		return mosquitto_publish_v5(mosq, mid, topic, payloadlen, payload, qos, retain, cfg.publish_props);
+		return mosquitto_publish_v5(mosq, mid, topic, strlen(wrapped_payload), (void *) wrapped_payload, qos, retain, cfg.publish_props);
+		// return mosquitto_publish_v5(mosq, mid, topic, payloadlen, payload, qos, retain, cfg.publish_props);
 	}
 }
 
@@ -145,13 +152,20 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 			case MSGMODE_CMD:
 			case MSGMODE_FILE:
 			case MSGMODE_STDIN_FILE:
-                // MQTT Control Message
-				rc = my_publish(mosq, &mid_sent, cfg.topic, cfg.msglen, cfg.message, cfg.qos, cfg.retain);
                 // On Connect, execute Key Exchange Protocol
                 //mqttz_init(&mqttz);
-                publisher_init(&mqttz);
+                if (publisher_init(&mqttz) != MQTTZ_SUCCESS)
+                {
+                    printf("MQT-TZ: Error when initializing publisher! Exiting...\n");
+                    mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
+                }
+                else
+                {
+                    printf("MQT-TZ: Succesfully initialized the publisher with the ");
+                    printf("following parameters:\n \t- cli_id: %s\n", mqttz.cli_id);
+                }
+				rc = my_publish(mosq, &mid_sent, cfg.topic, cfg.msglen, cfg.message, cfg.qos, cfg.retain);
                 //mqttz_clean(&mqttz);
-                // my_publish(mosq, mid, topic, sizeof(payload), payload, cfg.qos, cfg.retain);
 				break;
 			case MSGMODE_NULL:
 				rc = my_publish(mosq, &mid_sent, cfg.topic, 0, NULL, cfg.qos, cfg.retain);

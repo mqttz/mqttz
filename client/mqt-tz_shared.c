@@ -30,9 +30,9 @@ int mqttz_clean(mqttz_config *mqttz)
 int symmetric_encrypt(unsigned char *plain_text, int plain_text_len,
         unsigned char *key, unsigned char *iv, unsigned char *cipher_text)
 {
+    int cipher_text_len;
     EVP_CIPHER_CTX *ctx;
     int len;
-    int cipher_text_len;
     if (!(ctx = EVP_CIPHER_CTX_new()))
     {
         printf("Error in symmetric_encrypt!\n");
@@ -57,7 +57,7 @@ int symmetric_encrypt(unsigned char *plain_text, int plain_text_len,
     }
     cipher_text_len += len;
     EVP_CIPHER_CTX_free(ctx);
-    return cipher_text_len;
+    return MQTTZ_SUCCESS;
 }
 
 int symmetric_decrypt(unsigned char *cipher_text, int cipher_text_len,
@@ -90,41 +90,40 @@ int symmetric_decrypt(unsigned char *cipher_text, int cipher_text_len,
     }
     plain_text_len += len;
     EVP_CIPHER_CTX_free(ctx);
-    return plain_text_len;
+    plain_text[plain_text_len] = '\0'; // FIXME why am I doing this?
+    return MQTTZ_SUCCESS;
 }
 
 int wrap_payload(mqttz_config *mqttz, char *ret_val, char *load, int mode)
 {
     strcpy(ret_val, "{client_id: ");
     strcat(ret_val, mqttz->cli_id);
-    strcat(ret_val, ", payload: ");
     // Encrypt Payload According to the mode
     unsigned char enc_text[MQTTZ_MAX_MSG_SIZE];
     unsigned char dec_text[MQTTZ_MAX_MSG_SIZE];
+    char tmp_iv[strlen(mqttz->cli_aes_iv)];
+    strcpy(tmp_iv, mqttz->cli_aes_iv);
     int dec_len, enc_len;
-    if (mode == MQTTZ_RSA)
+    switch(mode)
     {
-        return MQTTZ_SUCCESS;
+        case MQTTZ_RSA:
+            return MQTTZ_SUCCESS;
+        case MQTTZ_AES:
+            if (symmetric_encrypt((unsigned char *) load, strlen(load), 
+                    (unsigned char *) mqttz->cli_aes_key, 
+                    (unsigned char *) mqttz->cli_aes_iv, enc_text) != MQTTZ_SUCCESS)
+            {
+                printf("MQT-TZ: Error with AES Encrypt!\n");
+                return MQTTZ_OPENSSL_ERROR;
+            }
+            break;
+        default:
+            printf("ERROR: Incorrect mode in wrap_payload. Mode: %i\n", mode);
+            return MQTTZ_BAD_PARAMETERS_ERROR;
     }
-    else if (mode == MQTTZ_AES)
-    {
-        printf("Original plaintext is: %s\n", load);
-        enc_len = symmetric_encrypt((unsigned char *) load, strlen(load), 
-                (unsigned char *) mqttz->cli_aes_key, 
-                (unsigned char *) mqttz->cli_aes_iv, enc_text);
-        // For decrypting if needed
-        /*printf("Ciphertext is: \n");
-        BIO_dump_fp(stdout, (const char *)enc_text, enc_len);
-        dec_len = symmetric_decrypt(enc_text, enc_len,
-                (unsigned char *) mqttz->cli_aes_key,
-                (unsigned char *) mqttz->cli_aes_iv, dec_text);
-        printf("Decrypted text is: %s\n", dec_text);*/
-    }
-    else
-    {
-        printf("ERROR: Incorrect mode in wrap_payload. Mode: %i\n", mode);
-        return MQTTZ_BAD_PARAMETERS_ERROR;
-    }
+    //strcat(ret_val, ", iv: ");
+    //strcat(ret_val, mqttz->cli_aes_iv);
+    strcat(ret_val, ", payload: ");
     strcat(ret_val, enc_text);
     strcat(ret_val, "}");
 //    unsigned char tmp[4096];
@@ -151,14 +150,12 @@ int wrap_payload(mqttz_config *mqttz, char *ret_val, char *load, int mode)
     return MQTTZ_SUCCESS;
 }
 
-int unwrap_payload(char *msg, char *cli_id, char *payload)
+int unwrap_payload(mqttz_config *mqttz, char *msg, char *payload, int mode)
 {   
     char tmp[] = "{client_id: ";
     char tmp2[] = ", payload: ";
-    printf("We got here!\n");
     char *pch = strstr(msg, tmp);
     char *pch2 = strstr(msg, tmp2);
-    printf("We got here!\n");
     if (pch == NULL)
     {
         printf("MQT-TZ: Badly formatted Payload in KE!\n");
@@ -174,11 +171,31 @@ int unwrap_payload(char *msg, char *cli_id, char *payload)
         printf("MQT-TZ: Badly formatted Client ID in KE!\n");
         return MQTTZ_MALFORMED_PAYLOAD_ERROR;
     }
-    printf("We got here!\n");
-    strncpy(cli_id, pch + strlen(tmp), MQTTZ_CLI_ID_SIZE);
-    int payload_size = strlen(msg) - ((pch2 + strlen(tmp2)) - msg) - 2;
-    printf("Payload size: %i\n", payload_size);
-    strncpy(payload, pch2 + strlen(tmp2), payload_size);
+    // TODO: this should take place in the brk_sub mode
+    // strncpy(cli_id, pch + strlen(tmp), MQTTZ_CLI_ID_SIZE);
+    int enc_payload_size = strlen(msg) - ((pch2 + strlen(tmp2)) - msg) - 1;
+    char enc_payload[enc_payload_size];
+    // memset(enc_payload, '\0', enc_payload_size); Don't need it
+    strncpy(enc_payload, pch2 + strlen(tmp2), enc_payload_size);
+    switch (mode)
+    {
+        case MQTTZ_AES:
+            if(symmetric_decrypt((unsigned char *) enc_payload,
+                    enc_payload_size,
+                    (unsigned char *) mqttz->cli_aes_key,
+                    (unsigned char *) mqttz->cli_aes_iv,
+                    (unsigned char *) payload) != MQTTZ_SUCCESS)
+            {
+                printf("MQT-TZ: Error in AES Decrypt!\n");
+                return MQTTZ_OPENSSL_ERROR;
+            }
+            printf("Decrypted text is: %s\n", payload);
+            printf("Decrypted length is: %li\n", strlen(payload));
+            break;
+        default:
+            printf("ERROR: Incorrect mode in unwrap_payload. Mode: %i\n", mode);
+            return MQTTZ_BAD_PARAMETERS_ERROR;
+    }
     return MQTTZ_SUCCESS;
 }
 
@@ -199,6 +216,12 @@ int publisher_init(mqttz_config *mqttz)
             printf("Error reading %s file!\n", MQTTZ_CLI_ID_FILE);
             return MQTTZ_FILE_READING_ERROR;
         }
+        if (strlen(mqttz->cli_id) != MQTTZ_CLI_ID_SIZE)
+        {
+            // FIXME Should we do this?
+            // BIO_dump_fp(stdout, (const char *)mqttz->cli_id, strlen(mqttz->cli_id));
+            mqttz->cli_id[MQTTZ_CLI_ID_SIZE] = '\0';
+        }
         fclose(fp);
         if (access(MQTTZ_CLI_KEY_FILE, R_OK) != -1)
         {
@@ -207,6 +230,11 @@ int publisher_init(mqttz_config *mqttz)
             {
                 printf("Error reading %s file!\n", MQTTZ_CLI_KEY_FILE);
                 return MQTTZ_FILE_READING_ERROR;
+            }
+            if (strlen(mqttz->cli_aes_key) != MQTTZ_AES_KEY_SIZE)
+            {
+                // FIXME Should we do this?
+                mqttz->cli_aes_key[MQTTZ_AES_KEY_SIZE] = '\0';
             }
             fclose(fp);
         }
@@ -217,11 +245,16 @@ int publisher_init(mqttz_config *mqttz)
         }
         if (access(MQTTZ_CLI_IV_FILE, R_OK) != -1)
         {
-            fp = fopen(MQTTZ_CLI_IV_FILE, "r");
+            fp = fopen("mqt-tz/cli_aes_iv.txt", "r");
             if ((getline(&(mqttz->cli_aes_iv), &len, fp) == -1) || (len == 0))
             {
                 printf("MQT-TZ: Error reading %s file!\n", MQTTZ_CLI_KEY_FILE);
                 return MQTTZ_FILE_READING_ERROR;
+            }
+            if (strlen(mqttz->cli_aes_iv) != MQTTZ_AES_IV_SIZE)
+            {
+                // FIXME Should we do this?
+                mqttz->cli_aes_iv[MQTTZ_AES_IV_SIZE] = '\0';
             }
             fclose(fp);
         }
@@ -237,10 +270,10 @@ int publisher_init(mqttz_config *mqttz)
         printf("MQT-TZ: File not found: %s!\n", MQTTZ_CLI_ID_FILE);
         printf("MQT-TZ: Starting the key exchange protocol...\n");
         // 1st: Generate a symetric key and iv and store it.
-        unsigned char key[32], iv[16];
-        memset(key, '\0', sizeof(key));
-        memset(iv, '\0', sizeof(iv));
-        if (!RAND_bytes(key, sizeof(key)))
+        unsigned char key[MQTTZ_AES_KEY_SIZE], iv[MQTTZ_AES_IV_SIZE];
+        memset(key, '\0', MQTTZ_AES_KEY_SIZE);
+        memset(iv, '\0', MQTTZ_AES_IV_SIZE);
+        if (!RAND_bytes(key, MQTTZ_AES_KEY_SIZE))
         {
             printf("MQT-TZ: OpenSSL Error when generating key!\n");
             return MQTTZ_OPENSSL_ERROR;
@@ -254,7 +287,7 @@ int publisher_init(mqttz_config *mqttz)
         fputs(mqttz->cli_aes_key, fp);
         fclose(fp);
         printf("MQT-TZ: Generated client's Symmetric Key!\n");
-        if (!RAND_bytes(iv, sizeof(iv)))
+        if (!RAND_bytes(iv, MQTTZ_AES_IV_SIZE))
         {
             printf("MQT-TZ: OpenSSL Error when generating key!\n");
             return MQTTZ_OPENSSL_ERROR;
@@ -297,9 +330,10 @@ int publisher_init(mqttz_config *mqttz)
         mqttz->cli_id = (char *)malloc((MQTTZ_CLI_ID_SIZE + 1) * sizeof(char));
         memset(mqttz->cli_id, '\0', sizeof(MQTTZ_CLI_ID_SIZE + 1));
         memset(enc_payload, '\0', sizeof(enc_payload));
-        if (unwrap_payload(tmp_response, mqttz->cli_id, 
-            enc_payload) != MQTTZ_SUCCESS)
+        if (unwrap_payload(mqttz, tmp_response, enc_payload,
+                    MQTTZ_AES) != MQTTZ_SUCCESS)
         {
+            printf("MQT-TZ: Error Decrypting the OK message in KE!\n");
             return MQTTZ_MALFORMED_PAYLOAD_ERROR;
         }
         printf("We received this: %s\n- Client ID: %s\n- Payload: %s\n",
@@ -313,10 +347,9 @@ int publisher_init(mqttz_config *mqttz)
             fclose(fp);
         }
         // Nice Version: creare a rr client and use it TODO
-        free(mqttz->cli_id);
         return MQTTZ_SUCCESS;
     }
-    return 0; //wahapen with this FIXME
+    return MQTTZ_SUCCESS; 
 }
 
 int subscriber_init(mqttz_config *mqttz)
@@ -331,7 +364,7 @@ int subscriber_init(mqttz_config *mqttz)
         // Load values if they are not loaded and files are available
         fp = fopen(MQTTZ_CLI_ID_FILE, "r");
         // TODO Define Cli_ID len
-        if ((getline(&(mqttz->cli_id), &len, fp) == -1) | (len == 0))
+        if ((getline(&(mqttz->cli_id), &len, fp) == -1) | (len == MQTTZ_CLI_ID_SIZE))
         {
             printf("Error reading %s file!\n", MQTTZ_CLI_ID_FILE);
             return MQTTZ_FILE_READING_ERROR;
@@ -344,6 +377,12 @@ int subscriber_init(mqttz_config *mqttz)
             {
                 printf("Error reading %s file!\n", MQTTZ_CLI_KEY_FILE);
                 return MQTTZ_FILE_READING_ERROR;
+            }
+            if (strlen(mqttz->cli_aes_key) != MQTTZ_AES_KEY_SIZE)
+            {
+                // FIXME Should we do this?
+                printf("Current length: %li\n", strlen(mqttz->cli_aes_key));
+                mqttz->cli_aes_key[MQTTZ_AES_KEY_SIZE] = '\0';
             }
             fclose(fp);
         }
@@ -360,6 +399,11 @@ int subscriber_init(mqttz_config *mqttz)
                 printf("MQT-TZ: Error reading %s file!\n", MQTTZ_CLI_KEY_FILE);
                 return MQTTZ_FILE_READING_ERROR;
             }
+            if (strlen(mqttz->cli_aes_iv) != MQTTZ_AES_IV_SIZE)
+            {
+                // FIXME Should we do this?
+                mqttz->cli_aes_iv[MQTTZ_AES_IV_SIZE] = '\0';
+            }
             fclose(fp);
         }
         else
@@ -374,10 +418,10 @@ int subscriber_init(mqttz_config *mqttz)
         printf("MQT-TZ: File not found: %s!\n", MQTTZ_CLI_ID_FILE);
         printf("MQT-TZ: Starting the key exchange protocol...\n");
         // 1st: Generate a symetric key and iv and store it.
-        unsigned char key[32], iv[16];
-        memset(key, '\0', sizeof(key));
-        memset(iv, '\0', sizeof(iv));
-        if (!RAND_bytes(key, sizeof(key)))
+        unsigned char key[MQTTZ_AES_KEY_SIZE], iv[MQTTZ_AES_IV_SIZE];
+        memset(key, '\0', MQTTZ_AES_KEY_SIZE);
+        memset(iv, '\0', MQTTZ_AES_IV_SIZE);
+        if (!RAND_bytes(key, MQTTZ_AES_KEY_SIZE))
         {
             printf("MQT-TZ: OpenSSL Error when generating key!\n");
             return MQTTZ_OPENSSL_ERROR;
@@ -386,12 +430,13 @@ int subscriber_init(mqttz_config *mqttz)
         mqttz->cli_id = "?";
         //strcpy(mqttz->cli_id, "?");
         mqttz->cli_aes_key = (char *) key;
+        printf("Size of the generated key: %li", strlen(mqttz->cli_aes_key));
         //strcpy(mqttz->cli_aes_key, (char *) key);
         fp = fopen(MQTTZ_CLI_KEY_FILE, "w");
         fputs(mqttz->cli_aes_key, fp);
         fclose(fp);
         printf("MQT-TZ: Generated client's Symmetric Key!\n");
-        if (!RAND_bytes(iv, sizeof(iv)))
+        if (!RAND_bytes(iv, MQTTZ_AES_IV_SIZE))
         {
             printf("MQT-TZ: OpenSSL Error when generating key!\n");
             return MQTTZ_OPENSSL_ERROR;
@@ -434,9 +479,10 @@ int subscriber_init(mqttz_config *mqttz)
         mqttz->cli_id = (char *)malloc((MQTTZ_CLI_ID_SIZE + 1) * sizeof(char));
         memset(mqttz->cli_id, '\0', sizeof(MQTTZ_CLI_ID_SIZE + 1));
         memset(enc_payload, '\0', sizeof(enc_payload));
-        if (unwrap_payload(tmp_response, mqttz->cli_id, 
-            enc_payload) != MQTTZ_SUCCESS)
+        if (unwrap_payload(mqttz, tmp_response, enc_payload,
+                    MQTTZ_AES) != MQTTZ_SUCCESS)
         {
+            printf("MQT-TZ: Error Decrypting the OK message in KE!\n");
             return MQTTZ_MALFORMED_PAYLOAD_ERROR;
         }
         printf("We received this: %s\n- Client ID: %s\n- Payload: %s\n",
@@ -450,10 +496,9 @@ int subscriber_init(mqttz_config *mqttz)
             // fclose(fp);
         // }
         // Nice Version: creare a rr client and use it TODO
-        free(mqttz->cli_id);
         return MQTTZ_SUCCESS;
     }
-    return 0; //wahapen with this FIXME
+    return MQTTZ_SUCCESS; //wahapen with this FIXME
 }
 
 RSA *createRSA(char *filename, int public)

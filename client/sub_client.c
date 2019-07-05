@@ -41,6 +41,7 @@ bool process_messages = true;
 int msg_count = 0;
 struct mosquitto *mosq = NULL;
 int last_mid = 0;
+static mqttz_config mqttz;
 
 #ifndef WIN32
 void my_signal_handler(int signum)
@@ -77,7 +78,18 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 
     if (strcmp(message->topic, MQTTZ_REQUEST_TOPIC) == 0)
     {
-        printf("Test: %s\n", message->topic);
+        char unwrapped_payload[MQTTZ_MAX_MSG_SIZE];
+        memset(unwrapped_payload, '\0', MQTTZ_MAX_MSG_SIZE);
+        if (unwrap_payload(&mqttz, (char *) message->payload, unwrapped_payload,
+                MQTTZ_AES) != MQTTZ_SUCCESS)
+        {
+            printf("MQT-TZ: Error Decrypting the Subscribed Message!\n");
+			mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
+        }
+        else
+        {
+            printf("MQT-TZ: Decrypted Information\n%s\n", unwrapped_payload);
+        }
     }
 
 	if(process_messages == false) return;
@@ -122,6 +134,17 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 	UNUSED(obj);
 	UNUSED(flags);
 	UNUSED(properties);
+
+    if (subscriber_init(&mqttz) != MQTTZ_SUCCESS)
+    {
+        printf("MQT-TZ: Error when initializing subscriber! Exiting...\n");
+		mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
+    }
+    else
+    {
+        printf("MQT-TZ: Succesfully initialized the subscriber with the ");
+        printf("following parameters:\n \t- cli_id: %s\n", mqttz.cli_id);
+    }
 
 	if(!result){
 		mosquitto_subscribe_multiple(mosq, NULL, cfg.topic_count, cfg.topics, cfg.qos, cfg.sub_opts, cfg.subscribe_props);
