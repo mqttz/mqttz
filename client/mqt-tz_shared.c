@@ -7,7 +7,6 @@ void test_method(char *tmp)
 
 int mqttz_init(mqttz_config *mqttz)
 {
-
     mqttz->cli_id = malloc((MQTTZ_CLI_ID_SIZE + 1) * sizeof(char));
     mqttz->cli_aes_key = malloc((32 + 1) * sizeof(char));
     mqttz->cli_aes_iv = malloc((16 + 1) * sizeof(char));
@@ -156,8 +155,10 @@ int unwrap_payload(char *msg, char *cli_id, char *payload)
 {   
     char tmp[] = "{client_id: ";
     char tmp2[] = ", payload: ";
+    printf("We got here!\n");
     char *pch = strstr(msg, tmp);
     char *pch2 = strstr(msg, tmp2);
+    printf("We got here!\n");
     if (pch == NULL)
     {
         printf("MQT-TZ: Badly formatted Payload in KE!\n");
@@ -170,9 +171,10 @@ int unwrap_payload(char *msg, char *cli_id, char *payload)
     }
     if ((pch2 - (pch + strlen(tmp))) != MQTTZ_CLI_ID_SIZE)
     {
-        printf("MQT-TZ: Badly formatted Payload in KE!\n");
+        printf("MQT-TZ: Badly formatted Client ID in KE!\n");
         return MQTTZ_MALFORMED_PAYLOAD_ERROR;
     }
+    printf("We got here!\n");
     strncpy(cli_id, pch + strlen(tmp), MQTTZ_CLI_ID_SIZE);
     int payload_size = strlen(msg) - ((pch2 + strlen(tmp2)) - msg) - 2;
     printf("Payload size: %i\n", payload_size);
@@ -290,8 +292,147 @@ int publisher_init(mqttz_config *mqttz)
         pclose(fp);
         // Decrypt message which should have the following format:
         // {cli_id: <my_cli_id>, payload: ENC(OK, mqttz->cli_aes_key)}
+        printf("We receive this response: %s\n", tmp_response);
         char enc_payload[MQTTZ_MAX_MSG_SIZE];
-        memset(mqttz->cli_id, '\0', MQTTZ_CLI_ID_SIZE);
+        mqttz->cli_id = (char *)malloc((MQTTZ_CLI_ID_SIZE + 1) * sizeof(char));
+        memset(mqttz->cli_id, '\0', sizeof(MQTTZ_CLI_ID_SIZE + 1));
+        memset(enc_payload, '\0', sizeof(enc_payload));
+        if (unwrap_payload(tmp_response, mqttz->cli_id, 
+            enc_payload) != MQTTZ_SUCCESS)
+        {
+            return MQTTZ_MALFORMED_PAYLOAD_ERROR;
+        }
+        printf("We received this: %s\n- Client ID: %s\n- Payload: %s\n",
+                tmp_response, mqttz->cli_id, enc_payload);
+        // TODO: decrypt payload
+        if (1) // || dec_payload == "OK")
+        {
+            // Write client id to file
+            fp = fopen(MQTTZ_CLI_ID_FILE, "w");
+            fputs(mqttz->cli_id, fp);
+            fclose(fp);
+        }
+        // Nice Version: creare a rr client and use it TODO
+        free(mqttz->cli_id);
+        return MQTTZ_SUCCESS;
+    }
+    return 0; //wahapen with this FIXME
+}
+
+int subscriber_init(mqttz_config *mqttz)
+{
+    FILE *fp;
+    size_t len = 0;
+
+    // If there is a client ID file, we can assume the Key Exchange has
+    // successfully finished.
+    if (access(MQTTZ_CLI_ID_FILE, R_OK) != -1)
+    {
+        // Load values if they are not loaded and files are available
+        fp = fopen(MQTTZ_CLI_ID_FILE, "r");
+        // TODO Define Cli_ID len
+        if ((getline(&(mqttz->cli_id), &len, fp) == -1) | (len == 0))
+        {
+            printf("Error reading %s file!\n", MQTTZ_CLI_ID_FILE);
+            return MQTTZ_FILE_READING_ERROR;
+        }
+        fclose(fp);
+        if (access(MQTTZ_CLI_KEY_FILE, R_OK) != -1)
+        {
+            fp = fopen(MQTTZ_CLI_KEY_FILE, "r");
+            if ((getline(&(mqttz->cli_aes_key), &len, fp) == -1) | (len == 0))
+            {
+                printf("Error reading %s file!\n", MQTTZ_CLI_KEY_FILE);
+                return MQTTZ_FILE_READING_ERROR;
+            }
+            fclose(fp);
+        }
+        else
+        {
+            printf("MQT-TZ: Key file not available!\n");
+            return MQTTZ_FILE_NOT_FOUND_ERROR;
+        }
+        if (access(MQTTZ_CLI_IV_FILE, R_OK) != -1)
+        {
+            fp = fopen(MQTTZ_CLI_IV_FILE, "r");
+            if ((getline(&(mqttz->cli_aes_iv), &len, fp) == -1) || (len == 0))
+            {
+                printf("MQT-TZ: Error reading %s file!\n", MQTTZ_CLI_KEY_FILE);
+                return MQTTZ_FILE_READING_ERROR;
+            }
+            fclose(fp);
+        }
+        else
+        {
+            printf("MQT-TZ: Key file not available!\n");
+            return MQTTZ_FILE_NOT_FOUND_ERROR;
+        }
+    }
+    else // TODO Define Expiration for the Key? (From Server Side!)
+    {
+        // If files are not available, we must trigger the Key Exchange
+        printf("MQT-TZ: File not found: %s!\n", MQTTZ_CLI_ID_FILE);
+        printf("MQT-TZ: Starting the key exchange protocol...\n");
+        // 1st: Generate a symetric key and iv and store it.
+        unsigned char key[32], iv[16];
+        memset(key, '\0', sizeof(key));
+        memset(iv, '\0', sizeof(iv));
+        if (!RAND_bytes(key, sizeof(key)))
+        {
+            printf("MQT-TZ: OpenSSL Error when generating key!\n");
+            return MQTTZ_OPENSSL_ERROR;
+        }
+        // Initially, client id is set to '?'
+        mqttz->cli_id = "?";
+        //strcpy(mqttz->cli_id, "?");
+        mqttz->cli_aes_key = (char *) key;
+        //strcpy(mqttz->cli_aes_key, (char *) key);
+        fp = fopen(MQTTZ_CLI_KEY_FILE, "w");
+        fputs(mqttz->cli_aes_key, fp);
+        fclose(fp);
+        printf("MQT-TZ: Generated client's Symmetric Key!\n");
+        if (!RAND_bytes(iv, sizeof(iv)))
+        {
+            printf("MQT-TZ: OpenSSL Error when generating key!\n");
+            return MQTTZ_OPENSSL_ERROR;
+        }
+        //strcpy(mqttz->cli_aes_iv, (char *) iv);
+        mqttz->cli_aes_iv = (char *) iv;
+        fp = fopen(MQTTZ_CLI_IV_FILE, "w");
+        fputs(mqttz->cli_aes_iv, fp);
+        fclose(fp);
+        printf("MQT-TZ: Generated client's Initial Vector!\n");
+        // 2nd: Send to broker a RR to the `key_query` topic
+        // Ugly Version: spawn a ./mosquitto_rr bash process
+        // Send the following message: TODO
+        // {cli_id: '?', payload: ENC(mqttz->cli_aes_key + mqttz->cli_aes_iv,
+        //  sPubKey)}
+        //  TODO enc my stuff with his stuff
+        char ret_val[MQTTZ_MAX_MSG_SIZE];
+        memset(ret_val, '\0', sizeof(ret_val));
+        // Example for encrypting with AES
+        wrap_payload(mqttz, ret_val, "Hello World!", MQTTZ_AES);
+        // BIO_dump_fp(stdout, (const char *)ret_val, strlen(ret_val));
+        // char *msg = format_payload('?', enc_key)
+        // char *cmd = (char*)malloc(4098 * sizeof(char)); //FIXME
+        char cmd[MQTTZ_MAX_MSG_SIZE];
+        sprintf(cmd, "mosquitto_rr -p 1887 -t '%s' -m '%s' -e '%s'",
+                MQTTZ_REQUEST_TOPIC, ret_val, MQTTZ_RESPONSE_TOPIC);
+        BIO_dump_fp(stdout, (const char *)cmd, strlen(cmd));
+        fp = popen(cmd, "r");
+        char *tmp_response = NULL;
+        len = 0;
+        if ((fp == NULL) || (getline(&tmp_response, &len, fp) == -1))
+        {
+            printf("MQT-TZ: Error running command!\n");
+        }
+        pclose(fp);
+        // Decrypt message which should have the following format:
+        // {cli_id: <my_cli_id>, payload: ENC(OK, mqttz->cli_aes_key)}
+        printf("We receive this response: %s\n", tmp_response);
+        char enc_payload[MQTTZ_MAX_MSG_SIZE];
+        mqttz->cli_id = (char *)malloc((MQTTZ_CLI_ID_SIZE + 1) * sizeof(char));
+        memset(mqttz->cli_id, '\0', sizeof(MQTTZ_CLI_ID_SIZE + 1));
         memset(enc_payload, '\0', sizeof(enc_payload));
         if (unwrap_payload(tmp_response, mqttz->cli_id, 
             enc_payload) != MQTTZ_SUCCESS)
@@ -309,6 +450,7 @@ int publisher_init(mqttz_config *mqttz)
             // fclose(fp);
         // }
         // Nice Version: creare a rr client and use it TODO
+        free(mqttz->cli_id);
         return MQTTZ_SUCCESS;
     }
     return 0; //wahapen with this FIXME
