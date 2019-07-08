@@ -198,7 +198,8 @@ int unwrap_payload(mqttz_config *mqttz, char *msg, char *payload, int mode)
         return MQTTZ_MALFORMED_PAYLOAD_ERROR;
     }
     mqttz->cli_aes_iv = (char *)malloc((MQTTZ_AES_IV_SIZE + 1) * sizeof(char));
-    strncpy(mqttz->cli_aes_iv, pch2 + strlen(tmp2), MQTTZ_CLI_ID_SIZE);
+    strncpy(mqttz->cli_aes_iv, pch2 + strlen(tmp2), MQTTZ_AES_IV_SIZE);
+    // BIO_dump_fp(stdout, (const char *)mqttz->cli_id, strlen(mqttz->cli_id));
     mqttz->cli_aes_iv[MQTTZ_AES_IV_SIZE] = '\0';
     int enc_payload_size = strlen(msg) - ((pch3 + strlen(tmp3)) - msg) - 1;
     char enc_payload[enc_payload_size];
