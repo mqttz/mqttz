@@ -135,7 +135,7 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 	UNUSED(flags);
 	UNUSED(properties);
 
-    if (subscriber_init(&mqttz) != MQTTZ_SUCCESS)
+    if (client_init(&mqttz) != MQTTZ_SUCCESS)
     {
         printf("MQT-TZ: Error when initializing subscriber! Exiting...\n");
 		mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);

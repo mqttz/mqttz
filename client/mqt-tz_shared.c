@@ -217,8 +217,6 @@ int unwrap_payload(mqttz_config *mqttz, char *msg, char *payload, int mode)
                 printf("MQT-TZ: Error in AES Decrypt!\n");
                 return MQTTZ_OPENSSL_ERROR;
             }
-            printf("Decrypted text is: %s\n", payload);
-            printf("Decrypted length is: %li\n", strlen(payload));
             break;
         default:
             printf("ERROR: Incorrect mode in unwrap_payload. Mode: %i\n", mode);
@@ -227,11 +225,10 @@ int unwrap_payload(mqttz_config *mqttz, char *msg, char *payload, int mode)
     return MQTTZ_SUCCESS;
 }
 
-int publisher_init(mqttz_config *mqttz)
+int client_init(mqttz_config *mqttz)
 {
     FILE *fp;
     size_t len = 0;
-
     // If there is a client ID file, we can assume the Key Exchange has
     // successfully finished.
     if (access(MQTTZ_CLI_ID_FILE, R_OK) != -1)
@@ -239,7 +236,7 @@ int publisher_init(mqttz_config *mqttz)
         // Load values if they are not loaded and files are available
         fp = fopen(MQTTZ_CLI_ID_FILE, "r");
         // TODO Define Cli_ID len
-        if ((getline(&(mqttz->cli_id), &len, fp) == -1) | (len == 0))
+        if (getline(&(mqttz->cli_id), &len, fp) == -1)
         {
             printf("Error reading %s file!\n", MQTTZ_CLI_ID_FILE);
             return MQTTZ_FILE_READING_ERROR;
@@ -342,6 +339,7 @@ int publisher_init(mqttz_config *mqttz)
     return MQTTZ_SUCCESS; 
 }
 
+/*
 int subscriber_init(mqttz_config *mqttz)
 {
     FILE *fp;
@@ -490,6 +488,7 @@ int subscriber_init(mqttz_config *mqttz)
     }
     return MQTTZ_SUCCESS; //wahapen with this FIXME
 }
+*/
 
 RSA *createRSA(char *filename, int public)
 {

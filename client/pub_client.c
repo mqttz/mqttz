@@ -154,7 +154,7 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 			case MSGMODE_STDIN_FILE:
                 // On Connect, execute Key Exchange Protocol
                 //mqttz_init(&mqttz);
-                if (publisher_init(&mqttz) != MQTTZ_SUCCESS)
+                if (client_init(&mqttz) != MQTTZ_SUCCESS)
                 {
                     printf("MQT-TZ: Error when initializing publisher! Exiting...\n");
                     mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);

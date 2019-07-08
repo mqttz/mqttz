@@ -48,7 +48,7 @@ int private_decrypt(unsigned char *enc_data, int data_len,
         unsigned char *decrypted);
 int public_encrypt(unsigned char *data, int data_len, 
         unsigned char *encrypted);
-int publisher_init(mqttz_config *mqttz);
+int client_init(mqttz_config *mqttz);
 int subscriber_init(mqttz_config *mqttz);
 int symmetric_encrypt(unsigned char *plain_text, int plain_text_len,
         unsigned char *key, unsigned char *iv, unsigned char *cipher_text);
