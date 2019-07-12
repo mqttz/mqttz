@@ -244,6 +244,16 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 		return 1;
 	}
 
+    // MQT-TZ Topic Handling?
+    // If we intercept a "id_query" topic.
+    // TODO: might be a good idea to prevent ANY subscriber to this topic
+    // even though it is already encrypted, just for completeness.
+    // This will prevent the message to even get processed.
+    if (strcmp(topic, "id_query") == 0)
+    {
+        printf("Heyyyo\n");
+    }
+
 	payloadlen = context->in_packet.remaining_length - context->in_packet.pos;
 	G_PUB_BYTES_RECEIVED_INC(payloadlen);
 	if(context->listener && context->listener->mount_point){
@@ -280,6 +290,34 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 			return 1;
 		}
 	}
+    // TODO: just for the SBBE FIXME FIXME
+    if (strcmp(topic, "ecg_test") == 0)
+    {
+        char my_payload[4096]; //= (char *) payload;
+        memset(my_payload, '\0', 4096);
+        sprintf(my_payload, "%s", payload);
+        printf("SBBE Rocks!\n"); 
+        printf("%s\n", my_payload);
+        char tmp[] = "{client_id: ";
+        char tmp2[] = ", iv: ";
+        char tmp3[] = ", payload: ";
+        char *pch = strstr(my_payload, tmp);
+        char *pch2 = strstr(my_payload, tmp2);
+        char *pch3 = strstr(my_payload, tmp3);
+        char *cli_id;
+        cli_id = malloc(sizeof(char) * (12 + 1));
+        memset(cli_id, '\0', 12 + 1);
+        strncpy(cli_id, pch + strlen(tmp), 12);
+        char *iv;
+        iv = malloc(sizeof(char) * (16 + 1));
+        memset(iv, '\0', 16 + 1);
+        strncpy(iv, pch2 + strlen(tmp2), 16);
+        int enc_payload_sz = payloadlen 
+            - ((pch3 + strlen(tmp3)) - my_payload) - 1;
+        char enc_payload[enc_payload_sz];
+        strncpy(enc_payload, pch3 + strlen(tmp3), enc_payload_sz);
+        printf("We gat: \n%s\n%s\n%s\n", cli_id, iv, enc_payload);
+    }
 
 	/* Check for topic access */
 	rc = mosquitto_acl_check(db, context, topic, payloadlen, UHPA_ACCESS(payload, payloadlen), qos, retain, MOSQ_ACL_WRITE);
@@ -315,6 +353,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 
 	switch(qos){
 		case 0:
+            // TODO Here!
 			rc2 = sub__messages_queue(db, context->id, topic, qos, retain, &stored);
 			if(rc2 > 0) rc = 1;
 			break;

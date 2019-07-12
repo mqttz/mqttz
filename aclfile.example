@@ -2,7 +2,7 @@
 topic read $SYS/#
 
 # This only affects clients with username "roger".
-user roger
+# user roger
 topic foo/bar
 
 # This affects all clients.
