@@ -31,6 +31,7 @@
             + Payload Size of 1kB, 4kB, 8kB, 16kB
         + Plot Structure:
             + ![Fig 14 in "On the Performance of ARM TrustZone"](./img/trustzone-comparison.png)
+            + ![My Version](./img/mb1_scheme.jpg)
 
 **Figures:**
 
