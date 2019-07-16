@@ -30,7 +30,7 @@
 1. Make artificial ECG generator.
     1. Get my hands on the `.h5` file!!!
 2. Microbenchmarks:
-    1. uB1: TrustZone Reencryption:
+    1. **uB1: TrustZone Reencryption:**
         + How many bytes/second can we reencrypt in the SW and how does it compare to the Normal World?
         + Measure:
             + Time to retrieve decrypt Key from Secure Storage
@@ -39,11 +39,12 @@
             + Time to encrypt payload
         + Vary:
             + Run in NW vs SW
+            + Load Key from persistent storage vs in memory?
             + Payload Size of 1kB, 4kB, 8kB, 16kB
         + Plot Structure:
             + ![Fig 14 in "On the Performance of ARM TrustZone"](./img/trustzone-comparison.png)
             + ![My Version](./img/mb1_scheme.jpg)
-    2. uB2: Key Exchange Performance
+    2. **uB2: Key Exchange Performance**
         + How much time does our Key Exchange protocl take?
         + Measure:
             + Time Spent for the 1st Key Exchange
@@ -54,8 +55,9 @@
                     + Time inside TZ: decrypt and store in SS
                 + Time in client (decrypt OK)
             + Time spent for the 2nd Key Exchange (epsilon?) no interaction w/ server
+        + Compare w/ what?
 3. Macrobenchmarks
-    1. MB1: Streaming a whole 100 Hz ECG
+    1. **MB1: Streaming a whole 100 Hz ECG**
         + What is the performance of our secure MQTT broker when streaming a whole 100 Hz ECG during a given period of time.
         + Measure:
             + Overall Latency defined as time from sending first byte to the last one.
@@ -80,12 +82,15 @@
         + Plot Structure
 
 **Figures:**
-1. Overall Structure
+1. **F1: MQT-TZ Architecture**
+2. **F2: Key Exchange Protocol**
+3. **F3: TrustZone Architecutre?**
 
 **Dissemination:**
 1. 15/08/19 - SysTEX
     + Plots:
     + Figures:
+        1. F1: make it one-column width
     + Notes:
         + Make one-liner of the authors
 2. 06/09/19 - Middleware (Industrial Track)
