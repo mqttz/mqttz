@@ -39,7 +39,7 @@
             + Time to encrypt payload
         + Vary:
             + Run in NW vs SW
-            + Load Key from persistent storage vs in memory?
+            + Load Key from persistent storage vs in memory? Yes
             + Payload Size of 1kB, 4kB, 8kB, 16kB
         + Plot Structure:
             + ![Fig 14 in "On the Performance of ARM TrustZone"](./img/trustzone-comparison.png)
@@ -89,8 +89,13 @@
 **Dissemination:**
 1. 15/08/19 - SysTEX
     + Plots:
+        1. uB2:
+            + Instead of the table, we will put the absolute numbers in the bar itself.
+            + We will do two different plots, one storing the key in SS and one in memory.
+            + We will follow the structure of the SafeFS paper in the end.
     + Figures:
         1. F1: make it one-column width
     + Notes:
         + Make one-liner of the authors
+        + In the last paragraph, report a problem we encountered that motivates our research and that would have made our life easier: Secure Point-to-Point comm. to TZ
 2. 06/09/19 - Middleware (Industrial Track)
