@@ -8,19 +8,25 @@ void test_method(char *tmp)
 int mqttz_init(mqttz_config *mqttz)
 {
     mqttz->cli_id = malloc((MQTTZ_CLI_ID_SIZE + 1) * sizeof(char));
-    mqttz->cli_aes_key = malloc((32 + 1) * sizeof(char));
-    mqttz->cli_aes_iv = malloc((16 + 1) * sizeof(char));
-    memset(mqttz->cli_id, '\0', sizeof(*(mqttz->cli_id)));
-    memset(mqttz->cli_aes_key, '\0', sizeof(*(mqttz->cli_aes_key)));
-    memset(mqttz->cli_aes_key, '\0', sizeof(*(mqttz->cli_aes_key)));
+    mqttz->cli_aes_key = malloc((MQTTZ_AES_KEY_SIZE + 1) * sizeof(char));
+    mqttz->cli_aes_iv = malloc((MQTTZ_AES_IV_SIZE + 1) * sizeof(char));
+    memset(mqttz->cli_id, '\0',
+            sizeof *(mqttz->cli_id) * (MQTTZ_CLI_ID_SIZE + 1));
+    memset(mqttz->cli_aes_key, '\0',
+            sizeof *(mqttz->cli_aes_key) * (MQTTZ_AES_KEY_SIZE + 1));
+    memset(mqttz->cli_aes_iv, '\0',
+            sizeof *(mqttz->cli_aes_iv) * (MQTTZ_AES_IV_SIZE + 1));
     return MQTTZ_SUCCESS;
 }
 
 int mqttz_clean(mqttz_config *mqttz)
 {
-    memset(mqttz->cli_id, '\0', sizeof(*(mqttz->cli_id)));
-    memset(mqttz->cli_aes_key, '\0', sizeof(*(mqttz->cli_aes_key)));
-    memset(mqttz->cli_aes_key, '\0', sizeof(*(mqttz->cli_aes_key)));
+    memset(mqttz->cli_id, '\0', 
+            sizeof *(mqttz->cli_id) * (MQTTZ_CLI_ID_SIZE + 1));
+    memset(mqttz->cli_aes_key, '\0',
+            sizeof *(mqttz->cli_aes_key) * (MQTTZ_AES_KEY_SIZE + 1));
+    memset(mqttz->cli_aes_iv, '\0',
+            sizeof *(mqttz->cli_aes_iv) * (MQTTZ_AES_IV_SIZE + 1));
     free(mqttz->cli_id);
     free(mqttz->cli_aes_key);
     free(mqttz->cli_aes_iv);
@@ -107,8 +113,10 @@ int wrap_payload(mqttz_config *mqttz, char *ret_val, char *load, int mode)
         case MQTTZ_RSA:
             return MQTTZ_SUCCESS;
         case MQTTZ_AES:
-            mqttz->cli_aes_iv = (char *)malloc((MQTTZ_AES_IV_SIZE + 1) * sizeof(char));
-            if (!RAND_bytes((unsigned char *) mqttz->cli_aes_iv, MQTTZ_AES_IV_SIZE))
+            mqttz->cli_aes_iv = (char *) malloc((MQTTZ_AES_IV_SIZE + 1)
+                    * sizeof(char));
+            if (!RAND_bytes((unsigned char *) mqttz->cli_aes_iv,
+                        MQTTZ_AES_IV_SIZE))
             {
                 printf("MQT-TZ: OpenSSL Error when generating IV!\n");
                 return MQTTZ_OPENSSL_ERROR;
@@ -132,27 +140,6 @@ int wrap_payload(mqttz_config *mqttz, char *ret_val, char *load, int mode)
     strcat(ret_val, ", payload: ");
     strcat(ret_val, enc_text);
     strcat(ret_val, "}");
-//    unsigned char tmp[4096];
-//    unsigned char tmp2[4096];
-//    int res = public_encrypt((unsigned char *) ret_val, sizeof(ret_val), tmp);
-//    if (res == -1)
-//    {
-//        printf("Public encrypt failed!\n");
-//    }
-//    else
-//    {
-//        printf("Public encrypt succeded!\n");
-//        //printf("%s\n", tmp);
-//    }
-//    int res2 = private_decrypt(tmp, sizeof(tmp), tmp2); 
-//    if (res2 == -1)
-//    {
-//        printf("Private decrypt failed!\n");
-//    }
-//    else
-//    {
-//        printf("%s\n", tmp2);
-//    }
     return MQTTZ_SUCCESS;
 }
 
@@ -241,10 +228,13 @@ int client_init(mqttz_config *mqttz)
             printf("Error reading %s file!\n", MQTTZ_CLI_ID_FILE);
             return MQTTZ_FILE_READING_ERROR;
         }
+        else
+            printf("MQT-TZ: Loaded Client Id -> %s", mqttz->cli_id);
         if (strlen(mqttz->cli_id) != MQTTZ_CLI_ID_SIZE)
         {
             // FIXME Should we do this?
             // BIO_dump_fp(stdout, (const char *)mqttz->cli_id, strlen(mqttz->cli_id));
+            printf("MQT-TZ: We are where we should not\n");
             mqttz->cli_id[MQTTZ_CLI_ID_SIZE] = '\0';
         }
         fclose(fp);
@@ -256,6 +246,8 @@ int client_init(mqttz_config *mqttz)
                 printf("Error reading %s file!\n", MQTTZ_CLI_KEY_FILE);
                 return MQTTZ_FILE_READING_ERROR;
             }
+            else
+                printf("MQT-TZ: Loaded Client Key -> %s", mqttz->cli_aes_key);
             if (strlen(mqttz->cli_aes_key) != MQTTZ_AES_KEY_SIZE)
             {
                 // FIXME Should we do this?

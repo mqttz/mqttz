@@ -76,7 +76,8 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 	UNUSED(obj);
 	UNUSED(properties);
 
-    if (strcmp(message->topic, MQTTZ_REQUEST_TOPIC) == 0)
+    //if (strcmp(message->topic, MQTTZ_REQUEST_TOPIC) == 0)
+    if (1)
     {
         char unwrapped_payload[MQTTZ_MAX_MSG_SIZE];
         memset(unwrapped_payload, '\0', MQTTZ_MAX_MSG_SIZE);

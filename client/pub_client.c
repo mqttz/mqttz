@@ -55,7 +55,8 @@ static uint64_t next_publish_tv;
 static void set_repeat_time(void)
 {
 	uint64_t ticks = GetTickCount64();
-	next_publish_tv = ticks + cfg.repeat_delay.tv_sec*1000 + cfg.repeat_delay.tv_usec/1000;
+	next_publish_tv = ticks + cfg.repeat_delay.tv_sec*1000 
+        + cfg.repeat_delay.tv_usec/1000;
 }
 
 static int check_repeat_time(void)
@@ -99,7 +100,8 @@ static int check_repeat_time(void)
 }
 #endif
 
-void my_disconnect_callback(struct mosquitto *mosq, void *obj, int rc, const mosquitto_property *properties)
+void my_disconnect_callback(struct mosquitto *mosq, void *obj, int rc,
+        const mosquitto_property *properties)
 {
 	UNUSED(mosq);
 	UNUSED(obj);
@@ -109,7 +111,8 @@ void my_disconnect_callback(struct mosquitto *mosq, void *obj, int rc, const mos
 	status = STATUS_DISCONNECTED;
 }
 
-int my_publish(struct mosquitto *mosq, int *mid, const char *topic, int payloadlen, void *payload, int qos, bool retain)
+int my_publish(struct mosquitto *mosq, int *mid, const char *topic,
+        int payloadlen, void *payload, int qos, bool retain)
 {
     char wrapped_payload[MQTTZ_MAX_MSG_SIZE];
     memset(wrapped_payload, '\0', MQTTZ_MAX_MSG_SIZE);
@@ -125,11 +128,14 @@ int my_publish(struct mosquitto *mosq, int *mid, const char *topic, int payloadl
     // unwrap_payload(&mqttz, wrapped_payload, tmp, MQTTZ_AES);
     // End Testing
 	ready_for_repeat = false;
-	if(cfg.protocol_version == MQTT_PROTOCOL_V5 && cfg.have_topic_alias && first_publish == false){
-		return mosquitto_publish_v5(mosq, mid, NULL, payloadlen, payload, qos, retain, cfg.publish_props);
+	if(cfg.protocol_version == MQTT_PROTOCOL_V5 && cfg.have_topic_alias
+            && first_publish == false){
+		return mosquitto_publish_v5(mosq, mid, NULL, payloadlen, payload, qos,
+                retain, cfg.publish_props);
 	}else{
 		first_publish = false;
-		return mosquitto_publish_v5(mosq, mid, topic, strlen(wrapped_payload), (void *) wrapped_payload, qos, retain, cfg.publish_props);
+		return mosquitto_publish_v5(mosq, mid, topic, strlen(wrapped_payload),
+                (void *) wrapped_payload, qos, retain, cfg.publish_props);
 		// return mosquitto_publish_v5(mosq, mid, topic, payloadlen, payload, qos, retain, cfg.publish_props);
 	}
 }
@@ -153,7 +159,7 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 			case MSGMODE_FILE:
 			case MSGMODE_STDIN_FILE:
                 // On Connect, execute Key Exchange Protocol
-                //mqttz_init(&mqttz);
+                mqttz_init(&mqttz);
                 if (client_init(&mqttz) != MQTTZ_SUCCESS)
                 {
                     printf("MQT-TZ: Error when initializing publisher! Exiting...\n");
@@ -165,7 +171,6 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
                     printf("following parameters:\n \t- cli_id: %s\n", mqttz.cli_id);
                 }
 				rc = my_publish(mosq, &mid_sent, cfg.topic, cfg.msglen, cfg.message, cfg.qos, cfg.retain);
-                //mqttz_clean(&mqttz);
 				break;
 			case MSGMODE_NULL:
 				rc = my_publish(mosq, &mid_sent, cfg.topic, 0, NULL, cfg.qos, cfg.retain);
@@ -196,6 +201,7 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
 					err_printf(&cfg, "Error: Message QoS not supported on broker, try a lower QoS.\n");
 					break;
 			}
+            mqttz_clean(&mqttz);
 			mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
 		}
 	}else{
