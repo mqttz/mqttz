@@ -261,6 +261,7 @@ int client_init(mqttz_config *mqttz)
 {
     FILE *fp;
     size_t len = 0;
+    printf("MQT-TZ: Starting Client from library!\n");
     // If there is a client ID file, we can assume the Key Exchange has
     // successfully finished.
     if (access(MQTTZ_CLI_ID_FILE, R_OK) != -1)

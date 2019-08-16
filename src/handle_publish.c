@@ -354,7 +354,7 @@ int handle__publish(struct mosquitto_db *db, struct mosquitto *context)
 	switch(qos){
 		case 0:
             // TODO Here!
-            printf("We here!\n");
+            // printf("We here!\n");
 			rc2 = sub__messages_queue(db, context->id, topic, qos, retain, &stored);
 			if(rc2 > 0) rc = 1;
 			break;

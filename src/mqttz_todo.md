@@ -1,7 +1,11 @@
 ## Implement Full Loop
 
 ### Call to the TA
-1. Intercept the message right before it is being sent to the client at: `lib/send_publish.c`
+1. Intercept the message right before it is being sent to the client at: `src/subs.c`
+2. Grep the client ID from the subscriber identifier.
+3. Unwrap
+4. Reencrypt
+5. Wrap again
 
 ### Map subscribers to MQT-TZ Cli Ids
 1. Maybe do so at: `src/handle_subscribe.c`

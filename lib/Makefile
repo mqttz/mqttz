@@ -159,7 +159,7 @@ net_mosq_ocsp.o : net_mosq_ocsp.c net_mosq.h
 net_mosq.o : net_mosq.c net_mosq.h
 	${CROSS_COMPILE}$(CC) $(LIB_CPPFLAGS) $(LIB_CFLAGS) -c $< -o $@
 
-mqt-tz_shared.o : mqt-tz_shared.c
+mqt-tz_shared.o : mqt-tz_shared.c mqt-tz_shared.h
 	${CROSS_COMPILE}$(CC) $(LIB_CPPFLAGS) $(LIB_CFLAGS) -c $< -o $@
 
 options.o : options.c mosquitto.h mosquitto_internal.h
