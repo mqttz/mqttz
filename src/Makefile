@@ -31,6 +31,7 @@ OBJS=	mosquitto.o \
 		logging.o \
 		loop.o \
 		memory_mosq.o \
+		mqt-tz_shared.o \
 		net.o \
 		net_mosq.o \
 		net_mosq_ocsp.o \
@@ -151,6 +152,9 @@ net_mosq_ocsp.o : ../lib/net_mosq_ocsp.c ../lib/net_mosq.h
 
 net_mosq.o : ../lib/net_mosq.c ../lib/net_mosq.h
 	${CROSS_COMPILE}${CC} $(BROKER_CPPFLAGS) $(BROKER_CFLAGS) -c $< -o $@
+
+mqt-tz_shared.o : ../lib/mqt-tz_shared.c
+	${CROSS_COMPILE}${CC} ${BROKER_CPPFLAGS} $(BROKER_CFLAGS) -c $< -o $@
 
 persist_read.o : persist_read.c persist.h mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CPPFLAGS) $(BROKER_CFLAGS) -c $< -o $@

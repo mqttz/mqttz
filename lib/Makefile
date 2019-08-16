@@ -23,6 +23,7 @@ MOSQ_OBJS=mosquitto.o \
 		  messages_mosq.o \
 		  net_mosq_ocsp.o \
 		  net_mosq.o \
+		  mqt-tz_shared.o \
 		  options.o \
 		  packet_datatypes.o \
 		  packet_mosq.o \
@@ -158,6 +159,9 @@ net_mosq_ocsp.o : net_mosq_ocsp.c net_mosq.h
 net_mosq.o : net_mosq.c net_mosq.h
 	${CROSS_COMPILE}$(CC) $(LIB_CPPFLAGS) $(LIB_CFLAGS) -c $< -o $@
 
+mqt-tz_shared.o : mqt-tz_shared.c
+	${CROSS_COMPILE}$(CC) $(LIB_CPPFLAGS) $(LIB_CFLAGS) -c $< -o $@
+
 options.o : options.c mosquitto.h mosquitto_internal.h
 	${CROSS_COMPILE}$(CC) $(LIB_CPPFLAGS) $(LIB_CFLAGS) -c $< -o $@
 
@@ -182,7 +186,7 @@ send_disconnect.o : send_disconnect.c send_mosq.h
 send_mosq.o : send_mosq.c send_mosq.h
 	${CROSS_COMPILE}$(CC) $(LIB_CPPFLAGS) $(LIB_CFLAGS) -c $< -o $@
 
-send_publish.o : send_publish.c send_mosq.h
+send_publish.o : send_publish.c send_mosq.h mqt-tz_shared.o 
 	${CROSS_COMPILE}$(CC) $(LIB_CPPFLAGS) $(LIB_CFLAGS) -c $< -o $@
 
 send_subscribe.o : send_subscribe.c send_mosq.h

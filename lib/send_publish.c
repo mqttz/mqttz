@@ -30,12 +30,12 @@ Contributors:
 #include "mosquitto_internal.h"
 #include "logging_mosq.h"
 #include "mqtt_protocol.h"
+#include "mqt-tz_shared.h"
 #include "memory_mosq.h"
 #include "net_mosq.h"
 #include "packet_mosq.h"
 #include "property_mosq.h"
 #include "send_mosq.h"
-
 
 int send__publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint32_t payloadlen, const void *payload, int qos, bool retain, bool dup, const mosquitto_property *cmsg_props, const mosquitto_property *store_props, uint32_t expiry_interval)
 {
@@ -124,6 +124,26 @@ int send__publish(struct mosquitto *mosq, uint16_t mid, const char *topic, uint3
 	log__printf(mosq, MOSQ_LOG_DEBUG, "Client %s sending PUBLISH (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", mosq->id, dup, qos, retain, mid, topic, (long)payloadlen);
 #endif
 
+    // MQT-TZ TA Proxy Reencryption Call! TODO FIXME HELLO
+    // get_client_id(mosq->id) TODO
+    /*
+    char unwrapped_payload[payloadlen];
+    char cli_id[MQTTZ_CLI_ID_SIZE];
+    char iv[MQTTZ_AES_IV_SIZE];
+    memset(unwrapped_payload, '\0', MQTTZ_MAX_MSG_SIZE);
+    if (broker_unwrap_payload(payload, cli_id, iv, unwrapped_payload,
+                payloadlen) != MQTTZ_SUCCESS)
+    {
+        printf("MQT-TZ: Error!\n");
+    }
+    else
+    {
+        printf("MQT-TZ: Decrypted Information\n%s\n", unwrapped_payload);
+    }
+    printf("In particular, these are the details we are interested in:\n");
+    printf("- Recipient: %s\n", mosq->id);
+    printf("- Sender: \n%s\n%s\n%s\n", cli_id, iv, payload);
+    */
 	return send__real_publish(mosq, mid, topic, payloadlen, payload, qos, retain, dup, cmsg_props, store_props, expiry_interval);
 }
 
