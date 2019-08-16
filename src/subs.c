@@ -113,8 +113,11 @@ static int subs__send(struct mosquitto_db *db, struct mosquitto__subleaf *leaf, 
             printf("- Payload: %s\n", stored->payload);
             printf("- Topic: %s\n", topic);
             int i;
+            char mqttz_id[MQTTZ_CLI_ID_SIZE];_
             for (i = 0; i < stored->dest_id_count; i++)
                 printf("- Destination: %i\t%s\n", i, stored->dest_ids[i]);
+                // Retrieve MQT-TZ Id from mosquitto ID
+                if (mosq_id_2_mqttz_id(stored->dest_ids[i], mqttz_id)
         }
 	}else{
 		return 1; /* Application error */
@@ -181,7 +184,7 @@ static int subs__process(struct mosquitto_db *db, struct mosquitto__subhier *hie
 			leaf = leaf->next;
 			continue;
 		}
-        printf("Are we here as well?\n");
+        //printf("Are we here as well?\n");
 		rc2 = subs__send(db, leaf, topic, qos, retain, stored);
 		if(rc2){
 			rc = 1;

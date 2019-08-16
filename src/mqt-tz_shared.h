@@ -55,6 +55,8 @@ int symmetric_encrypt(unsigned char *plain_text, int plain_text_len,
 int symmetric_decrypt(unsigned char *cipher_text, int cipher_text_len,
         unsigned char *key, unsigned char *iv, unsigned char *plain_text);
 int unwrap_payload(mqttz_config *mqttz, char *msg, char *payload, int mode);
+int broker_unwrap_payload(char *msg, char *id, char *iv, char *payload,
+        int payload_len);
 int wrap_payload(mqttz_config *mqttz, char *ret_val, char *payload, int mode);
 
 #endif

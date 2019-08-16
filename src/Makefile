@@ -234,7 +234,7 @@ session_expiry.o : session_expiry.c mosquitto_broker_internal.h
 signals.o : signals.c mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CPPFLAGS) $(BROKER_CFLAGS) -c $< -o $@
 
-subs.o : subs.c mosquitto_broker_internal.h
+subs.o : subs.c mosquitto_broker_internal.h mqt-tz_shared.c mqt-tz_shared.h
 	${CROSS_COMPILE}${CC} $(BROKER_CPPFLAGS) $(BROKER_CFLAGS) -c $< -o $@
 
 sys_tree.o : sys_tree.c mosquitto_broker_internal.h

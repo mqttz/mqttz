@@ -212,10 +212,56 @@ int unwrap_payload(mqttz_config *mqttz, char *msg, char *payload, int mode)
     return MQTTZ_SUCCESS;
 }
 
+int broker_unwrap_payload(char *msg, char *id, char *iv, char *payload,
+        int payload_len)
+{   
+    char tmp[] = "{client_id: ";
+    char tmp2[] = ", iv: ";
+    char tmp3[] = ", payload: ";
+    char *pch = strstr(msg, tmp);
+    char *pch2 = strstr(msg, tmp2);
+    char *pch3 = strstr(msg, tmp3);
+    if (pch == NULL)
+    {
+        printf("MQT-TZ: Badly formatted Payload in KE!\n");
+        return MQTTZ_MALFORMED_PAYLOAD_ERROR;
+    }
+    if (pch2 == NULL)
+    {
+        printf("MQT-TZ: Badly formatted Payload in KE!\n");
+        return MQTTZ_MALFORMED_PAYLOAD_ERROR;
+    }
+    if (pch3 == NULL)
+    {
+        printf("MQT-TZ: Badly formatted Payload in KE!\n");
+        return MQTTZ_MALFORMED_PAYLOAD_ERROR;
+    }
+    if ((pch2 - (pch + strlen(tmp))) != MQTTZ_CLI_ID_SIZE)
+    {
+        printf("MQT-TZ: Badly formatted Client ID in KE!\n");
+        return MQTTZ_MALFORMED_PAYLOAD_ERROR;
+    }
+    if ((pch3 - (pch2 + strlen(tmp2))) != MQTTZ_AES_IV_SIZE)
+    {
+        printf("MQT-TZ: Badly formatted IV in KE!\n");
+        return MQTTZ_MALFORMED_PAYLOAD_ERROR;
+    }
+    strncpy(id, (pch + strlen(tmp)), MQTTZ_CLI_ID_SIZE);
+    id[MQTTZ_CLI_ID_SIZE] = '\0';
+    strncpy(iv, pch2 + strlen(tmp2), MQTTZ_AES_IV_SIZE);
+    iv[MQTTZ_AES_IV_SIZE] = '\0';
+    int payload_size = payload_len - ((pch3 + strlen(tmp3)) - msg) - 1;
+    strncpy(payload, pch3 + strlen(tmp3), payload_size);
+    payload[payload_size] = '\0';
+    // BIO_dump_fp(stdout, (const char *)mqttz->cli_id, strlen(mqttz->cli_id));
+    return MQTTZ_SUCCESS;
+}
+
 int client_init(mqttz_config *mqttz)
 {
     FILE *fp;
     size_t len = 0;
+    printf("MQT-TZ: Starting Client from library!\n");
     // If there is a client ID file, we can assume the Key Exchange has
     // successfully finished.
     if (access(MQTTZ_CLI_ID_FILE, R_OK) != -1)
