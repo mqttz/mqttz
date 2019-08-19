@@ -215,6 +215,7 @@ int unwrap_payload(mqttz_config *mqttz, char *msg, char *payload, int mode)
 int broker_unwrap_payload(char *msg, char *id, char *iv, char *payload,
         int payload_len)
 {   
+    printf("test\n");
     char tmp[] = "{client_id: ";
     char tmp2[] = ", iv: ";
     char tmp3[] = ", payload: ";

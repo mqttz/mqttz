@@ -50,6 +50,7 @@ out/
 src/db_dump/mosquitto_db_dump
 src/mosquitto
 src/mosquitto_passwd
+src/ids
 
 test/broker/broker.pid
 test/test_client

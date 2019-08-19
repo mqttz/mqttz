@@ -65,9 +65,8 @@ struct sub__token {
 	uint16_t topic_len;
 };
 
-mosq_id_2_mqttz_id(char *mosquitto_id, char *mqttz_id)
+static int mosq_id_2_mqttz_id(char *mosquitto_id, char *mqttz_id)
 {
-    printf("aloha\n");
     char *file_name[40];
     strcpy(file_name, MQTTZ_ID_FILE_PATH);
     strcat(file_name, mosquitto_id);
@@ -78,6 +77,7 @@ mosq_id_2_mqttz_id(char *mosquitto_id, char *mqttz_id)
         return 1;
     }
     fscanf(key_file, "%s", mqttz_id); 
+    //mqttz_id[MQTTZ_CLI_ID_SIZE] = 
     return 0;
 }
 
@@ -88,7 +88,6 @@ static int subs__send(struct mosquitto_db *db, struct mosquitto__subleaf *leaf, 
 	int client_qos, msg_qos;
 	mosquitto_property *properties = NULL;
 	int rc2;
-
 	/* Check for ACL topic access. */
 	rc2 = mosquitto_acl_check(db, leaf->context, topic, stored->payloadlen, UHPA_ACCESS(stored->payload, stored->payloadlen), stored->qos, stored->retain, MOSQ_ACL_READ);
 	if(rc2 == MOSQ_ERR_ACL_DENIED){
@@ -124,32 +123,44 @@ static int subs__send(struct mosquitto_db *db, struct mosquitto__subleaf *leaf, 
         else
         {
             // MQT-TZ TA Re-encryption FIXME TODO HOLLA HELLO
-            printf("Properties:\n");
-            //printf("- Leaf Identifier: %s\n", *stored->dest_ids);
-            printf("- Payload: %s\n", stored->payload);
-            printf("- Topic: %s\n", topic);
+            //printf("Properties:\n");
+            char mqttz_id[MQTTZ_CLI_ID_SIZE + 1];
+            char unw_id[MQTTZ_CLI_ID_SIZE + 1];
+            char unw_iv[MQTTZ_AES_IV_SIZE + 1];
+            char unw_payload[stored->payloadlen + 1];
+            //printf("- Payload: %s\n", UHPA_ACCESS_PAYLOAD(stored));
+            //printf("- Payload: %s\n", UHPA_ACCESS_PAYLOAD(stored));
             int i;
-            char mqttz_id[MQTTZ_CLI_ID_SIZE];
-            //const char deli[] = "/"; 
-            //char *token;
             for (i = 0; i < stored->dest_id_count; i++)
             {
-                //printf("- Destination: %i\t%s\n", i, stored->dest_ids[i]);
+                memset(mqttz_id, '\0', MQTTZ_CLI_ID_SIZE + 1);
+                memset(unw_id, '\0', MQTTZ_CLI_ID_SIZE + 1);
+                memset(unw_iv, '\0', MQTTZ_AES_IV_SIZE + 1);
+                memset(unw_payload, '\0', stored->payloadlen + 1);
                 // Retrieve MQT-TZ Id from mosquitto ID
-                printf("Original mosquitto id: %s\n", stored->dest_ids[i]);
-                //token = strtok(stored->dest_ids[i], deli);
-                //printf("here: %s\n", token);
-                //printf("here: %s\n", stored->dest_ids[i]);
-                //token = strtok(NULL, deli);
+                //printf("Original mosquitto id: %s\n", stored->dest_ids[i]);
                 char *last = strrchr(stored->dest_ids[i], '/');
-                printf("Original file name: %s\n", last + 1);
+                //printf("Original mosquitto id: %s\n", last + 1);
                 if (mosq_id_2_mqttz_id(last + 1, mqttz_id) != 0)
-                    printf("MQT-TZ ERROR: Id not registered!\n");
-                else
                 {
-                    // Calling TA with the following arguments
-                    printf("Destination ID: %s\n", mqttz_id); 
+                    printf("MQT-TZ ERROR: Id not registered!\n");
+                    return 1;
                 }
+                //printf("1: %s\n", (char *) UHPA_ACCESS_PAYLOAD(stored));
+                //printf("2: %s\n", unw_id);
+                //printf("3: %s\n", unw_iv);
+                //printf("4: %s\n", unw_payload);
+                // Calling TA with the following arguments
+                if (broker_unwrap_payload((char *) UHPA_ACCESS_PAYLOAD(stored),
+                            unw_id, unw_iv, unw_payload, stored->payloadlen)
+                        != 0)
+                {
+                    printf("MQT-TZ ERROR: Error unwrapping payload!\n");
+                    return 1;
+                }
+                printf("Origin:\n- Id: %s\n- IV: %s\n- Payload: %s\n",
+                        unw_id, unw_iv, unw_payload);
+                printf("Destination:\n- Id:%s\n", mqttz_id); 
             }
         }
 	}else{
