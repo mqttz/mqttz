@@ -54,6 +54,7 @@ Contributors:
 #include "mosquitto_broker_internal.h"
 #include "memory_mosq.h"
 #include "mqtt_protocol.h"
+#include "mqt-tz_shared.h"
 #include "util_mosq.h"
 
 #include "utlist.h"
@@ -64,6 +65,21 @@ struct sub__token {
 	uint16_t topic_len;
 };
 
+mosq_id_2_mqttz_id(char *mosquitto_id, char *mqttz_id)
+{
+    printf("aloha\n");
+    char *file_name[40];
+    strcpy(file_name, MQTTZ_ID_FILE_PATH);
+    strcat(file_name, mosquitto_id);
+    FILE *key_file = fopen(file_name, "r");
+    if (key_file == NULL)
+    {
+        printf("MQT-TZ Error! ID file not found: %s\n", file_name);
+        return 1;
+    }
+    fscanf(key_file, "%s", mqttz_id); 
+    return 0;
+}
 
 static int subs__send(struct mosquitto_db *db, struct mosquitto__subleaf *leaf, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored)
 {
@@ -113,11 +129,28 @@ static int subs__send(struct mosquitto_db *db, struct mosquitto__subleaf *leaf, 
             printf("- Payload: %s\n", stored->payload);
             printf("- Topic: %s\n", topic);
             int i;
-            char mqttz_id[MQTTZ_CLI_ID_SIZE];_
+            char mqttz_id[MQTTZ_CLI_ID_SIZE];
+            //const char deli[] = "/"; 
+            //char *token;
             for (i = 0; i < stored->dest_id_count; i++)
-                printf("- Destination: %i\t%s\n", i, stored->dest_ids[i]);
+            {
+                //printf("- Destination: %i\t%s\n", i, stored->dest_ids[i]);
                 // Retrieve MQT-TZ Id from mosquitto ID
-                if (mosq_id_2_mqttz_id(stored->dest_ids[i], mqttz_id)
+                printf("Original mosquitto id: %s\n", stored->dest_ids[i]);
+                //token = strtok(stored->dest_ids[i], deli);
+                //printf("here: %s\n", token);
+                //printf("here: %s\n", stored->dest_ids[i]);
+                //token = strtok(NULL, deli);
+                char *last = strrchr(stored->dest_ids[i], '/');
+                printf("Original file name: %s\n", last + 1);
+                if (mosq_id_2_mqttz_id(last + 1, mqttz_id) != 0)
+                    printf("MQT-TZ ERROR: Id not registered!\n");
+                else
+                {
+                    // Calling TA with the following arguments
+                    printf("Destination ID: %s\n", mqttz_id); 
+                }
+            }
         }
 	}else{
 		return 1; /* Application error */

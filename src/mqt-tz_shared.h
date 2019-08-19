@@ -17,6 +17,7 @@
 #define MQTTZ_CLI_IV_FILE       "mqt-tz/cli_aes_iv.txt"
 #define MQTTZ_CLI_KEY_FILE      "mqt-tz/cli_aes_key.txt"
 #define MQTTZ_BRK_PKEY_FILE     "mqt-tz/sPubKey.pem"
+#define MQTTZ_ID_FILE_PATH      "/home/csegarra/Work/CSEM/MQT-TZ/mosquitto/src/ids/"
 #define MQTTZ_MAX_MSG_SIZE      4096
 #define MQTTZ_CLI_ID_SIZE       12
 #define MQTTZ_RSA_PADDING       RSA_PKCS1_PADDING
