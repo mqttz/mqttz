@@ -48,6 +48,7 @@ Contributors:
 #include "config.h"
 
 #include <assert.h>
+#include <process.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -128,15 +129,17 @@ static int subs__send(struct mosquitto_db *db, struct mosquitto__subleaf *leaf, 
             char unw_id[MQTTZ_CLI_ID_SIZE + 1];
             char unw_iv[MQTTZ_AES_IV_SIZE + 1];
             char unw_payload[stored->payloadlen + 1];
-            //printf("- Payload: %s\n", UHPA_ACCESS_PAYLOAD(stored));
-            //printf("- Payload: %s\n", UHPA_ACCESS_PAYLOAD(stored));
-            int i;
+            char cmd[MQTTZ_MAX_MSG_SIZE];
+            FILE *fp;
+            uint16_t i;
+            size_t len = 0;
             for (i = 0; i < stored->dest_id_count; i++)
             {
                 memset(mqttz_id, '\0', MQTTZ_CLI_ID_SIZE + 1);
                 memset(unw_id, '\0', MQTTZ_CLI_ID_SIZE + 1);
                 memset(unw_iv, '\0', MQTTZ_AES_IV_SIZE + 1);
                 memset(unw_payload, '\0', stored->payloadlen + 1);
+                memset(cmd, '\0', MQTTZ_MAX_MSG_SIZE);
                 // Retrieve MQT-TZ Id from mosquitto ID
                 //printf("Original mosquitto id: %s\n", stored->dest_ids[i]);
                 char *last = strrchr(stored->dest_ids[i], '/');
@@ -150,7 +153,7 @@ static int subs__send(struct mosquitto_db *db, struct mosquitto__subleaf *leaf, 
                 //printf("2: %s\n", unw_id);
                 //printf("3: %s\n", unw_iv);
                 //printf("4: %s\n", unw_payload);
-                // Calling TA with the following arguments
+                // Retrieve arguments for the TA
                 if (broker_unwrap_payload((char *) UHPA_ACCESS_PAYLOAD(stored),
                             unw_id, unw_iv, unw_payload, stored->payloadlen)
                         != 0)
@@ -160,7 +163,34 @@ static int subs__send(struct mosquitto_db *db, struct mosquitto__subleaf *leaf, 
                 }
                 printf("Origin:\n- Id: %s\n- IV: %s\n- Payload: %s\n",
                         unw_id, unw_iv, unw_payload);
-                printf("Destination:\n- Id:%s\n", mqttz_id); 
+                printf("Destination:\n- Id: %s\n", mqttz_id); 
+                // Call the TA
+                sprintf(cmd, "/usr/bin/optee_hot_cache %s %s %s %s",
+                        unw_id, unw_iv, unw_payload, mqttz_id);
+                fp = popen(cmd, "r");
+                if (fp == NULL)
+                {
+                    printf("MQT-TZ ERROR: Error running binary!\n");
+                    return 1;
+                }
+                if (getline(&unw_id, &len, fp) == -1)
+                {
+                    printf("MQT-TZ ERROR: Error retrieveing binary out!\n");
+                    return 1;
+                }
+                if (getline(&unw_iv, &len, fp) == -1)
+                {
+                    printf("MQT-TZ ERROR: Error retrieveing binary out!\n");
+                    return 1;
+                }
+                if (getline(&unw_payload, &len, fp) == -1)
+                {
+                    printf("MQT-TZ ERROR: Error retrieveing binary out!\n");
+                    return 1;
+                }
+                pclose(fp);
+                printf("Origin:\n- Id: %s\n- IV: %s\n- Payload: %s\n",
+                        unw_id, unw_iv, unw_payload);
             }
         }
 	}else{
