@@ -1,0 +1,4 @@
+# This affects access control for clients with no username.
+topic readwrite #
+# topic write id_query
+# topic read id_response
