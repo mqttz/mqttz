@@ -48,7 +48,6 @@ Contributors:
 #include "config.h"
 
 #include <assert.h>
-#include <process.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -165,14 +164,25 @@ static int subs__send(struct mosquitto_db *db, struct mosquitto__subleaf *leaf, 
                         unw_id, unw_iv, unw_payload);
                 printf("Destination:\n- Id: %s\n", mqttz_id); 
                 // Call the TA
-                sprintf(cmd, "/usr/bin/optee_hot_cache %s %s %s %s",
+                // FIXME Passing encrypted strings as command line arguments
+                // can yield huge problems. For the time being, if the string
+                // contains a \' bash will crash.
+                sprintf(cmd, "/usr/bin/optee_hot_cache '%s' '%s' '%s' '%s'",
                         unw_id, unw_iv, unw_payload, mqttz_id);
                 fp = popen(cmd, "r");
+                printf("Opened pipe!\n");
                 if (fp == NULL)
                 {
                     printf("MQT-TZ ERROR: Error running binary!\n");
                     return 1;
                 }
+                char buffer[1000];
+                while (getline(&buffer, &len, fp) != -1)
+                {
+                    printf("Arg: %s\n", buffer);
+                    memset(unw_payload, '\0', 1000);
+                }
+                /*
                 if (getline(&unw_id, &len, fp) == -1)
                 {
                     printf("MQT-TZ ERROR: Error retrieveing binary out!\n");
@@ -188,6 +198,7 @@ static int subs__send(struct mosquitto_db *db, struct mosquitto__subleaf *leaf, 
                     printf("MQT-TZ ERROR: Error retrieveing binary out!\n");
                     return 1;
                 }
+                */
                 pclose(fp);
                 printf("Origin:\n- Id: %s\n- IV: %s\n- Payload: %s\n",
                         unw_id, unw_iv, unw_payload);
