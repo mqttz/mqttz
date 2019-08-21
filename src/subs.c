@@ -124,18 +124,18 @@ static int subs__send(struct mosquitto_db *db, struct mosquitto__subleaf *leaf, 
         {
             // MQT-TZ TA Re-encryption FIXME TODO HOLLA HELLO
             //printf("Properties:\n");
-            char mqttz_id[MQTTZ_CLI_ID_SIZE + 1];
-            char unw_id[MQTTZ_CLI_ID_SIZE + 1];
+            char mqttz_id[MQTTZ_CLI_ID_SIZE + 2];
+            char unw_id[MQTTZ_CLI_ID_SIZE + 2];
             char unw_iv[MQTTZ_AES_IV_SIZE + 1];
             char unw_payload[stored->payloadlen + 1];
             char cmd[MQTTZ_MAX_MSG_SIZE];
             FILE *fp;
             uint16_t i;
-            size_t len = 0;
+            size_t len = MQTTZ_CLI_ID_SIZE;
             for (i = 0; i < stored->dest_id_count; i++)
             {
-                memset(mqttz_id, '\0', MQTTZ_CLI_ID_SIZE + 1);
-                memset(unw_id, '\0', MQTTZ_CLI_ID_SIZE + 1);
+                memset(mqttz_id, '\0', MQTTZ_CLI_ID_SIZE + 2);
+                memset(unw_id, '\0', MQTTZ_CLI_ID_SIZE + 2);
                 memset(unw_iv, '\0', MQTTZ_AES_IV_SIZE + 1);
                 memset(unw_payload, '\0', stored->payloadlen + 1);
                 memset(cmd, '\0', MQTTZ_MAX_MSG_SIZE);
@@ -160,15 +160,15 @@ static int subs__send(struct mosquitto_db *db, struct mosquitto__subleaf *leaf, 
                     printf("MQT-TZ ERROR: Error unwrapping payload!\n");
                     return 1;
                 }
-                printf("Origin:\n- Id: %s\n- IV: %s\n- Payload: %s\n",
-                        unw_id, unw_iv, unw_payload);
+                printf("Origin:\n- Id: %s\n", unw_id);
                 printf("Destination:\n- Id: %s\n", mqttz_id); 
                 // Call the TA
-                // FIXME Passing encrypted strings as command line arguments
-                // can yield huge problems. For the time being, if the string
-                // contains a \' bash will crash.
-                sprintf(cmd, "/usr/bin/optee_hot_cache '%s' '%s' '%s' '%s'",
-                        unw_id, unw_iv, unw_payload, mqttz_id);
+                // FIXME For the MW Paper and as a temporary workaround, we
+                // only send the two client identifiers. In the future we
+                // should think how to pass encrypted arguments through the
+                // command line.
+                sprintf(cmd, "/usr/bin/optee_hot_cache %s %s", 
+                        unw_id, mqttz_id);
                 fp = popen(cmd, "r");
                 printf("Opened pipe!\n");
                 if (fp == NULL)
@@ -176,32 +176,38 @@ static int subs__send(struct mosquitto_db *db, struct mosquitto__subleaf *leaf, 
                     printf("MQT-TZ ERROR: Error running binary!\n");
                     return 1;
                 }
+                /*
                 char buffer[1000];
                 while (getline(&buffer, &len, fp) != -1)
                 {
                     printf("Arg: %s\n", buffer);
-                    memset(unw_payload, '\0', 1000);
+                    memset(buffer, '\0', 1000);
                 }
+                */
+                //printf("Opened pipe!\n");
+                //char line[128];
+                fgets(unw_id, MQTTZ_CLI_ID_SIZE + 2, fp);
+                printf("Origin:\n- Id: %s\n", unw_id);
+                fgets(mqttz_id, MQTTZ_CLI_ID_SIZE + 2, fp);
+                printf("Destination:\n- Id: %s\n", mqttz_id);
                 /*
                 if (getline(&unw_id, &len, fp) == -1)
                 {
                     printf("MQT-TZ ERROR: Error retrieveing binary out!\n");
                     return 1;
                 }
-                if (getline(&unw_iv, &len, fp) == -1)
+                printf("Opened pipe!\n");
+                printf("Origin:\n- Id: %s\n", unw_id);
+                if (getline(&mqttz_id, &len, fp) == -1)
                 {
                     printf("MQT-TZ ERROR: Error retrieveing binary out!\n");
                     return 1;
                 }
-                if (getline(&unw_payload, &len, fp) == -1)
-                {
-                    printf("MQT-TZ ERROR: Error retrieveing binary out!\n");
-                    return 1;
-                }
-                */
                 pclose(fp);
-                printf("Origin:\n- Id: %s\n- IV: %s\n- Payload: %s\n",
-                        unw_id, unw_iv, unw_payload);
+                printf("Destination:\n- Id: %s\n", mqttz_id); 
+                */
+                //printf("Origin:\n- Id: %s\n- IV: %s\n- Payload: %s\n",
+                //        unw_id, unw_iv, unw_payload);
             }
         }
 	}else{
