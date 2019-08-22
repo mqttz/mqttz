@@ -167,8 +167,9 @@ static int subs__send(struct mosquitto_db *db, struct mosquitto__subleaf *leaf, 
                 // only send the two client identifiers. In the future we
                 // should think how to pass encrypted arguments through the
                 // command line.
-                sprintf(cmd, "/usr/bin/optee_hot_cache %s %s", 
-                        unw_id, mqttz_id);
+                //sprintf(cmd, "/usr/bin/optee_hot_cache %s %s", 
+                //        unw_id, mqttz_id);
+                sprintf(cmd, "/usr/bin/optee_example_hello_world"); 
                 fp = popen(cmd, "r");
                 printf("Opened pipe!\n");
                 if (fp == NULL)
