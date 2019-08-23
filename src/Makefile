@@ -3,9 +3,9 @@ include ../config.mk
 .PHONY: all install uninstall clean reallyclean
 
 ifeq ($(WITH_TLS),yes)
-all : mosquitto mosquitto_passwd
+all : mosquitto mosquitto_passwd run_command
 else
-all : mosquitto
+all : mosquitto run_command
 endif
 
 OBJS=	mosquitto.o \
@@ -73,6 +73,9 @@ OBJS=	mosquitto.o \
 		will_mosq.o
 
 mosquitto : ${OBJS}
+	${CROSS_COMPILE}${CC} ${BROKER_LDFLAGS} $^ -o $@ $(BROKER_LDADD)
+
+run_command : run_command.o
 	${CROSS_COMPILE}${CC} ${BROKER_LDFLAGS} $^ -o $@ $(BROKER_LDADD)
 
 mosquitto.o : mosquitto.c mosquitto_broker_internal.h
@@ -189,6 +192,9 @@ plugin.o : plugin.c mosquitto_plugin.h mosquitto_broker_internal.h
 read_handle.o : read_handle.c mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CPPFLAGS) $(BROKER_CFLAGS) -c $< -o $@
 
+run_command.o : run_command.c
+	${CROSS_COMPILE}${CC} $(BROKER_CPPFLAGS) $(BROKER_CFLAGS) -c $< -o $@
+
 security.o : security.c mosquitto_broker_internal.h
 	${CROSS_COMPILE}${CC} $(BROKER_CPPFLAGS) $(BROKER_CFLAGS) -c $< -o $@
 
@@ -275,7 +281,8 @@ plugin_defer.so : plugin_defer.c mosquitto_plugin.h mosquitto_broker.h mosquitto
 
 install : all
 	$(INSTALL) -d "${DESTDIR}$(prefix)/sbin"
-	$(INSTALL) ${STRIP_OPTS} mosquitto "${DESTDIR}${prefix}/sbin/mosquitto"
+	$(INSTALL) ${STRIP_OPTS} mosquitto "${DESTDIR}${prefix}/bin/mosquitto"
+	$(INSTALL) ${STRIP_OPTS} run_command "${DESTDIR}${prefix}/bin/run_command"
 	$(INSTALL) -d "${DESTDIR}$(prefix)/include"
 	$(INSTALL) mosquitto_broker.h "${DESTDIR}${prefix}/include/mosquitto_broker.h"
 	$(INSTALL) mosquitto_plugin.h "${DESTDIR}${prefix}/include/mosquitto_plugin.h"

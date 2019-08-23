@@ -169,8 +169,8 @@ static int subs__send(struct mosquitto_db *db, struct mosquitto__subleaf *leaf, 
                 // command line.
                 //sprintf(cmd, "/usr/bin/optee_hot_cache %s %s", 
                 //        unw_id, mqttz_id);
-                sprintf(cmd, "/usr/bin/optee_example_hello_world"); 
-                fp = popen(cmd, "r");
+                //fp = popen(cmd, "r");
+                fp = popen("/usr/bin/run_command", "r");
                 printf("Opened pipe!\n");
                 if (fp == NULL)
                 {
