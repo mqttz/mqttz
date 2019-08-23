@@ -280,7 +280,7 @@ plugin_defer.so : plugin_defer.c mosquitto_plugin.h mosquitto_broker.h mosquitto
 	${CROSS_COMPILE}${CC} -I. -I../lib -fPIC -shared $< -o $@
 
 install : all
-	$(INSTALL) -d "${DESTDIR}$(prefix)/sbin"
+	$(INSTALL) -d "${DESTDIR}$(prefix)/bin"
 	$(INSTALL) ${STRIP_OPTS} mosquitto "${DESTDIR}${prefix}/bin/mosquitto"
 	$(INSTALL) ${STRIP_OPTS} run_command "${DESTDIR}${prefix}/bin/run_command"
 	$(INSTALL) -d "${DESTDIR}$(prefix)/include"
@@ -292,13 +292,13 @@ ifeq ($(WITH_TLS),yes)
 endif
 
 uninstall :
-	-rm -f "${DESTDIR}${prefix}/sbin/mosquitto"
+	-rm -f "${DESTDIR}${prefix}/bin/mosquitto"
 	-rm -f "${DESTDIR}${prefix}/include/mosquitto_broker.h"
 	-rm -f "${DESTDIR}${prefix}/include/mosquitto_plugin.h"
 	-rm -f "${DESTDIR}${prefix}/bin/mosquitto_passwd"
 
 clean : 
-	-rm -f *.o mosquitto mosquitto_passwd *.gcda *.gcno
+	-rm -f *.o mosquitto mosquitto_passwd run_command *.gcda *.gcno
 
 reallyclean : clean
 	-rm -rf *.orig *.db
