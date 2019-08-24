@@ -87,9 +87,11 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
             printf("MQT-TZ: Error Decrypting the Subscribed Message!\n");
 			mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
         }
+        /* FIXME VERBOSE */
         else
         {
-            printf("MQT-TZ: Decrypted Information\n%s\n", unwrapped_payload);
+            //printf("MQT-TZ: Decrypted Information\n%s\n", unwrapped_payload);
+            printf("MQT-TZ: Done!\n");
         }
     }
 
@@ -141,11 +143,13 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int result, int flag
         printf("MQT-TZ: Error when initializing subscriber! Exiting...\n");
 		mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
     }
+    /* FIXME VERBOSE
     else
     {
         printf("MQT-TZ: Succesfully initialized the subscriber with the ");
         printf("following parameters:\n \t- cli_id: %s\n", mqttz.cli_id);
     }
+    */
 
 	if(!result){
 		mosquitto_subscribe_multiple(mosq, NULL, cfg.topic_count, cfg.topics, cfg.qos, cfg.sub_opts, cfg.subscribe_props);
