@@ -6,7 +6,7 @@ import signal
 import sys
 import time
 
-port = 1887
+port = 1889
 topic = 'jeje'
 msg = 'mama'
 MAGIC_MSG = "MQT-TZ: Done!\n"
