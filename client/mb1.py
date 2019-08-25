@@ -10,22 +10,20 @@ port = 1887
 topic = 'jeje'
 msg = 'mama'
 MAGIC_MSG = "MQT-TZ: Done!\n"
-NUM_EXPERIMENTS = 2
+NUM_EXPERIMENTS = 100
 
-def publish_mqttz():
-    times = [0,0]
+def publish_mqttz(times):
     for i in range(NUM_EXPERIMENTS):
         command = "./mosquitto_pub -p {} -t {} -m {}".format(port, topic, msg)
+        times.append(time.time())
         proc = subprocess.Popen(command.split(' '))
         proc.wait()
-        times[i] = time.time()
         proc.kill()
         print("Finished publishing!")
         time.sleep(3)
 
-def subscribe_mqttz():
+def subscribe_mqttz(times):
     # print("Do I still know what I am doing?")
-    times = [0,0]
     command = "./mosquitto_sub -p {} -t {}".format(port, topic)
     proc = subprocess.Popen(command.split(' '), stdout=subprocess.PIPE)
     count = 0
@@ -34,8 +32,9 @@ def subscribe_mqttz():
             try:
                 if (line.decode('utf-8') == MAGIC_MSG):
                     print("Yeah!")
+                    #print(line.decode('utf-8'))
                     count += 1
-                    times[i] = time.time()
+                    times.append(time.time())
                     print(count)
                 if (count == NUM_EXPERIMENTS):
                     print("We done!")
@@ -43,25 +42,35 @@ def subscribe_mqttz():
                     break
             except UnicodeDecodeError:
                 continue
+            except FileNotFoundError:
+                print("{} file does not exist!")
+                sys.exit(0)
     except KeyboardInterrupt:
         proc.kill()
         print("Bye!")
+        return
+
+def process_times(mode, times):
+    file_name = "times/{}.dat".format(mode)
+    with open(file_name, "w") as f:
+        for t in times:
+            f.write("{}\n".format(str(t)))
+
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal.default_int_handler)
-#    Thread(target = publish_mqttz).start()
-#    Thread(target = subscribe_mqttz).start()
-#    pub_times = [] #Array('i', NUM_EXPERIMENTS)
-#    sub_times = [] #Array('i', NUM_EXPERIMENTS)
-    subscriber = Process(target = subscribe_mqttz)
-    subscriber.start()
-    time.sleep(1)
-    publisher = Process(target = publish_mqttz)
-    publisher.start()
-    subscriber.join()
-    publisher.join()
-#    print(pub_times[:])
-#    print(sub_times[:])
-#    with Pool(processes = 2) as pool:
-#        pool.apply_async(subscribe_mqttz)
-#        pool.apply_async(publish_mqttz)
+    times = []
+    try:
+        mode = sys.argv[1]
+    except IndexError:
+        print("Haven't provided enough arguments!")
+        sys.exit(0)
+    if (mode == "mqttz-sub"):
+        subscribe_mqttz(times)
+    elif (mode == "mqttz-pub"):
+        publish_mqttz(times)
+    else:
+        print("{} mode has not been implemented yet!")
+        sys.exit(0)
+    process_times(mode, times)
+

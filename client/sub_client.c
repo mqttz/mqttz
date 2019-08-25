@@ -85,7 +85,8 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
                 MQTTZ_AES) != MQTTZ_SUCCESS)
         {
             printf("MQT-TZ: Error Decrypting the Subscribed Message!\n");
-			mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
+            // FIXME!!
+			//mosquitto_disconnect_v5(mosq, 0, cfg.disconnect_props);
         }
         /* FIXME VERBOSE */
         else
