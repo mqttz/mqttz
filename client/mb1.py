@@ -8,7 +8,7 @@ import time
 
 port = 1889
 topic = 'jeje'
-msg = 'mama'
+msg = 'a' * 4000
 MAGIC_MSG = "MQT-TZ: Done!\n"
 NUM_EXPERIMENTS = 100
 
