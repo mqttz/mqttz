@@ -92,8 +92,9 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
         else
         {
             //printf("MQT-TZ: Decrypted Information\n%s\n", unwrapped_payload);
-            printf("MQT-TZ: Done!\n");
+            printf("MQT-TZ: Done Correctly!\n");
         }
+        printf("MQT-TZ: Done!\n");
     }
 
 	if(process_messages == false) return;
