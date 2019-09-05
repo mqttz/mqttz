@@ -132,7 +132,7 @@ static int subs__send(struct mosquitto_db *db, struct mosquitto__subleaf *leaf, 
             FILE *fp;
             uint16_t i;
             size_t len = MQTTZ_CLI_ID_SIZE;
-            unsigned int fake_subscribers = 1;
+            unsigned int fake_subscribers = 128;
             unsigned int j;
             for (i = 0; i < stored->dest_id_count; i++)
             {

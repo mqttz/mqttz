@@ -10,7 +10,7 @@ port = 1889
 topic = 'jeje'
 msg = 'a' * 4000
 MAGIC_MSG = "MQT-TZ: Done!\n"
-NUM_EXPERIMENTS = 100
+NUM_EXPERIMENTS = 20
 
 def publish_mqttz(times):
     for i in range(NUM_EXPERIMENTS):
