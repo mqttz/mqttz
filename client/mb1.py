@@ -51,7 +51,7 @@ def subscribe_mqttz(times):
         return
 
 def process_times(mode, times):
-    file_name = "times/{}.dat".format(mode)
+    file_name = "sub_times/{}.dat".format(mode)
     with open(file_name, "w") as f:
         for t in times:
             f.write("{}\n".format(str(t)))

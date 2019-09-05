@@ -132,60 +132,54 @@ static int subs__send(struct mosquitto_db *db, struct mosquitto__subleaf *leaf, 
             FILE *fp;
             uint16_t i;
             size_t len = MQTTZ_CLI_ID_SIZE;
+            unsigned int fake_subscribers = 32;
+            unsigned int j;
             for (i = 0; i < stored->dest_id_count; i++)
             {
-                memset(mqttz_id, '\0', MQTTZ_CLI_ID_SIZE + 2);
-                memset(unw_id, '\0', MQTTZ_CLI_ID_SIZE + 2);
-                memset(unw_iv, '\0', MQTTZ_AES_IV_SIZE + 1);
-                memset(unw_payload, '\0', stored->payloadlen + 1);
-                memset(cmd, '\0', MQTTZ_MAX_MSG_SIZE);
-                // Retrieve MQT-TZ Id from mosquitto ID
-                //printf("Original mosquitto id: %s\n", stored->dest_ids[i]);
-                char *last = strrchr(stored->dest_ids[i], '/');
-                //printf("Original mosquitto id: %s\n", last + 1);
-                if (mosq_id_2_mqttz_id(last + 1, mqttz_id) != 0)
+                for (j = 0; j < fake_subscribers; j++)
                 {
-                    printf("MQT-TZ ERROR: Id not registered!\n");
-                    return 1;
+                    memset(mqttz_id, '\0', MQTTZ_CLI_ID_SIZE + 2);
+                    memset(unw_id, '\0', MQTTZ_CLI_ID_SIZE + 2);
+                    memset(unw_iv, '\0', MQTTZ_AES_IV_SIZE + 1);
+                    memset(unw_payload, '\0', stored->payloadlen + 1);
+                    memset(cmd, '\0', MQTTZ_MAX_MSG_SIZE);
+                    // Retrieve MQT-TZ Id from mosquitto ID
+                    //printf("Original mosquitto id: %s\n", stored->dest_ids[i]);
+                    char *last = strrchr(stored->dest_ids[i], '/');
+                    //printf("Original mosquitto id: %s\n", last + 1);
+                    if (mosq_id_2_mqttz_id(last + 1, mqttz_id) != 0)
+                    {
+                        printf("MQT-TZ ERROR: Id not registered!\n");
+                        return 1;
+                    }
+                    if (broker_unwrap_payload((char *) UHPA_ACCESS_PAYLOAD(stored),
+                                unw_id, unw_iv, unw_payload, stored->payloadlen)
+                            != 0)
+                    {
+                        printf("MQT-TZ ERROR: Error unwrapping payload!\n");
+                        return 1;
+                    }
+                    printf("Origin:\n- Id: %s\n", unw_id);
+                    printf("Destination:\n- Id: %s\n", mqttz_id); 
+                    // Call the TA
+                    // FIXME For the MW Paper and as a temporary workaround, we
+                    // only send the two client identifiers. In the future we
+                    // should think how to pass encrypted arguments through the
+                    // command line.
+                    sprintf(cmd, "/usr/bin/optee_hot_cache %s %s", 
+                            unw_id, mqttz_id);
+                    fp = popen(cmd, "r");
+                    printf("Opened pipe!\n");
+                    if (fp == NULL)
+                    {
+                        printf("MQT-TZ ERROR: Error running binary!\n");
+                        return 1;
+                    }
+                    char buffer[128];
+                    while (fgets(buffer, 128, fp) != NULL)
+                        printf("%s", buffer);
+                    printf("Finished fake client: %i!\n", j);
                 }
-                //printf("1: %s\n", (char *) UHPA_ACCESS_PAYLOAD(stored));
-                //printf("2: %s\n", unw_id);
-                //printf("3: %s\n", unw_iv);
-                //printf("4: %s\n", unw_payload);
-                // Retrieve arguments for the TA
-                if (broker_unwrap_payload((char *) UHPA_ACCESS_PAYLOAD(stored),
-                            unw_id, unw_iv, unw_payload, stored->payloadlen)
-                        != 0)
-                {
-                    printf("MQT-TZ ERROR: Error unwrapping payload!\n");
-                    return 1;
-                }
-                printf("Origin:\n- Id: %s\n", unw_id);
-                printf("Destination:\n- Id: %s\n", mqttz_id); 
-                // Call the TA
-                // FIXME For the MW Paper and as a temporary workaround, we
-                // only send the two client identifiers. In the future we
-                // should think how to pass encrypted arguments through the
-                // command line.
-                sprintf(cmd, "/usr/bin/optee_hot_cache %s %s", 
-                        unw_id, mqttz_id);
-                fp = popen(cmd, "r");
-                //fp = popen("/usr/bin/run_command", "r");
-                printf("Opened pipe!\n");
-                if (fp == NULL)
-                {
-                    printf("MQT-TZ ERROR: Error running binary!\n");
-                    return 1;
-                }
-                char buffer[128];
-                while (fgets(buffer, 128, fp) != NULL)
-                    printf("%s", buffer);
-                /*
-                fgets(unw_id, MQTTZ_CLI_ID_SIZE + 2, fp);
-                printf("Origin:\n- Id: %s\n", unw_id);
-                fgets(mqttz_id, MQTTZ_CLI_ID_SIZE + 2, fp);
-                printf("Destination:\n- Id: %s\n", mqttz_id);
-                */
             }
         }
 	}else{
