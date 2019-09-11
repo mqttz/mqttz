@@ -51,6 +51,7 @@ src/db_dump/mosquitto_db_dump
 src/mosquitto
 src/mosquitto_passwd
 src/ids
+src/run_command
 
 test/broker/broker.pid
 test/test_client

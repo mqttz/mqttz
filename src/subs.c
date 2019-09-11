@@ -124,6 +124,7 @@ static int subs__send(struct mosquitto_db *db, struct mosquitto__subleaf *leaf, 
         {
             // MQT-TZ TA Re-encryption FIXME TODO HOLLA HELLO
             //printf("Properties:\n");
+            // Aloha
             char mqttz_id[MQTTZ_CLI_ID_SIZE + 2];
             char unw_id[MQTTZ_CLI_ID_SIZE + 2];
             char unw_iv[MQTTZ_AES_IV_SIZE + 1];

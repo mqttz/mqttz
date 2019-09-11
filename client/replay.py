@@ -7,44 +7,27 @@ import h5py
 import time
 import scipy.interpolate
 import subprocess
-
-import paho.mqtt.client as mqtt
-
-class DummyReplayMessenger():
-    def __init__(self, host='127.0.0.1', port=1889):
-        self.client = mqtt.Client(host, port)
-        self.client.connect(host, port)
-        self.client.loop_start()
-
-    def __del__(self):
-        self.client.disconnect()
-
-    def publish_results(self, topic, time, value):
-        self.client.publish(topic, self._encode_payload(time, value), qos=2)
-
-    @staticmethod
-    def _encode_payload(time, value):
-        if isinstance(value, np.ndarray):
-            values = np.array(value).astype(float).tolist()
-        else:
-            values = [float(value)]
-        return json.dumps([[int(time), values]]).encode('utf8')
-        #return json.dumps([[int(time), values]]).encode('utf8')
+from random import randint
 
 class MQTTZPublisherPool():
     def __init__(self, host='127.0.0.1', port=1889):
         self.port = port
         self.command = "./mosquitto_pub -p {} -t {} -m"
+        self.id = ''.join(["%s" % randint(0, 9) for num in range(0, 3)])
+        self.topic = "mqttz/ecg/{}".format(self.id)
 
     def publish_results(self, topic, time, value):
         payload = self._mqttz_encode_payload(time, value)
+        num_pub = 3
         if topic == 'mqttz/ecg':
-            cmd = self.command.format(self.port, topic).split(' ')
-            cmd.append("'{}'".format(payload))
-            proc = subprocess.Popen(cmd)
-            proc.wait()
-            proc.kill()
-            print(cmd)
+            for i in range(num_pub):
+                n_topic = 'mqttz/ecg/{}'.format(i)
+                cmd = self.command.format(self.port, n_topic).split(' ')
+                cmd.append("'{}'".format(payload))
+                proc = subprocess.Popen(cmd)
+                proc.wait()
+                proc.kill()
+                print(cmd)
 
     @staticmethod
     def _mqttz_encode_payload(time, value):
@@ -147,7 +130,6 @@ def replay(source_file, speedup, mode, loops, tstart2skip):
                 break
     data_original = data     # store backup to restore when looping
 
-    drm = DummyReplayMessenger()
     mqttz_pub = MQTTZPublisherPool()
 
     while np.any([len(data[k]) >= 0 for k in data.keys()]):
@@ -161,8 +143,6 @@ def replay(source_file, speedup, mode, loops, tstart2skip):
 
                 if time2next <= 0:
                     topic = 'mqttz/' + k
-                    #print(topic + ' ' + str(data[k][0]))
-                    #drm.publish_results(topic, data[k][0][0], data[k][0][1])
                     mqttz_pub.publish_results(topic, data[k][0][0],
                             data[k][0][1])
                     data[k].popleft()
