@@ -122,7 +122,7 @@ int my_publish(struct mosquitto *mosq, int *mid, const char *topic,
         return MQTTZ_ERROR;    
     }
     printf("Wrapping the payload: \n");
-    BIO_dump_fp(stdout, (const char *)wrapped_payload, strlen(wrapped_payload));
+    // BIO_dump_fp(stdout, (const char *)wrapped_payload, strlen(wrapped_payload));
     // Testing IV
     // char tmp[MQTTZ_MAX_MSG_SIZE];
     // unwrap_payload(&mqttz, wrapped_payload, tmp, MQTTZ_AES);

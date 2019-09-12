@@ -18,7 +18,7 @@ class MQTTZPublisherPool():
 
     def publish_results(self, topic, time, value):
         payload = self._mqttz_encode_payload(time, value)
-        num_pub = 3
+        num_pub = 50
         if topic == 'mqttz/ecg':
             for i in range(num_pub):
                 n_topic = 'mqttz/ecg/{}'.format(i)
@@ -27,7 +27,7 @@ class MQTTZPublisherPool():
                 proc = subprocess.Popen(cmd)
                 proc.wait()
                 proc.kill()
-                print(cmd)
+                #print(cmd)
 
     @staticmethod
     def _mqttz_encode_payload(time, value):
