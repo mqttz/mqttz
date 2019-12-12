@@ -10,9 +10,11 @@ import subprocess
 from random import randint
 
 class MQTTZPublisherPool():
-    def __init__(self, host='127.0.0.1', port=1889):
+    #def __init__(self, host='127.0.0.1', port=1889):
+    def __init__(self, host='192.168.1.57', port=1883):
         self.port = port
-        self.command = "./mosquitto_pub -p {} -t {} -m"
+        self.host = host
+        self.command = "./mosquitto_pub -h {} -p {} -t {} -m"
         self.id = ''.join(["%s" % randint(0, 9) for num in range(0, 3)])
         self.topic = "mqttz/ecg/{}".format(self.id)
 
@@ -22,7 +24,8 @@ class MQTTZPublisherPool():
         if topic == 'mqttz/ecg':
             for i in range(num_pub):
                 n_topic = 'mqttz/ecg/{}'.format(i)
-                cmd = self.command.format(self.port, n_topic).split(' ')
+                cmd = self.command.format(self.host, self.port,
+                                          n_topic).split(' ')
                 cmd.append("'{}'".format(payload))
                 proc = subprocess.Popen(cmd)
                 proc.wait()
