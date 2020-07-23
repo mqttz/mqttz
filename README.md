@@ -1,101 +1,13 @@
-### MQT-TZ: Running mosquitto in the TrustZone
+## MQT-TZ: TrustZone Enabled MQTT Broker
 
-**Repository Directory:**
-1. Implementation:
-    + [MQT-TZ: Custom `mosquitto` implementation, Client and Broker](https://github.com/csegarragonz/mqttz)
-    + [Trusted Applications 4 TrustZone](https://github.com/csegarragonz/optee-apps)
-2. Dissemination:
-    + [SysTEX](https://github.com/vschiavoni/unine-csem/tree/master/SYSTEX19)
-    + [MIDDLEWARE](https://github.com/vschiavoni/unine-csem/tree/master/MIDDLEWARE19)
+-----
 
-#### To-Do List:
+MQT-TZ is a project aimed at hardening IoT gateways using TrustZone.
+A detailed project description can be read from the different publications where it appears:
++ [MQT-TZ: Secure MQTT Broker for Biomedical Signal Processing on the Edge](https://arxiv.org/abs/2007.01555).
++ [MQT-TZ: Hardening IoT Brokers Using ARM TrustZone](broken)
 
-**Implementation:**
-1. Client:
-    1. Key Exchange
-        1. Support Asymmetric Encryption.
-2. Broker:
-    1. Key Exchange
-        1. Filter `id_query` Topics
-        2. Support Asymmetric Encryption
-    2. Payload Reencryption
-        1. Key Retrieval from Persistent Storage Working.
-        2. Locate where in the broker implementation do the reencryption
-        3. Link with the pluggable reencryption method
-3. Deployment:
-    1. Run custom `mosquitto` implementation in Buildroot
-    2. Move everything to my personal laptop
-
-**Evaluation:**
-1. Make artificial ECG generator.
-    1. Get my hands on the `.h5` file!!!
-2. Microbenchmarks:
-    1. **uB1: TrustZone Reencryption:**
-        + How many bytes/second can we reencrypt in the SW and how does it compare to the Normal World?
-        + Measure:
-            + Time to retrieve decrypt Key from Secure Storage
-            + Time to decrypt payload
-            + Time to retrieve encrypt key from Secure Storage
-            + Time to encrypt payload
-        + Vary:
-            + Run in NW vs SW
-            + Load Key from persistent storage vs in memory? Yes
-            + Payload Size of 1kB, 4kB, 8kB, 16kB
-        + Plot Structure:
-            + ![Fig 14 in "On the Performance of ARM TrustZone"](./img/trustzone-comparison.png)
-            + ![My Version](./img/mb1_scheme.jpg)
-    2. **uB2: Key Exchange Performance**
-        + How much time does our Key Exchange protocl take?
-        + Measure:
-            + Time Spent for the 1st Key Exchange
-                + Overhead (`mosquitto` connect + TLS Handshake)
-                + Time in client (generate Sym Key)
-                + Time in server:
-                    + Time outside TZ: before TA call and after.
-                    + Time inside TZ: decrypt and store in SS
-                + Time in client (decrypt OK)
-            + Time spent for the 2nd Key Exchange (epsilon?) no interaction w/ server
-        + Compare w/ what?
-3. Macrobenchmarks
-    1. **MB1: Streaming a whole 100 Hz ECG**
-        + What is the performance of our secure MQTT broker when streaming a whole 100 Hz ECG during a given period of time.
-        + Measure:
-            + Overall Latency defined as time from sending first byte to the last one.
-            + Time spent in 1st Handshake (Key Exchange)
-            + Client Encryption Time
-            + Time Spent in Broker
-                + Time spent in TZ
-            + Client Decryption Time
-            + Time spent in >1 handshakes (no key exchange)
-        + Compare:
-            + Vanilla `mosquitto`
-            + Vanilla `mosquitto` w/ TLS + ACL
-            + MQTTZ w/ reencryption in the NS world
-            + MQTTZ w/ reencryption in the S world
-            + HiveMQ (w/ and w/out TLS if available)
-            + Tesarakt: request a Demo? [lol](https://teserakt.io/)
-            + A secure Pub/Sub alternative platform/protocol (rather than MQTT)
-        + Vary:
-            + Package Size?
-        + Considerations:
-            + What implicit flow control mechanisms are running under the hood? (`mosquitto`, ...)
-        + Plot Structure
-
-**Figures:**
-1. **F1: MQT-TZ Architecture**
-2. **F2: Key Exchange Protocol**
-3. **F3: TrustZone Architecutre?**
-
-**Dissemination:**
-1. 15/08/19 - SysTEX
-    + Plots:
-        1. uB2:
-            + Instead of the table, we will put the absolute numbers in the bar itself.
-            + We will do two different plots, one storing the key in SS and one in memory.
-            + We will follow the structure of the SafeFS paper in the end.
-    + Figures:
-        1. F1: make it one-column width
-    + Notes:
-        + Make one-liner of the authors
-        + In the last paragraph, report a problem we encountered that motivates our research and that would have made our life easier: Secure Point-to-Point comm. to TZ
-2. 06/09/19 - Middleware (Industrial Track)
+Navigating the [GitHub organization](https://github.com/mqttz) you will see the different building blocks of the project.
++ [Fork of the `mosquitto` MQTT client and broker](https://github.com/mqttz/mqttz)
++ [Trusted Applications for TrustZone and Op-TEE: MQT-TZ specific and Benchmarking Oriented](https://github.com/mqttz/optee-apps)
++ [Running a TLS-enabled MQTT Broker](https://github.com/mqttz/mqttz-conf)
